@@ -119,10 +119,14 @@ knowledge/universe.md
 knowledge/characters.md
 knowledge/concepts.md
 knowledge/glossary.md
+knowledge/dramaturgy.md
+knowledge/chatbot.md
 ```
 
 O arquivo `Texto caixa preta.pdf` esta na raiz do projeto como referencia do espetaculo.
-Nesta etapa, o conteudo usado pela IA deve estar transcrito ou resumido nos arquivos Markdown dentro de `knowledge/`.
+Ele foi extraido e lido integralmente nesta etapa.
+O entendimento dramaturgico do PDF foi curado principalmente em `knowledge/dramaturgy.md` e `knowledge/chatbot.md`.
+O conteudo usado pela IA deve estar transcrito ou resumido nos arquivos Markdown dentro de `knowledge/`.
 Futuramente, `lib/knowledge.js` pode ser substituido por RAG/vector store sem alterar o restante da aplicacao.
 
 ## Como memoria e /say entram no prompt
