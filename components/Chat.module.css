@@ -24,6 +24,106 @@
   animation: introBlink 0.55s steps(2, start) infinite;
 }
 
+.manualButton,
+.manualClose {
+  border: 1px solid var(--green-soft);
+  background: #000000;
+  color: var(--green);
+  cursor: pointer;
+}
+
+.manualButton {
+  position: fixed;
+  top: 24px;
+  right: 28px;
+  z-index: 20;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+
+.manualButton:hover,
+.manualButton:focus-visible,
+.manualClose:hover,
+.manualClose:focus-visible {
+  border-color: var(--green);
+  outline: 0;
+}
+
+.manualOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.82);
+}
+
+.manual {
+  width: min(680px, 100%);
+  max-height: min(760px, 88vh);
+  overflow-y: auto;
+  border: 1px solid var(--green-soft);
+  background: #000000;
+  box-shadow: 0 0 36px rgba(0, 255, 102, 0.12);
+}
+
+.manualHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--green-soft);
+}
+
+.manualHeader h2,
+.manualBody h3,
+.manualBody p,
+.manualBody dl {
+  margin: 0;
+}
+
+.manualHeader h2 {
+  font-size: 1.1rem;
+}
+
+.manualClose {
+  width: 32px;
+  height: 32px;
+}
+
+.manualBody {
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+  color: var(--green-dim);
+  font-size: clamp(0.9rem, 1.4vw, 1rem);
+  line-height: 1.45;
+}
+
+.manualBody h3,
+.manualBody strong,
+.manualBody dt {
+  color: var(--green);
+}
+
+.manualBody dl {
+  display: grid;
+  gap: 12px;
+}
+
+.manualBody dt {
+  margin-bottom: 4px;
+}
+
+.manualBody dd {
+  margin: 0;
+}
+
 .public {
   color: var(--green-dim);
   font-size: clamp(0.95rem, 1.65vw, 1.5rem);
@@ -99,6 +199,11 @@
 }
 
 @media (max-width: 640px) {
+  .manualButton {
+    top: 16px;
+    right: 18px;
+  }
+
   .form {
     grid-template-columns: auto 1fr;
   }

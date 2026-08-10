@@ -18,6 +18,7 @@ export default function Chat() {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [introStep, setIntroStep] = useState("cursor");
+  const [manualOpen, setManualOpen] = useState(false);
   const scrollRef = useRef(null);
   const initializedMessagesRef = useRef(false);
   const seenMessageIdsRef = useRef(new Set());
@@ -69,6 +70,21 @@ export default function Chat() {
 
     return () => events.close();
   }, []);
+
+  useEffect(() => {
+    if (!manualOpen) {
+      return undefined;
+    }
+
+    function closeOnEscape(event) {
+      if (event.key === "Escape") {
+        setManualOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [manualOpen]);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ block: "end" });
@@ -255,47 +271,111 @@ export default function Chat() {
   );
 
   return (
-    <Terminal title="CAIXA PRETA" footer={footer}>
-      <div className={styles.messages}>
-        {messages.length === 0 && introStep === "cursor" ? (
-          <p className={styles.introCursor}>&gt; <span>_</span></p>
-        ) : null}
+    <>
+      <button
+        aria-label="Abrir manual de comandos"
+        className={styles.manualButton}
+        onClick={() => setManualOpen(true)}
+        type="button"
+      >
+        ?
+      </button>
 
-        {messages.length === 0 && introStep === "dots" ? (
-          <p className={styles.introDots}>
-            &gt; {introDotsText}
-            {introDotsText !== INTRO_DOTS_TEXT ? (
-              <span className={styles.replyCursor} aria-hidden="true">_</span>
-            ) : null}
-          </p>
-        ) : null}
+      {manualOpen ? (
+        <div
+          aria-labelledby="manual-title"
+          aria-modal="true"
+          className={styles.manualOverlay}
+          role="dialog"
+        >
+          <section className={styles.manual}>
+            <header className={styles.manualHeader}>
+              <h2 id="manual-title">MANUAL</h2>
+              <button
+                aria-label="Fechar manual"
+                className={styles.manualClose}
+                onClick={() => setManualOpen(false)}
+                type="button"
+              >
+                X
+              </button>
+            </header>
 
-        {messages.length === 0 && introStep === "ready" ? (
-          <p className={styles.machine}>
-            &gt; {introText}
-            {introText !== INTRO_READY_TEXT ? (
-              <span className={styles.replyCursor} aria-hidden="true">_</span>
-            ) : null}
-          </p>
-        ) : null}
+            <div className={styles.manualBody}>
+              <h3>CHAT PUBLICO</h3>
+              <dl>
+                <div>
+                  <dt>/reset</dt>
+                  <dd>Limpa a conversa e reinicia a tela inicial.</dd>
+                </div>
+              </dl>
 
-        {messages.map((message) => (
-          <p
-            className={message.role === "assistant" ? styles.machine : styles.public}
-            key={message.id}
-          >
-            <span>{message.role === "assistant" ? ">" : "PUBLICO >"}</span>{" "}
-            {message.role === "assistant" ? typedReplies[message.id] ?? "" : message.content}
-            {message.role === "assistant" && typedReplies[message.id] !== message.content ? (
-              <span className={styles.replyCursor} aria-hidden="true">_</span>
-            ) : null}
-          </p>
-        ))}
+              <h3>OPERATOR</h3>
+              <p>Acesse <strong>/operator</strong> para comandos de controle.</p>
+              <dl>
+                <div>
+                  <dt>/say texto</dt>
+                  <dd>Faz a Caixa Preta responder a partir de uma instrucao do operador.</dd>
+                </div>
+                <div>
+                  <dt>/memory texto</dt>
+                  <dd>Guarda uma memoria para orientar as proximas respostas.</dd>
+                </div>
+                <div>
+                  <dt>/reset</dt>
+                  <dd>Apaga conversa, memorias e variaveis da sessao.</dd>
+                </div>
+              </dl>
 
-        {pending ? <p className={styles.machine}>&gt; _</p> : null}
-        {error ? <p className={styles.error}>&gt; {error}</p> : null}
-        <div ref={scrollRef} />
-      </div>
-    </Terminal>
+              <h3>USO BASICO</h3>
+              <p>Digite no campo inferior e pressione Enter. Respostas novas aparecem como texto digitado.</p>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      <Terminal title="CAIXA PRETA" footer={footer}>
+        <div className={styles.messages}>
+          {messages.length === 0 && introStep === "cursor" ? (
+            <p className={styles.introCursor}>&gt; <span>_</span></p>
+          ) : null}
+
+          {messages.length === 0 && introStep === "dots" ? (
+            <p className={styles.introDots}>
+              &gt; {introDotsText}
+              {introDotsText !== INTRO_DOTS_TEXT ? (
+                <span className={styles.replyCursor} aria-hidden="true">_</span>
+              ) : null}
+            </p>
+          ) : null}
+
+          {messages.length === 0 && introStep === "ready" ? (
+            <p className={styles.machine}>
+              &gt; {introText}
+              {introText !== INTRO_READY_TEXT ? (
+                <span className={styles.replyCursor} aria-hidden="true">_</span>
+              ) : null}
+            </p>
+          ) : null}
+
+          {messages.map((message) => (
+            <p
+              className={message.role === "assistant" ? styles.machine : styles.public}
+              key={message.id}
+            >
+              <span>{message.role === "assistant" ? ">" : "PUBLICO >"}</span>{" "}
+              {message.role === "assistant" ? typedReplies[message.id] ?? "" : message.content}
+              {message.role === "assistant" && typedReplies[message.id] !== message.content ? (
+                <span className={styles.replyCursor} aria-hidden="true">_</span>
+              ) : null}
+            </p>
+          ))}
+
+          {pending ? <p className={styles.machine}>&gt; _</p> : null}
+          {error ? <p className={styles.error}>&gt; {error}</p> : null}
+          <div ref={scrollRef} />
+        </div>
+      </Terminal>
+    </>
   );
 }
