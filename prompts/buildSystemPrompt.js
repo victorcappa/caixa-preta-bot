@@ -2,7 +2,7 @@ import { caixaPretaExamples } from "./examples";
 import { caixaPretaPersonality } from "./personality";
 import { caixaPretaRules } from "./rules";
 
-export const PROMPT_VERSION = 1;
+export const PROMPT_VERSION = 2;
 
 function variablesBlock(variables = {}) {
   if (!variables || Object.keys(variables).length === 0) {
