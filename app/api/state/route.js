@@ -1,8 +1,15 @@
+import { getKnowledgeStatus } from "@/lib/knowledge";
 import { showState } from "@/lib/showState";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET() {
-  return Response.json(showState.snapshot());
+  return Response.json({
+    ...showState.snapshot(),
+    context: {
+      knowledge: getKnowledgeStatus(),
+      promptVersion: 1
+    }
+  });
 }

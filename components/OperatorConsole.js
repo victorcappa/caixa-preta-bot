@@ -7,7 +7,15 @@ import styles from "./OperatorConsole.module.css";
 export default function OperatorConsole() {
   const [command, setCommand] = useState("");
   const [logs, setLogs] = useState([]);
-  const [state, setState] = useState({ memories: [], conversation: [], variables: {} });
+  const [state, setState] = useState({
+    memories: [],
+    conversation: [],
+    variables: {},
+    context: {
+      knowledge: { loaded: false, count: 0 },
+      promptVersion: 1
+    }
+  });
   const [status, setStatus] = useState("CONNECTING");
   const [pending, setPending] = useState(false);
   const scrollRef = useRef(null);
@@ -23,7 +31,10 @@ export default function OperatorConsole() {
     events.onerror = () => setStatus("DISCONNECTED");
     events.onmessage = (event) => {
       const payload = JSON.parse(event.data);
-      setState(payload.state);
+      setState({
+        ...payload.state,
+        context: payload.context
+      });
     };
 
     return () => events.close();
@@ -91,6 +102,7 @@ export default function OperatorConsole() {
   }
 
   const latestMemories = state.memories.slice(-5).reverse();
+  const variableCount = Object.keys(state.variables || {}).length;
   const footer = (
     <form className={styles.form} onSubmit={submitCommand}>
       <span aria-hidden="true">&gt;</span>
@@ -114,6 +126,9 @@ export default function OperatorConsole() {
             </span>
             <span>MEMORIES: {state.memories.length}</span>
             <span>MESSAGES: {state.conversation.length}</span>
+            <span>KNOWLEDGE: {state.context?.knowledge?.loaded ? "loaded" : "not loaded"}</span>
+            <span>VARIABLES: {variableCount}</span>
+            <span>PROMPT VERSION: {state.context?.promptVersion || 1}</span>
           </div>
 
           <div className={styles.history}>
