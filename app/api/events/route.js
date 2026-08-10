@@ -8,20 +8,36 @@ export async function GET() {
   const encoder = new TextEncoder();
   let unsubscribe = () => {};
   let keepAlive;
+  let closed = false;
+
+  function send(controller, payload) {
+    if (closed) {
+      return;
+    }
+
+    try {
+      controller.enqueue(encoder.encode(payload));
+    } catch {
+      closed = true;
+      clearInterval(keepAlive);
+      unsubscribe();
+    }
+  }
 
   const stream = new ReadableStream({
     start(controller) {
-      controller.enqueue(encoder.encode(encodeSse({ event: { type: "snapshot" }, state: showState.snapshot() })));
+      send(controller, encodeSse({ event: { type: "snapshot" }, state: showState.snapshot() }));
 
       unsubscribe = showState.subscribe((payload) => {
-        controller.enqueue(encoder.encode(encodeSse(payload)));
+        send(controller, encodeSse(payload));
       });
 
       keepAlive = setInterval(() => {
-        controller.enqueue(encoder.encode(": keepalive\n\n"));
+        send(controller, ": keepalive\n\n");
       }, 25000);
     },
     cancel() {
+      closed = true;
       clearInterval(keepAlive);
       unsubscribe();
     }
