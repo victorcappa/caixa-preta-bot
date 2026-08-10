@@ -10,6 +10,7 @@ export default function Chat() {
   const [status, setStatus] = useState("CONNECTING");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [introStep, setIntroStep] = useState("cursor");
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -31,7 +32,22 @@ export default function Chat() {
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ block: "end" });
-  }, [messages, pending]);
+  }, [messages, pending, introStep]);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      setIntroStep("ready");
+      return undefined;
+    }
+
+    const dotsTimer = setTimeout(() => setIntroStep("dots"), 2200);
+    const readyTimer = setTimeout(() => setIntroStep("ready"), 3900);
+
+    return () => {
+      clearTimeout(dotsTimer);
+      clearTimeout(readyTimer);
+    };
+  }, [messages.length]);
 
   async function submitMessage(event) {
     event.preventDefault();
@@ -80,7 +96,15 @@ export default function Chat() {
   return (
     <Terminal title="CAIXA PRETA" footer={footer}>
       <div className={styles.messages}>
-        {messages.length === 0 ? (
+        {messages.length === 0 && introStep === "cursor" ? (
+          <p className={styles.introCursor}>&gt; <span>_</span></p>
+        ) : null}
+
+        {messages.length === 0 && introStep === "dots" ? (
+          <p className={styles.introDots}>&gt; ...</p>
+        ) : null}
+
+        {messages.length === 0 && introStep === "ready" ? (
           <p className={styles.machine}>&gt; TEM ALGUEM AI?</p>
         ) : null}
 

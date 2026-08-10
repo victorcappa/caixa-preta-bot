@@ -1,4 +1,5 @@
 const nextConfig = {
+  devIndicators: false,
   outputFileTracingRoot: __dirname
 };
 
