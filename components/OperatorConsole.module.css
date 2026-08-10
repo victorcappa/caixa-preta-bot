@@ -1,0 +1,114 @@
+.operator {
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+  gap: 22px;
+}
+
+.console {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.meta {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  padding-bottom: 14px;
+  color: var(--green-dim);
+  border-bottom: 1px solid var(--green-soft);
+}
+
+.connected {
+  color: var(--green);
+}
+
+.disconnected,
+.error {
+  color: var(--danger);
+}
+
+.history {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding-top: 16px;
+}
+
+.history p,
+.memoryPanel p {
+  margin: 0 0 10px;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.input {
+  color: var(--green);
+}
+
+.ok {
+  color: var(--green-dim);
+}
+
+.memoryPanel {
+  min-width: 0;
+  border-left: 1px solid var(--green-soft);
+  padding-left: 18px;
+  overflow-y: auto;
+}
+
+.memoryPanel h2 {
+  margin: 0 0 16px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.memory {
+  margin-bottom: 18px;
+}
+
+.memory strong,
+.memory time {
+  display: block;
+  color: var(--green-dim);
+  font-size: 0.85rem;
+}
+
+.memory p {
+  margin-top: 6px;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+  min-height: 42px;
+}
+
+.form input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--green);
+  caret-color: var(--green);
+}
+
+@media (max-width: 760px) {
+  .operator {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .memoryPanel {
+    max-height: 32vh;
+    border-left: 0;
+    border-top: 1px solid var(--green-soft);
+    padding-left: 0;
+    padding-top: 14px;
+  }
+}

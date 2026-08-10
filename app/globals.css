@@ -1,0 +1,36 @@
+:root {
+  --bg: #000000;
+  --green: #00ff66;
+  --green-dim: #008f3a;
+  --green-soft: rgba(0, 255, 102, 0.18);
+  --danger: #ff4d4d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--green);
+  font-family: "Courier New", Courier, monospace;
+}
+
+body {
+  overflow: hidden;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: var(--green);
+  color: var(--bg);
+}

@@ -1,0 +1,44 @@
+.terminal {
+  width: 100vw;
+  height: 100vh;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  background: #000000;
+  color: var(--green);
+  letter-spacing: 0;
+}
+
+.header {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--green-soft);
+  padding-bottom: 16px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: clamp(1.2rem, 3vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 18px 0;
+}
+
+.footer {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--green-soft);
+  padding-top: 14px;
+}
+
+@media (max-width: 640px) {
+  .terminal {
+    padding: 18px;
+  }
+}

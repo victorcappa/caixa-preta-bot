@@ -1,0 +1,21 @@
+{
+  "name": "caixa-preta-chat",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "next": "^15.4.6",
+    "openai": "^5.12.2",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "eslint": "^9.32.0",
+    "eslint-config-next": "^15.4.6"
+  }
+}
