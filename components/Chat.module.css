@@ -18,6 +18,12 @@
   font-size: clamp(1.05rem, 2.35vw, 2.35rem);
 }
 
+.replyCursor {
+  display: inline-block;
+  margin-left: 0.08em;
+  animation: introBlink 0.55s steps(2, start) infinite;
+}
+
 .public {
   color: var(--green-dim);
   font-size: clamp(0.95rem, 1.65vw, 1.5rem);
