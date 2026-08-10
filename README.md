@@ -24,9 +24,12 @@ Crie ou edite o arquivo `.env.local` na raiz do projeto:
 
 ```bash
 OPENAI_API_KEY=sua_chave_aqui
+OPENAI_MODEL=gpt-5-nano
 ```
 
 O arquivo `.env.local` esta no `.gitignore` e nao deve ser commitado.
+
+`OPENAI_MODEL` e opcional. O padrao do projeto e `gpt-5-nano`, escolhido para testes e uso local com menor custo. Para uma resposta mais forte em apresentacao, voce pode trocar para `gpt-5-mini`.
 
 ## Rodar localmente
 

@@ -8,6 +8,7 @@ export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [status, setStatus] = useState("CONNECTING");
+  const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const scrollRef = useRef(null);
 
@@ -41,6 +42,7 @@ export default function Chat() {
     }
 
     setInput("");
+    setError("");
     setPending(true);
 
     try {
@@ -51,8 +53,11 @@ export default function Chat() {
       });
 
       if (!response.ok) {
-        throw new Error("Falha ao conversar com a Caixa Preta.");
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Falha ao conversar com a Caixa Preta.");
       }
+    } catch (requestError) {
+      setError(requestError.message);
     } finally {
       setPending(false);
     }
@@ -90,6 +95,7 @@ export default function Chat() {
         ))}
 
         {pending ? <p className={styles.machine}>&gt; _</p> : null}
+        {error ? <p className={styles.error}>&gt; {error}</p> : null}
         <div ref={scrollRef} />
       </div>
     </Terminal>

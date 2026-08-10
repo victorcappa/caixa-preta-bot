@@ -23,6 +23,11 @@
   font-size: clamp(1rem, 2vw, 1.8rem);
 }
 
+.error {
+  color: var(--danger);
+  font-size: clamp(0.95rem, 1.6vw, 1.4rem);
+}
+
 .form {
   display: grid;
   grid-template-columns: auto 1fr auto;
