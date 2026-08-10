@@ -13,6 +13,15 @@ export async function POST(request) {
       return Response.json({ error: "Mensagem vazia." }, { status: 400 });
     }
 
+    if (message === "/reset") {
+      showState.reset();
+      return Response.json({ command: "reset", message: "SESSION RESET" });
+    }
+
+    if (message.startsWith("/")) {
+      return Response.json({ error: `Comando desconhecido: ${message}` }, { status: 400 });
+    }
+
     showState.addMessage("user", message, "projection");
 
     const reply = await generateCaixaPretaReply({
