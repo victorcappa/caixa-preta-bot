@@ -56,6 +56,12 @@ Pedir que a Caixa Preta diga algo na projecao:
 /say faça um comentario indicando que agora podemos comecar
 ```
 
+Apagar a memoria, conversa e variaveis da sessao atual:
+
+```text
+/reset
+```
+
 Comandos desconhecidos aparecem somente no operator:
 
 ```text

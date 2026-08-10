@@ -27,6 +27,11 @@ export async function POST(request) {
 
     const { name, content } = parseCommand(rawCommand);
 
+    if (name === "/reset") {
+      showState.reset();
+      return Response.json({ message: "SESSION RESET" });
+    }
+
     if (name === "/memory") {
       if (!content) {
         return Response.json({ error: "MEMORY EMPTY" }, { status: 400 });
