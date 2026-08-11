@@ -59,8 +59,10 @@ Pedir que a Caixa Preta diga algo na projecao:
 Entrar no modo MALAS e gerar uma transicao contextual na projecao:
 
 ```text
-/malas
+/mala
 ```
+
+`/malas` tambem funciona como alias.
 
 Apagar a memoria, conversa e variaveis da sessao atual:
 
@@ -97,7 +99,7 @@ A Caixa Preta responde a partir de uma montagem central de contexto:
 2. regras dramatúrgicas
 3. exemplos de comportamento
 4. conhecimento local
-5. memória da apresentação
+5. observações silenciosas da apresentação
 6. histórico recente da conversa
 7. orientação do operador, quando enviada por `/say`
 
@@ -152,8 +154,11 @@ Futuramente, `lib/knowledge.js` pode ser substituido por RAG/vector store sem al
 ## Como memoria e /say entram no prompt
 
 `/memory texto` salva uma observacao da apresentacao atual em memoria de sessao.
-Essa memoria entra nas proximas chamadas como `MEMORIA DA APRESENTACAO`.
-Ela nao e uma ordem para a Caixa Preta falar imediatamente.
+Essa memoria entra nas proximas chamadas como observacao silenciosa, classificada
+entre `RECENT`, `RELEVANT` e `AVAILABLE`.
+Ela nao e uma ordem para a Caixa Preta falar imediatamente, nem conteudo para
+recitar. A Caixa Preta pode usar, ignorar, guardar para callback ou deixar a
+observacao alterar ritmo, tom e decisao.
 
 `/say orientacao` entra como `ORIENTACAO DO OPERADOR`.
 A instrucao nao aparece para o publico e nao deve ser repetida literalmente.
@@ -168,6 +173,6 @@ No modo `host`, a Caixa Preta interage com a plateia, usa memoria como materia
 de improviso e nao antecipa as malas. O publico pode escrever sobre malas, mas
 isso nao muda o estado interno.
 
-Somente o operator pode executar `/malas`.
+Somente o operator pode executar `/mala` ou `/malas`.
 Quando isso acontece, o estado muda para `malas`, o operator mostra `MODE:
 MALAS` e a Caixa Preta gera uma transicao publica sem revelar o comando.

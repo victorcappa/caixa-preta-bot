@@ -319,7 +319,11 @@ export default function Chat() {
                 </div>
                 <div>
                   <dt>/memory texto</dt>
-                  <dd>Guarda uma memoria para orientar as proximas respostas.</dd>
+                  <dd>Guarda uma observacao silenciosa da apresentacao.</dd>
+                </div>
+                <div>
+                  <dt>/mala</dt>
+                  <dd>Entra no modo MALAS e gera uma transicao publica. /malas tambem funciona.</dd>
                 </div>
                 <div>
                   <dt>/reset</dt>

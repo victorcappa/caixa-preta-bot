@@ -44,9 +44,9 @@ export async function POST(request) {
       });
     }
 
-    if (name === "/malas") {
+    if (name === "/malas" || name === "/mala") {
       if (content) {
-        return Response.json({ error: "MALAS DOES NOT ACCEPT ARGUMENTS" }, { status: 400 });
+        return Response.json({ error: "MALA DOES NOT ACCEPT ARGUMENTS" }, { status: 400 });
       }
 
       const modeChange = showState.setMode(SHOW_MODES.malas);

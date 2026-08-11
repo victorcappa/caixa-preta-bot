@@ -76,7 +76,7 @@ export default function OperatorConsole() {
     }
 
     const commandName = raw.split(/\s+/)[0];
-    if (!["/memory", "/say", "/reset", "/malas"].includes(commandName)) {
+    if (!["/memory", "/say", "/reset", "/malas", "/mala"].includes(commandName)) {
       addLog(`UNKNOWN COMMAND: ${commandName}`, "error");
       return;
     }

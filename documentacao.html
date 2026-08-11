@@ -380,7 +380,8 @@ npm run dev</code></pre>
                   <h3>MEMORY BUFFER</h3>
                   <p>
                     Mostra as ultimas memorias registradas pelo operador. Essas observacoes entram
-                    nas proximas chamadas como memoria da apresentacao.
+                    nas proximas chamadas como contexto silencioso da apresentacao, classificado
+                    entre <code>RECENT</code>, <code>RELEVANT</code> e <code>AVAILABLE</code>.
                   </p>
                 </article>
 
@@ -401,7 +402,9 @@ npm run dev</code></pre>
                   <strong>/memory texto</strong>
                   <p>
                     Guarda uma observacao sobre a apresentacao atual. Use para fatos que devem
-                    influenciar respostas futuras, sem forcar uma fala imediata.
+                    influenciar respostas futuras, sem forcar uma fala imediata. Memoria nao e
+                    conteudo para recitar: a Caixa Preta pode usar, ignorar, guardar para callback
+                    ou deixar a observacao alterar ritmo, tom e decisao.
                   </p>
                   <pre><code>/memory entrou uma pessoa atrasada de blusa listrada</code></pre>
                 </article>
@@ -413,6 +416,15 @@ npm run dev</code></pre>
                     nao aparece literalmente para o publico; a IA transforma a orientacao em fala.
                   </p>
                   <pre><code>/say faca um comentario curto indicando que agora podemos comecar</code></pre>
+                </article>
+
+                <article class="command">
+                  <strong>/mala</strong>
+                  <p>
+                    Entra no modo MALAS e gera uma transicao contextual na projecao sem revelar o
+                    comando tecnico. <code>/malas</code> tambem funciona como alias.
+                  </p>
+                  <pre><code>/mala</code></pre>
                 </article>
 
                 <article class="command">
@@ -435,8 +447,15 @@ npm run dev</code></pre>
               <h2>&gt; CONTEUDO DA IA</h2>
               <p>
                 A resposta da Caixa Preta nasce de uma montagem de contexto. O servidor junta
-                personalidade, regras dramaturgicas, exemplos, conhecimento local, memoria da
-                apresentacao, historico recente e a orientacao do operador quando existe.
+                personalidade, regras dramaturgicas, exemplos, conhecimento local, observacoes
+                silenciosas da apresentacao, historico recente e a orientacao do operador quando
+                existe.
+              </p>
+
+              <p>
+                As observacoes de <code>/memory</code> sao fatos de contexto, nao mensagens do
+                publico. Elas nao precisam ser reconhecidas nem usadas imediatamente. O comportamento
+                desejado e memoria como percepcao: observar, interpretar, decidir e agir.
               </p>
 
               <pre><code>prompts/personality.js
@@ -463,8 +482,9 @@ knowledge/chatbot.md</code></pre>
                 <li>Abra a projecao em tela cheia em <code>localhost:3000</code>.</li>
                 <li>Abra o operator em outro navegador, monitor ou aba.</li>
                 <li>Use <code>/reset</code> para comecar limpo.</li>
-                <li>Durante a cena, use <code>/memory</code> para registrar acontecimentos reais.</li>
+                <li>Durante a cena, use <code>/memory</code> para registrar acontecimentos reais como contexto silencioso.</li>
                 <li>Use <code>/say</code> quando precisar que a Caixa Preta intervenha agora.</li>
+                <li>Use <code>/mala</code> quando a cena deve entrar no modo MALAS.</li>
                 <li>Ao final, use <code>/reset</code> se a proxima sessao nao deve herdar nada.</li>
               </ol>
             </section>

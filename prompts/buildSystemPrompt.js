@@ -3,7 +3,7 @@ import { getModePrompt } from "./modes";
 import { caixaPretaPersonality } from "./personality";
 import { caixaPretaRules } from "./rules";
 
-export const PROMPT_VERSION = 4;
+export const PROMPT_VERSION = 5;
 
 function variablesBlock(variables = {}) {
   if (!variables || Object.keys(variables).length === 0) {
@@ -39,6 +39,12 @@ Mensagens efetivamente trocadas com o publico na projecao.
 MEMORIA:
 Observacoes fornecidas pelo operador sobre acontecimentos reais desta apresentacao.
 Memoria nao e ordem. Memoria e algo que a maquina agora sabe.
+Memoria e percepcao de mundo, nao conteudo para recitar.
+
+OBSERVACOES SILENCIOSAS:
+Bloco de memorias da apresentacao enviado com classificacao RECENT, RELEVANT
+ou AVAILABLE. Recencia ajuda, mas nao obriga uso imediato. Use somente quando
+isso gerar clareza, acao, humor, tensao, continuidade ou callback.
 
 ORIENTACAO:
 Instrucao do operador enviada por /say.
