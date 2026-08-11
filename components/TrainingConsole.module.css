@@ -1,0 +1,297 @@
+.training {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 22px;
+}
+
+.main,
+.notes {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.meta {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  align-items: center;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--green-soft);
+  color: var(--green-dim);
+}
+
+.meta span:first-child {
+  color: var(--green);
+}
+
+.meta label {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.memoryBox {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 8px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--green-soft);
+}
+
+.memoryBox label,
+.feedback label,
+.correction label,
+.notes h2 {
+  color: var(--green);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.memoryBox textarea {
+  min-height: 72px;
+}
+
+.conversation {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 16px;
+}
+
+.message {
+  display: grid;
+  gap: 10px;
+}
+
+.message p,
+.empty,
+.saved,
+.error,
+.note p,
+.alternatives p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
+
+.machine {
+  color: var(--green);
+}
+
+.user,
+.empty {
+  color: var(--green-dim);
+}
+
+.machine span,
+.user span {
+  color: var(--green);
+  font-weight: 700;
+}
+
+.feedback {
+  display: grid;
+  gap: 10px;
+  padding-left: 18px;
+  border-left: 1px solid var(--green-soft);
+}
+
+.feedbackButtons,
+.noteActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.feedback label,
+.correction label {
+  display: grid;
+  gap: 6px;
+}
+
+.feedback textarea {
+  min-height: 64px;
+}
+
+.feedback input {
+  min-height: 34px;
+}
+
+.correction {
+  display: grid;
+  gap: 8px;
+}
+
+.correction textarea {
+  min-height: 96px;
+}
+
+.alternatives {
+  display: grid;
+  gap: 10px;
+}
+
+.alternatives article,
+.note {
+  display: grid;
+  gap: 8px;
+  padding: 10px 0;
+  border-top: 1px solid var(--green-soft);
+}
+
+.alternatives strong {
+  color: var(--green-dim);
+  font-size: 0.8rem;
+}
+
+.saved {
+  color: var(--green);
+  font-size: 0.82rem;
+}
+
+.error {
+  color: var(--danger);
+}
+
+.notes {
+  overflow-y: auto;
+  border-left: 1px solid var(--green-soft);
+  padding-left: 18px;
+}
+
+.notes h2 {
+  margin: 0 0 14px;
+}
+
+.noteForm,
+.noteList {
+  display: grid;
+  gap: 10px;
+}
+
+.noteForm {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--green-soft);
+}
+
+.noteForm textarea,
+.note textarea {
+  min-height: 86px;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 42px;
+}
+
+.form input,
+.feedback input,
+.memoryBox textarea,
+.feedback textarea,
+.correction textarea,
+.noteForm textarea,
+.note textarea,
+.meta select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--green-soft);
+  outline: 0;
+  background: #000000;
+  color: var(--green);
+  caret-color: var(--green);
+  font: inherit;
+}
+
+.form input {
+  border: 0;
+}
+
+.meta select {
+  width: auto;
+  padding: 4px 8px;
+}
+
+.feedback input,
+.memoryBox textarea,
+.feedback textarea,
+.correction textarea,
+.noteForm textarea,
+.note textarea {
+  padding: 8px;
+  resize: vertical;
+}
+
+.form input:disabled {
+  color: var(--green-dim);
+}
+
+.status {
+  color: var(--green-dim);
+  font-size: 0.78rem;
+}
+
+.feedback button,
+.correction button,
+.noteForm button,
+.noteActions button,
+.alternatives button {
+  min-height: 32px;
+  border: 1px solid var(--green-soft);
+  background: #000000;
+  color: var(--green);
+  font: inherit;
+  cursor: pointer;
+}
+
+.feedback button:hover,
+.feedback button:focus-visible,
+.correction button:hover,
+.correction button:focus-visible,
+.noteForm button:hover,
+.noteForm button:focus-visible,
+.noteActions button:hover,
+.noteActions button:focus-visible,
+.alternatives button:hover,
+.alternatives button:focus-visible {
+  border-color: var(--green);
+  outline: 0;
+}
+
+.feedback button:disabled {
+  color: var(--green-dim);
+  cursor: wait;
+}
+
+@media (max-width: 860px) {
+  .training {
+    grid-template-columns: 1fr;
+  }
+
+  .notes {
+    max-height: 38vh;
+    border-left: 0;
+    border-top: 1px solid var(--green-soft);
+    padding-left: 0;
+    padding-top: 16px;
+  }
+
+  .form {
+    grid-template-columns: auto 1fr;
+  }
+
+  .status {
+    grid-column: 2;
+  }
+}

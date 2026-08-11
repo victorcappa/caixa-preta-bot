@@ -33,7 +33,12 @@ const requiredPromptMarkers = [
   "\"unexpectedMaterial\": \"...\"",
   "\"activeBit\": null",
   "compliance_roast",
-  "Anti-therapy"
+  "Anti-therapy",
+  "nao transforme a interacao em formulario",
+  "nao repita a mesma mecanica de interacao mais de 2 turnos seguidos",
+  "se a mesma mecanica apareceu 2 vezes seguidas, force uma mudanca",
+  "Nao termine como validacao administrativa seca",
+  "Evite terminar em validacao administrativa"
 ];
 
 const simulation = [

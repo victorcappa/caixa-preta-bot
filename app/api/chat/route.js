@@ -1,4 +1,5 @@
-import { generateCaixaPretaReply } from "@/lib/openai";
+import { applyHangmanGuess } from "@/lib/activities";
+import { generateCaixaPretaTurn } from "@/lib/openai";
 import { showState } from "@/lib/showState";
 
 export const dynamic = "force-dynamic";
@@ -24,14 +25,39 @@ export async function POST(request) {
 
     showState.addMessage("user", message, "projection");
 
-    const reply = await generateCaixaPretaReply({
+    const activeHangman = showState.snapshot().performance.activities.find((activity) => (
+      activity.type === "HANGMAN" && activity.status === "active"
+    ));
+    if (activeHangman && /^[\p{L}0-9]{1,18}$/u.test(message)) {
+      const result = applyHangmanGuess(activeHangman, message);
+      if (result) {
+        showState.updateActivity(result.activity, { source: "public", result: result.result });
+        showState.queuePerformanceEvents(result.events, "activity");
+      }
+    }
+
+    const turn = await generateCaixaPretaTurn({
       state: showState.snapshot(),
       userMessage: message
     });
 
-    const assistantMessage = showState.addMessage("assistant", reply, "openai");
+    if (turn.salience.length) {
+      showState.addSalience(turn.salience, "agent");
+    }
 
-    return Response.json({ message: assistantMessage });
+    if (turn.activity?.type === "HANGMAN" && turn.activity?.action === "start") {
+      showState.startHangmanActivity({ word: turn.activity.word, source: "agent" });
+    }
+
+    const assistantMessage = turn.text
+      ? showState.addMessage("assistant", turn.text, "openai")
+      : null;
+
+    if (turn.events.length) {
+      showState.queuePerformanceEvents(turn.events, "agent");
+    }
+
+    return Response.json({ message: assistantMessage, events: turn.events });
   } catch (error) {
     console.error("CHAT ERROR", error);
     return Response.json(

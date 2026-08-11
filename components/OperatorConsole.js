@@ -76,7 +76,19 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     }
 
     const commandName = raw.split(/\s+/)[0];
-    if (!["/memory", "/say", "/reset", "/malas", "/mala"].includes(commandName)) {
+    if (![
+      "/memory",
+      "/say",
+      "/reset",
+      "/malas",
+      "/mala",
+      "/event",
+      "/draw",
+      "/activity",
+      "/intensity",
+      "/clear",
+      "/clear-performance"
+    ].includes(commandName)) {
       addLog(`UNKNOWN COMMAND: ${commandName}`, "error");
       return;
     }
@@ -105,6 +117,8 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   }
 
   const latestMemories = state.memories.slice(-5).reverse();
+  const performanceLog = (state.performance?.eventLog || []).slice(-8).reverse();
+  const activities = state.performance?.activities || [];
   const variableCount = Object.keys(state.variables || {}).length;
   const footer = (
     <form className={styles.form} onSubmit={submitCommand}>
@@ -130,6 +144,9 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             <span>MEMORIES: {state.memories.length}</span>
             <span>MESSAGES: {state.conversation.length}</span>
             <span className={styles.modeBadge}>MODE: {(state.mode || "host").toUpperCase()}</span>
+            <span>INTENSITY: {(state.performance?.intensity || "calm").toUpperCase()}</span>
+            <span>ACTIVITIES: {activities.length}</span>
+            <span>EVENTS: {state.performance?.events?.length || 0}</span>
             <span>KNOWLEDGE: {state.context?.knowledge?.loaded ? "loaded" : "not loaded"}</span>
             <span>VARIABLES: {variableCount}</span>
             <span>PROMPT VERSION: {state.context?.promptVersion || 1}</span>
@@ -153,6 +170,25 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
               <strong>MEMORY</strong>
               <time>{new Date(memory.timestamp).toLocaleTimeString("pt-BR")}</time>
               <p>{memory.content}</p>
+            </article>
+          ))}
+
+          <h2>PERFORMANCE</h2>
+          {activities.length === 0 ? <p>NO ACTIVE ACTIVITIES</p> : null}
+          {activities.map((activity) => (
+            <article className={styles.memory} key={activity.id}>
+              <strong>{activity.type} / {activity.status}</strong>
+              <p>{JSON.stringify(activity.publicState)}</p>
+            </article>
+          ))}
+
+          <h2>EVENT LOG</h2>
+          {performanceLog.length === 0 ? <p>EMPTY</p> : null}
+          {performanceLog.map((entry) => (
+            <article className={styles.memory} key={entry.id}>
+              <strong>{entry.type}</strong>
+              <time>{new Date(entry.timestamp).toLocaleTimeString("pt-BR")}</time>
+              <p>{[entry.eventType, entry.activityType, entry.action, entry.text].filter(Boolean).join(" / ") || entry.eventId || "LOG"}</p>
             </article>
           ))}
         </aside>

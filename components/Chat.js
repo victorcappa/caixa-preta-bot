@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import OperatorConsole from "./OperatorConsole";
+import PerformanceLayer from "./PerformanceLayer";
 import Terminal from "./Terminal";
 import styles from "./Chat.module.css";
 
@@ -18,6 +19,7 @@ export default function Chat() {
   const [status, setStatus] = useState("CONNECTING");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [performanceEvents, setPerformanceEvents] = useState([]);
   const [introStep, setIntroStep] = useState("cursor");
   const [manualOpen, setManualOpen] = useState(false);
   const [operatorMounted, setOperatorMounted] = useState(false);
@@ -54,6 +56,7 @@ export default function Chat() {
         }
 
         setMessages(data.conversation || []);
+        setPerformanceEvents(data.performance?.events || []);
       })
       .catch(() => setStatus("DISCONNECTED"));
 
@@ -69,6 +72,7 @@ export default function Chat() {
       }
 
       setMessages(payload.state.conversation || []);
+      setPerformanceEvents(payload.state.performance?.events || []);
     };
 
     return () => events.close();
@@ -282,9 +286,22 @@ export default function Chat() {
       <span className={styles.status}>{pending ? "PROCESSING" : status}</span>
     </form>
   );
+  const activeTypingAssistant = [...messages].reverse().find((message) => (
+    message.role === "assistant" && typedReplies[message.id] !== message.content
+  ));
+  const activeTypingStartedAt = activeTypingAssistant
+    ? new Date(activeTypingAssistant.timestamp).getTime()
+    : null;
+  const visiblePerformanceEvents = activeTypingStartedAt
+    ? performanceEvents.filter((event) => (
+      event.source !== "agent" || new Date(event.createdAt).getTime() < activeTypingStartedAt
+    ))
+    : performanceEvents;
 
   return (
     <div className={`${styles.workspace} ${operatorOpen ? styles.workspaceWithOperator : ""}`}>
+      <PerformanceLayer events={visiblePerformanceEvents} />
+
       <button
         aria-label="Abrir manual de comandos"
         className={styles.manualButton}
