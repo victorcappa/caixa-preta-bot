@@ -89,6 +89,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       "/activity",
       "/intensity",
       "/model",
+      "/phone",
       "/clear",
       "/clear-performance"
     ].includes(commandName)) {
@@ -148,9 +149,35 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     }
   }
 
+  async function sendOperatorCommand(raw, fallback = "OPERATOR ERROR") {
+    addLog(`> ${raw}`, "input");
+    setPending(true);
+
+    try {
+      const response = await fetch("/api/operator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command: raw })
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        addLog(data.error || fallback, "error");
+        return;
+      }
+
+      addLog(data.message, "ok");
+    } catch {
+      addLog("SERVER CONNECTION FAILED", "error");
+    } finally {
+      setPending(false);
+    }
+  }
+
   const latestMemories = state.memories.slice(-5).reverse();
   const performanceLog = (state.performance?.eventLog || []).slice(-8).reverse();
   const activities = state.performance?.activities || [];
+  const phoneProjection = state.performance?.phoneProjection || { status: "hidden" };
   const modelOptions = state.context?.modelOptions || ["gpt-5-mini", "gpt-5-nano"];
   const variableCount = Object.keys(state.variables || {}).length;
   const footer = (
@@ -221,6 +248,29 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
           ))}
 
           <h2>PERFORMANCE</h2>
+          <button
+            className={styles.panicButton}
+            onClick={() => sendOperatorCommand("/phone hide", "PHONE ERROR")}
+            type="button"
+          >
+            HIDE PHONE
+          </button>
+          {phoneProjection.status !== "hidden" ? (
+            <article className={styles.memory}>
+              <strong>PHONE / {phoneProjection.status}</strong>
+              <p>{[phoneProjection.participant, phoneProjection.contentType, phoneProjection.privacyLevel].filter(Boolean).join(" / ") || "PENDING"}</p>
+              {phoneProjection.status === "pending_operator_confirmation" ? (
+                <button
+                  className={styles.approveButton}
+                  disabled={pending}
+                  onClick={() => sendOperatorCommand("/phone approve", "PHONE ERROR")}
+                  type="button"
+                >
+                  APPROVE PHONE
+                </button>
+              ) : null}
+            </article>
+          ) : null}
           {activities.length === 0 ? <p>NO ACTIVE ACTIVITIES</p> : null}
           {activities.map((activity) => (
             <article className={styles.memory} key={activity.id}>

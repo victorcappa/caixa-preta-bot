@@ -71,6 +71,30 @@ async function main() {
   assert.equal(normalizePerformanceEvents("not-array").length, 0);
   assert(performanceCapabilitiesBlock().includes("FULLSCREEN_TEXT"));
   assert(performanceCapabilitiesBlock().includes("Nunca gere numeros de contagem"));
+  assert(performanceCapabilitiesBlock().includes("PHONE_PROJECTION_REQUEST"));
+
+  const phoneRequest = normalizePerformanceEvent({
+    type: "PHONE_PROJECTION_REQUEST",
+    payload: {
+      participant: "Victor",
+      contentType: "instagram_search",
+      privacyLevel: "high",
+      requiresHumanApproval: false
+    }
+  });
+
+  assert.equal(phoneRequest.type, "PHONE_PROJECTION_REQUEST");
+  assert.equal(phoneRequest.payload.requiresHumanApproval, true);
+  assert.equal(phoneRequest.payload.status, "pending_operator_confirmation");
+  assert.equal(phoneRequest.payload.privacyLevel, "high");
+
+  const phoneHide = normalizePerformanceEvent({
+    type: "HIDE_PHONE_PROJECTION",
+    payload: { text: "private" }
+  });
+
+  assert.equal(phoneHide.type, "HIDE_PHONE_PROJECTION");
+  assert.deepEqual(phoneHide.payload, {});
 
   const countdown = normalizePerformanceEvent({
     type: PERFORMANCE_EVENT_TYPES.countdown,

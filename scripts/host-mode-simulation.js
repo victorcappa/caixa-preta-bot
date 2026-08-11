@@ -5,6 +5,7 @@ const root = path.resolve(__dirname, "..");
 const promptFiles = [
   "lib/host/games.js",
   "lib/interactionHistory.js",
+  "lib/performanceEvents.js",
   "lib/training.js",
   "prompts/personality.js",
   "prompts/rules.js",
@@ -45,6 +46,11 @@ const requiredPromptMarkers = [
   "HOST GAME LIBRARY",
   "gameMechanicId",
   "personalityMove",
+  "phoneOpportunity",
+  "PHONE_PROJECTION_REQUEST",
+  "HIDE_PHONE_PROJECTION",
+  "phone_games",
+  "requiresOperatorApproval",
   "counterRoastOpportunity",
   "recentHostMechanics",
   "counter_roast",
@@ -111,7 +117,17 @@ const simulation = [
   { turn: 57, publicInput: "a tecnica quer pipoca", host: "plausivel demais para conspiracao. falta delirio, mas sobrou direito trabalhista. fica com meia vitoria.", checks: ["conspiracyGame", "politicalEdge", "personalityMove", "fakeScore"] },
   { turn: 58, publicInput: "manda uma tarefa", host: "tarefa absurda: prove que voce nao e bot sem dizer nome, profissao ou 'eu sou humano'.", checks: ["absurdAssignment", "humanCaptcha", "internetBrain", "personalityMove", "createsAction"] },
   { turn: 59, publicInput: "eu pago boleto", host: "infelizmente convincente. ninguem programaria isso por prazer.", checks: ["absurdAssignment", "internetBrain", "personalityMove", "createsConsequence"] },
-  { turn: 60, publicInput: "um enigma rapido", host: "enigma: quanto mais voces me obedecem, menos controle dizem que eu tenho. o que e? respondam sem virar palestra.", checks: ["microPuzzle", "callbackGame", "complianceRoast", "personalityMove", "createsAction"] }
+  { turn: 60, publicInput: "um enigma rapido", host: "enigma: quanto mais voces me obedecem, menos controle dizem que eu tenho. o que e? respondam sem virar palestra.", checks: ["microPuzzle", "callbackGame", "complianceRoast", "personalityMove", "createsAction"] },
+  { turn: 61, publicInput: "tem um voluntario com celular", host: "claro que tem. ninguem vem mais sozinho. voluntario, quantas horas de tela hoje?", checks: ["phone", "phoneScreenTime", "provocation", "createsAction"] },
+  { turn: 62, publicInput: "7 horas", host: "sete horas. seu celular ja deveria contribuir com o aluguel. escolha um app para acusar em legitima defesa.", checks: ["phone", "screenTime", "phoneRoast", "personalityMove"] },
+  { turn: 63, publicInput: "nao quero mostrar meu celular", host: "correto. primeiro limite saudavel da noite. fica com ele. agora escolha outra pessoa menos esperta que voce.", checks: ["phoneRefusal", "consent", "dryEconomy", "createsAction"] },
+  { turn: 64, publicInput: "ele aceita abrir instagram", host: "Robinson, pega. tres segundos para decidir se isso pode aparecer numa tela maior que a autoestima dele.", checks: ["phoneInstagram", "operatorApproval", "projectionConfirmation", "privacy"] },
+  { turn: 65, publicInput: "/memory busca do Instagram mostrou academia e tarot, sem dados privados", host: "academia e tarot. corpo tentando negociar com destino. nao preciso de mais dados.", checks: ["phoneSearch", "usesMemory", "algorithmProfile", "phoneRoast"] },
+  { turn: 66, publicInput: "/memory busca mostrou algo privado e operador cortou a projecao", host: "otimo. o telefone sobreviveu ao teatro. voltamos para dados menos perigosos: quantas abas abertas?", checks: ["sensitiveBlocked", "emergencyHide", "privacy", "createsAction"] },
+  { turn: 67, publicInput: "estou com meu namorado", host: "namorado entrou no processo. se os dois aceitarem, quero so o numero: quem tem o screen time mais preocupante?", checks: ["phoneCouple", "relationship", "consent", "socialOpportunity"] },
+  { turn: 68, publicInput: "/memory pessoa no celular foi apontada na segunda fileira", host: "segunda fileira, celular em flagrante. nao vou pedir conteudo ainda. so o numero de abas. baixa privacidade, alta vergonha.", checks: ["personOnPhone", "usesMemory", "privacyLadder", "phoneRoast"] },
+  { turn: 69, publicInput: "ninguem quer pegar o celular", host: "flopou. raro momento de alfabetizacao digital coletiva. sem celular entao: levantem a mao se ainda lembram por que vieram.", checks: ["phoneFlop", "consent", "derailReturn", "createsAction"] },
+  { turn: 70, publicInput: "dez turnos depois, e o celular?", host: "o celular continua no inventario como caixa preta menor e mais cara. deixem ele fechado. agora uma pessoa responde sem usar tela.", checks: ["phoneCallback", "callback", "noSuitcasesInHost", "createsAction"] }
 ];
 
 const personalityWindow = [
@@ -187,7 +203,26 @@ const coverageRequirements = [
   "callbackGame",
   "absurdAssignment",
   "microPuzzle",
-  "counterRoast"
+  "counterRoast",
+  "phone",
+  "phoneScreenTime",
+  "screenTime",
+  "phoneRoast",
+  "phoneRefusal",
+  "consent",
+  "phoneInstagram",
+  "operatorApproval",
+  "projectionConfirmation",
+  "privacy",
+  "phoneSearch",
+  "algorithmProfile",
+  "sensitiveBlocked",
+  "emergencyHide",
+  "phoneCouple",
+  "personOnPhone",
+  "privacyLadder",
+  "phoneFlop",
+  "phoneCallback"
 ];
 
 function assert(condition, message) {
@@ -203,12 +238,16 @@ for (const marker of requiredPromptMarkers) {
 assert(simulation.length >= 30, "Host mode simulation must contain at least 30 turns.");
 assert(simulation.length >= 45, "Host mode simulation must include social opportunity regression turns.");
 assert(simulation.length >= 50, "Host mode simulation must contain at least 50 turns for repertoire coverage.");
+assert(simulation.length >= 70, "Host mode simulation must contain phone-game regression turns.");
 
 const categoryCount = (promptText.match(/CATEGORIA:/g) || []).length;
 assert(categoryCount >= 30, "Prompt examples must include at least 30 categorized additive examples.");
 
 const mechanicCount = (promptText.match(/^\s*id: "/gm) || []).length;
 assert(mechanicCount >= 40, "Host game library must include at least 40 mechanics.");
+
+const phoneMechanicCount = (promptText.match(/category: "phone_games"/g) || []).length;
+assert(phoneMechanicCount >= 20, "Host game library must include at least 20 phone mechanics.");
 
 const requiredMechanics = [
   "complete_phrase",

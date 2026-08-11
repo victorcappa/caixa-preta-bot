@@ -101,6 +101,29 @@
   margin-bottom: 18px;
 }
 
+.panicButton,
+.approveButton {
+  width: 100%;
+  min-height: 36px;
+  margin: 0 0 14px;
+  border: 1px solid var(--green);
+  background: transparent;
+  color: var(--green);
+  font: inherit;
+  cursor: pointer;
+}
+
+.panicButton {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.panicButton:disabled,
+.approveButton:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
 .memory strong,
 .memory time {
   display: block;

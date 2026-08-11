@@ -43,7 +43,7 @@ function Shape({ shape }) {
   return <circle cx={`${shape.x}%`} cy={`${shape.y}%`} r="3" />;
 }
 
-export default function PerformanceLayer({ events = [] }) {
+export default function PerformanceLayer({ events = [], phoneProjection = { status: "hidden" } }) {
   const [activeEvents, setActiveEvents] = useState([]);
   const [drawingShapes, setDrawingShapes] = useState([]);
   const executedRef = useRef(new Set());
@@ -66,6 +66,10 @@ export default function PerformanceLayer({ events = [] }) {
       const timer = setTimeout(() => {
         if (event.type === "CLEAR_DRAWING") {
           setDrawingShapes([]);
+          return;
+        }
+
+        if (event.type === "HIDE_PHONE_PROJECTION") {
           return;
         }
 
@@ -115,9 +119,20 @@ export default function PerformanceLayer({ events = [] }) {
   const hideUi = activeEvents.some((event) => event.type === "HIDE_UI");
   const blackout = activeEvents.some((event) => event.type === "BLACKOUT");
   const glitch = activeEvents.find((event) => event.type === "GLITCH");
-  const overlayEvents = activeEvents.filter((event) => !["HIDE_UI", "BLACKOUT", "GLITCH", "DRAWING"].includes(event.type));
+  const overlayEvents = activeEvents.filter((event) => ![
+    "HIDE_UI",
+    "BLACKOUT",
+    "GLITCH",
+    "DRAWING",
+    "PHONE_PROJECTION_REQUEST",
+    "HIDE_PHONE_PROJECTION"
+  ].includes(event.type));
 
-  if (!activeEvents.length && !drawingShapes.length) {
+  const visiblePhoneProjection = phoneProjection?.status && phoneProjection.status !== "hidden"
+    ? phoneProjection
+    : null;
+
+  if (!activeEvents.length && !drawingShapes.length && !visiblePhoneProjection) {
     return null;
   }
 
@@ -125,6 +140,17 @@ export default function PerformanceLayer({ events = [] }) {
     <div className={`${styles.layer} ${hideUi ? styles.hideUi : ""} ${glitch ? styles.glitch : ""}`} aria-live="polite">
       {blackout ? <div className={styles.blackout} /> : null}
       {glitch ? <div className={styles.glitchText}>{glitch.payload.text || "////"}</div> : null}
+      {visiblePhoneProjection ? (
+        <div className={styles.phoneProjection}>
+          <span>PHONE PROJECTION</span>
+          <strong>{visiblePhoneProjection.status.replaceAll("_", " ").toUpperCase()}</strong>
+          <small>
+            {[visiblePhoneProjection.participant, visiblePhoneProjection.contentType, visiblePhoneProjection.privacyLevel]
+              .filter(Boolean)
+              .join(" / ")}
+          </small>
+        </div>
+      ) : null}
 
       {drawingShapes.length ? (
         <svg className={styles.drawing} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">

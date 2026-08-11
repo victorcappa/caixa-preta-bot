@@ -71,6 +71,23 @@ Trocar o modelo usado nas proximas respostas:
 `/model gpt-5-mini` volta para o modelo mais encorpado. A mesma troca aparece
 como seletor na barra superior do operator.
 
+Preparar uma solicitacao segura de projecao de celular:
+
+```text
+/phone request Victor instagram_search high
+```
+
+Confirmar ou cortar imediatamente essa camada:
+
+```text
+/phone approve
+/phone hide
+```
+
+`/event phone Victor instagram_search high` tambem cria um
+`PHONE_PROJECTION_REQUEST`. Isso nunca projeta conteudo privado sozinho; apenas
+marca que ha uma confirmacao humana pendente.
+
 Entrar no modo MALAS e gerar uma transicao contextual na projecao:
 
 ```text
@@ -195,6 +212,18 @@ O HOST usa uma biblioteca de mecanicas curtas, como lacuna, regra secreta,
 voto social, captcha humano, pontos falsos, Quem Sou Eu, conspiracao express e
 enigma rapido. A escolha da mecanica deve variar pelo contexto e respeitar
 cooldown conceitual para evitar repeticao.
+
+A biblioteca tambem inclui `phone_games`: celular como objeto cenico, arquivo,
+evidencia, algoritmo pessoal, lanterna, nota, camera, calculadora ou timer.
+Participacao com celular e sempre voluntaria. Conteudo `high` privacy, buscas,
+fotos, Instagram search ou qualquer projecao exigem confirmacao humana no
+operator. Recusa vira material de personalidade e deve abrir outro jogo.
+
+Privacy ladder do celular:
+
+- `low`: numeros e metadados, como horas de tela, quantidade de abas, app mais usado
+- `medium`: ultimo emoji, ultima musica, propria bio ou evidencia escolhida
+- `high`: buscas, fotos, conteudo pessoal, Instagram search ou projecao
 
 Somente o operator pode executar `/mala` ou `/malas`.
 Quando isso acontece, o estado muda para `malas`, o operator mostra `MODE:

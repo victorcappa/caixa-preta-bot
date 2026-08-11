@@ -22,6 +22,7 @@
 .flashText,
 .glitchText,
 .countdown,
+.phoneProjection,
 .forbidden,
 .choice {
   position: absolute;
@@ -86,6 +87,26 @@
 .countdown span {
   display: block;
   font-size: clamp(1rem, 3vw, 3rem);
+}
+
+.phoneProjection {
+  display: grid;
+  gap: 12px;
+  min-width: min(86vw, 620px);
+  padding: 28px;
+  border: 1px solid var(--green);
+  background: #000000;
+  box-shadow: 0 0 32px rgba(0, 255, 102, 0.16);
+}
+
+.phoneProjection span,
+.phoneProjection small {
+  color: var(--green-dim);
+  font-size: clamp(0.8rem, 2vw, 1.2rem);
+}
+
+.phoneProjection strong {
+  font-size: clamp(1.2rem, 4vw, 3rem);
 }
 
 .forbidden,

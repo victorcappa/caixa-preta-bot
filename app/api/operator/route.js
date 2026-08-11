@@ -47,6 +47,19 @@ function eventFromCommand(kind, content) {
     return { type: "FORBIDDEN_BUTTON", payload: { label: content || "NAO TOQUE" }, durationMs: 8000 };
   }
 
+  if (kind === "phone") {
+    const [participant, contentType, privacyLevel] = content.split(/\s+/);
+    return {
+      type: "PHONE_PROJECTION_REQUEST",
+      payload: {
+        participant: participant || "",
+        contentType: contentType || "phone_content",
+        privacyLevel: privacyLevel || "high"
+      },
+      durationMs: 12000
+    };
+  }
+
   return null;
 }
 
@@ -91,6 +104,44 @@ export async function POST(request) {
       return Response.json({
         message: `MODEL ${modelChange.previousModel} -> ${modelChange.model}`
       });
+    }
+
+    if (name === "/phone") {
+      const [action, ...rest] = content.split(/\s+/);
+
+      if (action === "approve") {
+        const current = showState.snapshot().performance.phoneProjection;
+
+        if (current.status !== "pending_operator_confirmation") {
+          return Response.json({ error: "PHONE NOTHING PENDING" }, { status: 400 });
+        }
+
+        const phoneProjection = showState.approvePhoneProjection();
+        return Response.json({
+          message: `PHONE PROJECTION APPROVED ${phoneProjection.participant || ""}`.trim()
+        });
+      }
+
+      if (action === "hide" || action === "blackout") {
+        showState.hidePhoneProjection();
+        return Response.json({ message: "PHONE PROJECTION HIDDEN" });
+      }
+
+      if (action === "request") {
+        const [participant, contentType, privacyLevel] = rest;
+        const queued = showState.queuePerformanceEvents([{
+          type: "PHONE_PROJECTION_REQUEST",
+          payload: {
+            participant: participant || "",
+            contentType: contentType || "phone_content",
+            privacyLevel: privacyLevel || "high"
+          },
+          durationMs: 12000
+        }], "operator");
+        return Response.json({ message: `PHONE REQUEST QUEUED ${queued[0].id}` });
+      }
+
+      return Response.json({ error: "PHONE COMMAND UNKNOWN" }, { status: 400 });
     }
 
     if (name === "/event") {

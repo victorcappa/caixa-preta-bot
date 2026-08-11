@@ -20,6 +20,7 @@ export default function Chat() {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [performanceEvents, setPerformanceEvents] = useState([]);
+  const [phoneProjection, setPhoneProjection] = useState({ status: "hidden" });
   const [introStep, setIntroStep] = useState("cursor");
   const [manualOpen, setManualOpen] = useState(false);
   const [operatorMounted, setOperatorMounted] = useState(false);
@@ -57,6 +58,7 @@ export default function Chat() {
 
         setMessages(data.conversation || []);
         setPerformanceEvents(data.performance?.events || []);
+        setPhoneProjection(data.performance?.phoneProjection || { status: "hidden" });
       })
       .catch(() => setStatus("DISCONNECTED"));
 
@@ -73,6 +75,7 @@ export default function Chat() {
 
       setMessages(payload.state.conversation || []);
       setPerformanceEvents(payload.state.performance?.events || []);
+      setPhoneProjection(payload.state.performance?.phoneProjection || { status: "hidden" });
     };
 
     return () => events.close();
@@ -300,7 +303,7 @@ export default function Chat() {
 
   return (
     <div className={`${styles.workspace} ${operatorOpen ? styles.workspaceWithOperator : ""}`}>
-      <PerformanceLayer events={visiblePerformanceEvents} />
+      <PerformanceLayer events={visiblePerformanceEvents} phoneProjection={phoneProjection} />
 
       <button
         aria-label="Abrir manual de comandos"
@@ -360,6 +363,14 @@ export default function Chat() {
                 <div>
                   <dt>/memory texto</dt>
                   <dd>Guarda uma observacao silenciosa da apresentacao.</dd>
+                </div>
+                <div>
+                  <dt>/model modelo</dt>
+                  <dd>Alterna entre gpt-5-mini e gpt-5-nano.</dd>
+                </div>
+                <div>
+                  <dt>/phone approve|hide</dt>
+                  <dd>Confirma ou corta imediatamente uma solicitacao de projecao de celular.</dd>
                 </div>
                 <div>
                   <dt>/mala</dt>
