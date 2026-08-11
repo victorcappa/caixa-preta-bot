@@ -5,6 +5,12 @@
   gap: 22px;
 }
 
+.embeddedOperator {
+  grid-template-columns: 1fr;
+  grid-template-rows: minmax(0, 1fr) minmax(120px, 30vh);
+  gap: 16px;
+}
+
 .console {
   min-width: 0;
   display: flex;
@@ -62,6 +68,13 @@
   border-left: 1px solid var(--green-soft);
   padding-left: 18px;
   overflow-y: auto;
+}
+
+.embeddedOperator .memoryPanel {
+  border-left: 0;
+  border-top: 1px solid var(--green-soft);
+  padding-left: 0;
+  padding-top: 14px;
 }
 
 .memoryPanel h2 {

@@ -1,3 +1,44 @@
+.workspace {
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 0;
+  gap: 0;
+  overflow: hidden;
+  background: #000000;
+  transition: grid-template-columns 260ms ease, gap 260ms ease;
+}
+
+.workspaceWithOperator {
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 42vw);
+  gap: 1px;
+}
+
+.chatPane {
+  min-width: 0;
+  height: 100vh;
+}
+
+.embeddedTerminal {
+  width: 100%;
+  height: 100%;
+}
+
+.operatorDrawer {
+  min-width: 0;
+  height: 100vh;
+  overflow: hidden;
+  border-left: 1px solid var(--green-soft);
+  opacity: 0;
+  transform: translateX(100%);
+  transition: opacity 220ms ease, transform 260ms ease;
+}
+
+.operatorDrawerOpen {
+  opacity: 1;
+  transform: translateX(0);
+}
+
 .messages {
   min-height: 100%;
   display: flex;
@@ -15,7 +56,7 @@
 
 .machine {
   color: var(--green);
-  font-size: clamp(1.05rem, 2.35vw, 2.35rem);
+  font-size: clamp(0.95rem, 1.75vw, 1.75rem);
 }
 
 .replyCursor {
@@ -25,6 +66,7 @@
 }
 
 .manualButton,
+.operatorButton,
 .manualClose {
   border: 1px solid var(--green-soft);
   background: #000000;
@@ -32,9 +74,9 @@
   cursor: pointer;
 }
 
-.manualButton {
+.manualButton,
+.operatorButton {
   position: fixed;
-  top: 24px;
   right: 28px;
   z-index: 20;
   width: 36px;
@@ -44,12 +86,28 @@
   font-weight: 700;
 }
 
+.manualButton {
+  top: 24px;
+}
+
+.operatorButton {
+  top: 68px;
+  font-size: 0.78rem;
+}
+
 .manualButton:hover,
 .manualButton:focus-visible,
+.operatorButton:hover,
+.operatorButton:focus-visible,
 .manualClose:hover,
 .manualClose:focus-visible {
   border-color: var(--green);
   outline: 0;
+}
+
+.operatorButton[aria-pressed="true"] {
+  border-color: var(--green);
+  box-shadow: 0 0 18px rgba(0, 255, 102, 0.14);
 }
 
 .manualOverlay {
@@ -126,13 +184,13 @@
 
 .public {
   color: var(--green-dim);
-  font-size: clamp(0.95rem, 1.65vw, 1.5rem);
+  font-size: clamp(0.85rem, 1.25vw, 1.2rem);
 }
 
 .introCursor,
 .introDots {
   color: var(--green-dim);
-  font-size: clamp(1.05rem, 2.35vw, 2.35rem);
+  font-size: clamp(0.95rem, 1.75vw, 1.75rem);
   letter-spacing: 0;
 }
 
@@ -146,7 +204,7 @@
 
 .error {
   color: var(--danger);
-  font-size: clamp(0.95rem, 1.6vw, 1.4rem);
+  font-size: clamp(0.85rem, 1.25vw, 1.2rem);
 }
 
 .form {
@@ -199,9 +257,33 @@
 }
 
 @media (max-width: 640px) {
-  .manualButton {
+  .workspace,
+  .workspaceWithOperator {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .operatorDrawer {
+    position: fixed;
+    inset: 0 0 0 auto;
+    z-index: 18;
+    width: min(100vw, 520px);
+    border-left: 1px solid var(--green-soft);
+    box-shadow: -18px 0 42px rgba(0, 0, 0, 0.72);
+  }
+
+  .operatorDrawerOpen {
+    transform: translateX(0);
+  }
+
+  .manualButton,
+  .operatorButton {
     top: 16px;
     right: 18px;
+  }
+
+  .operatorButton {
+    top: 60px;
   }
 
   .form {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import OperatorConsole from "./OperatorConsole";
 import Terminal from "./Terminal";
 import styles from "./Chat.module.css";
 
@@ -19,6 +20,8 @@ export default function Chat() {
   const [pending, setPending] = useState(false);
   const [introStep, setIntroStep] = useState("cursor");
   const [manualOpen, setManualOpen] = useState(false);
+  const [operatorMounted, setOperatorMounted] = useState(false);
+  const [operatorOpen, setOperatorOpen] = useState(false);
   const scrollRef = useRef(null);
   const initializedMessagesRef = useRef(false);
   const seenMessageIdsRef = useRef(new Set());
@@ -256,6 +259,16 @@ export default function Chat() {
     }
   }
 
+  function toggleOperator() {
+    if (operatorOpen) {
+      setOperatorOpen(false);
+      return;
+    }
+
+    setOperatorMounted(true);
+    requestAnimationFrame(() => setOperatorOpen(true));
+  }
+
   const footer = (
     <form className={styles.form} onSubmit={submitMessage}>
       <span aria-hidden="true">&gt;</span>
@@ -271,7 +284,7 @@ export default function Chat() {
   );
 
   return (
-    <>
+    <div className={`${styles.workspace} ${operatorOpen ? styles.workspaceWithOperator : ""}`}>
       <button
         aria-label="Abrir manual de comandos"
         className={styles.manualButton}
@@ -279,6 +292,16 @@ export default function Chat() {
         type="button"
       >
         ?
+      </button>
+
+      <button
+        aria-label={operatorOpen ? "Esconder terminal operador" : "Abrir terminal operador ao lado"}
+        aria-pressed={operatorOpen}
+        className={styles.operatorButton}
+        onClick={toggleOperator}
+        type="button"
+      >
+        OP
       </button>
 
       {manualOpen ? (
@@ -311,7 +334,7 @@ export default function Chat() {
               </dl>
 
               <h3>OPERATOR</h3>
-              <p>Acesse <strong>/operator</strong> para comandos de controle.</p>
+              <p>Acesse <strong>/operator</strong> em outra aba ou use o botao <strong>OP</strong> ao lado deste guia.</p>
               <dl>
                 <div>
                   <dt>/say texto</dt>
@@ -338,48 +361,65 @@ export default function Chat() {
         </div>
       ) : null}
 
-      <Terminal title="CAIXA PRETA" footer={footer}>
-        <div className={styles.messages}>
-          {messages.length === 0 && introStep === "cursor" ? (
-            <p className={styles.introCursor}>&gt; <span>_</span></p>
-          ) : null}
+      <section className={styles.chatPane} aria-label="Chat publico">
+        <Terminal title="CAIXA PRETA" footer={footer} className={styles.embeddedTerminal}>
+          <div className={styles.messages}>
+            {messages.length === 0 && introStep === "cursor" ? (
+              <p className={styles.introCursor}>&gt; <span>_</span></p>
+            ) : null}
 
-          {messages.length === 0 && introStep === "dots" ? (
-            <p className={styles.introDots}>
-              &gt; {introDotsText}
-              {introDotsText !== INTRO_DOTS_TEXT ? (
-                <span className={styles.replyCursor} aria-hidden="true">_</span>
-              ) : null}
-            </p>
-          ) : null}
+            {messages.length === 0 && introStep === "dots" ? (
+              <p className={styles.introDots}>
+                &gt; {introDotsText}
+                {introDotsText !== INTRO_DOTS_TEXT ? (
+                  <span className={styles.replyCursor} aria-hidden="true">_</span>
+                ) : null}
+              </p>
+            ) : null}
 
-          {messages.length === 0 && introStep === "ready" ? (
-            <p className={styles.machine}>
-              &gt; {introText}
-              {introText !== INTRO_READY_TEXT ? (
-                <span className={styles.replyCursor} aria-hidden="true">_</span>
-              ) : null}
-            </p>
-          ) : null}
+            {messages.length === 0 && introStep === "ready" ? (
+              <p className={styles.machine}>
+                &gt; {introText}
+                {introText !== INTRO_READY_TEXT ? (
+                  <span className={styles.replyCursor} aria-hidden="true">_</span>
+                ) : null}
+              </p>
+            ) : null}
 
-          {messages.map((message) => (
-            <p
-              className={message.role === "assistant" ? styles.machine : styles.public}
-              key={message.id}
-            >
-              <span>{message.role === "assistant" ? ">" : "PUBLICO >"}</span>{" "}
-              {message.role === "assistant" ? typedReplies[message.id] ?? "" : message.content}
-              {message.role === "assistant" && typedReplies[message.id] !== message.content ? (
-                <span className={styles.replyCursor} aria-hidden="true">_</span>
-              ) : null}
-            </p>
-          ))}
+            {messages.map((message) => (
+              <p
+                className={message.role === "assistant" ? styles.machine : styles.public}
+                key={message.id}
+              >
+                <span>{message.role === "assistant" ? ">" : "PUBLICO >"}</span>{" "}
+                {message.role === "assistant" ? typedReplies[message.id] ?? "" : message.content}
+                {message.role === "assistant" && typedReplies[message.id] !== message.content ? (
+                  <span className={styles.replyCursor} aria-hidden="true">_</span>
+                ) : null}
+              </p>
+            ))}
 
-          {pending ? <p className={styles.machine}>&gt; _</p> : null}
-          {error ? <p className={styles.error}>&gt; {error}</p> : null}
-          <div ref={scrollRef} />
-        </div>
-      </Terminal>
-    </>
+            {pending ? <p className={styles.machine}>&gt; _</p> : null}
+            {error ? <p className={styles.error}>&gt; {error}</p> : null}
+            <div ref={scrollRef} />
+          </div>
+        </Terminal>
+      </section>
+
+      {operatorMounted ? (
+        <aside
+          aria-hidden={!operatorOpen}
+          className={`${styles.operatorDrawer} ${operatorOpen ? styles.operatorDrawerOpen : ""}`}
+          inert={operatorOpen ? undefined : ""}
+          onTransitionEnd={(event) => {
+            if (event.currentTarget === event.target && !operatorOpen) {
+              setOperatorMounted(false);
+            }
+          }}
+        >
+          <OperatorConsole embedded terminalClassName={styles.embeddedTerminal} />
+        </aside>
+      ) : null}
+    </div>
   );
 }

@@ -42,6 +42,10 @@ Depois abra:
 - `http://localhost:3000`
 - `http://localhost:3000/operator`
 
+O operator tambem pode ser aberto dentro da tela principal pelo botao `OP`,
+abaixo do botao `?`. Ele alterna entre chat em tela cheia e chat com terminal
+operador ao lado; em telas menores, aparece como gaveta animada.
+
 ## Comandos do operator
 
 Registrar uma memoria da apresentacao:

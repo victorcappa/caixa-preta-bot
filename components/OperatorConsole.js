@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Terminal from "./Terminal";
 import styles from "./OperatorConsole.module.css";
 
-export default function OperatorConsole() {
+export default function OperatorConsole({ embedded = false, terminalClassName = "" } = {}) {
   const [command, setCommand] = useState("");
   const [logs, setLogs] = useState([]);
   const [state, setState] = useState({
@@ -120,8 +120,8 @@ export default function OperatorConsole() {
   );
 
   return (
-    <Terminal title="CAIXA PRETA / OPERATOR" footer={footer}>
-      <div className={styles.operator}>
+    <Terminal title="OPERATOR" footer={footer} className={terminalClassName}>
+      <div className={`${styles.operator} ${embedded ? styles.embeddedOperator : ""}`}>
         <section className={styles.console}>
           <div className={styles.meta}>
             <span className={status === "CONNECTED" ? styles.connected : styles.disconnected}>
