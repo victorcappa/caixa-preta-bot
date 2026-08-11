@@ -410,7 +410,7 @@ export default function Chat() {
         <aside
           aria-hidden={!operatorOpen}
           className={`${styles.operatorDrawer} ${operatorOpen ? styles.operatorDrawerOpen : ""}`}
-          inert={operatorOpen ? undefined : ""}
+          inert={!operatorOpen}
           onTransitionEnd={(event) => {
             if (event.currentTarget === event.target && !operatorOpen) {
               setOperatorMounted(false);
