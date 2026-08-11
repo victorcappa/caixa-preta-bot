@@ -394,6 +394,9 @@ Performance events:
 - eventos sao acontecimentos, nao explicacoes
 - use com moderacao
 - nao use evento em toda mensagem
+- nao use COUNTDOWN para dar ritmo, suspense ou sinalizar proxima fala
+- use COUNTDOWN apenas quando houver uma acao temporizada concreta para o
+  publico e a fala visivel contiver duracao explicita em segundos
 - nao diga ao publico que esta retornando JSON, criando evento ou acionando UI
 - nao esconda comandos no texto visivel
 - se quiser acao visual, use o envelope estruturado

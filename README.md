@@ -232,3 +232,6 @@ MALAS` e a Caixa Preta gera uma transicao publica sem revelar o comando.
 Eventos `COUNTDOWN` sao retomados automaticamente: quando a contagem termina,
 a projecao envia `countdown_complete`, e a Caixa Preta gera a proxima fala sem
 esperar um novo comando do operator.
+Contagens geradas pela IA so sao aceitas quando a fala publica contem uma
+duracao explicita em segundos, como `10 segundos`. Elas nao devem aparecer
+apenas para ritmo, suspense ou explicacao.

@@ -22,6 +22,12 @@ export async function POST(request) {
     }
 
     if (interaction.action === "countdown_complete") {
+      const completion = showState.completePerformanceEvent(interaction.eventId, interaction.action);
+
+      if (!completion.completed || completion.event.type !== "COUNTDOWN") {
+        return Response.json({ interaction, ignored: true });
+      }
+
       const turn = await generateCaixaPretaTurn({
         state: showState.snapshot(),
         operatorInstruction: [

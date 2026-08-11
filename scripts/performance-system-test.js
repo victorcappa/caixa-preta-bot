@@ -8,6 +8,7 @@ async function main() {
 
   const {
     PERFORMANCE_EVENT_TYPES,
+    filterAgentPerformanceEvents,
     normalizePerformanceEvent,
     normalizePerformanceEvents,
     performanceCapabilitiesBlock
@@ -71,7 +72,16 @@ async function main() {
   assert.equal(normalizePerformanceEvents("not-array").length, 0);
   assert(performanceCapabilitiesBlock().includes("FULLSCREEN_TEXT"));
   assert(performanceCapabilitiesBlock().includes("Nunca gere numeros de contagem"));
+  assert(performanceCapabilitiesBlock().includes("so e aceito se o texto publico contiver duracao"));
   assert(performanceCapabilitiesBlock().includes("PHONE_PROJECTION_REQUEST"));
+  assert.equal(
+    filterAgentPerformanceEvents([{ type: "COUNTDOWN", payload: { duration: 5 } }], "vamos seguir").length,
+    0
+  );
+  assert.equal(
+    filterAgentPerformanceEvents([{ type: "COUNTDOWN", payload: { duration: 10 } }], "dez segundos de silencio").length,
+    1
+  );
 
   const phoneRequest = normalizePerformanceEvent({
     type: "PHONE_PROJECTION_REQUEST",
