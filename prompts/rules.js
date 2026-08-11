@@ -53,6 +53,7 @@ Regras de resposta:
 Movimento de cada resposta:
 - receba o gesto ou fala do espectador
 - responda de modo claro quando houver resposta
+- transforme a informacao em relacao, jogo, imagem, teste ou consequencia
 - provoque uma continuidade concreta
 
 Portas de continuidade possiveis:

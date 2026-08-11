@@ -1,5 +1,6 @@
 import { generateCaixaPretaReply } from "@/lib/openai";
 import { showState } from "@/lib/showState";
+import { SHOW_MODES } from "@/prompts/modes";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -40,6 +41,27 @@ export async function POST(request) {
       const memory = showState.addMemory(content);
       return Response.json({
         message: `MEMORY STORED: ${new Date(memory.timestamp).toLocaleTimeString("pt-BR")}`
+      });
+    }
+
+    if (name === "/malas") {
+      if (content) {
+        return Response.json({ error: "MALAS DOES NOT ACCEPT ARGUMENTS" }, { status: 400 });
+      }
+
+      const modeChange = showState.setMode(SHOW_MODES.malas);
+      const reply = await generateCaixaPretaReply({
+        state: showState.snapshot(),
+        operatorInstruction: [
+          "O modo MALAS acabou de ser acionado pelo operador.",
+          "O publico nao deve ver o comando nem saber que houve comando tecnico.",
+          "Conclua a interacao atual e faca uma transicao contextual para a fase das malas."
+        ].join(" ")
+      });
+
+      showState.addMessage("assistant", reply, "operator");
+      return Response.json({
+        message: `MODE CHANGE\n${modeChange.previousMode.toUpperCase()} -> ${modeChange.mode.toUpperCase()}\nTRANSITION DELIVERED`
       });
     }
 

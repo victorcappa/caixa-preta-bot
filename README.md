@@ -56,6 +56,12 @@ Pedir que a Caixa Preta diga algo na projecao:
 /say faça um comentario indicando que agora podemos comecar
 ```
 
+Entrar no modo MALAS e gerar uma transicao contextual na projecao:
+
+```text
+/malas
+```
+
 Apagar a memoria, conversa e variaveis da sessao atual:
 
 ```text
@@ -81,6 +87,7 @@ npm run build
 ```
 
 O estado inicial fica em memoria no servidor e e reiniciado quando o processo do Next.js reinicia.
+O modo inicial da apresentacao e `host`.
 
 ## Arquitetura de contexto
 
@@ -96,6 +103,7 @@ A Caixa Preta responde a partir de uma montagem central de contexto:
 
 A chamada para a OpenAI fica isolada em `lib/openai.js`.
 A montagem do system prompt fica em `prompts/buildSystemPrompt.js`.
+As regras especificas de modo ficam em `prompts/modes.js`.
 O carregamento da base local fica em `lib/knowledge.js`.
 
 ## Onde editar a máquina
@@ -116,6 +124,12 @@ Exemplos de comportamento:
 
 ```text
 prompts/examples.js
+```
+
+Modos dramaturgicos:
+
+```text
+prompts/modes.js
 ```
 
 Base de conhecimento local:
@@ -144,3 +158,16 @@ Ela nao e uma ordem para a Caixa Preta falar imediatamente.
 `/say orientacao` entra como `ORIENTACAO DO OPERADOR`.
 A instrucao nao aparece para o publico e nao deve ser repetida literalmente.
 A IA transforma a orientacao em uma fala final da Caixa Preta.
+
+## Modes
+
+O estado da apresentacao tem `mode`, `previousMode` e `modeStartedAt`.
+`/reset` volta para `host`.
+
+No modo `host`, a Caixa Preta interage com a plateia, usa memoria como materia
+de improviso e nao antecipa as malas. O publico pode escrever sobre malas, mas
+isso nao muda o estado interno.
+
+Somente o operator pode executar `/malas`.
+Quando isso acontece, o estado muda para `malas`, o operator mostra `MODE:
+MALAS` e a Caixa Preta gera uma transicao publica sem revelar o comando.

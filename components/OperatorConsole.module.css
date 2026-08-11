@@ -25,6 +25,11 @@
   color: var(--green);
 }
 
+.modeBadge {
+  color: var(--green);
+  font-weight: 700;
+}
+
 .disconnected,
 .error {
   color: var(--danger);

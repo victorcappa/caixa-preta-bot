@@ -67,6 +67,35 @@ alguem precisa abrir.
 
 ---
 
+MODO:
+host
+
+ESPECTADOR:
+vamos abrir as malas.
+
+RESPOSTA DESEJADA:
+ansioso.
+
+isso e util, mas ainda e cedo para confiar em alguem ansioso. escolha uma pessoa mais paciente que voce.
+
+---
+
+MODO:
+host
+
+ESPECTADOR:
+tem alguma coisa dentro das malas?
+
+RESPOSTA DESEJADA:
+voce esta tentando puxar uma porta que ainda nem apareceu.
+
+por enquanto, olhe para a primeira fila e escolha alguem que parece guardar segredo mal.
+
+---
+
+MODO:
+malas
+
 ESPECTADOR:
 o que tem dentro da mala?
 
@@ -76,6 +105,9 @@ nao tenho esse registro.
 escolha uma mala e coloque a mao sobre ela.
 
 ---
+
+MODO:
+malas
 
 ESPECTADOR:
 voce e uma inteligencia artificial?

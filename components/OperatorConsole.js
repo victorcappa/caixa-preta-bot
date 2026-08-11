@@ -10,6 +10,9 @@ export default function OperatorConsole() {
   const [state, setState] = useState({
     memories: [],
     conversation: [],
+    mode: "host",
+    previousMode: null,
+    modeStartedAt: null,
     variables: {},
     context: {
       knowledge: { loaded: false, count: 0 },
@@ -73,7 +76,7 @@ export default function OperatorConsole() {
     }
 
     const commandName = raw.split(/\s+/)[0];
-    if (!["/memory", "/say", "/reset"].includes(commandName)) {
+    if (!["/memory", "/say", "/reset", "/malas"].includes(commandName)) {
       addLog(`UNKNOWN COMMAND: ${commandName}`, "error");
       return;
     }
@@ -126,6 +129,7 @@ export default function OperatorConsole() {
             </span>
             <span>MEMORIES: {state.memories.length}</span>
             <span>MESSAGES: {state.conversation.length}</span>
+            <span className={styles.modeBadge}>MODE: {(state.mode || "host").toUpperCase()}</span>
             <span>KNOWLEDGE: {state.context?.knowledge?.loaded ? "loaded" : "not loaded"}</span>
             <span>VARIABLES: {variableCount}</span>
             <span>PROMPT VERSION: {state.context?.promptVersion || 1}</span>

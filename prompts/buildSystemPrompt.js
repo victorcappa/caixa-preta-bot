@@ -1,8 +1,9 @@
 import { caixaPretaExamples } from "./examples";
+import { getModePrompt } from "./modes";
 import { caixaPretaPersonality } from "./personality";
 import { caixaPretaRules } from "./rules";
 
-export const PROMPT_VERSION = 3;
+export const PROMPT_VERSION = 4;
 
 function variablesBlock(variables = {}) {
   if (!variables || Object.keys(variables).length === 0) {
@@ -22,6 +23,8 @@ export function buildSystemPrompt({ knowledge = "", variables = {} } = {}) {
     caixaPretaPersonality,
     "REGRAS:",
     caixaPretaRules,
+    "MODO DRAMATURGICO ATUAL:",
+    getModePrompt(variables.currentMode),
     "CONHECIMENTO LOCAL DA OBRA:",
     knowledge || "Nenhum conhecimento local carregado.",
     variablesBlock(variables),
