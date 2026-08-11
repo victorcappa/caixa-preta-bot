@@ -58,7 +58,8 @@ export default function TrainingConsole() {
     examples: [],
     styleNotes: [],
     stats: { total: 0, perfect: 0, almost: 0, bad: 0 },
-    suggestedTags: []
+    suggestedTags: [],
+    suggestedGameMechanics: []
   });
   const [drafts, setDrafts] = useState({});
   const [styleNoteDraft, setStyleNoteDraft] = useState("");
@@ -95,6 +96,7 @@ export default function TrainingConsole() {
         preferredResponse: "",
         notes: "",
         tags: "",
+        gameMechanic: "",
         alternatives: [],
         improving: false,
         saved: false,
@@ -165,6 +167,7 @@ export default function TrainingConsole() {
     const preferredResponse = override.preferredResponse ?? draft.preferredResponse;
     const notes = override.notes ?? draft.notes;
     const tags = override.tags ?? draft.tags;
+    const gameMechanic = override.gameMechanic ?? draft.gameMechanic;
 
     if ((rating === "almost" || rating === "bad") && !preferredResponse?.trim()) {
       updateDraft(message.id, {
@@ -185,6 +188,7 @@ export default function TrainingConsole() {
           rating,
           preferredResponse: preferredResponse?.trim() || null,
           notes: notes?.trim() || null,
+          gameMechanic: gameMechanic?.trim() || null,
           tags: tagsFromText(tags || "")
         })
       });
@@ -378,6 +382,15 @@ export default function TrainingConsole() {
                           value={draft.tags || ""}
                           onChange={(event) => updateDraft(message.id, { tags: event.target.value })}
                           placeholder={(snapshot.suggestedTags || []).slice(0, 6).join(", ")}
+                        />
+                      </label>
+
+                      <label>
+                        GAME MECHANIC
+                        <input
+                          value={draft.gameMechanic || ""}
+                          onChange={(event) => updateDraft(message.id, { gameMechanic: event.target.value })}
+                          placeholder={(snapshot.suggestedGameMechanics || []).slice(0, 4).join(", ")}
                         />
                       </label>
 

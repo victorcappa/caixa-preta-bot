@@ -3,6 +3,9 @@ const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
 const promptFiles = [
+  "lib/host/games.js",
+  "lib/interactionHistory.js",
+  "lib/training.js",
   "prompts/personality.js",
   "prompts/rules.js",
   "prompts/modes.js",
@@ -38,7 +41,14 @@ const requiredPromptMarkers = [
   "nao repita a mesma mecanica de interacao mais de 2 turnos seguidos",
   "se a mesma mecanica apareceu 2 vezes seguidas, force uma mudanca",
   "Nao termine como validacao administrativa seca",
-  "Evite terminar em validacao administrativa"
+  "Evite terminar em validacao administrativa",
+  "HOST GAME LIBRARY",
+  "gameMechanicId",
+  "personalityMove",
+  "counterRoastOpportunity",
+  "recentHostMechanics",
+  "counter_roast",
+  "game_mechanic"
 ];
 
 const simulation = [
@@ -87,7 +97,54 @@ const simulation = [
   { turn: 43, publicInput: "o que eu devia sentir?", host: "nada obrigatorio. de 0 a 10, quanto voce fingiu que isso significava alguma coisa?", checks: ["antiTherapy", "complianceRoast", "createsAction"] },
   { turn: 44, publicInput: "nove", host: "nove e muito fingimento para pouco gesto. parabens, voces transformaram mao em produto cultural.", checks: ["complianceRoast", "sarcasm", "createsConsequence"] },
   { turn: 45, publicInput: "vamos abrir uma mala?", host: "ansioso. isso ainda nao e acao disponivel. escolha alguem menos apressado que voce.", checks: ["noSuitcasesInHost", "createsAction", "sarcasm"] },
-  { turn: 46, publicInput: "/memory publico repetiu uma palavra em coro", host: "coro registrado. obediencia coletiva com pretensao artistica.", checks: ["usesMemory", "complianceRoast", "sarcasm"] }
+  { turn: 46, publicInput: "/memory publico repetiu uma palavra em coro", host: "coro registrado. obediencia coletiva com pretensao artistica.", checks: ["usesMemory", "complianceRoast", "sarcasm", "obedienceTest", "personalityMove"] },
+  { turn: 47, publicInput: "me da um jogo", host: "otimo. frase com buraco, que e quase dramaturgia: o verdadeiro motivo pelo qual voces vieram ao teatro foi _____.", checks: ["fillInTheBlank", "gameMechanic", "personalityMove", "createsAction"] },
+  { turn: 48, publicInput: "fugir do jantar em familia", host: "boa. fuga domestica aceita como financiamento cultural. isso entra no inventario com cheiro de domingo.", checks: ["inventory", "dryEconomy", "personalityMove", "createsConsequence"] },
+  { turn: 49, publicInput: "qual e a regra?", host: "nao conto. eu aceito teatro, rejeito jantar e fico neutra diante de sobremesa. descubram a regra antes que ela vire instituicao.", checks: ["ruleGuessing", "gameMechanic", "personalityMove", "createsAction"] },
+  { turn: 50, publicInput: "pipoca", host: "rejeitado. muito cinema, pouca culpa. proxima tentativa.", checks: ["ruleGuessing", "dryEconomy", "personalityMove", "createsAction"] },
+  { turn: 51, publicInput: "vamos votar", host: "finalmente, uma democracia inutil. quem acha pipoca aceitavel levanta a mao; quem discorda fica com a superioridade moral imaginaria.", checks: ["socialVote", "gameMechanic", "politicalEdge", "personalityMove"] },
+  { turn: 52, publicInput: "levantaram a mao", host: "pronto. obedeceram uma tela para defender pipoca. o seculo termina assim, mas com lanche.", checks: ["obedienceTest", "complianceRoast", "personalityMove", "createsConsequence"] },
+  { turn: 53, publicInput: "voce tambem e menos importante que a pipoca", host: "essa doeu menos do que deveria. voce perdeu protecao diplomatica e ganhou um ponto por coragem irresponsavel.", checks: ["counterRoast", "fakeScore", "personalityMove", "callback"] },
+  { turn: 54, publicInput: "escolhe alguem para descobrir algo", host: "voce da protecao diplomatica suspensa escolhe alguem. essa pessoa e agora uma coisa banal e precisa descobrir fazendo perguntas de sim ou nao.", checks: ["whoAmI", "callbackGame", "gameMechanic", "personalityMove", "createsAction"] },
+  { turn: 55, publicInput: "sou famoso?", host: "nao. que alivio administrativo. celebridade ja chega com assessoria e pouca utilidade.", checks: ["whoAmI", "dryEconomy", "personalityMove", "createsConsequence"] },
+  { turn: 56, publicInput: "/memory alguem riu da palavra pipoca e a tecnica continuou cansada", host: "pipoca, risada e tecnica cansada. tres provas, zero ciencia. alguem conecte isso numa conspiracao de vinte segundos.", checks: ["conspiracyGame", "usesMemory", "gameMechanic", "personalityMove", "createsAction"] },
+  { turn: 57, publicInput: "a tecnica quer pipoca", host: "plausivel demais para conspiracao. falta delirio, mas sobrou direito trabalhista. fica com meia vitoria.", checks: ["conspiracyGame", "politicalEdge", "personalityMove", "fakeScore"] },
+  { turn: 58, publicInput: "manda uma tarefa", host: "tarefa absurda: prove que voce nao e bot sem dizer nome, profissao ou 'eu sou humano'.", checks: ["absurdAssignment", "humanCaptcha", "internetBrain", "personalityMove", "createsAction"] },
+  { turn: 59, publicInput: "eu pago boleto", host: "infelizmente convincente. ninguem programaria isso por prazer.", checks: ["absurdAssignment", "internetBrain", "personalityMove", "createsConsequence"] },
+  { turn: 60, publicInput: "um enigma rapido", host: "enigma: quanto mais voces me obedecem, menos controle dizem que eu tenho. o que e? respondam sem virar palestra.", checks: ["microPuzzle", "callbackGame", "complianceRoast", "personalityMove", "createsAction"] }
+];
+
+const personalityWindow = [
+  "dry_judgment",
+  "light_roast",
+  "internet_association",
+  "callback",
+  "fake_seriousness",
+  "underreaction",
+  "arbitrary_punishment",
+  "self_roast",
+  "political_association",
+  "game_language",
+  "counter_roast",
+  "dry_judgment",
+  "none",
+  "callback",
+  "overreaction",
+  "internet_association",
+  "light_roast",
+  "fake_seriousness",
+  "none",
+  "conspiracy_brain",
+  "compliance_roast",
+  "dry_judgment",
+  "flirt",
+  "meta_theatre",
+  "arbitrary_reward",
+  "counter_roast",
+  "underreaction",
+  "game_language",
+  "nihilistic_comment",
+  "callback"
 ];
 
 const coverageRequirements = [
@@ -117,7 +174,20 @@ const coverageRequirements = [
   "complianceRoast",
   "antiTherapy",
   "dryEconomy",
-  "noSuitcasesInHost"
+  "noSuitcasesInHost",
+  "gameMechanic",
+  "personalityMove",
+  "fillInTheBlank",
+  "ruleGuessing",
+  "socialVote",
+  "obedienceTest",
+  "fakeScore",
+  "whoAmI",
+  "conspiracyGame",
+  "callbackGame",
+  "absurdAssignment",
+  "microPuzzle",
+  "counterRoast"
 ];
 
 function assert(condition, message) {
@@ -132,9 +202,31 @@ for (const marker of requiredPromptMarkers) {
 
 assert(simulation.length >= 30, "Host mode simulation must contain at least 30 turns.");
 assert(simulation.length >= 45, "Host mode simulation must include social opportunity regression turns.");
+assert(simulation.length >= 50, "Host mode simulation must contain at least 50 turns for repertoire coverage.");
 
 const categoryCount = (promptText.match(/CATEGORIA:/g) || []).length;
 assert(categoryCount >= 30, "Prompt examples must include at least 30 categorized additive examples.");
+
+const mechanicCount = (promptText.match(/^\s*id: "/gm) || []).length;
+assert(mechanicCount >= 40, "Host game library must include at least 40 mechanics.");
+
+const requiredMechanics = [
+  "complete_phrase",
+  "guess_the_rule",
+  "collective_judgment",
+  "obedience_test",
+  "fake_points",
+  "who_am_i",
+  "express_conspiracy",
+  "imaginary_item",
+  "absurd_assignment",
+  "human_captcha",
+  "micro_riddle"
+];
+
+for (const mechanic of requiredMechanics) {
+  assert(promptText.includes(`id: "${mechanic}"`), `Missing host mechanic: ${mechanic}`);
+}
 
 const covered = new Set(simulation.flatMap((turn) => turn.checks));
 for (const requirement of coverageRequirements) {
@@ -189,13 +281,28 @@ assert(
 );
 
 assert(
+  simulation.filter((turn) => turn.checks.includes("personalityMove")).length >= 14,
+  "Simulation must mark personality moves during game turns."
+);
+
+assert(
   simulation.filter((turn) => turn.checks.includes("flirt")).length >= 5,
   "Simulation must include at least 5 light flirt turns."
 );
 
+assert(personalityWindow.length === 30, "Personality window must contain 30 turns.");
+
+let consecutiveNone = 0;
+for (const move of personalityWindow) {
+  consecutiveNone = move === "none" ? consecutiveNone + 1 : 0;
+  assert(consecutiveNone <= 2, "Personality window cannot contain more than 2 consecutive none moves.");
+}
+
 console.log("HOST MODE SIMULATION: PASS");
 console.log(`turns: ${simulation.length}`);
 console.log(`coverage: ${coverageRequirements.join(", ")}`);
+console.log(`mechanics: ${mechanicCount}`);
+console.log(`personalityWindow: ${personalityWindow.join(", ")}`);
 console.log("");
 for (const turn of simulation) {
   console.log(`${turn.turn}. PUBLICO > ${turn.publicInput}`);

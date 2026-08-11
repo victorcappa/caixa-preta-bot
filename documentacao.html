@@ -337,14 +337,15 @@
 
 # .env.local
 OPENAI_API_KEY=sua_chave_aqui
-OPENAI_MODEL=gpt-5-nano
+OPENAI_MODEL=gpt-5-mini
 
 npm run dev</code></pre>
 
               <p class="note">
                 O arquivo <code>.env.local</code> nao deve ser commitado. O modelo padrao e
-                <code>gpt-5-nano</code>; para respostas mais fortes em apresentacao, use
-                <code>gpt-5-mini</code>.
+                <code>gpt-5-mini</code>; para testes locais de menor custo, use
+                <code>gpt-5-nano</code>. O operator tambem permite alternar entre os dois durante
+                a apresentacao.
               </p>
             </section>
 
@@ -395,8 +396,10 @@ npm run dev</code></pre>
                 <article class="panel">
                   <h3>STATUS</h3>
                   <p>
-                    A barra superior indica conexao, quantidade de memorias, mensagens, variaveis e
-                    se a base local de conhecimento foi carregada.
+                    A barra superior indica conexao, modelo selecionado, quantidade de memorias,
+                    mensagens, variaveis e se a base local de conhecimento foi carregada. O seletor
+                    <code>MODEL</code> muda as proximas chamadas da Caixa Preta sem reiniciar o
+                    servidor.
                   </p>
                 </article>
               </div>
@@ -423,6 +426,16 @@ npm run dev</code></pre>
                     nao aparece literalmente para o publico; a IA transforma a orientacao em fala.
                   </p>
                   <pre><code>/say faca um comentario curto indicando que agora podemos comecar</code></pre>
+                </article>
+
+                <article class="command">
+                  <strong>/model modelo</strong>
+                  <p>
+                    Escolhe o modelo usado nas proximas respostas. Use <code>gpt-5-mini</code> para
+                    mais corpo e personalidade, ou <code>gpt-5-nano</code> para testes de menor
+                    custo. O mesmo controle aparece como seletor no topo do operator.
+                  </p>
+                  <pre><code>/model gpt-5-nano</code></pre>
                 </article>
 
                 <article class="command">
@@ -465,9 +478,18 @@ npm run dev</code></pre>
                 desejado e memoria como percepcao: observar, interpretar, decidir e agir.
               </p>
 
+              <p>
+                No modo HOST, o repertorio de microjogos fica em <code>lib/host/games.js</code>.
+                A biblioteca inclui mecanicas curtas como lacuna, regra secreta, voto social,
+                captcha humano, pontos falsos, Quem Sou Eu, conspiracao express e enigma rapido.
+                O planner deve escolher mecanicas diferentes das recentes e respeitar cooldown
+                conceitual para evitar repeticao.
+              </p>
+
               <pre><code>prompts/personality.js
 prompts/rules.js
 prompts/examples.js
+lib/host/games.js
 knowledge/universe.md
 knowledge/characters.md
 knowledge/concepts.md
@@ -491,7 +513,9 @@ knowledge/chatbot.md</code></pre>
                 <li>Use <code>/reset</code> para comecar limpo.</li>
                 <li>Durante a cena, use <code>/memory</code> para registrar acontecimentos reais como contexto silencioso.</li>
                 <li>Use <code>/say</code> quando precisar que a Caixa Preta intervenha agora.</li>
+                <li>Use o seletor <code>MODEL</code> ou <code>/model</code> para alternar entre <code>gpt-5-mini</code> e <code>gpt-5-nano</code>.</li>
                 <li>Use <code>/mala</code> quando a cena deve entrar no modo MALAS.</li>
+                <li>Quando um evento <code>COUNTDOWN</code> termina, a Caixa Preta continua sozinha a partir do fim da contagem.</li>
                 <li>Ao final, use <code>/reset</code> se a proxima sessao nao deve herdar nada.</li>
               </ol>
             </section>

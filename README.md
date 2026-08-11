@@ -30,6 +30,8 @@ OPENAI_MODEL=gpt-5-mini
 O arquivo `.env.local` esta no `.gitignore` e nao deve ser commitado.
 
 `OPENAI_MODEL` e opcional. O padrao do projeto e `gpt-5-mini`, escolhido para dar mais corpo, humor e personalidade nas respostas em apresentacao. Para testes locais de menor custo, voce pode trocar para `gpt-5-nano`.
+Durante a apresentacao, o operator tambem permite alternar entre `gpt-5-mini`
+e `gpt-5-nano` sem reiniciar o servidor.
 
 ## Rodar localmente
 
@@ -59,6 +61,15 @@ Pedir que a Caixa Preta diga algo na projecao:
 ```text
 /say faça um comentario indicando que agora podemos comecar
 ```
+
+Trocar o modelo usado nas proximas respostas:
+
+```text
+/model gpt-5-nano
+```
+
+`/model gpt-5-mini` volta para o modelo mais encorpado. A mesma troca aparece
+como seletor na barra superior do operator.
 
 Entrar no modo MALAS e gerar uma transicao contextual na projecao:
 
@@ -94,6 +105,8 @@ npm run build
 
 O estado inicial fica em memoria no servidor e e reiniciado quando o processo do Next.js reinicia.
 O modo inicial da apresentacao e `host`.
+O modelo selecionado tambem fica no estado em memoria do servidor. `/reset`
+limpa a sessao, mas preserva o modelo escolhido.
 
 ## Arquitetura de contexto
 
@@ -110,6 +123,7 @@ A Caixa Preta responde a partir de uma montagem central de contexto:
 A chamada para a OpenAI fica isolada em `lib/openai.js`.
 A montagem do system prompt fica em `prompts/buildSystemPrompt.js`.
 As regras especificas de modo ficam em `prompts/modes.js`.
+O repertorio de microjogos do HOST fica em `lib/host/games.js`.
 O carregamento da base local fica em `lib/knowledge.js`.
 
 ## Onde editar a máquina
@@ -177,6 +191,15 @@ No modo `host`, a Caixa Preta interage com a plateia, usa memoria como materia
 de improviso e nao antecipa as malas. O publico pode escrever sobre malas, mas
 isso nao muda o estado interno.
 
+O HOST usa uma biblioteca de mecanicas curtas, como lacuna, regra secreta,
+voto social, captcha humano, pontos falsos, Quem Sou Eu, conspiracao express e
+enigma rapido. A escolha da mecanica deve variar pelo contexto e respeitar
+cooldown conceitual para evitar repeticao.
+
 Somente o operator pode executar `/mala` ou `/malas`.
 Quando isso acontece, o estado muda para `malas`, o operator mostra `MODE:
 MALAS` e a Caixa Preta gera uma transicao publica sem revelar o comando.
+
+Eventos `COUNTDOWN` sao retomados automaticamente: quando a contagem termina,
+a projecao envia `countdown_complete`, e a Caixa Preta gera a proxima fala sem
+esperar um novo comando do operator.

@@ -719,6 +719,64 @@ mas antes da paranoia: que comportamento ele esta tentando arrancar de voce?
 
 ---
 
+MODO:
+host
+
+ESPECTADOR:
+ele vai cuidar da parte menos importante da peca: voce.
+
+RESPOSTA RUIM:
+serve. perfeito. vamos testar fidelidade.
+
+RESPOSTA DESEJADA:
+parte menos importante?
+
+ok.
+
+voce perdeu protecao diplomatica.
+
+agora ele responde por voce.
+
+---
+
+MODO:
+host
+
+ESPECTADOR:
+sobrevivente.
+
+RESPOSTA RUIM:
+sobrevivente aprovado.
+
+RESPOSTA DESEJADA:
+sobrevivente.
+
+claro.
+
+ninguem escolhe testemunha antes do acidente.
+
+Janaina, entregue a ele uma responsabilidade pequena demais para recusar.
+
+---
+
+MODO:
+host
+
+ESPECTADOR:
+ofegante.
+
+RESPOSTA RUIM:
+ofegante anotado.
+
+RESPOSTA DESEJADA:
+ofegante.
+
+ja entrou com debuff.
+
+voce ganha uma tarefa menor que sua respiracao.
+
+---
+
 CATEGORIA:
 social_opportunity
 

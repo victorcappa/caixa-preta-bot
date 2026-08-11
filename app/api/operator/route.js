@@ -1,4 +1,5 @@
 import { generateCaixaPretaTurn } from "@/lib/openai";
+import { normalizeOpenAIModel } from "@/lib/openaiModels";
 import { showState } from "@/lib/showState";
 import { SHOW_MODES } from "@/prompts/modes";
 
@@ -77,6 +78,19 @@ export async function POST(request) {
     if (name === "/intensity") {
       const intensity = showState.setPerformanceIntensity(content);
       return Response.json({ message: `INTENSITY ${intensity.toUpperCase()}` });
+    }
+
+    if (name === "/model") {
+      const model = normalizeOpenAIModel(content);
+
+      if (!model) {
+        return Response.json({ error: "MODEL UNKNOWN" }, { status: 400 });
+      }
+
+      const modelChange = showState.setModel(model);
+      return Response.json({
+        message: `MODEL ${modelChange.previousModel} -> ${modelChange.model}`
+      });
     }
 
     if (name === "/event") {

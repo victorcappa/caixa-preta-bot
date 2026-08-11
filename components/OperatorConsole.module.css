@@ -36,6 +36,20 @@
   font-weight: 700;
 }
 
+.modelControl {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.modelSelect {
+  border: 1px solid var(--green-soft);
+  background: #020402;
+  color: var(--green);
+  font: inherit;
+  padding: 2px 6px;
+}
+
 .disconnected,
 .error {
   color: var(--danger);

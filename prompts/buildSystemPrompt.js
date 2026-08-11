@@ -1,9 +1,10 @@
 import { caixaPretaExamples } from "./examples";
+import { buildHostGameLibraryBlock } from "../lib/host/games";
 import { getModePrompt } from "./modes";
 import { caixaPretaPersonality } from "./personality";
 import { caixaPretaRules } from "./rules";
 
-export const PROMPT_VERSION = 10;
+export const PROMPT_VERSION = 11;
 
 function variablesBlock(variables = {}) {
   if (!variables || Object.keys(variables).length === 0) {
@@ -23,6 +24,8 @@ export function buildSystemPrompt({ knowledge = "", variables = {} } = {}) {
     caixaPretaPersonality,
     "REGRAS:",
     caixaPretaRules,
+    "BIBLIOTECA DE MECANICAS DO HOST:",
+    buildHostGameLibraryBlock(),
     "MODO DRAMATURGICO ATUAL:",
     getModePrompt(variables.currentMode),
     "CONHECIMENTO LOCAL DA OBRA:",

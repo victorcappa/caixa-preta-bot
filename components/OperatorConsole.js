@@ -13,9 +13,11 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     mode: "host",
     previousMode: null,
     modeStartedAt: null,
+    model: "gpt-5-mini",
     variables: {},
     context: {
       knowledge: { loaded: false, count: 0 },
+      modelOptions: ["gpt-5-mini", "gpt-5-nano"],
       promptVersion: 1
     }
   });
@@ -86,6 +88,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       "/draw",
       "/activity",
       "/intensity",
+      "/model",
       "/clear",
       "/clear-performance"
     ].includes(commandName)) {
@@ -116,9 +119,39 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     }
   }
 
+  async function changeModel(model) {
+    if (!model || pending || model === state.model) {
+      return;
+    }
+
+    addLog(`> /model ${model}`, "input");
+    setPending(true);
+
+    try {
+      const response = await fetch("/api/operator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command: `/model ${model}` })
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        addLog(data.error || "MODEL ERROR", "error");
+        return;
+      }
+
+      addLog(data.message, "ok");
+    } catch {
+      addLog("SERVER CONNECTION FAILED", "error");
+    } finally {
+      setPending(false);
+    }
+  }
+
   const latestMemories = state.memories.slice(-5).reverse();
   const performanceLog = (state.performance?.eventLog || []).slice(-8).reverse();
   const activities = state.performance?.activities || [];
+  const modelOptions = state.context?.modelOptions || ["gpt-5-mini", "gpt-5-nano"];
   const variableCount = Object.keys(state.variables || {}).length;
   const footer = (
     <form className={styles.form} onSubmit={submitCommand}>
@@ -147,6 +180,20 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             <span>INTENSITY: {(state.performance?.intensity || "calm").toUpperCase()}</span>
             <span>ACTIVITIES: {activities.length}</span>
             <span>EVENTS: {state.performance?.events?.length || 0}</span>
+            <label className={styles.modelControl}>
+              MODEL:
+              <select
+                aria-label="Modelo GPT"
+                className={styles.modelSelect}
+                disabled={pending}
+                onChange={(event) => changeModel(event.target.value)}
+                value={state.model || "gpt-5-mini"}
+              >
+                {modelOptions.map((model) => (
+                  <option key={model} value={model}>{model}</option>
+                ))}
+              </select>
+            </label>
             <span>KNOWLEDGE: {state.context?.knowledge?.loaded ? "loaded" : "not loaded"}</span>
             <span>VARIABLES: {variableCount}</span>
             <span>PROMPT VERSION: {state.context?.promptVersion || 1}</span>
