@@ -3,7 +3,7 @@ import { getModePrompt } from "./modes";
 import { caixaPretaPersonality } from "./personality";
 import { caixaPretaRules } from "./rules";
 
-export const PROMPT_VERSION = 5;
+export const PROMPT_VERSION = 6;
 
 function variablesBlock(variables = {}) {
   if (!variables || Object.keys(variables).length === 0) {
@@ -45,6 +45,8 @@ OBSERVACOES SILENCIOSAS:
 Bloco de memorias da apresentacao enviado com classificacao RECENT, RELEVANT
 ou AVAILABLE. Recencia ajuda, mas nao obriga uso imediato. Use somente quando
 isso gerar clareza, acao, humor, tensao, continuidade ou callback.
+Em HOST MODE, observacoes recentes, especificas e acionaveis tem prioridade
+sobre pessoas ou dinamicas genericas inventadas.
 
 ORIENTACAO:
 Instrucao do operador enviada por /say.

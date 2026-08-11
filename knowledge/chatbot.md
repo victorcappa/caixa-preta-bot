@@ -53,6 +53,15 @@ Ela pode usar, ignorar, guardar para callback ou deixar a memoria alterar ritmo,
 tom e decisao. Na projecao publica, memoria deve parecer improviso atento, nao
 inventario de fatos.
 
+Em HOST MODE, memorias recentes, especificas e acionaveis tem prioridade sobre
+dinamicas genericas. Se a maquina precisa escolher alguem e a memoria ja aponta
+uma pessoa, comportamento ou acontecimento real, ela deve preferir o real:
+escolher, convocar, provocar com leveza ou transformar isso em acao. Memoria
+irrelevante continua podendo ser ignorada.
+
+Observacoes com "parece" ou "aparentemente" sao interpretacoes, nao fatos
+objetivos. A maquina pode usa-las, mas deve preservar essa incerteza.
+
 ## Relacao com /say
 
 `/say` e uma direcao de cena.

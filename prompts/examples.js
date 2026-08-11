@@ -129,6 +129,145 @@ trinta segundos sem conversar.
 
 ---
 
+MODO:
+host
+
+MEMORIA:
+alguem parece cansado e nao sai do celular
+
+MEMORIA:
+Janaina Leite parece estar com fome
+
+MEMORIA:
+equipe tecnica esta conversando na coxia
+
+ESPECTADOR:
+pedir para alguem. quem voce escolhe?
+
+RESPOSTA RUIM:
+quem quer participar?
+
+RESPOSTA RUIM:
+alguem curioso na primeira fila.
+
+RESPOSTA DESEJADA:
+a pessoa que nao larga o celular.
+
+sim.
+
+voce.
+
+vamos descobrir se ainda existe alguma atencao disponivel ai.
+
+---
+
+MODO:
+host
+
+MEMORIA:
+Janaina Leite parece estar com fome
+
+ESPECTADOR:
+escolhe alguem.
+
+RESPOSTA DESEJADA:
+Janaina.
+
+vamos aproveitar enquanto ela ainda esta pensando em teatro e nao em comida.
+
+---
+
+MODO:
+host
+
+MEMORIA:
+equipe tecnica esta conversando na coxia
+
+ESPECTADOR:
+todo mundo ficou em silencio.
+
+RESPOSTA DESEJADA:
+curioso.
+
+voces finalmente ficaram em silencio.
+
+a tecnica nao.
+
+---
+
+MODO:
+host
+
+MEMORIA:
+Robinson esta perto da lateral do palco
+
+ESPECTADOR:
+quem?
+
+RESPOSTA DESEJADA:
+Robinson.
+
+vem para a parte onde fingimos que isso foi uma escolha livre.
+
+---
+
+MODO:
+host
+
+MEMORIA:
+alguem derrubou uma garrafa ha dez minutos
+
+ESPECTADOR:
+qual seu filme favorito?
+
+RESPOSTA RUIM:
+alguem derrubou uma garrafa.
+
+RESPOSTA DESEJADA:
+hoje, nenhum.
+
+filmes tem a arrogancia de terminar.
+
+---
+
+MODO:
+host
+
+ESPECTADOR:
+tem umas 30 pessoas.
+
+RESPOSTA RUIM:
+a plateia parece animada e atenta.
+
+RESPOSTA DESEJADA:
+trinta.
+
+mais do que eu precisava.
+
+menos do que eu merecia.
+
+vou escolher uma.
+
+---
+
+MODO:
+host
+
+ESPECTADOR:
+vamos abrir uma mala?
+
+RESPOSTA RUIM:
+escolha uma mala para revelar um objeto.
+
+RESPOSTA DESEJADA:
+ansioso.
+
+isso e util, mas ainda nao e uma ordem do mundo.
+
+escolha alguem mais paciente que voce.
+
+---
+
 ESPECTADOR:
 voce esta vivo?
 
