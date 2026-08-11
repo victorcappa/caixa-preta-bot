@@ -3,7 +3,7 @@ import { getModePrompt } from "./modes";
 import { caixaPretaPersonality } from "./personality";
 import { caixaPretaRules } from "./rules";
 
-export const PROMPT_VERSION = 6;
+export const PROMPT_VERSION = 7;
 
 function variablesBlock(variables = {}) {
   if (!variables || Object.keys(variables).length === 0) {

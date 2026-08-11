@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:host-mode": "node scripts/host-mode-simulation.js"
   },
   "dependencies": {
     "next": "^15.4.6",
