@@ -153,6 +153,24 @@ async function main() {
   });
   const opportunity = director.evaluateGameOpportunity(state, "estamos parados");
   assert.equal(opportunity.shouldStartAutomatic, true);
+  const automaticGame = director.startGame(state, { source: "automatic" });
+  assert.notEqual(automaticGame.gameState.id, "draw_and_guess");
+  assert.notEqual(automaticGame.gameState.id, "pictionary_teams");
+
+  const gossipState = baseState({
+    game: director.createInitialGameState(),
+    memories: [
+      { content: "estamos no ensaio" },
+      { content: "vamos tirar fotos hoje" }
+    ],
+    conversation: [
+      { role: "assistant", content: "Time A ganha a honra duvidosa de decidir: jogo rapido, fofoca leve ou acusacao ficticia?" },
+      { role: "user", content: "fofoca leve" }
+    ]
+  });
+  const gossipGame = director.startGame(gossipState, { source: "automatic" });
+  assert.notEqual(gossipGame.gameState.id, "draw_and_guess");
+  assert.notEqual(gossipGame.gameState.id, "pictionary_teams");
 
   state = baseState({
     game: director.createInitialGameState(),
@@ -186,6 +204,9 @@ async function main() {
   started = director.startGame(state, { requestedGame: "desenho", source: "operator" });
   assert.equal(started.gameState.id, "draw_and_guess");
   assert(started.events.some((event) => event.type === "DRAWING"));
+  advance = director.advanceGame({ ...state, game: started.gameState }, started.gameState.privateData.secretWord);
+  assert.equal(advance.result.completed, true);
+  assert(advance.events.some((event) => event.type === "CLEAR_DRAWING"));
 
   started = director.startGame(state, { requestedGame: "teams", source: "operator" });
   assert.equal(started.gameState.teams.length, 2);
