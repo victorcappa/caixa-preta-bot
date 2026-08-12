@@ -201,10 +201,47 @@ export async function POST(request) {
         return Response.json({ message: stopped.stopped ? "GAME STOPPED" : "NO ACTIVE GAME" });
       }
 
+      if (gameCommand.action === "secret") {
+        const secretSet = showState.setGameSecret(gameCommand.secret, { source: "operator" });
+
+        if (!secretSet.applied) {
+          return Response.json({ error: "GAME SECRET NOT ACCEPTED" }, { status: 400 });
+        }
+
+        const turn = await generateCaixaPretaTurn({
+          state: showState.privateSnapshot(),
+          operatorInstruction: "O operador definiu secret para Maria Antonieta. Nao revele o segredo. Continue fazendo perguntas de sim/nao/talvez para descobrir."
+        });
+
+        showState.addMessage("assistant", turn.text, "operator");
+
+        if (turn.events.length) {
+          showState.queuePerformanceEvents(turn.events, "agent");
+        }
+
+        return Response.json({ message: "GAME SECRET SET" });
+      }
+
+      const activeGame = showState.snapshot().game;
+      if (activeGame?.active && gameCommand.action !== "replace") {
+        return Response.json({
+          error: [
+            `GAME ALREADY ACTIVE: ${activeGame.id}`,
+            "Use /game stop",
+            "Use /game replace <game>"
+          ].join("\n")
+        }, { status: 409 });
+      }
+
       const started = showState.startGame({
         requestedGame: gameCommand.requestedGame,
-        source: "operator"
+        source: "operator",
+        replace: gameCommand.action === "replace"
       });
+
+      if (started.blocked) {
+        return Response.json({ error: `GAME ALREADY ACTIVE: ${started.gameState.id}` }, { status: 409 });
+      }
 
       if (!started.gameState.id) {
         return Response.json({ error: "NO ELIGIBLE GAME" }, { status: 400 });

@@ -453,6 +453,23 @@ npm run dev</code></pre>
                 </article>
 
                 <article class="command">
+                  <strong>/game [tipo|stop|replace|secret]</strong>
+                  <p>
+                    Controla jogos do HOST sem expor o comando na projecao. Se ja houver jogo ativo,
+                    <code>/game</code> nao empilha outro: use <code>/game stop</code> ou
+                    <code>/game replace tipo</code>. Em Maria Antonieta com a Caixa adivinhando,
+                    <code>/game secret texto</code> guarda o segredo no servidor/operator sem
+                    enviar esse segredo para o modelo.
+                  </p>
+                  <pre><code>/game maria
+/game secret Anitta
+/game mestre
+/game cards
+/game stop
+/game replace forca</code></pre>
+                </article>
+
+                <article class="command">
                   <strong>/mala</strong>
                   <p>
                     Entra no modo MALAS e gera uma transicao contextual na projecao sem revelar o
@@ -493,11 +510,20 @@ npm run dev</code></pre>
               </p>
 
               <p>
-                No modo HOST, o repertorio de microjogos fica em <code>lib/host/games.js</code>.
-                A biblioteca inclui mecanicas curtas como lacuna, regra secreta, voto social,
-                captcha humano, pontos falsos, Quem Sou Eu, conspiracao express e enigma rapido.
-                O planner deve escolher mecanicas diferentes das recentes e respeitar cooldown
-                conceitual para evitar repeticao.
+                No modo HOST, conversa tambem e gameplay. <code>conversationRun</code> e um periodo
+                de 2 a 8 turnos em que a Caixa Preta pode conversar, comentar, implicar, fazer
+                follow-up, usar memoria, fazer piada ou mudar de assunto sem iniciar jogo, ponto,
+                cargo, voto, gesto ou countdown.
+              </p>
+
+              <p>
+                O repertorio de jogos e microdinamicas fica em <code>lib/host/games.js</code>.
+                Quando houver <code>GAME START</code>, o GameDirector prioriza jogos reconheciveis
+                e stateful: Maria Antonieta / Quem Sou Eu, Mestre Mandou, Cards-style, Forca,
+                desenho, Pictionary em times, Adivinhe a Regra, Sim/Nao proibidos, Palavra
+                Proibida, charadas, quiz, equipes e text adventure. Pontos falsos, cargos,
+                inventario, votacoes abstratas e tarefas arbitrarias sao microdinamicas: podem
+                aparecer como piada ou dentro de jogos, mas nao substituem jogo real.
               </p>
 
               <p>
@@ -505,7 +531,9 @@ npm run dev</code></pre>
                 evidencia, algoritmo pessoal, lanterna, nota, camera, calculadora ou timer.
                 Participacao com celular e sempre voluntaria. Buscas, fotos, Instagram search,
                 conteudo pessoal ou qualquer projecao exigem confirmacao humana no operator.
-                Se houver recusa, a Caixa Preta deve reagir com personalidade e abrir outro jogo.
+                Se houver recusa, a Caixa Preta deve reagir com personalidade e pode voltar
+                para conversa, mudar de assunto ou abrir outro jogo somente se houver
+                oportunidade real.
               </p>
 
               <p class="note">

@@ -384,8 +384,8 @@ export default function Chat() {
                   <dd>Guarda uma observacao silenciosa da apresentacao.</dd>
                 </div>
                 <div>
-                  <dt>/game [tipo|random|stop]</dt>
-                  <dd>Forca, escolhe ou encerra um jogo sem expor o comando na projecao.</dd>
+                  <dt>/game [tipo|stop|replace|secret]</dt>
+                  <dd>Controla jogos sem empilhar; use secret para Maria quando a Caixa adivinha.</dd>
                 </div>
                 <div>
                   <dt>/model modelo</dt>

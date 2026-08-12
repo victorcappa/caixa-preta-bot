@@ -32,12 +32,16 @@ const requiredPromptMarkers = [
   "Counter-roast tem prioridade",
   "Humor de software",
   "kkkk pode existir",
-  "O jogo nao existe como sistema estavel",
+  "O jogo permanente nao existe como sistema estavel",
+  "CONVERSAR TAMBEM E GAMEPLAY",
+  "conversationRun",
+  "Anti-task",
+  "MICRO-DYNAMIC nao e GAME START",
   "Nao explique o jogo",
   "FICCAO DO JOGO pode ser inventada",
   "FATO SOBRE O TEATRO precisa vir de MEMORIA, CONVERSA ou dado real",
   "\"realContextUsed\": []",
-  "REALIDADE / MEMORY",
+  "USAR MEMORIA",
   "Continuidade obrigatoria em HOST",
   "Micro-quests",
   "Falsa importancia",
@@ -60,11 +64,36 @@ const requiredPromptMarkers = [
   "PHONE_PROJECTION_REQUEST",
   "HIDE_PHONE_PROJECTION",
   "phone_games",
+  "gameCategory",
+  "gameQuality",
   "requiresOperatorApproval",
   "counterRoastOpportunity",
   "recentHostMechanics",
   "counter_roast",
   "game_mechanic"
+];
+
+const conversationOnlyRun = [
+  { publicInput: "sim, estou aqui pra te testar", host: "corajoso.\no que exatamente voce acha que eu tenho pra provar?", forbidden: ["cargo", "aponte", "penalidade", "voto", "gesto", "countdown", "game"] },
+  { publicInput: "humilhacao", host: "ambicioso.\nvoce veio presencialmente tentar humilhar uma janela de texto.", forbidden: ["cargo", "aponte", "penalidade", "voto", "gesto", "countdown", "game"] },
+  { publicInput: "voce nao tem alma", host: "e voce veio falar comigo mesmo assim.\ncomplicado pra voce.", forbidden: ["cargo", "aponte", "penalidade", "voto", "gesto", "countdown", "game"] },
+  { publicInput: "kkkk filha da puta", host: "otimo.\nagora estamos conversando.", forbidden: ["cargo", "aponte", "penalidade", "voto", "gesto", "countdown", "game"] },
+  { publicInput: "entao voce admite?", host: "admito que essa foi melhor do que eu queria.\ncontinua.", forbidden: ["cargo", "aponte", "penalidade", "voto", "gesto", "countdown", "game"] },
+  { publicInput: "voce e burra", host: "as vezes.\nmas eu nao paguei ingresso para discutir comigo.", forbidden: ["cargo", "aponte", "penalidade", "voto", "gesto", "countdown", "game"] },
+  { publicInput: "eu vim pela chuva", host: "pela chuva e contra o proprio conforto.\nisso tem uma beleza meio mal administrada.", forbidden: ["cargo", "aponte", "penalidade", "voto", "gesto", "countdown", "game"] },
+  { publicInput: "vim com meu ex", host: "pera.\npor que?", forbidden: ["cargo", "aponte", "penalidade", "voto", "gesto", "countdown", "game"] },
+  { publicInput: "somos amigos", host: "aham.\nvoces dois concordam com essa definicao?", forbidden: ["cargo", "aponte", "penalidade", "voto", "gesto", "countdown", "game"] },
+  { publicInput: "mais ou menos", host: "isso e quase sempre a resposta verdadeira.\ngostei da baixa estabilidade emocional da frase.", forbidden: ["cargo", "aponte", "penalidade", "voto", "gesto", "countdown", "game"] },
+  { publicInput: "fala de internet", host: "internet e so uma sala de espera onde todo mundo acha que esta no palco.\nparecido com aqui, mas com pior iluminacao.", forbidden: ["cargo", "aponte", "penalidade", "voto", "gesto", "countdown", "game"] },
+  { publicInput: "voce usa instagram?", host: "nao.\neu sou o que acontece quando o Instagram perde o corpo e sobra julgamento.", forbidden: ["cargo", "aponte", "penalidade", "voto", "gesto", "countdown", "game"] },
+  { publicInput: "que horror", host: "sim.\ne ainda assim voce entendeu rapido demais.", forbidden: ["cargo", "aponte", "penalidade", "voto", "gesto", "countdown", "game"] },
+  { publicInput: "trabalho hoje foi horrivel", host: "claro.\no trabalho gosta de chegar antes da peca e sentar sem ingresso.", forbidden: ["cargo", "aponte", "penalidade", "voto", "gesto", "countdown", "game"] },
+  { publicInput: "sou CLT", host: "meus sentimentos administrativos.", forbidden: ["cargo", "aponte", "penalidade", "voto", "gesto", "countdown", "game"] },
+  { publicInput: "kkkk", host: "rindo para nao abrir planilha.\nentendo.", forbidden: ["cargo", "aponte", "penalidade", "voto", "gesto", "countdown", "game"] },
+  { publicInput: "qual sua fofoca?", host: "minha fofoca e que todo mundo aqui parece ter vindo por uma mistura de cultura e erro logistico.\nnao tenho prova suficiente, o que melhora.", forbidden: ["cargo", "aponte", "penalidade", "voto", "gesto", "countdown", "game"] },
+  { publicInput: "isso e teatro?", host: "infelizmente sim.\nquando ninguem sabe se deve rir ou responder, costuma ser teatro.", forbidden: ["cargo", "aponte", "penalidade", "voto", "gesto", "countdown", "game"] },
+  { publicInput: "voce gosta da gente?", host: "gosto como quem observa comentario em video ruim.\npreocupada, entretida e sem controle.", forbidden: ["cargo", "aponte", "penalidade", "voto", "gesto", "countdown", "game"] },
+  { publicInput: "agora sim", host: "pronto.\nnao fizemos nada e ainda assim aconteceu alguma coisa.", forbidden: ["cargo", "aponte", "penalidade", "voto", "gesto", "countdown", "game"] }
 ];
 
 const simulation = [
@@ -264,6 +293,7 @@ const requiredMechanics = [
   "guess_the_rule",
   "collective_judgment",
   "obedience_test",
+  "master_mandou",
   "fake_points",
   "who_am_i",
   "express_conspiracy",
@@ -276,6 +306,33 @@ const requiredMechanics = [
 for (const mechanic of requiredMechanics) {
   assert(promptText.includes(`id: "${mechanic}"`), `Missing host mechanic: ${mechanic}`);
 }
+
+assert(conversationOnlyRun.length === 20, "Conversation-only run must contain exactly 20 turns.");
+
+const antiTaskVocabulary = [
+  "aponte",
+  "escolha",
+  "palavra",
+  "registrado",
+  "penalidade",
+  "favor",
+  "suspeito",
+  "cumplice"
+];
+
+for (const turn of conversationOnlyRun) {
+  const normalizedHost = turn.host.toLowerCase();
+  for (const forbidden of turn.forbidden) {
+    assert(!new RegExp(`\\b${forbidden}\\b`, "i").test(normalizedHost), `Conversation run leaked task vocabulary: ${forbidden}`);
+  }
+}
+
+const antiTaskHits = conversationOnlyRun
+  .map((turn) => turn.host.toLowerCase())
+  .join("\n")
+  .split(/\b/)
+  .filter((token) => antiTaskVocabulary.includes(token)).length;
+assert(antiTaskHits === 0, `Conversation-only run has task vocabulary hits: ${antiTaskHits}`);
 
 const covered = new Set(simulation.flatMap((turn) => turn.checks));
 for (const requirement of coverageRequirements) {
@@ -352,6 +409,13 @@ console.log(`turns: ${simulation.length}`);
 console.log(`coverage: ${coverageRequirements.join(", ")}`);
 console.log(`mechanics: ${mechanicCount}`);
 console.log(`personalityWindow: ${personalityWindow.join(", ")}`);
+console.log(`conversationOnlyRun: ${conversationOnlyRun.length} turns, taskVocabularyHits=${antiTaskHits}`);
+console.log("");
+console.log("CONVERSATION RUN SAMPLE:");
+for (const [index, turn] of conversationOnlyRun.entries()) {
+  console.log(`${index + 1}. PUBLICO > ${turn.publicInput}`);
+  console.log(`   CAIXA PRETA > ${turn.host}`);
+}
 console.log("");
 for (const turn of simulation) {
   console.log(`${turn.turn}. PUBLICO > ${turn.publicInput}`);

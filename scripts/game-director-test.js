@@ -97,28 +97,17 @@ async function main() {
 
   const explicitEscape = director.startGame(state, { requestedGame: "escape", source: "operator" });
   assert.equal(explicitEscape.gameState.id, "mini_escape_room");
-  const replacementGame = director.startGame({ ...state, game: explicitEscape.gameState }, { source: "operator" });
-  assert.notEqual(replacementGame.gameState.id, "mini_escape_room");
-  const preferredReplacementIds = [
-    "hangman",
-    "who_am_i",
-    "cards_style_fill_in",
-    "morel_recording",
-    "three_suitcases",
-    "black_box_transcript",
-    "object_trace",
-    "color_failure",
-    "rehearsal_loop",
-    "boarding_gate",
-    "draw_and_guess",
-    "complete_phrase",
-    "guess_the_rule",
-    "secret_rule",
-    "yes_no_forbidden",
-    "forbidden_word",
-    "collective_judgment"
-  ];
-  assert(preferredReplacementIds.includes(replacementGame.gameState.id));
+  const blockedReplacement = director.startGame({ ...state, game: explicitEscape.gameState }, { source: "operator" });
+  assert.equal(blockedReplacement.blocked, true);
+  assert.equal(blockedReplacement.selection.blockedReason, "game_already_active");
+  assert.equal(blockedReplacement.gameState.id, "mini_escape_room");
+  const replacementGame = director.startGame({ ...state, game: explicitEscape.gameState }, {
+    requestedGame: "cards",
+    source: "operator",
+    replace: true
+  });
+  assert.equal(replacementGame.blocked, undefined);
+  assert.equal(replacementGame.gameState.id, "cards_style_fill_in");
 
   state.game = director.createInitialGameState();
   const selectedIds = [];
@@ -184,8 +173,18 @@ async function main() {
     ]
   });
   const wordOpportunity = director.evaluateGameOpportunity(state, "saudade");
-  assert.equal(wordOpportunity.aiMayStart, true);
-  assert.equal(wordOpportunity.shouldStartAutomatic, true);
+  assert.equal(wordOpportunity.conversationRun.continueConversation, true);
+  assert.equal(wordOpportunity.shouldStartAutomatic, false);
+
+  const taskyState = baseState({
+    game: director.createInitialGameState(),
+    conversation: [
+      { role: "assistant", content: "complete a frase: o teatro sobrevive porque _____." },
+      { role: "user", content: "pessoas insistem" }
+    ]
+  });
+  const gameRequestOpportunity = director.evaluateGameOpportunity(taskyState, "me da um jogo");
+  assert.equal(gameRequestOpportunity.aiMayStart, true);
 
   started = director.startGame(state, { requestedGame: "forca", source: "operator" });
   assert.equal(started.gameState.id, "hangman");
@@ -198,8 +197,66 @@ async function main() {
 
   started = director.startGame(state, { requestedGame: "maria", source: "operator" });
   assert.equal(started.gameState.id, "who_am_i");
-  assert.equal(typeof started.gameState.privateData.secret, "string");
-  assert.equal(started.gameState.phase, "yes_no_questions");
+  assert.equal(started.gameState.privateData.secret, null);
+  assert.equal(started.gameState.privateData.hiddenFromModel, true);
+  assert.equal(started.gameState.publicData.secretKnownToModel, false);
+  assert.equal(started.gameState.phase, "awaiting_secret");
+  const mariaWithSecret = director.setGameSecret({ ...state, game: started.gameState }, "Anitta");
+  assert.equal(mariaWithSecret.applied, true);
+  assert.equal(mariaWithSecret.gameState.privateData.secret, "Anitta");
+  assert.equal(mariaWithSecret.gameState.publicData.secretKnownToModel, false);
+  advance = director.advanceGame({ ...state, game: mariaWithSecret.gameState }, "sim");
+  assert.equal(advance.result.type, "yes_no_answer");
+  assert.deepEqual(advance.gameState.publicData.answers, ["sim"]);
+  const missedGuess = director.applyGameMove({ ...state, game: advance.gameState }, {
+    gameMove: "guess_secret",
+    guess: "Fernanda Torres"
+  });
+  assert.equal(missedGuess.result.hit, false);
+  assert.equal(missedGuess.gameState.active, true);
+  const hitGuess = director.applyGameMove({ ...state, game: missedGuess.gameState }, {
+    gameMove: "guess_secret",
+    guess: "Anitta"
+  });
+  assert.equal(hitGuess.result.hit, true);
+  assert.equal(hitGuess.gameState.active, false);
+
+  started = director.startGame(state, { requestedGame: "mestre", source: "operator" });
+  assert.equal(started.gameState.id, "master_mandou");
+  let masterState = started.gameState;
+  for (let index = 0; index < 10; index += 1) {
+    const command = index % 2 === 0
+      ? `Caixa mandou comando ${index}`
+      : `comando armadilha ${index}`;
+    const moved = director.applyGameMove({ ...state, game: masterState }, {
+      gameMove: "master_command",
+      command,
+      valid: index % 2 === 0
+    });
+    assert.equal(moved.applied, true);
+    masterState = moved.gameState;
+    const observed = director.advanceGame({ ...state, game: masterState }, index % 2 === 0 ? "todos obedeceram" : "alguns erraram");
+    assert.equal(observed.result.type, "master_observation");
+    masterState = observed.gameState;
+  }
+  assert.equal(masterState.publicData.validCommands, 5);
+  assert.equal(masterState.publicData.trapCommands, 5);
+
+  started = director.startGame(state, { requestedGame: "cards", source: "operator" });
+  assert.equal(started.gameState.id, "cards_style_fill_in");
+  assert.equal(started.gameState.phase, "collect_answers");
+  let cardsState = started.gameState;
+  for (const answer of ["processo judicial", "um cafe ruim", "a tecnica descansando"]) {
+    const collected = director.advanceGame({ ...state, game: cardsState }, answer);
+    cardsState = collected.gameState;
+  }
+  assert.equal(cardsState.phase, "judge");
+  const winner = director.applyGameMove({ ...state, game: cardsState }, {
+    gameMove: "choose_winner",
+    winner: "a tecnica descansando"
+  });
+  assert.equal(winner.applied, true);
+  assert.equal(winner.gameState.active, false);
 
   started = director.startGame(state, { requestedGame: "desenho", source: "operator" });
   assert.equal(started.gameState.id, "draw_and_guess");

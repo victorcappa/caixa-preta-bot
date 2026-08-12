@@ -88,6 +88,23 @@ Confirmar ou cortar imediatamente essa camada:
 `PHONE_PROJECTION_REQUEST`. Isso nunca projeta conteudo privado sozinho; apenas
 marca que ha uma confirmacao humana pendente.
 
+Forcar ou controlar um jogo do HOST:
+
+```text
+/game
+/game cards
+/game maria
+/game secret Anitta
+/game mestre
+/game stop
+/game replace forca
+```
+
+Se ja houver jogo ativo, `/game` nao empilha outro. Use `/game stop` para
+encerrar ou `/game replace tipo` para substituir explicitamente. Em Maria
+Antonieta no modo em que a Caixa adivinha, `/game secret texto` define o segredo
+no servidor/operator sem enviar esse segredo para o modelo.
+
 Entrar no modo MALAS e gerar uma transicao contextual na projecao:
 
 ```text
@@ -140,7 +157,7 @@ A Caixa Preta responde a partir de uma montagem central de contexto:
 A chamada para a OpenAI fica isolada em `lib/openai.js`.
 A montagem do system prompt fica em `prompts/buildSystemPrompt.js`.
 As regras especificas de modo ficam em `prompts/modes.js`.
-O repertorio de microjogos do HOST fica em `lib/host/games.js`.
+O repertorio de jogos e microdinamicas do HOST fica em `lib/host/games.js`.
 O carregamento da base local fica em `lib/knowledge.js`.
 
 ## Onde editar a máquina
@@ -208,16 +225,24 @@ No modo `host`, a Caixa Preta interage com a plateia, usa memoria como materia
 de improviso e nao antecipa as malas. O publico pode escrever sobre malas, mas
 isso nao muda o estado interno.
 
-O HOST usa uma biblioteca de mecanicas curtas, como lacuna, regra secreta,
-voto social, captcha humano, pontos falsos, Quem Sou Eu, conspiracao express e
-enigma rapido. A escolha da mecanica deve variar pelo contexto e respeitar
-cooldown conceitual para evitar repeticao.
+O HOST deve conseguir conversar sem transformar todo turno em tarefa.
+`conversationRun` e um periodo de 2 a 8 turnos em que a Caixa Preta pode apenas
+conversar, comentar, implicar, fazer follow-up, usar memoria, fazer piada ou
+mudar de assunto sem iniciar jogo, ponto, cargo, voto, gesto ou countdown.
+
+Quando houver jogo, o GameDirector prioriza jogos reconheciveis e stateful:
+Maria Antonieta / Quem Sou Eu, Mestre Mandou, Cards-style, Forca, desenho,
+Pictionary em times, Adivinhe a Regra, Sim/Nao proibidos, Palavra Proibida,
+charadas, quiz, equipes e text adventure. Pontos falsos, cargos, inventario,
+votacoes abstratas e tarefas arbitrarias sao microdinamicas: podem aparecer
+como piada ou dentro de jogos, mas nao substituem `GAME START`.
 
 A biblioteca tambem inclui `phone_games`: celular como objeto cenico, arquivo,
 evidencia, algoritmo pessoal, lanterna, nota, camera, calculadora ou timer.
 Participacao com celular e sempre voluntaria. Conteudo `high` privacy, buscas,
 fotos, Instagram search ou qualquer projecao exigem confirmacao humana no
-operator. Recusa vira material de personalidade e deve abrir outro jogo.
+operator. Recusa vira material de personalidade e pode voltar para conversa,
+mudar de assunto ou abrir outro jogo somente se houver oportunidade real.
 
 Privacy ladder do celular:
 
