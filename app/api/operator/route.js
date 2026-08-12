@@ -301,26 +301,85 @@ export async function POST(request) {
       });
     }
 
-    if (name === "/malas" || name === "/mala") {
-      if (content) {
-        return Response.json({ error: "MALA DOES NOT ACCEPT ARGUMENTS" }, { status: 400 });
-      }
-
+    if (name === "/malas" || name === "/mala" || name === "/suitcase") {
       const hadActiveGame = showState.snapshot().game?.active;
-      if (hadActiveGame) {
+      const [action = "start", ...rest] = content.split(/\s+/).filter(Boolean);
+      const normalizedAction = action
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+
+      if ((normalizedAction === "start" || !content) && hadActiveGame) {
         showState.stopGame({ status: "mode_change", source: "operator" });
       }
 
+      if (normalizedAction === "abort" || normalizedAction === "stop") {
+        const aborted = showState.abortSuitcases({ source: "operator" });
+        return Response.json({ message: `SUITCASES ABORTED\n${aborted.state.phase}` });
+      }
+
+      if (normalizedAction === "reset") {
+        const reset = showState.resetSuitcases({ source: "operator" });
+        return Response.json({ message: `SUITCASES RESET\n${reset.state.phase}` });
+      }
+
+      if (normalizedAction === "win") {
+        showState.finishSuitcases("machine_win", { source: "operator" });
+        return Response.json({ message: "SUITCASE FORCE WIN" });
+      }
+
+      if (normalizedAction === "lose") {
+        showState.finishSuitcases("audience_win", { source: "operator" });
+        return Response.json({ message: "SUITCASE FORCE LOSE" });
+      }
+
+      if (normalizedAction === "next") {
+        const next = showState.nextInstagramPerson({ source: "operator" });
+        return Response.json({
+          message: `INSTAGRAM NEXT\n${next.state.instagram?.selectedPerson?.name || "NO PERSON"}`
+        });
+      }
+
+      if (["1", "name", "nome", "maria", "mariaantonieta"].includes(normalizedAction)) {
+        const forced = showState.forceSuitcaseExperience("name", { source: "operator" });
+        return Response.json({ message: `SUITCASE FORCE NAME\n${forced.state.phase}` });
+      }
+
+      if (["2", "instagram", "insta"].includes(normalizedAction)) {
+        const forced = showState.forceSuitcaseExperience("instagram", { source: "operator" });
+        return Response.json({
+          message: `SUITCASE FORCE INSTAGRAM\n${forced.state.instagram?.selectedPerson?.name || "NO PERSON"}`
+        });
+      }
+
+      if (["3", "game", "jogo", "desafio", "puzzle"].includes(normalizedAction)) {
+        const forced = showState.forceSuitcaseExperience("game", {
+          source: "operator",
+          requestedGame: rest.join(" ") || null
+        });
+        return Response.json({ message: `SUITCASE FORCE GAME\n${forced.state.currentGame?.id || "NO GAME"}` });
+      }
+
+      if (!["start", ""].includes(normalizedAction)) {
+        return Response.json({ error: "MALA COMMAND UNKNOWN" }, { status: 400 });
+      }
+
       const modeChange = showState.setMode(SHOW_MODES.malas);
+      showState.startSuitcases({ source: "operator" });
       const turn = await generateCaixaPretaTurn({
         state: showState.privateSnapshot(),
         operatorInstruction: [
           "O modo MALAS acabou de ser acionado pelo operador.",
           hadActiveGame ? "Havia um jogo ativo; encerre ou dissolva essa regra antes de entrar nas malas." : "",
           "O publico nao deve ver o comando nem saber que houve comando tecnico.",
-          "Conclua a interacao atual e faca uma transicao contextual para a fase das malas."
+          "Conclua a interacao atual e faca uma transicao contextual para a fase das malas.",
+          "O estado ja esta aguardando escolha de mala. Termine com uma conducao viva para escolher uma mala, sem parecer menu tecnico."
         ].join(" ")
       });
+
+      if (turn.suitcase && showState.snapshot().suitcase?.active) {
+        showState.applySuitcaseMove(turn.suitcase, { source: "agent" });
+      }
 
       showState.addMessage("assistant", turn.text, "operator");
 
@@ -349,6 +408,10 @@ export async function POST(request) {
 
       if (turn.game?.gameMove && showState.snapshot().game?.active) {
         showState.applyGameMove(turn.game, { source: "agent" });
+      }
+
+      if (turn.suitcase && showState.snapshot().suitcase?.active) {
+        showState.applySuitcaseMove(turn.suitcase, { source: "agent" });
       }
 
       showState.addMessage("assistant", turn.text, "operator");

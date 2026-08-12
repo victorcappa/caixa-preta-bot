@@ -1,0 +1,35 @@
+[
+  {
+    "id": "janaina",
+    "name": "Janaína Leite",
+    "instagramHandle": "@janainaleite",
+    "instagramUrl": "",
+    "enabled": true,
+    "preparedFeed": [
+      {
+        "id": "1",
+        "label": "POST 01",
+        "caption": "conteudo preparado para ensaio"
+      },
+      {
+        "id": "2",
+        "label": "POST 02",
+        "caption": "substituir por material autorizado"
+      }
+    ]
+  },
+  {
+    "id": "victor",
+    "name": "Victor Cappa",
+    "instagramHandle": "@victorcappa",
+    "instagramUrl": "",
+    "enabled": true,
+    "preparedFeed": [
+      {
+        "id": "1",
+        "label": "POST 01",
+        "caption": "conteudo preparado para ensaio"
+      }
+    ]
+  }
+]

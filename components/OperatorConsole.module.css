@@ -102,7 +102,8 @@
 }
 
 .panicButton,
-.approveButton {
+.approveButton,
+.controlGrid button {
   width: 100%;
   min-height: 36px;
   margin: 0 0 14px;
@@ -113,13 +114,30 @@
   cursor: pointer;
 }
 
+.controlGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin: 0 0 18px;
+}
+
+.controlGrid button {
+  margin: 0;
+  min-height: 34px;
+  color: var(--green-dim);
+  border-color: var(--green-soft);
+  text-align: left;
+  padding: 6px 8px;
+}
+
 .panicButton {
   border-color: var(--danger);
   color: var(--danger);
 }
 
 .panicButton:disabled,
-.approveButton:disabled {
+.approveButton:disabled,
+.controlGrid button:disabled {
   cursor: default;
   opacity: 0.5;
 }

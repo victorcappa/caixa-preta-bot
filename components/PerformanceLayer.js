@@ -47,6 +47,7 @@ export default function PerformanceLayer({
   activities = [],
   events = [],
   game = null,
+  suitcase = null,
   onMachineBusyChange = () => {},
   phoneProjection = { status: "hidden" }
 }) {
@@ -86,7 +87,17 @@ export default function PerformanceLayer({
           return;
         }
 
-        if (event.type === "DRAWING") {
+        if (event.type === "HIDE_INSTAGRAM" || event.type === "RETURN_TO_CHAT") {
+          setActiveEvents((current) => current.filter((item) => item.type !== "SHOW_INSTAGRAM"));
+          return;
+        }
+
+        if (event.type === "CLEAR_SCREEN") {
+          setActiveEvents([]);
+          return;
+        }
+
+        if (event.type === "DRAWING" || event.type === "START_DRAWING" || event.type === "ADD_DRAWING_ELEMENT") {
           setDrawingShapes((current) => [...current, ...(event.payload.shapes || [])].slice(-64));
         }
 
@@ -149,8 +160,13 @@ export default function PerformanceLayer({
     "BLACKOUT",
     "GLITCH",
     "DRAWING",
+    "START_DRAWING",
+    "ADD_DRAWING_ELEMENT",
     "PHONE_PROJECTION_REQUEST",
-    "HIDE_PHONE_PROJECTION"
+    "HIDE_PHONE_PROJECTION",
+    "HIDE_INSTAGRAM",
+    "RETURN_TO_CHAT",
+    "CLEAR_SCREEN"
   ].includes(event.type));
 
   const visiblePhoneProjection = phoneProjection?.status && phoneProjection.status !== "hidden"
@@ -173,8 +189,25 @@ export default function PerformanceLayer({
     }
     : null;
   const visibleHangman = activityHangman || gameHangman;
+  const suitcaseGame = suitcase?.currentGame;
+  const suitcaseHangman = suitcaseGame?.id === "hangman" && suitcaseGame.active
+    ? {
+      id: suitcaseGame.id,
+      type: "HANGMAN",
+      status: "active",
+      publicState: {
+        progress: suitcaseGame.publicState?.progress,
+        wrongGuesses: suitcaseGame.publicState?.wrongLetters || [],
+        guessCount: suitcaseGame.attempts || 0,
+        maxErrors: 6
+      }
+    }
+    : null;
+  const visibleSuitcasePuzzle = suitcaseGame && suitcaseGame.active && ["scrambled_word", "riddle", "guess_the_rule"].includes(suitcaseGame.id)
+    ? suitcaseGame
+    : null;
 
-  if (!activeEvents.length && !drawingShapes.length && !visiblePhoneProjection && !visibleHangman) {
+  if (!activeEvents.length && !drawingShapes.length && !visiblePhoneProjection && !visibleHangman && !suitcaseHangman && !visibleSuitcasePuzzle) {
     return null;
   }
 
@@ -195,6 +228,8 @@ export default function PerformanceLayer({
       ) : null}
 
       {visibleHangman ? <HangmanOverlay activity={visibleHangman} /> : null}
+      {suitcaseHangman ? <HangmanOverlay activity={suitcaseHangman} label="MALA / FORCA" /> : null}
+      {visibleSuitcasePuzzle ? <SuitcasePuzzle game={visibleSuitcasePuzzle} /> : null}
 
       {drawingShapes.length ? (
         <svg className={styles.drawing} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
@@ -246,6 +281,10 @@ export default function PerformanceLayer({
           );
         }
 
+        if (event.type === "SHOW_INSTAGRAM") {
+          return <InstagramOverlay event={event} key={event.id} />;
+        }
+
         if (event.type === "FORBIDDEN_BUTTON") {
           return (
             <button
@@ -277,7 +316,7 @@ export default function PerformanceLayer({
         }
 
         return (
-          <div className={event.type === "FLASH_TEXT" ? styles.flashText : styles.fullscreenText} key={event.id}>
+          <div className={["FLASH_TEXT"].includes(event.type) ? styles.flashText : resultClassName(event.type)} key={event.id}>
             {event.payload.text}
           </div>
         );
@@ -286,7 +325,19 @@ export default function PerformanceLayer({
   );
 }
 
-function HangmanOverlay({ activity }) {
+function resultClassName(type) {
+  if (type === "SHOW_WIN") {
+    return `${styles.fullscreenText} ${styles.winText}`;
+  }
+
+  if (type === "SHOW_LOSE") {
+    return `${styles.fullscreenText} ${styles.loseText}`;
+  }
+
+  return styles.fullscreenText;
+}
+
+function HangmanOverlay({ activity, label = "FORCA" }) {
   const publicState = activity.publicState || {};
   const wrongGuesses = publicState.wrongGuesses || [];
   const maxErrors = Number(publicState.maxErrors || 6);
@@ -296,7 +347,7 @@ function HangmanOverlay({ activity }) {
 
   return (
     <aside className={styles.hangman} aria-label="Forca">
-      <span className={styles.hangmanLabel}>FORCA</span>
+      <span className={styles.hangmanLabel}>{label}</span>
       <strong className={styles.hangmanProgress}>{publicState.progress || "_ _ _"}</strong>
       <div className={styles.hangmanMeta}>
         <span>{errorCount}/{maxErrors}</span>
@@ -308,6 +359,58 @@ function HangmanOverlay({ activity }) {
       </div>
       {completed ? (
         <p className={styles.hangmanStatus}>{solved ? "ACERTOU" : "MORREU"}</p>
+      ) : null}
+    </aside>
+  );
+}
+
+function InstagramOverlay({ event }) {
+  const person = event.payload?.person || {};
+  const posts = person.preparedFeed || [];
+
+  return (
+    <section className={styles.instagram} aria-label="Instagram">
+      <header>
+        <span>INSTAGRAM</span>
+        <strong>{person.name || "VIDA NAO CADASTRADA"}</strong>
+        <small>{person.instagramHandle || person.instagramUrl || "sem handle configurado"}</small>
+      </header>
+      <div className={styles.instagramGrid}>
+        {(posts.length ? posts : Array.from({ length: 6 }, (_, index) => ({
+          id: `${index + 1}`,
+          label: `POST ${index + 1}`,
+          caption: "material autorizado pendente"
+        }))).map((post, index) => (
+          <article className={styles.instagramPost} key={post.id || index}>
+            <b>{post.label || `POST ${index + 1}`}</b>
+            <p>{post.caption || "sem legenda preparada"}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SuitcasePuzzle({ game }) {
+  const publicState = game.publicState || {};
+
+  return (
+    <aside className={styles.puzzle} aria-label="Puzzle">
+      <span>{game.name}</span>
+      {game.id === "scrambled_word" ? <strong>{publicState.scrambled}</strong> : null}
+      {game.id === "riddle" ? <strong>{publicState.prompt}</strong> : null}
+      {game.id === "guess_the_rule" ? (
+        <div className={styles.ruleExamples}>
+          {(publicState.examples || []).map((example) => (
+            <p key={example.word}>{example.accepted ? "ACEITO" : "NAO ACEITO"}: {example.word}</p>
+          ))}
+        </div>
+      ) : null}
+      {publicState.hints?.length ? (
+        <p>PISTAS: {publicState.hints.join(" / ")}</p>
+      ) : null}
+      {publicState.tests?.length ? (
+        <p>{publicState.tests.slice(-3).map((test) => `${test.accepted ? "ACEITO" : "NAO"} ${test.input}`).join(" / ")}</p>
       ) : null}
     </aside>
   );
