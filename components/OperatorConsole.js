@@ -86,6 +86,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       "/mala",
       "/event",
       "/draw",
+      "/game",
       "/activity",
       "/intensity",
       "/model",
@@ -178,6 +179,11 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   const performanceLog = (state.performance?.eventLog || []).slice(-8).reverse();
   const activities = state.performance?.activities || [];
   const phoneProjection = state.performance?.phoneProjection || { status: "hidden" };
+  const game = state.game || { active: false, id: null, cooldownTurnsRemaining: 0 };
+  const participantCounts = state.participants?.counts || { team: 0, audience: 0, session: 0, available: 0 };
+  const participantHistory = Object.values(state.participants?.history || {})
+    .sort((a, b) => (b.selectedCount || 0) - (a.selectedCount || 0))
+    .slice(0, 4);
   const modelOptions = state.context?.modelOptions || ["gpt-5-mini", "gpt-5-nano"];
   const variableCount = Object.keys(state.variables || {}).length;
   const footer = (
@@ -205,6 +211,8 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             <span>MESSAGES: {state.conversation.length}</span>
             <span className={styles.modeBadge}>MODE: {(state.mode || "host").toUpperCase()}</span>
             <span>INTENSITY: {(state.performance?.intensity || "calm").toUpperCase()}</span>
+            <span>GAME: {game.active ? `${game.id} / ${game.startSource}`.toUpperCase() : `COOLDOWN ${game.cooldownTurnsRemaining || 0}`}</span>
+            <span>PARTICIPANTS: T{participantCounts.team} A{participantCounts.audience} S{participantCounts.session}</span>
             <span>ACTIVITIES: {activities.length}</span>
             <span>EVENTS: {state.performance?.events?.length || 0}</span>
             <label className={styles.modelControl}>
@@ -248,6 +256,32 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
           ))}
 
           <h2>PERFORMANCE</h2>
+          <article className={styles.memory}>
+            <strong>GAME DIRECTOR</strong>
+            <p>
+              {game.id ? `${game.id} / ${game.phase} / ${game.startSource || "none"}` : "NO GAME"}
+              {"\n"}AVAILABLE: {participantCounts.available}
+              {"\n"}COOLDOWN: {game.cooldownTurnsRemaining || 0}
+            </p>
+          </article>
+          {game.participants?.length ? (
+            <article className={styles.memory}>
+              <strong>GAME PARTICIPANTS</strong>
+              <p>{game.participants.map((participant) => `${participant.name} [${participant.source}]`).join("\n")}</p>
+            </article>
+          ) : null}
+          {game.teams?.length ? (
+            <article className={styles.memory}>
+              <strong>TEAMS</strong>
+              <p>{game.teams.map((team) => `${team.name}: ${team.participants.map((participant) => participant.name).join(", ")}`).join("\n")}</p>
+            </article>
+          ) : null}
+          {participantHistory.length ? (
+            <article className={styles.memory}>
+              <strong>MOST USED</strong>
+              <p>{participantHistory.map((participant) => `${participant.name} ${participant.selectedCount}`).join("\n")}</p>
+            </article>
+          ) : null}
           <button
             className={styles.panicButton}
             onClick={() => sendOperatorCommand("/phone hide", "PHONE ERROR")}

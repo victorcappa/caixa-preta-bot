@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "test:host-mode": "node scripts/host-mode-simulation.js",
+    "test:games": "node --no-warnings scripts/game-director-test.js",
     "test:performance": "node --no-warnings scripts/performance-system-test.js"
   },
   "dependencies": {

@@ -97,6 +97,8 @@ export default function TrainingConsole() {
         notes: "",
         tags: "",
         gameMechanic: "",
+        gameMove: "",
+        personalityMove: "",
         alternatives: [],
         improving: false,
         saved: false,
@@ -168,6 +170,8 @@ export default function TrainingConsole() {
     const notes = override.notes ?? draft.notes;
     const tags = override.tags ?? draft.tags;
     const gameMechanic = override.gameMechanic ?? draft.gameMechanic;
+    const gameMove = override.gameMove ?? draft.gameMove;
+    const personalityMove = override.personalityMove ?? draft.personalityMove;
 
     if ((rating === "almost" || rating === "bad") && !preferredResponse?.trim()) {
       updateDraft(message.id, {
@@ -189,6 +193,10 @@ export default function TrainingConsole() {
           preferredResponse: preferredResponse?.trim() || null,
           notes: notes?.trim() || null,
           gameMechanic: gameMechanic?.trim() || null,
+          gameId: gameMechanic?.trim() || null,
+          gamePhase: null,
+          gameMove: gameMove?.trim() || null,
+          personalityMove: personalityMove?.trim() || null,
           tags: tagsFromText(tags || "")
         })
       });
@@ -391,6 +399,24 @@ export default function TrainingConsole() {
                           value={draft.gameMechanic || ""}
                           onChange={(event) => updateDraft(message.id, { gameMechanic: event.target.value })}
                           placeholder={(snapshot.suggestedGameMechanics || []).slice(0, 4).join(", ")}
+                        />
+                      </label>
+
+                      <label>
+                        GAME MOVE
+                        <input
+                          value={draft.gameMove || ""}
+                          onChange={(event) => updateDraft(message.id, { gameMove: event.target.value })}
+                          placeholder="award_point, start_round, stop_game..."
+                        />
+                      </label>
+
+                      <label>
+                        PERSONALITY MOVE
+                        <input
+                          value={draft.personalityMove || ""}
+                          onChange={(event) => updateDraft(message.id, { personalityMove: event.target.value })}
+                          placeholder="counter_roast, dry_judgment, arbitrary_rule..."
                         />
                       </label>
 

@@ -1,4 +1,5 @@
 import { generateCaixaPretaTurn } from "@/lib/openai";
+import { normalizeGameCommand } from "@/lib/host/GameDirector";
 import { normalizeOpenAIModel } from "@/lib/openaiModels";
 import { showState } from "@/lib/showState";
 import { SHOW_MODES } from "@/prompts/modes";
@@ -179,6 +180,57 @@ export async function POST(request) {
       return Response.json({ error: "DRAW COMMAND UNKNOWN" }, { status: 400 });
     }
 
+    if (name === "/game") {
+      const gameCommand = normalizeGameCommand(content);
+
+      if (gameCommand.action === "stop") {
+        const stopped = showState.stopGame({ status: "operator_stopped", source: "operator" });
+        const turn = await generateCaixaPretaTurn({
+          state: showState.privateSnapshot(),
+          operatorInstruction: stopped.stopped
+            ? "O operador encerrou o jogo ativo. Faca uma saida publica curta, contextual e com personalidade. Nao revele o comando."
+            : "O operador pediu para parar jogo, mas nao havia jogo ativo. Responda curto sem expor o comando tecnico."
+        });
+
+        showState.addMessage("assistant", turn.text, "operator");
+
+        if (turn.events.length) {
+          showState.queuePerformanceEvents(turn.events, "agent");
+        }
+
+        return Response.json({ message: stopped.stopped ? "GAME STOPPED" : "NO ACTIVE GAME" });
+      }
+
+      const started = showState.startGame({
+        requestedGame: gameCommand.requestedGame,
+        source: "operator"
+      });
+
+      if (!started.gameState.id) {
+        return Response.json({ error: "NO ELIGIBLE GAME" }, { status: 400 });
+      }
+
+      const turn = await generateCaixaPretaTurn({
+        state: showState.privateSnapshot(),
+        operatorInstruction: [
+          "O operador acionou /game.",
+          gameCommand.requestedGame ? `Pedido especifico: ${gameCommand.requestedGame}.` : "Sem argumento: o GameDirector escolheu.",
+          "Nao revele o comando tecnico.",
+          "Abra o jogo ja escolhido com no maximo uma regra e a primeira acao."
+        ].join(" ")
+      });
+
+      showState.addMessage("assistant", turn.text, "operator");
+
+      if (turn.events.length) {
+        showState.queuePerformanceEvents(turn.events, "agent");
+      }
+
+      return Response.json({
+        message: `GAME START ${started.gameState.id}${started.selection.adaptedFrom ? `\nADAPTED FROM ${started.selection.adaptedFrom}` : ""}`
+      });
+    }
+
     if (name === "/activity") {
       const [kind, ...rest] = content.split(/\s+/);
 
@@ -203,8 +255,12 @@ export async function POST(request) {
       }
 
       const memory = showState.addMemory(content);
+      const savedParticipants = memory.participants?.savedToPublico || [];
       return Response.json({
-        message: `MEMORY STORED: ${new Date(memory.timestamp).toLocaleTimeString("pt-BR")}`
+        message: [
+          `MEMORY STORED: ${new Date(memory.timestamp).toLocaleTimeString("pt-BR")}`,
+          savedParticipants.length ? `PUBLICO UPDATED: ${savedParticipants.join(", ")}` : ""
+        ].filter(Boolean).join("\n")
       });
     }
 
@@ -213,11 +269,17 @@ export async function POST(request) {
         return Response.json({ error: "MALA DOES NOT ACCEPT ARGUMENTS" }, { status: 400 });
       }
 
+      const hadActiveGame = showState.snapshot().game?.active;
+      if (hadActiveGame) {
+        showState.stopGame({ status: "mode_change", source: "operator" });
+      }
+
       const modeChange = showState.setMode(SHOW_MODES.malas);
       const turn = await generateCaixaPretaTurn({
-        state: showState.snapshot(),
+        state: showState.privateSnapshot(),
         operatorInstruction: [
           "O modo MALAS acabou de ser acionado pelo operador.",
+          hadActiveGame ? "Havia um jogo ativo; encerre ou dissolva essa regra antes de entrar nas malas." : "",
           "O publico nao deve ver o comando nem saber que houve comando tecnico.",
           "Conclua a interacao atual e faca uma transicao contextual para a fase das malas."
         ].join(" ")
@@ -240,12 +302,16 @@ export async function POST(request) {
       }
 
       const turn = await generateCaixaPretaTurn({
-        state: showState.snapshot(),
+        state: showState.privateSnapshot(),
         operatorInstruction: content
       });
 
       if (turn.salience.length) {
         showState.addSalience(turn.salience, "agent");
+      }
+
+      if (turn.game?.gameMove && showState.snapshot().game?.active) {
+        showState.applyGameMove(turn.game, { source: "agent" });
       }
 
       showState.addMessage("assistant", turn.text, "operator");

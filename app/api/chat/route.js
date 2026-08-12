@@ -25,10 +25,22 @@ export async function POST(request) {
 
     showState.addMessage("user", message, "projection");
 
+    const gameWasActive = showState.snapshot().game?.active;
+    let gameAdvance = null;
+
+    if (gameWasActive) {
+      gameAdvance = showState.advanceGame(message, { source: "public" });
+    } else {
+      const opportunity = showState.getGameOpportunity(message);
+      if (opportunity.shouldStartAutomatic) {
+        showState.startGame({ source: "automatic" });
+      }
+    }
+
     const activeHangman = showState.snapshot().performance.activities.find((activity) => (
       activity.type === "HANGMAN" && activity.status === "active"
     ));
-    if (activeHangman && /^[\p{L}0-9]{1,18}$/u.test(message)) {
+    if (!gameWasActive && activeHangman && /^[\p{L}0-9]{1,18}$/u.test(message)) {
       const result = applyHangmanGuess(activeHangman, message);
       if (result) {
         showState.updateActivity(result.activity, { source: "public", result: result.result });
@@ -37,8 +49,10 @@ export async function POST(request) {
     }
 
     const turn = await generateCaixaPretaTurn({
-      state: showState.snapshot(),
-      userMessage: message
+      state: showState.privateSnapshot(),
+      userMessage: gameAdvance?.result
+        ? `${message}\n\nGAME_ADVANCE_RESULT:\n${JSON.stringify(gameAdvance.result)}`
+        : message
     });
 
     if (turn.salience.length) {
@@ -49,6 +63,16 @@ export async function POST(request) {
       showState.startHangmanActivity({ word: turn.activity.word, source: "agent" });
     }
 
+    const currentGame = showState.snapshot().game;
+    if (turn.game?.startGame && !currentGame?.active && (currentGame?.cooldownTurnsRemaining || 0) <= 0) {
+      showState.startGame({
+        requestedGame: turn.game.requestedGame || turn.game.gameSuggestion || null,
+        source: "ai"
+      });
+    } else if (turn.game?.gameMove && showState.snapshot().game?.active) {
+      showState.applyGameMove(turn.game, { source: "agent" });
+    }
+
     const assistantMessage = turn.text
       ? showState.addMessage("assistant", turn.text, "openai")
       : null;
@@ -56,6 +80,8 @@ export async function POST(request) {
     if (turn.events.length) {
       showState.queuePerformanceEvents(turn.events, "agent");
     }
+
+    showState.completeTurnGameTick();
 
     return Response.json({ message: assistantMessage, events: turn.events });
   } catch (error) {
