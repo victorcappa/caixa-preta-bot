@@ -132,6 +132,10 @@ async function main() {
   const inferredCountdown = inferActionCountdownEvent("Janaina, segure a mao dele por dez segundos.");
   assert.equal(inferredCountdown.type, "COUNTDOWN");
   assert.equal(inferredCountdown.payload.duration, 10);
+  assert.equal(
+    inferActionCountdownEvent("defenda esse atraso por dez segundos sem culpar o transito").payload.duration,
+    10
+  );
   assert.equal(inferActionCountdownEvent("eu avisei ha oito segundos."), null);
 
   const interactionHistory = buildInteractionHistoryBlock([

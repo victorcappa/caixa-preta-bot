@@ -19,6 +19,7 @@ export default function Chat() {
   const [status, setStatus] = useState("CONNECTING");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [performancePending, setPerformancePending] = useState(false);
   const [performanceEvents, setPerformanceEvents] = useState([]);
   const [performanceActivities, setPerformanceActivities] = useState([]);
   const [phoneProjection, setPhoneProjection] = useState({ status: "hidden" });
@@ -251,7 +252,7 @@ export default function Chat() {
     event.preventDefault();
 
     const content = input.trim();
-    if (!content || pending) {
+    if (!content || pending || performancePending || activeTypingAssistant) {
       return;
     }
 
@@ -287,6 +288,10 @@ export default function Chat() {
     requestAnimationFrame(() => setOperatorOpen(true));
   }
 
+  const activeTypingAssistant = [...messages].reverse().find((message) => (
+    message.role === "assistant" && typedReplies[message.id] !== message.content
+  ));
+  const machineBusy = pending || performancePending || Boolean(activeTypingAssistant);
   const footer = (
     <form className={styles.form} onSubmit={submitMessage}>
       <span aria-hidden="true">&gt;</span>
@@ -295,14 +300,11 @@ export default function Chat() {
         autoComplete="off"
         value={input}
         onChange={(event) => setInput(event.target.value)}
-        disabled={pending}
+        disabled={machineBusy}
       />
-      <span className={styles.status}>{pending ? "PROCESSING" : status}</span>
+      <span className={styles.status}>{machineBusy ? "PROCESSING" : status}</span>
     </form>
   );
-  const activeTypingAssistant = [...messages].reverse().find((message) => (
-    message.role === "assistant" && typedReplies[message.id] !== message.content
-  ));
   const activeTypingStartedAt = activeTypingAssistant
     ? new Date(activeTypingAssistant.timestamp).getTime()
     : null;
@@ -318,6 +320,7 @@ export default function Chat() {
         activities={performanceActivities}
         events={visiblePerformanceEvents}
         game={game}
+        onMachineBusyChange={setPerformancePending}
         phoneProjection={phoneProjection}
       />
 

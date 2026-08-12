@@ -47,11 +47,13 @@ export default function PerformanceLayer({
   activities = [],
   events = [],
   game = null,
+  onMachineBusyChange = () => {},
   phoneProjection = { status: "hidden" }
 }) {
   const [activeEvents, setActiveEvents] = useState([]);
   const [drawingShapes, setDrawingShapes] = useState([]);
   const executedRef = useRef(new Set());
+  const pendingInteractionsRef = useRef(0);
 
   useEffect(() => {
     if (!events.length) {
@@ -109,16 +111,28 @@ export default function PerformanceLayer({
   }, [events]);
 
   async function sendInteraction(event, action, payload = {}) {
-    await fetch("/api/performance/interaction", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        eventId: event.id,
-        activityId: event.activityId,
-        action,
-        payload
-      })
-    }).catch(() => {});
+    pendingInteractionsRef.current += 1;
+    onMachineBusyChange(true);
+
+    try {
+      await fetch("/api/performance/interaction", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventId: event.id,
+          activityId: event.activityId,
+          action,
+          payload
+        })
+      });
+    } catch {
+      // Interaction failures should not freeze the public input.
+    } finally {
+      pendingInteractionsRef.current = Math.max(0, pendingInteractionsRef.current - 1);
+      if (pendingInteractionsRef.current === 0) {
+        onMachineBusyChange(false);
+      }
+    }
   }
 
   const hideUi = activeEvents.some((event) => event.type === "HIDE_UI");
@@ -137,9 +151,9 @@ export default function PerformanceLayer({
     ? phoneProjection
     : null;
   const activityHangman = activities.find((activity) => (
-    activity.type === "HANGMAN" && ["active", "paused", "completed"].includes(activity.status)
+    activity.type === "HANGMAN" && ["active", "paused"].includes(activity.status)
   ));
-  const gameHangman = game?.id === "hangman" && (game.active || ["completed", "auto_ended"].includes(game.phase))
+  const gameHangman = game?.id === "hangman" && game.active
     ? {
       id: game.id,
       type: "HANGMAN",
