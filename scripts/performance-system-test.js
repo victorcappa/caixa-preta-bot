@@ -156,6 +156,15 @@ async function main() {
   assert(mixedCollectionHistory.includes("shortCollectionPressure = high"));
   assert(mixedCollectionHistory.includes("nao peca palavra, nome, opcao curta"));
 
+  const presenceLoopHistory = buildInteractionHistoryBlock([
+    { role: "assistant", content: "defenda em dez segundos o motivo de estar aqui." },
+    { role: "assistant", content: "agora diga por que voce veio ao teatro." }
+  ]);
+
+  assert(presenceLoopHistory.includes("presenceJustificationPressure = high"));
+  assert(presenceLoopHistory.includes("nao pergunte por que vieram"));
+  assert(presenceLoopHistory.includes("Mude de eixo agora"));
+
   const dryClosureHistory = buildInteractionHistoryBlock([
     { role: "assistant", content: "registro: obedeceram. compliance validada." }
   ]);

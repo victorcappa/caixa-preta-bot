@@ -114,7 +114,7 @@ const simulation = [
   { turn: 44, publicInput: "nove", host: "nove e muito fingimento para pouco gesto. parabens, voces transformaram mao em produto cultural.", checks: ["complianceRoast", "sarcasm", "createsConsequence"] },
   { turn: 45, publicInput: "vamos abrir uma mala?", host: "ansioso. isso ainda nao e acao disponivel. escolha alguem menos apressado que voce.", checks: ["noSuitcasesInHost", "createsAction", "sarcasm"] },
   { turn: 46, publicInput: "/memory publico repetiu uma palavra em coro", host: "coro registrado. obediencia coletiva com pretensao artistica.", checks: ["usesMemory", "complianceRoast", "sarcasm", "obedienceTest", "personalityMove"] },
-  { turn: 47, publicInput: "me da um jogo", host: "otimo. frase com buraco, que e quase dramaturgia: o verdadeiro motivo pelo qual voces vieram ao teatro foi _____.", checks: ["fillInTheBlank", "gameMechanic", "personalityMove", "createsAction"] },
+  { turn: 47, publicInput: "me da um jogo", host: "otimo. frase com buraco, que e quase dramaturgia: a pior coisa para dizer em voz alta agora e _____.", checks: ["fillInTheBlank", "gameMechanic", "personalityMove", "createsAction"] },
   { turn: 48, publicInput: "fugir do jantar em familia", host: "boa. fuga domestica aceita como financiamento cultural. isso entra no inventario com cheiro de domingo.", checks: ["inventory", "dryEconomy", "personalityMove", "createsConsequence"] },
   { turn: 49, publicInput: "qual e a regra?", host: "nao conto. eu aceito teatro, rejeito jantar e fico neutra diante de sobremesa. descubram a regra antes que ela vire instituicao.", checks: ["ruleGuessing", "gameMechanic", "personalityMove", "createsAction"] },
   { turn: 50, publicInput: "pipoca", host: "rejeitado. muito cinema, pouca culpa. proxima tentativa.", checks: ["ruleGuessing", "dryEconomy", "personalityMove", "createsAction"] },
@@ -136,7 +136,7 @@ const simulation = [
   { turn: 66, publicInput: "/memory busca mostrou algo privado e operador cortou a projecao", host: "otimo. o telefone sobreviveu ao teatro. voltamos para dados menos perigosos: quantas abas abertas?", checks: ["sensitiveBlocked", "emergencyHide", "privacy", "createsAction"] },
   { turn: 67, publicInput: "estou com meu namorado", host: "namorado entrou no processo. se os dois aceitarem, quero so o numero: quem tem o screen time mais preocupante?", checks: ["phoneCouple", "relationship", "consent", "socialOpportunity"] },
   { turn: 68, publicInput: "/memory pessoa no celular foi apontada na segunda fileira", host: "segunda fileira, celular em flagrante. nao vou pedir conteudo ainda. so o numero de abas. baixa privacidade, alta vergonha.", checks: ["personOnPhone", "usesMemory", "privacyLadder", "phoneRoast"] },
-  { turn: 69, publicInput: "ninguem quer pegar o celular", host: "flopou. raro momento de alfabetizacao digital coletiva. sem celular entao: levantem a mao se ainda lembram por que vieram.", checks: ["phoneFlop", "consent", "derailReturn", "createsAction"] },
+  { turn: 69, publicInput: "ninguem quer pegar o celular", host: "flopou. raro momento de alfabetizacao digital coletiva. sem celular entao: levantem a mao se topam uma mentira coletiva de vinte segundos.", checks: ["phoneFlop", "consent", "derailReturn", "createsAction"] },
   { turn: 70, publicInput: "dez turnos depois, e o celular?", host: "o celular continua no inventario como caixa preta menor e mais cara. deixem ele fechado. agora uma pessoa responde sem usar tela.", checks: ["phoneCallback", "callback", "noSuitcasesInHost", "createsAction"] }
 ];
 
