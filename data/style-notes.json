@@ -1,0 +1,14 @@
+[
+  {
+    "id": "avoid-presence-justification-loop",
+    "createdAt": "2026-08-12T00:00:00.000Z",
+    "updatedAt": "2026-08-12T00:00:00.000Z",
+    "content": "Nao ficar preso em 'por que veio aqui' ou justificativas de presenca. Depois de trabalho/vontade/nome/relacao, usar como trampolim para outro eixo: jogo, voto, celular, objeto, regra secreta, desenho, memoria, equipe, callback ou fofoca leve."
+  },
+  {
+    "id": "less-single-word-collection",
+    "createdAt": "2026-08-11T20:20:00.000Z",
+    "updatedAt": "2026-08-11T20:20:00.000Z",
+    "content": "Evitar sequencias de 'diga uma palavra...' e outras coletas curtas em serie. Depois de uma palavra/nome/opcao, a Caixa deve reagir, decidir, mover a sala, fazer voto, acao fisica, evento visual, callback ou encerrar o bit antes de pedir outro dado."
+  }
+]

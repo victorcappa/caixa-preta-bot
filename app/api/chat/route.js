@@ -1,4 +1,5 @@
-import { generateCaixaPretaReply } from "@/lib/openai";
+import { applyHangmanGuess } from "@/lib/activities";
+import { generateCaixaPretaTurn } from "@/lib/openai";
 import { showState } from "@/lib/showState";
 
 export const dynamic = "force-dynamic";
@@ -13,16 +14,82 @@ export async function POST(request) {
       return Response.json({ error: "Mensagem vazia." }, { status: 400 });
     }
 
-    showState.addMessage("user", message, "projection");
+    if (message === "/reset") {
+      showState.reset();
+      return Response.json({ command: "reset", message: "SESSION RESET" });
+    }
 
-    const reply = await generateCaixaPretaReply({
-      state: showState.snapshot(),
-      userMessage: message
+    if (message.startsWith("/")) {
+      return Response.json({ error: `Comando desconhecido: ${message}` }, { status: 400 });
+    }
+
+    showState.cancelPerformanceEvents({
+      type: "COUNTDOWN",
+      reason: "public_message",
+      source: "projection"
     });
 
-    const assistantMessage = showState.addMessage("assistant", reply, "openai");
+    showState.addMessage("user", message, "projection");
 
-    return Response.json({ message: assistantMessage });
+    const gameWasActive = showState.snapshot().game?.active;
+    let gameAdvance = null;
+
+    if (gameWasActive) {
+      gameAdvance = showState.advanceGame(message, { source: "public" });
+    } else {
+      const opportunity = showState.getGameOpportunity(message);
+      if (opportunity.shouldStartAutomatic) {
+        showState.startGame({ source: "automatic" });
+      }
+    }
+
+    const activeHangman = showState.snapshot().performance.activities.find((activity) => (
+      activity.type === "HANGMAN" && activity.status === "active"
+    ));
+    if (!gameWasActive && activeHangman && /^[\p{L}0-9]{1,18}$/u.test(message)) {
+      const result = applyHangmanGuess(activeHangman, message);
+      if (result) {
+        showState.updateActivity(result.activity, { source: "public", result: result.result });
+        showState.queuePerformanceEvents(result.events, "activity");
+      }
+    }
+
+    const turn = await generateCaixaPretaTurn({
+      state: showState.privateSnapshot(),
+      userMessage: gameAdvance?.result
+        ? `${message}\n\nGAME_ADVANCE_RESULT:\n${JSON.stringify(gameAdvance.result)}`
+        : message
+    });
+
+    if (turn.salience.length) {
+      showState.addSalience(turn.salience, "agent");
+    }
+
+    if (turn.activity?.type === "HANGMAN" && turn.activity?.action === "start") {
+      showState.startHangmanActivity({ word: turn.activity.word, source: "agent" });
+    }
+
+    const currentGame = showState.snapshot().game;
+    if (turn.game?.startGame && !currentGame?.active && (currentGame?.cooldownTurnsRemaining || 0) <= 0) {
+      showState.startGame({
+        requestedGame: turn.game.requestedGame || turn.game.gameSuggestion || null,
+        source: "ai"
+      });
+    } else if (turn.game?.gameMove && showState.snapshot().game?.active) {
+      showState.applyGameMove(turn.game, { source: "agent" });
+    }
+
+    const assistantMessage = turn.text
+      ? showState.addMessage("assistant", turn.text, "openai")
+      : null;
+
+    if (turn.events.length) {
+      showState.queuePerformanceEvents(turn.events, "agent");
+    }
+
+    showState.completeTurnGameTick();
+
+    return Response.json({ message: assistantMessage, events: turn.events });
   } catch (error) {
     console.error("CHAT ERROR", error);
     return Response.json(

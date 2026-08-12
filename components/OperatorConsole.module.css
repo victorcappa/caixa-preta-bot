@@ -5,6 +5,12 @@
   gap: 22px;
 }
 
+.embeddedOperator {
+  grid-template-columns: 1fr;
+  grid-template-rows: minmax(0, 1fr) minmax(120px, 30vh);
+  gap: 16px;
+}
+
 .console {
   min-width: 0;
   display: flex;
@@ -23,6 +29,25 @@
 
 .connected {
   color: var(--green);
+}
+
+.modeBadge {
+  color: var(--green);
+  font-weight: 700;
+}
+
+.modelControl {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.modelSelect {
+  border: 1px solid var(--green-soft);
+  background: #020402;
+  color: var(--green);
+  font: inherit;
+  padding: 2px 6px;
 }
 
 .disconnected,
@@ -59,6 +84,13 @@
   overflow-y: auto;
 }
 
+.embeddedOperator .memoryPanel {
+  border-left: 0;
+  border-top: 1px solid var(--green-soft);
+  padding-left: 0;
+  padding-top: 14px;
+}
+
 .memoryPanel h2 {
   margin: 0 0 16px;
   font-size: 1rem;
@@ -67,6 +99,29 @@
 
 .memory {
   margin-bottom: 18px;
+}
+
+.panicButton,
+.approveButton {
+  width: 100%;
+  min-height: 36px;
+  margin: 0 0 14px;
+  border: 1px solid var(--green);
+  background: transparent;
+  color: var(--green);
+  font: inherit;
+  cursor: pointer;
+}
+
+.panicButton {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.panicButton:disabled,
+.approveButton:disabled {
+  cursor: default;
+  opacity: 0.5;
 }
 
 .memory strong,

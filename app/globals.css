@@ -34,3 +34,10 @@ textarea {
   background: var(--green);
   color: var(--bg);
 }
+
+[data-nextjs-dev-tools-button],
+[data-nextjs-dev-tools],
+[data-nextjs-devtools],
+nextjs-portal {
+  display: none !important;
+}

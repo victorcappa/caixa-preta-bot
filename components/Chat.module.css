@@ -1,3 +1,44 @@
+.workspace {
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 0;
+  gap: 0;
+  overflow: hidden;
+  background: #000000;
+  transition: grid-template-columns 260ms ease, gap 260ms ease;
+}
+
+.workspaceWithOperator {
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 42vw);
+  gap: 1px;
+}
+
+.chatPane {
+  min-width: 0;
+  height: 100vh;
+}
+
+.embeddedTerminal {
+  width: 100%;
+  height: 100%;
+}
+
+.operatorDrawer {
+  min-width: 0;
+  height: 100vh;
+  overflow: hidden;
+  border-left: 1px solid var(--green-soft);
+  opacity: 0;
+  transform: translateX(100%);
+  transition: opacity 220ms ease, transform 260ms ease;
+}
+
+.operatorDrawerOpen {
+  opacity: 1;
+  transform: translateX(0);
+}
+
 .messages {
   min-height: 100%;
   display: flex;
@@ -15,17 +56,155 @@
 
 .machine {
   color: var(--green);
-  font-size: clamp(1.25rem, 3vw, 3rem);
+  font-size: clamp(0.95rem, 1.75vw, 1.75rem);
+}
+
+.replyCursor {
+  display: inline-block;
+  margin-left: 0.08em;
+  animation: introBlink 0.55s steps(2, start) infinite;
+}
+
+.manualButton,
+.operatorButton,
+.manualClose {
+  border: 1px solid var(--green-soft);
+  background: #000000;
+  color: var(--green);
+  cursor: pointer;
+}
+
+.manualButton,
+.operatorButton {
+  position: fixed;
+  right: 28px;
+  z-index: 20;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+
+.manualButton {
+  top: 24px;
+}
+
+.operatorButton {
+  top: 68px;
+  font-size: 0.78rem;
+}
+
+.manualButton:hover,
+.manualButton:focus-visible,
+.operatorButton:hover,
+.operatorButton:focus-visible,
+.manualClose:hover,
+.manualClose:focus-visible {
+  border-color: var(--green);
+  outline: 0;
+}
+
+.operatorButton[aria-pressed="true"] {
+  border-color: var(--green);
+  box-shadow: 0 0 18px rgba(0, 255, 102, 0.14);
+}
+
+.manualOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.82);
+}
+
+.manual {
+  width: min(680px, 100%);
+  max-height: min(760px, 88vh);
+  overflow-y: auto;
+  border: 1px solid var(--green-soft);
+  background: #000000;
+  box-shadow: 0 0 36px rgba(0, 255, 102, 0.12);
+}
+
+.manualHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--green-soft);
+}
+
+.manualHeader h2,
+.manualBody h3,
+.manualBody p,
+.manualBody dl {
+  margin: 0;
+}
+
+.manualHeader h2 {
+  font-size: 1.1rem;
+}
+
+.manualClose {
+  width: 32px;
+  height: 32px;
+}
+
+.manualBody {
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+  color: var(--green-dim);
+  font-size: clamp(0.9rem, 1.4vw, 1rem);
+  line-height: 1.45;
+}
+
+.manualBody h3,
+.manualBody strong,
+.manualBody dt {
+  color: var(--green);
+}
+
+.manualBody dl {
+  display: grid;
+  gap: 12px;
+}
+
+.manualBody dt {
+  margin-bottom: 4px;
+}
+
+.manualBody dd {
+  margin: 0;
 }
 
 .public {
   color: var(--green-dim);
-  font-size: clamp(1rem, 2vw, 1.8rem);
+  font-size: clamp(0.85rem, 1.25vw, 1.2rem);
+}
+
+.introCursor,
+.introDots {
+  color: var(--green-dim);
+  font-size: clamp(0.95rem, 1.75vw, 1.75rem);
+  letter-spacing: 0;
+}
+
+.introCursor span {
+  animation: introBlink 0.55s steps(2, start) 4;
+}
+
+.introDots {
+  animation: fadeIn 1.1s ease-out both;
 }
 
 .error {
   color: var(--danger);
-  font-size: clamp(0.95rem, 1.6vw, 1.4rem);
+  font-size: clamp(0.85rem, 1.25vw, 1.2rem);
 }
 
 .form {
@@ -55,7 +234,58 @@
   font-size: 0.78rem;
 }
 
+@keyframes introBlink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+
+  46%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 @media (max-width: 640px) {
+  .workspace,
+  .workspaceWithOperator {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .operatorDrawer {
+    position: fixed;
+    inset: 0 0 0 auto;
+    z-index: 18;
+    width: min(100vw, 520px);
+    border-left: 1px solid var(--green-soft);
+    box-shadow: -18px 0 42px rgba(0, 0, 0, 0.72);
+  }
+
+  .operatorDrawerOpen {
+    transform: translateX(0);
+  }
+
+  .manualButton,
+  .operatorButton {
+    top: 16px;
+    right: 18px;
+  }
+
+  .operatorButton {
+    top: 60px;
+  }
+
   .form {
     grid-template-columns: auto 1fr;
   }
