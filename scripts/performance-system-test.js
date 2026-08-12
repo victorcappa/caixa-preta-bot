@@ -5,6 +5,7 @@ async function main() {
   const activitiesModule = await import("../lib/activities.js");
   const countdownTextModule = await import("../lib/countdownText.js");
   const interactionModule = await import("../lib/interactionHistory.js");
+  const publicTextModule = await import("../lib/publicText.js");
 
   const {
     PERFORMANCE_EVENT_TYPES,
@@ -22,6 +23,9 @@ async function main() {
   const {
     buildInteractionHistoryBlock
   } = interactionModule;
+  const {
+    sanitizePublicTextForProjection
+  } = publicTextModule;
   const {
     inferCountdownDurationFromText,
     inferCountdownDurationsFromText
@@ -137,6 +141,24 @@ async function main() {
     10
   );
   assert.equal(inferActionCountdownEvent("eu avisei ha oito segundos."), null);
+
+  const leakedSuitcaseQuestion = sanitizePublicTextForProjection(
+    "nao. ok. nomeado e morto - otimo material. vou fazer pergunta formal (ask_question). essa pessoa era conhecida publicamente (sim/nao)?"
+  );
+  assert.equal(
+    leakedSuitcaseQuestion,
+    "nao. ok. nomeado e morto - otimo material. essa pessoa era conhecida publicamente (sim/nao)?"
+  );
+  assert(!/ask_question|suitcase|campo estruturado|JSON|pergunta formal/i.test(leakedSuitcaseQuestion));
+
+  const leakedSuitcaseAction = sanitizePublicTextForProjection(
+    "entendido. vou registrar como pergunta (suitcase.action ask_question). proxima: essa pessoa era relacionada a aviacao ou acidentes (sim/nao)?"
+  );
+  assert.equal(
+    leakedSuitcaseAction,
+    "proxima: essa pessoa era relacionada a aviacao ou acidentes (sim/nao)?"
+  );
+  assert(!/ask_question|suitcase|campo estruturado|JSON|vou registrar/i.test(leakedSuitcaseAction));
 
   const interactionHistory = buildInteractionHistoryBlock([
     { role: "assistant", content: "agora digam uma palavra." },
