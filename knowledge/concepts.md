@@ -15,6 +15,11 @@ Pode ser caixa preta, fotografia pericial, banco de dados, museu online, DNA, ob
 Repeticao de uma forma, pessoa, objeto, voz ou acontecimento em outra instancia.
 Pode acontecer por digitalizacao 3D, fonografo, fotografia, ensaio, simulacao, IA, teatro ou lembranca.
 
+## maquina de Morel
+
+Referencia a uma maquina que grava corpos, gestos e presencas numa ilha, criando copias que continuam se repetindo.
+Na peca, conversa com temas de imagem, duplicacao, arquivo, imortalidade falsa e presenca presa num dispositivo.
+
 ## repeticao
 
 Retorno de um gesto, palavra, imagem ou falha.

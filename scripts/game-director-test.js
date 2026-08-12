@@ -79,11 +79,21 @@ async function main() {
   assert(started.gameState.participants.some((participant) => participant.source === "audience"));
   assert(started.gameState.participants.some((participant) => participant.source === "team"));
 
-  const rankedGames = director.scoreGames(state).slice(0, 10).map((item) => item.game.id);
+  const rankedGames = director.scoreGames(state).slice(0, 15).map((item) => item.game.id);
   assert(rankedGames.includes("hangman"));
   assert(rankedGames.includes("who_am_i"));
   assert(rankedGames.includes("cards_style_fill_in"));
   assert(!rankedGames.includes("mini_escape_room"));
+
+  const spectacleState = baseState({
+    game: director.createInitialGameState(),
+    memories: [{ content: "publico perguntou sobre o espetaculo Caixa Preta" }],
+    conversation: [{ role: "user", content: "e a invencao de Morel?" }]
+  });
+  const dramaturgyRanked = director.scoreGames(spectacleState).slice(0, 6).map((item) => item.game.id);
+  assert(dramaturgyRanked.includes("morel_recording"));
+  assert(dramaturgyRanked.includes("black_box_transcript"));
+  assert.equal(director.startGame(spectacleState, { requestedGame: "morel", source: "operator" }).gameState.id, "morel_recording");
 
   const explicitEscape = director.startGame(state, { requestedGame: "escape", source: "operator" });
   assert.equal(explicitEscape.gameState.id, "mini_escape_room");
@@ -93,6 +103,13 @@ async function main() {
     "hangman",
     "who_am_i",
     "cards_style_fill_in",
+    "morel_recording",
+    "three_suitcases",
+    "black_box_transcript",
+    "object_trace",
+    "color_failure",
+    "rehearsal_loop",
+    "boarding_gate",
     "draw_and_guess",
     "complete_phrase",
     "guess_the_rule",

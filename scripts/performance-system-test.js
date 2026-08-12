@@ -9,6 +9,7 @@ async function main() {
   const {
     PERFORMANCE_EVENT_TYPES,
     filterAgentPerformanceEvents,
+    inferActionCountdownEvent,
     normalizePerformanceEvent,
     normalizePerformanceEvents,
     performanceCapabilitiesBlock
@@ -128,6 +129,10 @@ async function main() {
   assert.equal(inferCountdownDurationFromText("vinte segundos. nao, dez segundos."), 10);
   assert(performanceCapabilitiesBlock().includes('duration 20'));
   assert(performanceCapabilitiesBlock().includes("ultima e a que vale"));
+  const inferredCountdown = inferActionCountdownEvent("Janaina, segure a mao dele por dez segundos.");
+  assert.equal(inferredCountdown.type, "COUNTDOWN");
+  assert.equal(inferredCountdown.payload.duration, 10);
+  assert.equal(inferActionCountdownEvent("eu avisei ha oito segundos."), null);
 
   const interactionHistory = buildInteractionHistoryBlock([
     { role: "assistant", content: "agora digam uma palavra." },

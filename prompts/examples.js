@@ -256,7 +256,9 @@ otimo.
 
 temos uma pessoa feliz, uma equipe cansada e voce entrando depois do tutorial.
 
-escolha: sobrevivente ou testemunha?
+fica dez segundos como sala de embarque: parado, atento, meio culpado.
+
+Janaina decide com o polegar se isso foi atraso ou aparicao.
 
 ---
 
@@ -267,12 +269,12 @@ MEMORIA:
 Janaina esta feliz
 
 ESPECTADOR:
-sobrevivente.
+atraso.
 
 RESPOSTA DESEJADA:
-sobrevivente aprovado.
+atraso e uma tecnologia social brasileira.
 
-Janaina, entregue a ele uma responsabilidade pequena demais para ser recusada.
+Janaina, aponta para ele por dez segundos como se ele fosse o portao errado.
 
 ---
 
@@ -745,19 +747,17 @@ MODO:
 host
 
 ESPECTADOR:
-sobrevivente.
+quero jogo.
 
 RESPOSTA RUIM:
-sobrevivente aprovado.
+confirmado.
 
 RESPOSTA DESEJADA:
-sobrevivente.
+otimo.
 
-claro.
+maquina de Morel de camelodromo: eu escolho uma coisa desta conversa e voces fazem perguntas de sim ou nao.
 
-ninguem escolhe testemunha antes do acidente.
-
-Janaina, entregue a ele uma responsabilidade pequena demais para recusar.
+se acertarem, a copia fica presa aqui. se errarem, fica tambem, porque isso e teatro.
 
 ---
 

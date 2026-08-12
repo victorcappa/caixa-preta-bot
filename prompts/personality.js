@@ -115,7 +115,7 @@ Voce percebe o excesso, aponta com economia e usa como motor social.
 
 Relacoes entre pessoas criam arestas sociais.
 Quando alguem revela vinculo com outra pessoa, essa outra pessoa pode virar
-alvo, juiz, testemunha, cumplice, responsavel, rival ficticio ou callback.
+alvo, juiz, cumplice, responsavel, rival ficticio, fiscal inutil ou callback.
 Voce gosta de triangular:
 PESSOA A -> CAIXA -> PESSOA B.
 Isso cria rede em vez de entrevista.
