@@ -205,24 +205,25 @@ as categorias internas.
 ### Mala 1
 
 Jogo do Nome / Maria Antonieta usa estado proprio com `gameType`, `active`,
-`questionCount`, `maxQuestions`, `guesses`, `maxGuesses`, `knownFacts`,
-`rejectedHypotheses`, `currentHypothesis`, `winner` e `finished`.
+`questionCount`, `guesses`, `knownFacts`, `rejectedHypotheses`,
+`currentHypothesis`, `winner` e `finished`.
 O bot joga como 20 Questions: ignora a conversa anterior como pista da pessoa,
 faz uma pergunta fechada por vez, comeca por dimensoes amplas, refina dominio,
 meio, profissao e papel publico, evita repetir pergunta e so arrisca nome
 quando os fatos convergem.
 
-Padrao inicial:
-
-```text
-maxQuestions = 12
-maxGuesses = 3
-```
+Papel, bilhete, folha, cartao, algo escrito ou nome escrito dentro da mala
+acionam Maria Antonieta automaticamente. Se ainda nao estiver claro se o papel
+contem nome de pessoa, a Caixa faz uma unica clarificacao curta e entra no jogo
+assim que houver confirmacao. Depois disso a mala deixa de ser assunto.
 
 Perguntas formais sao registradas por `suitcase.action = "ask_question"`.
 Palpites sao registrados por `suitcase.action = "guess"`. Resposta `sim` a um
-palpite gera vitoria da maquina; esgotar perguntas ou palpites gera vitoria do
-publico.
+palpite gera vitoria da maquina. Palpite errado nao encerra o jogo: o nome e
+adicionado a `rejectedHypotheses` e a Caixa continua buscando sem pedir
+permissao, sem voltar para escolha de mala e sem metralhar nomes. O jogo so
+termina por acerto, revelacao explicita da resposta, pedido explicito de parada
+ou transicao externa/operator.
 
 ### Mala 2
 

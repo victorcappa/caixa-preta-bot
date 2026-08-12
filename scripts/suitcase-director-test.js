@@ -4,6 +4,9 @@ async function main() {
   const director = await import("../lib/suitcases/SuitcaseDirector.js");
 
   assert.equal(director.interpretSuitcaseContent("tem um papel com um nome escrito").type, "guess_who");
+  assert.equal(director.interpretSuitcaseContent("achei um nome").type, "guess_who");
+  assert.equal(director.interpretSuitcaseContent("tem uma pessoa escrita").type, "guess_who");
+  assert.equal(director.interpretSuitcaseContent("tem um papel").type, "needs_person_confirmation");
   assert.equal(director.interpretSuitcaseContent("tem escrito insta").type, "instagram");
   assert.equal(director.interpretSuitcaseContent("e um desafio, tipo puzzle").type, "mini_game");
   assert.equal(director.interpretSuitcaseContent("nao entendi o objeto").type, "unknown");
@@ -23,8 +26,8 @@ async function main() {
   advanced = director.advanceSuitcases(state, "tem um papel escrito Madonna");
   state = advanced.state;
   assert.equal(state.activeExperience, "guess_who");
-  assert.equal(state.guessWho.maxQuestions, 12);
-  assert.equal(state.guessWho.maxGuesses, 3);
+  assert.equal(state.guessWho.maxQuestions, null);
+  assert.equal(state.guessWho.maxGuesses, null);
   assert.equal(director.isGuessWhoClosedQuestion("Essa pessoa esta viva?"), true);
   assert.equal(director.isGuessWhoClosedQuestion("artista, politico, parente famoso, cientista?"), false);
   assert.equal(director.isGuessWhoClosedQuestion("era mais conhecida local ou nacional?"), false);
@@ -124,11 +127,53 @@ async function main() {
     guess: "Madonna"
   });
   state = moved.state;
-  advanced = director.advanceSuitcases(state, "sim");
+  advanced = director.advanceSuitcases(state, "nao");
+  state = advanced.state;
+  assert.equal(state.active, true);
+  assert.equal(state.phase, "ACTIVE_EXPERIENCE");
+  assert.equal(state.result, null);
+  assert.equal(state.guessWho.finished, false);
+  assert(state.guessWho.rejectedHypotheses.includes("Madonna"));
+  assert.equal(advanced.result.exhausted, false);
+
+  const afterMissTurn = director.enforceGuessWhoTurn({
+    text: "quer escolher outra mala?",
+    suitcase: null
+  }, state);
+  assert.equal(afterMissTurn.suitcase.action, "ask_question");
+  assert(!/mala|quer|continuar|escolher/i.test(afterMissTurn.text));
+
+  moved = director.applySuitcaseMove(state, {
+    action: "guess",
+    guess: "Cher"
+  });
+  state = moved.state;
+  advanced = director.advanceSuitcases(state, "sim, e Cher");
   state = advanced.state;
   assert.equal(state.active, false);
   assert.equal(state.result, "machine_win");
   assert(advanced.events.some((event) => event.type === "SHOW_WIN"));
+
+  state = director.startSuitcases(director.createInitialSuitcaseState(), { source: "test" }).state;
+  state = director.advanceSuitcases(state, "mala 1").state;
+  advanced = director.advanceSuitcases(state, "tem um papel");
+  state = advanced.state;
+  assert.equal(state.phase, "WAITING_FOR_SUITCASE_CONTENT");
+  assert.equal(state.lastInterpretation.reason, "paper_needs_person_confirmation");
+  advanced = director.advanceSuitcases(state, "sim");
+  state = advanced.state;
+  assert.equal(state.activeExperience, "guess_who");
+  assert.equal(state.guessWho.active, true);
+
+  moved = director.applySuitcaseMove(state, {
+    action: "ask_question",
+    question: "Essa pessoa era real?"
+  });
+  state = moved.state;
+  advanced = director.advanceSuitcases(state, "a resposta e Madonna");
+  assert.equal(advanced.state.active, false);
+  assert.equal(advanced.state.result, "audience_win");
+  assert.equal(advanced.state.guessWho.revealedAnswer, "Madonna");
 
   state = director.startSuitcases(director.createInitialSuitcaseState(), { source: "test" }).state;
   state = director.advanceSuitcases(state, "2").state;
