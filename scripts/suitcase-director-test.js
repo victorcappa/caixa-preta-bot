@@ -25,6 +25,21 @@ async function main() {
   assert.equal(state.activeExperience, "guess_who");
   assert.equal(state.guessWho.maxQuestions, 12);
   assert.equal(state.guessWho.maxGuesses, 3);
+  assert.equal(director.isGuessWhoClosedQuestion("Essa pessoa esta viva?"), true);
+  assert.equal(director.isGuessWhoClosedQuestion("artista, politico, parente famoso, cientista?"), false);
+  assert.equal(director.isGuessWhoClosedQuestion("era mais conhecida local ou nacional?"), false);
+
+  const forcedClosedTurn = director.enforceGuessWhoTurn({
+    text: "artista, politico, parente famoso, cientista? escolha uma categoria curta.",
+    events: [],
+    salience: [],
+    activity: null,
+    game: null,
+    suitcase: null
+  }, state);
+  assert.equal(forcedClosedTurn.suitcase.action, "ask_question");
+  assert.equal(director.isGuessWhoClosedQuestion(forcedClosedTurn.text), true);
+  assert(!/escolha|categoria|local ou nacional|quer que/i.test(forcedClosedTurn.text));
 
   let moved = director.applySuitcaseMove(state, {
     action: "ask_question",
