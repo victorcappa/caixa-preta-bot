@@ -20,7 +20,9 @@ export default function Chat() {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [performanceEvents, setPerformanceEvents] = useState([]);
+  const [performanceActivities, setPerformanceActivities] = useState([]);
   const [phoneProjection, setPhoneProjection] = useState({ status: "hidden" });
+  const [game, setGame] = useState(null);
   const [introStep, setIntroStep] = useState("cursor");
   const [manualOpen, setManualOpen] = useState(false);
   const [operatorMounted, setOperatorMounted] = useState(false);
@@ -51,14 +53,17 @@ export default function Chat() {
     fetch("/api/state")
       .then((response) => response.json())
       .then((data) => {
+        setPerformanceEvents(data.performance?.events || []);
+        setPerformanceActivities(data.performance?.activities || []);
+        setPhoneProjection(data.performance?.phoneProjection || { status: "hidden" });
+        setGame(data.game || null);
+
         if (!initializedMessagesRef.current) {
           hydrateInitialMessages(data.conversation || []);
           return;
         }
 
         setMessages(data.conversation || []);
-        setPerformanceEvents(data.performance?.events || []);
-        setPhoneProjection(data.performance?.phoneProjection || { status: "hidden" });
       })
       .catch(() => setStatus("DISCONNECTED"));
 
@@ -69,13 +74,19 @@ export default function Chat() {
       const payload = JSON.parse(event.data);
 
       if (!initializedMessagesRef.current && payload.event?.type === "snapshot") {
+        setPerformanceEvents(payload.state.performance?.events || []);
+        setPerformanceActivities(payload.state.performance?.activities || []);
+        setPhoneProjection(payload.state.performance?.phoneProjection || { status: "hidden" });
+        setGame(payload.state.game || null);
         hydrateInitialMessages(payload.state.conversation || []);
         return;
       }
 
       setMessages(payload.state.conversation || []);
       setPerformanceEvents(payload.state.performance?.events || []);
+      setPerformanceActivities(payload.state.performance?.activities || []);
       setPhoneProjection(payload.state.performance?.phoneProjection || { status: "hidden" });
+      setGame(payload.state.game || null);
     };
 
     return () => events.close();
@@ -303,7 +314,12 @@ export default function Chat() {
 
   return (
     <div className={`${styles.workspace} ${operatorOpen ? styles.workspaceWithOperator : ""}`}>
-      <PerformanceLayer events={visiblePerformanceEvents} phoneProjection={phoneProjection} />
+      <PerformanceLayer
+        activities={performanceActivities}
+        events={visiblePerformanceEvents}
+        game={game}
+        phoneProjection={phoneProjection}
+      />
 
       <button
         aria-label="Abrir manual de comandos"
@@ -363,6 +379,10 @@ export default function Chat() {
                 <div>
                   <dt>/memory texto</dt>
                   <dd>Guarda uma observacao silenciosa da apresentacao.</dd>
+                </div>
+                <div>
+                  <dt>/game [tipo|random|stop]</dt>
+                  <dd>Forca, escolhe ou encerra um jogo sem expor o comando na projecao.</dd>
                 </div>
                 <div>
                   <dt>/model modelo</dt>

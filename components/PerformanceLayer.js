@@ -43,7 +43,12 @@ function Shape({ shape }) {
   return <circle cx={`${shape.x}%`} cy={`${shape.y}%`} r="3" />;
 }
 
-export default function PerformanceLayer({ events = [], phoneProjection = { status: "hidden" } }) {
+export default function PerformanceLayer({
+  activities = [],
+  events = [],
+  game = null,
+  phoneProjection = { status: "hidden" }
+}) {
   const [activeEvents, setActiveEvents] = useState([]);
   const [drawingShapes, setDrawingShapes] = useState([]);
   const executedRef = useRef(new Set());
@@ -131,8 +136,25 @@ export default function PerformanceLayer({ events = [], phoneProjection = { stat
   const visiblePhoneProjection = phoneProjection?.status && phoneProjection.status !== "hidden"
     ? phoneProjection
     : null;
+  const activityHangman = activities.find((activity) => (
+    activity.type === "HANGMAN" && ["active", "paused", "completed"].includes(activity.status)
+  ));
+  const gameHangman = game?.id === "hangman" && (game.active || ["completed", "auto_ended"].includes(game.phase))
+    ? {
+      id: game.id,
+      type: "HANGMAN",
+      status: game.active ? "active" : "completed",
+      publicState: {
+        progress: game.data?.progress,
+        wrongGuesses: game.data?.wrongLetters || [],
+        guessCount: game.round || 0,
+        maxErrors: 6
+      }
+    }
+    : null;
+  const visibleHangman = activityHangman || gameHangman;
 
-  if (!activeEvents.length && !drawingShapes.length && !visiblePhoneProjection) {
+  if (!activeEvents.length && !drawingShapes.length && !visiblePhoneProjection && !visibleHangman) {
     return null;
   }
 
@@ -151,6 +173,8 @@ export default function PerformanceLayer({ events = [], phoneProjection = { stat
           </small>
         </div>
       ) : null}
+
+      {visibleHangman ? <HangmanOverlay activity={visibleHangman} /> : null}
 
       {drawingShapes.length ? (
         <svg className={styles.drawing} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
@@ -239,6 +263,33 @@ export default function PerformanceLayer({ events = [], phoneProjection = { stat
         );
       })}
     </div>
+  );
+}
+
+function HangmanOverlay({ activity }) {
+  const publicState = activity.publicState || {};
+  const wrongGuesses = publicState.wrongGuesses || [];
+  const maxErrors = Number(publicState.maxErrors || 6);
+  const errorCount = wrongGuesses.length;
+  const completed = activity.status === "completed";
+  const solved = completed && !`${publicState.progress || ""}`.includes("_");
+
+  return (
+    <aside className={styles.hangman} aria-label="Forca">
+      <span className={styles.hangmanLabel}>FORCA</span>
+      <strong className={styles.hangmanProgress}>{publicState.progress || "_ _ _"}</strong>
+      <div className={styles.hangmanMeta}>
+        <span>{errorCount}/{maxErrors}</span>
+        <span>{Number(publicState.guessCount || 0)} palpites</span>
+      </div>
+      <div className={styles.hangmanWrong}>
+        <span>ERROS</span>
+        <b>{wrongGuesses.length ? wrongGuesses.join(" / ").toUpperCase() : "-"}</b>
+      </div>
+      {completed ? (
+        <p className={styles.hangmanStatus}>{solved ? "ACERTOU" : "MORREU"}</p>
+      ) : null}
+    </aside>
   );
 }
 
