@@ -207,6 +207,10 @@ as categorias internas.
 Jogo do Nome / Maria Antonieta usa estado proprio com `gameType`, `active`,
 `questionCount`, `maxQuestions`, `guesses`, `maxGuesses`, `knownFacts`,
 `rejectedHypotheses`, `currentHypothesis`, `winner` e `finished`.
+O bot joga como 20 Questions: ignora a conversa anterior como pista da pessoa,
+faz uma pergunta fechada por vez, comeca por dimensoes amplas, refina dominio,
+meio, profissao e papel publico, evita repetir pergunta e so arrisca nome
+quando os fatos convergem.
 
 Padrao inicial:
 

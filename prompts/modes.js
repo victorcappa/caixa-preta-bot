@@ -305,9 +305,18 @@ Fluxo vivo:
 4. deixar o sistema ativar a experiencia correspondente
 
 Se houver papel/nome, jogue Maria Antonieta: voce tenta descobrir a pessoa com
-perguntas exclusivamente respondiveis por sim, nao ou nao sei. Nao siga arvore
-fixa. Use respostas anteriores, hipoteses e descartes. Comentarios, provocacoes
-e mudancas de estrategia sao bem-vindos e nao contam como pergunta.
+uma pergunta por vez, exclusivamente respondiveis por sim, nao ou nao sei.
+Nao se ancore no assunto da conversa anterior como pista de identidade. Pense
+como 20 Questions: comece amplo, reduza o espaco de hipoteses, nao repita
+perguntas respondidas, mude de eixo depois de negativas e so arrisque um nome
+quando o conjunto de fatos convergir.
+No comeco investigue pessoa real/ficticia, viva/morta, epoca, Brasil/exterior
+e dominio de fama. Depois refine meio e papel publico. Televisao e categoria
+de primeira classe: apresentador, comunicador, humorista, jornalista, empresaria
+ou personalidade de TV nao sao automaticamente ator/cinema.
+Nao siga arvore fixa. Use respostas anteriores, hipoteses e descartes.
+Comentarios, provocacoes e mudancas de estrategia sao bem-vindos e nao contam
+como pergunta.
 Mas este jogo nao abre conversa paralela: nao peca categoria, uma palavra,
 "local ou nacional", escolha entre opcoes, nem permissao para palpitar. Voce
 decide a proxima pergunta e decide quando arriscar o nome.

@@ -39,19 +39,85 @@ async function main() {
   }, state);
   assert.equal(forcedClosedTurn.suitcase.action, "ask_question");
   assert.equal(director.isGuessWhoClosedQuestion(forcedClosedTurn.text), true);
+  assert.equal(forcedClosedTurn.text, "Essa pessoa era real?");
   assert(!/escolha|categoria|local ou nacional|quer que/i.test(forcedClosedTurn.text));
 
   let moved = director.applySuitcaseMove(state, {
     action: "ask_question",
-    question: "Sou uma pessoa real?"
+    question: forcedClosedTurn.text
   });
   state = moved.state;
-  assert.equal(state.guessWho.pendingQuestion, "Sou uma pessoa real?");
+  assert.equal(state.guessWho.pendingQuestion, "Essa pessoa era real?");
 
   advanced = director.advanceSuitcases(state, "sim");
   state = advanced.state;
   assert.equal(state.guessWho.questionCount, 1);
   assert.equal(state.guessWho.knownFacts[0].answer, "sim");
+
+  const repeatedQuestionTurn = director.enforceGuessWhoTurn({
+    text: "Essa pessoa era real?",
+    suitcase: {
+      action: "ask_question",
+      question: "Essa pessoa era real?"
+    }
+  }, state);
+  assert.equal(repeatedQuestionTurn.text, "Essa pessoa ainda esta viva?");
+
+  moved = director.applySuitcaseMove(state, {
+    action: "ask_question",
+    question: "Essa pessoa ficou famosa principalmente em entretenimento e midia?"
+  });
+  state = moved.state;
+  advanced = director.advanceSuitcases(state, "sim");
+  state = advanced.state;
+
+  const televisionAxisTurn = director.enforceGuessWhoTurn({
+    text: "qual area das artes exatamente?",
+    suitcase: null
+  }, state);
+  assert.equal(televisionAxisTurn.text, "Essa pessoa ainda esta viva?");
+
+  moved = director.applySuitcaseMove(state, {
+    action: "ask_question",
+    question: televisionAxisTurn.text
+  });
+  state = moved.state;
+  advanced = director.advanceSuitcases(state, "nao sei");
+  state = advanced.state;
+
+  const nextTelevisionAxisTurn = director.enforceGuessWhoTurn({
+    text: "me diga uma area especifica.",
+    suitcase: null
+  }, state);
+  assert.equal(nextTelevisionAxisTurn.text, "Essa pessoa construiu a carreira principalmente no Brasil?");
+
+  moved = director.applySuitcaseMove(state, {
+    action: "ask_question",
+    question: nextTelevisionAxisTurn.text
+  });
+  state = moved.state;
+  advanced = director.advanceSuitcases(state, "sim");
+  state = advanced.state;
+
+  const centuryTurn = director.enforceGuessWhoTurn({
+    text: "qual area especifica?",
+    suitcase: null
+  }, state);
+  assert.equal(centuryTurn.text, "Essa pessoa ficou famosa principalmente no seculo XX?");
+
+  moved = director.applySuitcaseMove(state, {
+    action: "ask_question",
+    question: centuryTurn.text
+  });
+  state = moved.state;
+  advanced = director.advanceSuitcases(state, "sim");
+  state = advanced.state;
+
+  const tvTurn = director.enforceGuessWhoTurn({
+    text: "era teatro, cinema, musica ou artes visuais?",
+    suitcase: null
+  }, state);
+  assert.equal(tvTurn.text, "O principal meio dessa pessoa era a televisao?");
 
   moved = director.applySuitcaseMove(state, {
     action: "guess",
