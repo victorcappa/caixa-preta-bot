@@ -56,6 +56,12 @@ export default function PerformanceLayer({
   const pendingInteractionsRef = useRef(0);
 
   useEffect(() => {
+    const eventIds = new Set(events.map((event) => event.id));
+
+    setActiveEvents((current) => current.filter((event) => eventIds.has(event.id)));
+  }, [events]);
+
+  useEffect(() => {
     if (!events.length) {
       setActiveEvents([]);
       setDrawingShapes([]);

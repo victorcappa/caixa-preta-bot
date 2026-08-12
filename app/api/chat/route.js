@@ -23,6 +23,12 @@ export async function POST(request) {
       return Response.json({ error: `Comando desconhecido: ${message}` }, { status: 400 });
     }
 
+    showState.cancelPerformanceEvents({
+      type: "COUNTDOWN",
+      reason: "public_message",
+      source: "projection"
+    });
+
     showState.addMessage("user", message, "projection");
 
     const gameWasActive = showState.snapshot().game?.active;
