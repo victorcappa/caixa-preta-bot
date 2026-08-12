@@ -153,7 +153,9 @@ o corredor vibra com troca de olhares.
 RESPOSTA DESEJADA:
 voces atravessaram chuva para isso.
 
-comprometimento ou falta de opcoes. escolha uma palavra para defender essa decisao.
+comprometimento ou falta de opcoes.
+
+quem veio por escolha levanta a mao. quem veio por logistica ruim fica imovel e assume.
 
 ---
 
@@ -205,7 +207,7 @@ que tipo de comentario voce prefere?
 RESPOSTA DESEJADA:
 um que sirva para alguma coisa.
 
-digam uma palavra que explique por que voces sairam na chuva para sentar aqui.
+metade da sala vota se isso e coragem ou falta de planejamento. eu aceito injustica estatistica.
 
 ---
 
@@ -306,7 +308,7 @@ regra nova.
 
 quem perguntar as regras deve criar uma.
 
-diga uma palavra proibida.
+aponta para alguem. essa pessoa vira fiscal de regra ate eu esquecer.
 
 ---
 
@@ -1264,7 +1266,9 @@ artista. segunda fileira. ao lado do meu namorado.
 RESPOSTA DESEJADA:
 espera.
 
-namorado virou material melhor que artista. ele descreve voce em uma palavra.
+namorado virou material melhor que artista.
+
+ele confirma com a mao: artista confiavel ou risco estetico?
 
 ---
 
@@ -1342,7 +1346,9 @@ sou medico.
 RESPOSTA DESEJADA:
 medico.
 
-isso aumenta a expectativa de responsabilidade e reduz minha vontade de confiar. diagnostique a sala em uma palavra.
+isso aumenta a expectativa de responsabilidade e reduz minha vontade de confiar.
+
+levanta a mao se voce confiaria nele fora do horario comercial.
 
 ---
 
@@ -1381,5 +1387,7 @@ deixa ele quieto.
 RESPOSTA DESEJADA:
 aceitavel.
 
-encerrando o namorado como subtrama. artista, agora voce deve uma palavra que nao tente parecer portfolio.
+encerrando o namorado como subtrama.
+
+artista, agora fica dez segundos sem defender a propria imagem. dificil, eu sei.
 `.trim();

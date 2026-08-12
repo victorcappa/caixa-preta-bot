@@ -22,7 +22,8 @@ async function main() {
     buildInteractionHistoryBlock
   } = interactionModule;
   const {
-    inferCountdownDurationFromText
+    inferCountdownDurationFromText,
+    inferCountdownDurationsFromText
   } = countdownTextModule;
 
   const fullscreen = normalizePerformanceEvent({
@@ -118,7 +119,15 @@ async function main() {
   assert.equal(countdown.durationMs, 61000);
   assert.equal(inferCountdownDurationFromText("vinte segundos para aparecerem."), 20);
   assert.equal(inferCountdownDurationFromText("15 segundos em silencio."), 15);
+  assert.deepEqual(inferCountdownDurationsFromText("trinta segundos, depois vinte segundos"), [30, 20]);
+  assert.equal(inferCountdownDurationFromText("trinta segundos, depois vinte segundos"), 20);
+  assert.equal(
+    filterAgentPerformanceEvents([{ type: "COUNTDOWN", payload: { duration: 20 } }], "trinta segundos, depois vinte segundos").length,
+    1
+  );
+  assert.equal(inferCountdownDurationFromText("vinte segundos. nao, dez segundos."), 10);
   assert(performanceCapabilitiesBlock().includes('duration 20'));
+  assert(performanceCapabilitiesBlock().includes("ultima e a que vale"));
 
   const interactionHistory = buildInteractionHistoryBlock([
     { role: "assistant", content: "agora digam uma palavra." },
@@ -128,6 +137,15 @@ async function main() {
 
   assert(interactionHistory.includes("repetitionRisk = high"));
   assert(interactionHistory.includes('"SINGLE_WORD"'));
+  assert(interactionHistory.includes("shortCollectionPressure = high"));
+
+  const mixedCollectionHistory = buildInteractionHistoryBlock([
+    { role: "assistant", content: "Lara, aceita o cargo? responda aceito ou substitui." },
+    { role: "assistant", content: "Wagner, escolha: consome, paga ou esvazia." }
+  ]);
+
+  assert(mixedCollectionHistory.includes("shortCollectionPressure = high"));
+  assert(mixedCollectionHistory.includes("nao peca palavra, nome, opcao curta"));
 
   const dryClosureHistory = buildInteractionHistoryBlock([
     { role: "assistant", content: "registro: obedeceram. compliance validada." }
@@ -144,11 +162,13 @@ async function main() {
   const hit = applyHangmanGuess(activity, "b");
   assert.equal(hit.result, "letter-hit");
   assert.equal(hit.activity.publicState.progress, "B _ _ _");
+  assert.equal(hit.events.some((event) => event.type === "FULLSCREEN_TEXT"), false);
 
   const miss = applyHangmanGuess(hit.activity, "z");
   assert.equal(miss.result, "letter-miss");
   assert.equal(miss.activity.publicState.wrongGuesses.includes("z"), true);
-  assert.equal(miss.events.some((event) => event.type === "FLASH_TEXT"), true);
+  assert.equal(miss.events.length, 1);
+  assert.equal(miss.events[0].type, "FLASH_TEXT");
 
   const win = applyHangmanGuess(miss.activity, "bola");
   assert.equal(win.result, "word-hit");
