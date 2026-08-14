@@ -1,5 +1,7 @@
 import { generateCaixaPretaTurn } from "@/lib/openai";
 import { normalizeGameCommand } from "@/lib/host/GameDirector";
+import { parseInstagramCommand } from "@/lib/instagram/commands";
+import { getInstagramController } from "@/lib/instagram/InstagramController";
 import { normalizeOpenAIModel } from "@/lib/openaiModels";
 import { showState } from "@/lib/showState";
 import { SHOW_MODES } from "@/prompts/modes";
@@ -143,6 +145,61 @@ export async function POST(request) {
       }
 
       return Response.json({ error: "PHONE COMMAND UNKNOWN" }, { status: 400 });
+    }
+
+    if (name === "/instagram") {
+      const instagramCommand = parseInstagramCommand(content);
+
+      if (!instagramCommand.valid) {
+        return Response.json({
+          error: [
+            "INSTAGRAM COMMAND UNKNOWN",
+            "Use /instagram follow cappavictor"
+          ].join("\n")
+        }, { status: 400 });
+      }
+
+      try {
+        const controller = getInstagramController({
+          reporter: (instagram) => showState.updateInstagram(instagram)
+        });
+        const result = await controller.follow(instagramCommand.username);
+        showState.updateInstagram({
+          ...controller.getStatus(),
+          message: result.message
+        });
+        return Response.json({ message: result.message });
+      } catch (error) {
+        const message = error.message || "";
+
+        if (message.startsWith("INSTAGRAM_PROFILE_NOT_ALLOWED")) {
+          showState.updateInstagram({
+            status: "MANUAL_INTERVENTION",
+            message: `perfil fora da whitelist: @${instagramCommand.username}`,
+            targetProfile: instagramCommand.username,
+            lastAction: "follow"
+          });
+
+          return Response.json({
+            error: `INSTAGRAM PROFILE NOT ALLOWED: @${instagramCommand.username}`
+          }, { status: 403 });
+        }
+
+        if (message === "INSTAGRAM_USERNAME_INVALID") {
+          return Response.json({ error: "INSTAGRAM USERNAME INVALID" }, { status: 400 });
+        }
+
+        console.error("INSTAGRAM OPERATOR ERROR", error);
+        showState.updateInstagram({
+          status: "ERROR",
+          message: "erro Playwright",
+          lastError: `${message}`.slice(0, 180),
+          targetProfile: instagramCommand.username,
+          lastAction: "follow"
+        });
+
+        return Response.json({ error: "INSTAGRAM REQUEST FAILED" }, { status: 500 });
+      }
     }
 
     if (name === "/event") {

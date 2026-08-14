@@ -91,6 +91,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       "/activity",
       "/intensity",
       "/model",
+      "/instagram",
       "/phone",
       "/clear",
       "/clear-performance"
@@ -182,6 +183,8 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   const phoneProjection = state.performance?.phoneProjection || { status: "hidden" };
   const game = state.game || { active: false, id: null, cooldownTurnsRemaining: 0 };
   const suitcase = state.suitcase || { active: false, phase: "IDLE" };
+  const instagram = state.instagram || { status: "DISCONNECTED", logs: [] };
+  const instagramLogs = (instagram.logs || []).slice(-5).reverse();
   const suitcaseGame = suitcase.currentGame || null;
   const participantCounts = state.participants?.counts || { team: 0, audience: 0, session: 0, available: 0 };
   const participantHistory = Object.values(state.participants?.history || {})
@@ -216,6 +219,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             <span>INTENSITY: {(state.performance?.intensity || "calm").toUpperCase()}</span>
             <span>GAME: {game.active ? `${game.id} / ${game.startSource}`.toUpperCase() : `COOLDOWN ${game.cooldownTurnsRemaining || 0}`}</span>
             <span>SUITCASE: {suitcase.active ? `${suitcase.phase} / ${suitcase.activeExperience || "none"}` : suitcase.phase}</span>
+            <span>INSTAGRAM: {instagram.status || "DISCONNECTED"}</span>
             <span>PARTICIPANTS: T{participantCounts.team} A{participantCounts.audience} S{participantCounts.session}</span>
             <span>ACTIVITIES: {activities.length}</span>
             <span>EVENTS: {state.performance?.events?.length || 0}</span>
@@ -260,6 +264,31 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
           ))}
 
           <h2>PERFORMANCE</h2>
+          <article className={styles.memory}>
+            <strong>INSTAGRAM / {instagram.status || "DISCONNECTED"}</strong>
+            <p>
+              ACCOUNT: @{instagram.account || "caixapretabot"}
+              {"\n"}TARGET: {instagram.targetProfile ? `@${instagram.targetProfile}` : "-"}
+              {"\n"}ACTION: {instagram.lastAction || "-"}
+              {"\n"}BUTTON: {instagram.lastButtonState || "-"}
+              {"\n"}MESSAGE: {instagram.message || "-"}
+              {"\n"}URL: {instagram.currentUrl || "-"}
+            </p>
+            <button
+              className={styles.approveButton}
+              disabled={pending}
+              onClick={() => sendOperatorCommand("/instagram follow cappavictor", "INSTAGRAM ERROR")}
+              type="button"
+            >
+              FOLLOW @CAPPAVICTOR
+            </button>
+          </article>
+          {instagramLogs.length ? (
+            <article className={styles.memory}>
+              <strong>INSTAGRAM LOG</strong>
+              <p>{instagramLogs.map((entry) => `${new Date(entry.timestamp).toLocaleTimeString("pt-BR")} ${entry.status}: ${entry.message}`).join("\n")}</p>
+            </article>
+          ) : null}
           <article className={styles.memory}>
             <strong>SUITCASE DEBUG</strong>
             <p>

@@ -88,6 +88,34 @@ Confirmar ou cortar imediatamente essa camada:
 `PHONE_PROJECTION_REQUEST`. Isso nunca projeta conteudo privado sozinho; apenas
 marca que ha uma confirmacao humana pendente.
 
+Abrir o Instagram real em Chromium visivel e seguir o perfil autorizado:
+
+```text
+/instagram follow cappavictor
+```
+
+Na primeira execucao, o Chromium abre `instagram.com` usando o perfil persistente
+em `.runtime/instagram-profile/`. Se o Instagram pedir login, faca login
+manualmente como `@caixapretabot` na janela aberta. O navegador permanece aberto
+para a cena e a sessao fica salva para as proximas execucoes. O comando so aceita
+perfis listados em `INSTAGRAM_ALLOWED_PROFILES`; por padrao, apenas
+`cappavictor`. O painel operator mostra `INSTAGRAM >` com progresso, URL, estado
+do botao e necessidade de intervencao manual quando houver checkpoint, captcha,
+2FA ou tela desconhecida.
+
+Variaveis relacionadas:
+
+```bash
+INSTAGRAM_ENABLED=true
+INSTAGRAM_DEBUG=false
+INSTAGRAM_THEATRICAL_DELAY=700
+INSTAGRAM_ALLOWED_PROFILES=cappavictor
+```
+
+Com `INSTAGRAM_DEBUG=true`, erros salvam screenshot e metadados seguros em
+`.runtime/instagram-debug/`. O projeto nunca salva usuario, senha, cookies,
+tokens ou headers em logs.
+
 Forcar ou controlar um jogo do HOST:
 
 ```text

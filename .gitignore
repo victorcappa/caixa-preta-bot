@@ -1,6 +1,7 @@
 node_modules
 .venv-pdf
 .next
+.runtime/
 out
 dist
 .env
