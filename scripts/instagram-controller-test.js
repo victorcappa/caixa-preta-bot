@@ -216,8 +216,17 @@ async function main() {
   let commentOpenedMediaFor = null;
   let commentClickedInput = false;
   let commentFilled = "";
+  let commentTyped = "";
   let commentSubmitted = false;
   let openedComments = false;
+  commentController.page = {
+    keyboard: {
+      press: async () => {},
+      type: async (text) => {
+        commentTyped += text;
+      }
+    }
+  };
   commentController.openProfile = async () => ({ status: "ready" });
   commentController.waitForEmbeddedFrameReady = async () => true;
   commentController.openLatestProfileMedia = async (username) => {
@@ -248,7 +257,8 @@ async function main() {
   assert.equal(commentOpenedMediaFor, "cappavictor");
   assert.equal(openedComments, true);
   assert.equal(commentClickedInput, true);
-  assert.equal(commentFilled, "biscoiteiro");
+  assert.equal(commentFilled, "");
+  assert.equal(commentTyped, "biscoiteiro");
   assert.equal(commentSubmitted, true);
 
   console.log("Instagram controller tests passed");
