@@ -27,6 +27,10 @@ function withTimeout(promise, ms, errorMessage) {
 }
 
 async function executeInstagramCommand(controller, instagramCommand) {
+  if (instagramCommand.action !== "watch_reels") {
+    controller.stopReelsAutoplay?.({ silent: true });
+  }
+
   if (instagramCommand.action?.startsWith("analyze_")) {
     return executeInstagramAnalysis(controller, instagramCommand);
   }

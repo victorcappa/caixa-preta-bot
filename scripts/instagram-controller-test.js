@@ -185,6 +185,20 @@ async function main() {
   assert.equal(dispatchedTouchEvents.at(-1).payload.type, "touchEnd");
   assert.deepEqual(pressedKeys, ["ArrowDown"]);
 
+  const reelDelayController = new controllerModule.InstagramController({ config });
+  reelDelayController.page = {
+    evaluate: async () => ({ duration: 7, currentTime: 1.2 })
+  };
+  assert.equal(await reelDelayController.getCurrentReelWatchDelayMs(), 6150);
+  reelDelayController.page = {
+    evaluate: async () => ({ duration: 40, currentTime: 0 })
+  };
+  assert.equal(await reelDelayController.getCurrentReelWatchDelayMs(), 10000);
+  reelDelayController.startReelsAutoplay(1500);
+  assert.equal(reelDelayController.reelsAutoplayActive, true);
+  reelDelayController.stopReelsAutoplay({ silent: true });
+  assert.equal(reelDelayController.reelsAutoplayActive, false);
+
   const clickController = new controllerModule.InstagramController({ config });
   const tappedPoints = [];
   const mouseClicks = [];
