@@ -67,16 +67,22 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
   }
 
   function handleClick(event) {
-    const rect = viewportRef.current?.getBoundingClientRect();
-    if (!rect) {
+    const point = normalizedPointInFrame(
+      viewportRef.current?.getBoundingClientRect(),
+      frame?.viewport,
+      event.clientX,
+      event.clientY
+    );
+
+    if (!point) {
       return;
     }
 
     viewportRef.current.focus();
     sendInput({
       type: "click",
-      x: (event.clientX - rect.left) / rect.width,
-      y: (event.clientY - rect.top) / rect.height
+      x: point.x,
+      y: point.y
     });
   }
 
@@ -122,4 +128,36 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
       </div>
     </aside>
   );
+}
+
+function normalizedPointInFrame(rect, viewport, clientX, clientY) {
+  if (!rect) {
+    return null;
+  }
+
+  const sourceWidth = Number(viewport?.width) || 1280;
+  const sourceHeight = Number(viewport?.height) || 900;
+  const sourceRatio = sourceWidth / sourceHeight;
+  const boxRatio = rect.width / rect.height;
+  let frameLeft = rect.left;
+  let frameTop = rect.top;
+  let frameWidth = rect.width;
+  let frameHeight = rect.height;
+
+  if (boxRatio > sourceRatio) {
+    frameWidth = rect.height * sourceRatio;
+    frameLeft = rect.left + ((rect.width - frameWidth) / 2);
+  } else {
+    frameHeight = rect.width / sourceRatio;
+    frameTop = rect.top + ((rect.height - frameHeight) / 2);
+  }
+
+  const x = (clientX - frameLeft) / frameWidth;
+  const y = (clientY - frameTop) / frameHeight;
+
+  if (x < 0 || x > 1 || y < 0 || y > 1) {
+    return null;
+  }
+
+  return { x, y };
 }
