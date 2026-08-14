@@ -110,10 +110,11 @@ interpreta a intencao e escolhe uma acao pre-definida (`follow`, `open_profile`,
 `follow_and_comment_latest`, `analyze_current`,
 `analyze_profile`, `analyze_recent_posts`, `analyze_latest_media` ou
 `watch_reels`, `send_direct_latest`, `send_direct_thread`, `like_latest_media`
-ou `like_nth_media`). Exemplos:
+`like_nth_media` ou `open_directs`). Exemplos:
 `/instagram seguir perfil do marcusgarcia e comentar na ultima foto algo engracado`.
 `/instagram assistir reels` abre Reels e passa automaticamente entre videos,
 esperando de 2 a 10 segundos conforme a duracao visivel do video.
+`/instagram abrir directs`.
 `/instagram entrar na ultima mensagem e escrever uma mensagem para o grupo: ola, mundo`.
 `/instagram escrever no chat group com livinha, janaina e marcus: oi grupo`.
 `/instagram olhar ultimo post do perfil cappavictor`.

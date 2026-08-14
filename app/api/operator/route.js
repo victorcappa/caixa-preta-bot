@@ -39,6 +39,10 @@ async function executeInstagramCommand(controller, instagramCommand) {
     return controller.openReels();
   }
 
+  if (instagramCommand.action === "open_directs") {
+    return controller.openDirects();
+  }
+
   if (instagramCommand.action === "send_direct_latest") {
     return controller.sendDirectMessage({ message: instagramCommand.message });
   }

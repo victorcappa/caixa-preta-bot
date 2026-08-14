@@ -50,6 +50,18 @@ async function main() {
     username: "",
     error: null
   });
+  assert.deepEqual(commands.parseInstagramCommand("abrir directs"), {
+    valid: true,
+    action: "open_directs",
+    username: "",
+    error: null
+  });
+  assert.deepEqual(commands.parseInstagramCommand("ver minhas mensagens"), {
+    valid: true,
+    action: "open_directs",
+    username: "",
+    error: null
+  });
   assert.deepEqual(commands.parseInstagramCommand("entrar na ultima mensagem e escrever uma mensagem para o grupo: olá, mundo"), {
     valid: true,
     action: "send_direct_latest",
@@ -387,6 +399,19 @@ async function main() {
   assert.equal(directOpenedLatest, true);
   assert.equal(directTyped, "olá, mundo");
   assert.equal(directSubmitted, true);
+
+  const openDirectsController = new controllerModule.InstagramController({ config });
+  let openDirectsLoaded = false;
+  openDirectsController.openDirectInbox = async () => {
+    openDirectsLoaded = true;
+    return { status: "ready" };
+  };
+  openDirectsController.waitForEmbeddedFrameReady = async () => true;
+  assert.deepEqual(await openDirectsController.openDirects(), {
+    status: "ready",
+    message: "INSTAGRAM: directs aberto no iframe"
+  });
+  assert.equal(openDirectsLoaded, true);
 
   const likeController = new controllerModule.InstagramController({ config });
   let openedLikeMedia = null;
