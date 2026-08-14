@@ -65,8 +65,13 @@
 
 .viewport {
   min-height: 0;
+  align-self: center;
+  justify-self: center;
   display: grid;
   place-items: center;
+  width: min(calc(100% - 24px), calc((100vh - 96px) * 0.566));
+  max-width: calc(100% - 24px);
+  max-height: calc(100% - 12px);
   margin: 0 12px 12px;
   outline: 1px solid var(--green-soft);
   background: #050505;
@@ -112,10 +117,11 @@
   .panel {
     border-left: 0;
     border-top: 1px solid var(--green-soft);
-    min-height: 44vh;
+    min-height: 52vh;
   }
 
   .viewport {
+    width: min(calc(100% - 20px), calc((52vh - 92px) * 0.566));
     margin: 0 10px 10px;
   }
 }

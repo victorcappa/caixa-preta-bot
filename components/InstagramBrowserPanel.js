@@ -117,6 +117,7 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
         onKeyDown={handleKeyDown}
         ref={viewportRef}
         role="application"
+        style={{ aspectRatio: `${frame?.viewport?.width || 430} / ${frame?.viewport?.height || 760}` }}
         tabIndex={0}
       >
         {frame?.image ? (
@@ -135,8 +136,8 @@ function normalizedPointInFrame(rect, viewport, clientX, clientY) {
     return null;
   }
 
-  const sourceWidth = Number(viewport?.width) || 1280;
-  const sourceHeight = Number(viewport?.height) || 900;
+  const sourceWidth = Number(viewport?.width) || 430;
+  const sourceHeight = Number(viewport?.height) || 760;
   const sourceRatio = sourceWidth / sourceHeight;
   const boxRatio = rect.width / rect.height;
   let frameLeft = rect.left;

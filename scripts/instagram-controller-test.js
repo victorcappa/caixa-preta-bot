@@ -24,6 +24,8 @@ async function main() {
     INSTAGRAM_EMBEDDED: "true",
     INSTAGRAM_DEBUG: "true",
     INSTAGRAM_THEATRICAL_DELAY: "2000",
+    INSTAGRAM_VIEWPORT_WIDTH: "430",
+    INSTAGRAM_VIEWPORT_HEIGHT: "760",
     INSTAGRAM_ALLOWED_PROFILES: "cappavictor"
   });
 
@@ -31,6 +33,7 @@ async function main() {
   assert.equal(config.embedded, true);
   assert.equal(config.debug, true);
   assert.equal(config.theatricalDelayMs, 1500);
+  assert.deepEqual(config.viewport, { width: 430, height: 760 });
   assert.deepEqual(config.allowedProfiles, ["cappavictor"]);
   assert(config.profileDir.endsWith(".runtime/instagram-profile"));
   assert(config.debugDir.endsWith(".runtime/instagram-debug"));
