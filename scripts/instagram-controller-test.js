@@ -18,6 +18,19 @@ async function main() {
   assert.equal(commands.parseInstagramCommand("like cappavictor").valid, false);
   assert.equal(commands.parseInstagramCommand("follow cappavictor extra").valid, false);
   assert.equal(commands.parseInstagramCommand("follow https://instagram.com/cappavictor").valid, false);
+  assert.deepEqual(commands.parseInstagramCommand("entrar no perfil @cappavictor e comentar na ultima foto 'biscoiteiro'"), {
+    valid: true,
+    action: "comment_latest",
+    username: "cappavictor",
+    comment: "biscoiteiro",
+    error: null
+  });
+  assert.deepEqual(commands.parseInstagramCommand("entrar no perfil @cappavictor"), {
+    valid: true,
+    action: "open_profile",
+    username: "cappavictor",
+    error: null
+  });
 
   const config = controllerModule.getInstagramConfig({
     INSTAGRAM_ENABLED: "true",
@@ -184,6 +197,39 @@ async function main() {
     message: "INSTAGRAM: nao foi possivel confirmar a acao"
   });
   assert.equal(recoveredProfileFor, "cappavictor");
+
+  const commentController = new controllerModule.InstagramController({ config });
+  let commentOpenedMediaFor = null;
+  let commentClickedInput = false;
+  let commentFilled = "";
+  let commentSubmitted = false;
+  commentController.openProfile = async () => ({ status: "ready" });
+  commentController.waitForEmbeddedFrameReady = async () => true;
+  commentController.openLatestProfileMedia = async (username) => {
+    commentOpenedMediaFor = username;
+    return true;
+  };
+  commentController.findCommentInput = async () => ({
+    click: async () => {
+      commentClickedInput = true;
+    },
+    fill: async (text) => {
+      commentFilled = text;
+    }
+  });
+  commentController.submitComment = async () => {
+    commentSubmitted = true;
+  };
+  commentController.theatricalDelay = async () => {};
+
+  assert.deepEqual(await commentController.commentLatestMedia("@cappavictor", "biscoiteiro"), {
+    status: "commented",
+    message: "INSTAGRAM: comentario enviado para @cappavictor"
+  });
+  assert.equal(commentOpenedMediaFor, "cappavictor");
+  assert.equal(commentClickedInput, true);
+  assert.equal(commentFilled, "biscoiteiro");
+  assert.equal(commentSubmitted, true);
 
   console.log("Instagram controller tests passed");
 }

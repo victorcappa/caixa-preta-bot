@@ -163,7 +163,8 @@ export async function POST(request) {
         return Response.json({
           error: [
             "INSTAGRAM COMMAND UNKNOWN",
-            "Use /instagram follow cappavictor"
+            "Use /instagram follow cappavictor",
+            "Ou /instagram entrar no perfil @cappavictor e comentar na ultima foto 'biscoiteiro'"
           ].join("\n")
         }, { status: 400 });
       }
@@ -172,7 +173,12 @@ export async function POST(request) {
         const controller = getInstagramController({
           reporter: (instagram) => showState.updateInstagram(instagram)
         });
-        const result = await withTimeout(controller.follow(instagramCommand.username), 45000, "INSTAGRAM_REQUEST_TIMEOUT");
+        const action = instagramCommand.action === "comment_latest"
+          ? controller.commentLatestMedia(instagramCommand.username, instagramCommand.comment)
+          : instagramCommand.action === "open_profile"
+            ? controller.openProfile(instagramCommand.username)
+            : controller.follow(instagramCommand.username);
+        const result = await withTimeout(action, 45000, "INSTAGRAM_REQUEST_TIMEOUT");
         showState.updateInstagram({
           ...controller.getStatus(),
           message: result.message
@@ -186,7 +192,7 @@ export async function POST(request) {
             status: "MANUAL_INTERVENTION",
             message: `perfil fora da whitelist: @${instagramCommand.username}`,
             targetProfile: instagramCommand.username,
-            lastAction: "follow"
+            lastAction: instagramCommand.action
           });
 
           return Response.json({
@@ -198,13 +204,17 @@ export async function POST(request) {
           return Response.json({ error: "INSTAGRAM USERNAME INVALID" }, { status: 400 });
         }
 
+        if (message === "INSTAGRAM_COMMENT_EMPTY") {
+          return Response.json({ error: "INSTAGRAM COMMENT EMPTY" }, { status: 400 });
+        }
+
         if (message === "INSTAGRAM_REQUEST_TIMEOUT") {
           showState.updateInstagram({
             status: "ERROR",
             message: "timeout no comando Instagram",
             lastError: "operator timeout",
             targetProfile: instagramCommand.username,
-            lastAction: "follow"
+            lastAction: instagramCommand.action
           });
 
           return Response.json({ error: "INSTAGRAM REQUEST TIMEOUT" }, { status: 504 });
@@ -216,7 +226,7 @@ export async function POST(request) {
           message: "erro Playwright",
           lastError: `${message}`.slice(0, 180),
           targetProfile: instagramCommand.username,
-          lastAction: "follow"
+          lastAction: instagramCommand.action
         });
 
         return Response.json({ error: "INSTAGRAM REQUEST FAILED" }, { status: 500 });
