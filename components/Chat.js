@@ -10,6 +10,22 @@ import styles from "./Chat.module.css";
 const INTRO_READY_TEXT = "TEM ALGUEM AI?";
 const INTRO_DOTS_TEXT = "...";
 const TYPE_INTERVAL_MS = 42;
+const DEFAULT_OPERATOR_WIDTH = 520;
+const DEFAULT_INSTAGRAM_WIDTH = 520;
+const DEFAULT_INSTAGRAM_HEIGHT = 480;
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function storedNumber(key, fallback) {
+  if (typeof window === "undefined") {
+    return fallback;
+  }
+
+  const value = Number(window.localStorage.getItem(key));
+  return Number.isFinite(value) ? value : fallback;
+}
 
 export default function Chat() {
   const [messages, setMessages] = useState([]);
@@ -32,6 +48,11 @@ export default function Chat() {
   const [operatorMounted, setOperatorMounted] = useState(false);
   const [operatorOpen, setOperatorOpen] = useState(false);
   const [instagramPanelClosed, setInstagramPanelClosed] = useState(false);
+  const [operatorWidth, setOperatorWidth] = useState(DEFAULT_OPERATOR_WIDTH);
+  const [instagramWidth, setInstagramWidth] = useState(DEFAULT_INSTAGRAM_WIDTH);
+  const [instagramHeight, setInstagramHeight] = useState(DEFAULT_INSTAGRAM_HEIGHT);
+  const workspaceRef = useRef(null);
+  const chatPaneRef = useRef(null);
   const scrollRef = useRef(null);
   const initializedMessagesRef = useRef(false);
   const seenMessageIdsRef = useRef(new Set());
@@ -101,6 +122,12 @@ export default function Chat() {
     };
 
     return () => events.close();
+  }, []);
+
+  useEffect(() => {
+    setOperatorWidth(storedNumber("caixa-preta.operatorWidth", DEFAULT_OPERATOR_WIDTH));
+    setInstagramWidth(storedNumber("caixa-preta.instagramWidth", DEFAULT_INSTAGRAM_WIDTH));
+    setInstagramHeight(storedNumber("caixa-preta.instagramHeight", DEFAULT_INSTAGRAM_HEIGHT));
   }, []);
 
   useEffect(() => {
@@ -304,6 +331,146 @@ export default function Chat() {
     requestAnimationFrame(() => setOperatorOpen(true));
   }
 
+  function beginOperatorResize(event) {
+    const workspaceRect = workspaceRef.current?.getBoundingClientRect();
+    if (!workspaceRect) {
+      return;
+    }
+
+    event.preventDefault();
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    function onPointerMove(pointerEvent) {
+      const nextWidth = clamp(
+        workspaceRect.right - pointerEvent.clientX,
+        320,
+        Math.max(320, workspaceRect.width - 420)
+      );
+
+      setOperatorWidth(nextWidth);
+      window.localStorage.setItem("caixa-preta.operatorWidth", `${Math.round(nextWidth)}`);
+    }
+
+    function onPointerUp() {
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+    }
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp, { once: true });
+  }
+
+  function resizeOperatorByKeyboard(event) {
+    if (!["ArrowLeft", "ArrowRight"].includes(event.key)) {
+      return;
+    }
+
+    const workspaceRect = workspaceRef.current?.getBoundingClientRect();
+    if (!workspaceRect) {
+      return;
+    }
+
+    event.preventDefault();
+    const direction = event.key === "ArrowLeft" ? 1 : -1;
+    const nextWidth = clamp(
+      operatorWidth + (direction * 24),
+      320,
+      Math.max(320, workspaceRect.width - 420)
+    );
+
+    setOperatorWidth(nextWidth);
+    window.localStorage.setItem("caixa-preta.operatorWidth", `${Math.round(nextWidth)}`);
+  }
+
+  function beginInstagramResize(event) {
+    const chatPaneRect = chatPaneRef.current?.getBoundingClientRect();
+    if (!chatPaneRect) {
+      return;
+    }
+
+    const stacked = window.matchMedia("(max-width: 1100px)").matches;
+    event.preventDefault();
+    document.body.style.cursor = stacked ? "row-resize" : "col-resize";
+    document.body.style.userSelect = "none";
+
+    function onPointerMove(pointerEvent) {
+      if (stacked) {
+        const nextHeight = clamp(
+          chatPaneRect.bottom - pointerEvent.clientY,
+          280,
+          Math.max(280, chatPaneRect.height - 220)
+        );
+
+        setInstagramHeight(nextHeight);
+        window.localStorage.setItem("caixa-preta.instagramHeight", `${Math.round(nextHeight)}`);
+        return;
+      }
+
+      const nextWidth = clamp(
+        chatPaneRect.right - pointerEvent.clientX,
+        280,
+        Math.max(280, chatPaneRect.width - 280)
+      );
+
+      setInstagramWidth(nextWidth);
+      window.localStorage.setItem("caixa-preta.instagramWidth", `${Math.round(nextWidth)}`);
+    }
+
+    function onPointerUp() {
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+    }
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp, { once: true });
+  }
+
+  function resizeInstagramByKeyboard(event) {
+    const horizontalKeys = ["ArrowLeft", "ArrowRight"];
+    const verticalKeys = ["ArrowUp", "ArrowDown"];
+    const stacked = window.matchMedia("(max-width: 1100px)").matches;
+    const acceptedKeys = stacked ? verticalKeys : horizontalKeys;
+
+    if (!acceptedKeys.includes(event.key)) {
+      return;
+    }
+
+    const chatPaneRect = chatPaneRef.current?.getBoundingClientRect();
+    if (!chatPaneRect) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (stacked) {
+      const direction = event.key === "ArrowUp" ? 1 : -1;
+      const nextHeight = clamp(
+        instagramHeight + (direction * 24),
+        280,
+        Math.max(280, chatPaneRect.height - 220)
+      );
+
+      setInstagramHeight(nextHeight);
+      window.localStorage.setItem("caixa-preta.instagramHeight", `${Math.round(nextHeight)}`);
+      return;
+    }
+
+    const direction = event.key === "ArrowLeft" ? 1 : -1;
+    const nextWidth = clamp(
+      instagramWidth + (direction * 24),
+      280,
+      Math.max(280, chatPaneRect.width - 280)
+    );
+
+    setInstagramWidth(nextWidth);
+    window.localStorage.setItem("caixa-preta.instagramWidth", `${Math.round(nextWidth)}`);
+  }
+
   const activeTypingAssistant = [...messages].reverse().find((message) => (
     message.role === "assistant" && typedReplies[message.id] !== message.content
   ));
@@ -330,9 +497,18 @@ export default function Chat() {
     ))
     : performanceEvents;
   const visibleInstagramPanel = instagram?.embedded && instagram.status && instagram.status !== "DISCONNECTED" && !instagramPanelClosed;
+  const layoutStyle = {
+    "--operator-width": `${operatorWidth}px`,
+    "--instagram-width": `${instagramWidth}px`,
+    "--instagram-height": `${instagramHeight}px`
+  };
 
   return (
-    <div className={`${styles.workspace} ${operatorOpen ? styles.workspaceWithOperator : ""}`}>
+    <div
+      className={`${styles.workspace} ${operatorOpen ? styles.workspaceWithOperator : ""}`}
+      ref={workspaceRef}
+      style={layoutStyle}
+    >
       <PerformanceLayer
         activities={performanceActivities}
         events={visiblePerformanceEvents}
@@ -434,7 +610,11 @@ export default function Chat() {
         </div>
       ) : null}
 
-      <section className={`${styles.chatPane} ${visibleInstagramPanel ? styles.chatPaneWithInstagram : ""}`} aria-label="Chat publico">
+      <section
+        className={`${styles.chatPane} ${visibleInstagramPanel ? styles.chatPaneWithInstagram : ""}`}
+        aria-label="Chat publico"
+        ref={chatPaneRef}
+      >
         <Terminal title="CAIXA PRETA" footer={footer} className={styles.embeddedTerminal}>
           <div className={styles.messages}>
             {messages.length === 0 && introStep === "cursor" ? (
@@ -478,12 +658,35 @@ export default function Chat() {
           </div>
         </Terminal>
         {visibleInstagramPanel ? (
-          <InstagramBrowserPanel
-            instagram={instagram}
-            onClose={() => setInstagramPanelClosed(true)}
-          />
+          <>
+            <div
+              aria-label="Redimensionar chat e Instagram"
+              aria-orientation="vertical"
+              className={styles.instagramResizeHandle}
+              onKeyDown={resizeInstagramByKeyboard}
+              onPointerDown={beginInstagramResize}
+              role="separator"
+              tabIndex={0}
+            />
+            <InstagramBrowserPanel
+              instagram={instagram}
+              onClose={() => setInstagramPanelClosed(true)}
+            />
+          </>
         ) : null}
       </section>
+
+      {operatorMounted && operatorOpen ? (
+        <div
+          aria-label="Redimensionar chat e operator"
+          aria-orientation="vertical"
+          className={styles.operatorResizeHandle}
+          onKeyDown={resizeOperatorByKeyboard}
+          onPointerDown={beginOperatorResize}
+          role="separator"
+          tabIndex={0}
+        />
+      ) : null}
 
       {operatorMounted ? (
         <aside

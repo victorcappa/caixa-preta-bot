@@ -10,8 +10,8 @@
 }
 
 .workspaceWithOperator {
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 42vw);
-  gap: 1px;
+  grid-template-columns: minmax(0, 1fr) 8px minmax(320px, var(--operator-width, 520px));
+  gap: 0;
 }
 
 .chatPane {
@@ -23,7 +23,7 @@
 }
 
 .chatPaneWithInstagram {
-  grid-template-columns: minmax(300px, 0.9fr) minmax(320px, 1.1fr);
+  grid-template-columns: minmax(300px, 1fr) 8px minmax(280px, var(--instagram-width, 520px));
 }
 
 .embeddedTerminal {
@@ -39,6 +39,35 @@
   opacity: 0;
   transform: translateX(100%);
   transition: opacity 220ms ease, transform 260ms ease;
+}
+
+.instagramResizeHandle,
+.operatorResizeHandle {
+  min-width: 8px;
+  min-height: 8px;
+  background: #000000;
+  border: 0;
+  cursor: col-resize;
+  touch-action: none;
+  transition: background 120ms ease, box-shadow 120ms ease;
+}
+
+.instagramResizeHandle {
+  border-left: 1px solid var(--green-soft);
+  border-right: 1px solid var(--green-soft);
+}
+
+.operatorResizeHandle {
+  border-left: 1px solid var(--green-soft);
+}
+
+.instagramResizeHandle:hover,
+.instagramResizeHandle:focus-visible,
+.operatorResizeHandle:hover,
+.operatorResizeHandle:focus-visible {
+  outline: 0;
+  background: rgba(0, 255, 102, 0.16);
+  box-shadow: 0 0 18px rgba(0, 255, 102, 0.14);
 }
 
 .operatorDrawerOpen {
@@ -270,6 +299,10 @@
     gap: 0;
   }
 
+  .operatorResizeHandle {
+    display: none;
+  }
+
   .operatorDrawer {
     position: fixed;
     inset: 0 0 0 auto;
@@ -305,6 +338,16 @@
 @media (max-width: 1100px) {
   .chatPaneWithInstagram {
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(34vh, 0.85fr) minmax(52vh, 1.15fr);
+    grid-template-rows: minmax(220px, 1fr) 8px minmax(280px, var(--instagram-height, 480px));
+  }
+
+  .instagramResizeHandle {
+    min-width: 0;
+    min-height: 8px;
+    border-top: 1px solid var(--green-soft);
+    border-right: 0;
+    border-bottom: 1px solid var(--green-soft);
+    border-left: 0;
+    cursor: row-resize;
   }
 }

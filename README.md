@@ -48,6 +48,10 @@ O operator tambem pode ser aberto dentro da tela principal pelo botao `OP`,
 abaixo do botao `?`. Ele alterna entre chat em tela cheia e chat com terminal
 operador ao lado; em telas menores, aparece como gaveta animada.
 
+Quando o Instagram embutido e/ou o operator estiverem visiveis, arraste as
+divisorias entre `chat | Instagram | operator` para ajustar o palco. O tamanho
+fica salvo no navegador para o proximo reload.
+
 ## Comandos do operator
 
 Registrar uma memoria da apresentacao:
