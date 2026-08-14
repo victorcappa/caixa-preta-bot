@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./InstagramBrowserPanel.module.css";
 
 const INPUT_KEYS = [
@@ -17,88 +17,60 @@ const INPUT_KEYS = [
 
 export default function InstagramBrowserPanel({ instagram, onClose }) {
   const [frameViewport, setFrameViewport] = useState(instagram.viewport || { width: 430, height: 760 });
-  const [streamError, setStreamError] = useState("");
-  const [streamRetry, setStreamRetry] = useState(0);
-  const [streamReady, setStreamReady] = useState(false);
+  const [frameImage, setFrameImage] = useState("");
+  const [frameError, setFrameError] = useState("");
   const viewportRef = useRef(null);
-  const streamImageRef = useRef(null);
-  const streamObjectUrlRef = useRef(null);
+  const hasFrameImageRef = useRef(false);
   const pointerRef = useRef(null);
   const ignoreNextClickRef = useRef(false);
   const wheelRef = useRef({ deltaY: 0, sentAt: 0 });
-  const streamRetryTimerRef = useRef(null);
 
   useEffect(() => {
     if (instagram.viewport?.width && instagram.viewport?.height) {
       setFrameViewport(instagram.viewport);
     }
-    setStreamError("");
+    setFrameError("");
   }, [instagram.status, instagram.updatedAt, instagram.viewport]);
-
-  useEffect(() => () => {
-    clearTimeout(streamRetryTimerRef.current);
-    if (streamObjectUrlRef.current) {
-      URL.revokeObjectURL(streamObjectUrlRef.current);
-    }
-  }, []);
-
-  const streamSrc = useMemo(() => {
-    const key = [instagram.updatedAt, instagram.status, instagram.currentUrl, streamRetry].filter(Boolean).join("-");
-    return `/api/instagram/stream?stream=${encodeURIComponent(key || "active")}`;
-  }, [instagram.currentUrl, instagram.status, instagram.updatedAt, streamRetry]);
 
   useEffect(() => {
     let cancelled = false;
-    let buffer = new Uint8Array(0);
-    const controller = new AbortController();
+    let timer = null;
 
-    async function readStream() {
+    async function loadFrame() {
       try {
-        setStreamError((current) => current || "STREAM CONECTANDO");
-        const response = await fetch(streamSrc, {
-          cache: "no-store",
-          signal: controller.signal
-        });
+        const response = await fetch(`/api/instagram/frame?t=${Date.now()}`, { cache: "no-store" });
 
-        if (!response.ok || !response.body) {
-          throw new Error("STREAM UNAVAILABLE");
+        if (!response.ok) {
+          throw new Error("FRAME UNAVAILABLE");
         }
 
-        const reader = response.body.getReader();
-        setStreamError("");
-
-        while (!cancelled) {
-          const { done, value } = await reader.read();
-          if (done) {
-            throw new Error("STREAM ENDED");
+        const data = await response.json();
+        if (!cancelled) {
+          if (data.viewport?.width && data.viewport?.height) {
+            setFrameViewport(data.viewport);
           }
-
-          buffer = appendBuffer(buffer, value);
-          const extracted = extractJpegFrames(buffer);
-          buffer = extracted.remaining;
-
-          for (const image of extracted.images) {
-            updateStreamImage(streamImageRef.current, streamObjectUrlRef, image);
-            setStreamReady(true);
-            setStreamError("");
-          }
+          hasFrameImageRef.current = Boolean(data.image);
+          setFrameImage(data.image || "");
+          setFrameError("");
         }
       } catch (error) {
-        if (cancelled || error.name === "AbortError") {
-          return;
+        if (!cancelled && !hasFrameImageRef.current) {
+          setFrameError("FRAME RECONECTANDO");
         }
-
-        handleStreamError();
+      } finally {
+        if (!cancelled) {
+          timer = setTimeout(loadFrame, instagram.status === "ACTING" || instagram.status === "NAVIGATING" ? 120 : 180);
+        }
       }
     }
 
-    readStream();
+    loadFrame();
 
     return () => {
       cancelled = true;
-      controller.abort();
+      clearTimeout(timer);
     };
-  }, [streamSrc]);
+  }, [instagram.status]);
 
   async function sendInput(payload) {
     await fetch("/api/instagram/input", {
@@ -236,15 +208,6 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
     sendSwipe(nextDeltaY > 0 ? "up" : "down", "wheel");
   }
 
-  function handleStreamError() {
-    setStreamError("STREAM RECONECTANDO");
-    clearTimeout(streamRetryTimerRef.current);
-    streamRetryTimerRef.current = setTimeout(() => {
-      setStreamError("");
-      setStreamRetry((retry) => retry + 1);
-    }, 900);
-  }
-
   return (
     <aside className={styles.panel} aria-label="Instagram real embutido">
       <header className={styles.header}>
@@ -268,22 +231,22 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
         style={{ aspectRatio: `${frameViewport.width || 430} / ${frameViewport.height || 760}` }}
         tabIndex={0}
       >
-        {streamError && !streamReady ? (
-          <div className={styles.placeholder}>{streamError}</div>
+        {frameError && !frameImage ? (
+          <div className={styles.placeholder}>{frameError}</div>
         ) : null}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           alt="Instagram real controlado pelo Playwright"
-          className={streamReady ? "" : styles.hiddenFrame}
+          className={frameImage ? "" : styles.hiddenFrame}
           draggable="false"
-          onError={handleStreamError}
+          onError={() => setFrameError("FRAME RECONECTANDO")}
           onLoad={(event) => {
             const { naturalWidth, naturalHeight } = event.currentTarget;
             if (naturalWidth && naturalHeight) {
               setFrameViewport({ width: naturalWidth, height: naturalHeight });
             }
           }}
-          ref={streamImageRef}
+          src={frameImage}
         />
         <div
           aria-hidden="true"
@@ -329,62 +292,4 @@ function normalizedPointInFrame(rect, viewport, clientX, clientY) {
   }
 
   return { x, y };
-}
-
-function appendBuffer(current, next) {
-  const merged = new Uint8Array(current.length + next.length);
-  merged.set(current);
-  merged.set(next, current.length);
-  return merged;
-}
-
-function extractJpegFrames(buffer) {
-  const images = [];
-  let offset = 0;
-
-  while (offset < buffer.length) {
-    const start = findMarker(buffer, 0xff, 0xd8, offset);
-    if (start < 0) {
-      return { images, remaining: new Uint8Array(0) };
-    }
-
-    const end = findMarker(buffer, 0xff, 0xd9, start + 2);
-    if (end < 0) {
-      const remaining = buffer.slice(start);
-      return {
-        images,
-        remaining: remaining.length > 2_000_000 ? remaining.slice(-2_000_000) : remaining
-      };
-    }
-
-    images.push(buffer.slice(start, end + 2));
-    offset = end + 2;
-  }
-
-  return { images, remaining: new Uint8Array(0) };
-}
-
-function findMarker(buffer, first, second, startAt) {
-  for (let index = startAt; index < buffer.length - 1; index += 1) {
-    if (buffer[index] === first && buffer[index + 1] === second) {
-      return index;
-    }
-  }
-
-  return -1;
-}
-
-function updateStreamImage(imageElement, objectUrlRef, image) {
-  if (!imageElement) {
-    return;
-  }
-
-  const previousUrl = objectUrlRef.current;
-  const nextUrl = URL.createObjectURL(new Blob([image], { type: "image/jpeg" }));
-  objectUrlRef.current = nextUrl;
-  imageElement.src = nextUrl;
-
-  if (previousUrl) {
-    setTimeout(() => URL.revokeObjectURL(previousUrl), 1000);
-  }
 }
