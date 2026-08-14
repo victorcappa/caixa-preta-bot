@@ -17,6 +17,15 @@ function parseCommand(raw) {
   return { name, content };
 }
 
+function withTimeout(promise, ms, errorMessage) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error(errorMessage)), ms);
+    })
+  ]);
+}
+
 function eventFromCommand(kind, content) {
   if (kind === "text") {
     return { type: "FULLSCREEN_TEXT", payload: { text: content || "REGISTRADO" }, durationMs: 1800 };
@@ -163,7 +172,7 @@ export async function POST(request) {
         const controller = getInstagramController({
           reporter: (instagram) => showState.updateInstagram(instagram)
         });
-        const result = await controller.follow(instagramCommand.username);
+        const result = await withTimeout(controller.follow(instagramCommand.username), 45000, "INSTAGRAM_REQUEST_TIMEOUT");
         showState.updateInstagram({
           ...controller.getStatus(),
           message: result.message
@@ -187,6 +196,18 @@ export async function POST(request) {
 
         if (message === "INSTAGRAM_USERNAME_INVALID") {
           return Response.json({ error: "INSTAGRAM USERNAME INVALID" }, { status: 400 });
+        }
+
+        if (message === "INSTAGRAM_REQUEST_TIMEOUT") {
+          showState.updateInstagram({
+            status: "ERROR",
+            message: "timeout no comando Instagram",
+            lastError: "operator timeout",
+            targetProfile: instagramCommand.username,
+            lastAction: "follow"
+          });
+
+          return Response.json({ error: "INSTAGRAM REQUEST TIMEOUT" }, { status: 504 });
         }
 
         console.error("INSTAGRAM OPERATOR ERROR", error);

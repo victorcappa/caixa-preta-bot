@@ -79,6 +79,7 @@ async function main() {
   const fallbackFollowController = new controllerModule.InstagramController({ config });
   let openedMediaFor = null;
   let clickedFollow = false;
+  let recoveredAfterFollow = null;
   const followStates = [
     { state: null, label: "", locator: null },
     {
@@ -98,6 +99,9 @@ async function main() {
     return true;
   };
   fallbackFollowController.waitForFollowStateChange = async () => ({ state: "following", label: "Following", locator: null });
+  fallbackFollowController.recoverProfileView = async (username) => {
+    recoveredAfterFollow = username;
+  };
   fallbackFollowController.theatricalDelay = async () => {};
 
   assert.deepEqual(await fallbackFollowController.follow("@cappavictor"), {
@@ -106,6 +110,18 @@ async function main() {
   });
   assert.equal(openedMediaFor, "cappavictor");
   assert.equal(clickedFollow, true);
+  assert.equal(recoveredAfterFollow, "cappavictor");
+
+  const busyController = new controllerModule.InstagramController({ config });
+  busyController.actionInProgress = true;
+  assert.deepEqual(await busyController.follow("@cappavictor"), {
+    status: "busy",
+    message: "INSTAGRAM: acao em andamento"
+  });
+  await assert.rejects(
+    () => busyController.captureJpegFrame(),
+    /INSTAGRAM_ACTION_IN_PROGRESS/
+  );
 
   const textFollowController = new controllerModule.InstagramController({ config });
   textFollowController.targetProfile = "cappavictor";
