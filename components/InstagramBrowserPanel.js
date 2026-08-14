@@ -18,10 +18,12 @@ const INPUT_KEYS = [
 export default function InstagramBrowserPanel({ instagram, onClose }) {
   const [frameViewport, setFrameViewport] = useState(instagram.viewport || { width: 430, height: 760 });
   const [streamError, setStreamError] = useState("");
+  const [streamRetry, setStreamRetry] = useState(0);
   const viewportRef = useRef(null);
   const pointerRef = useRef(null);
   const ignoreNextClickRef = useRef(false);
   const wheelRef = useRef({ deltaY: 0, sentAt: 0 });
+  const streamRetryTimerRef = useRef(null);
 
   useEffect(() => {
     if (instagram.viewport?.width && instagram.viewport?.height) {
@@ -30,10 +32,14 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
     setStreamError("");
   }, [instagram.status, instagram.updatedAt, instagram.viewport]);
 
+  useEffect(() => () => {
+    clearTimeout(streamRetryTimerRef.current);
+  }, []);
+
   const streamSrc = useMemo(() => {
-    const key = [instagram.updatedAt, instagram.status, instagram.currentUrl].filter(Boolean).join("-");
+    const key = [instagram.updatedAt, instagram.status, instagram.currentUrl, streamRetry].filter(Boolean).join("-");
     return `/api/instagram/stream?stream=${encodeURIComponent(key || "active")}`;
-  }, [instagram.currentUrl, instagram.status, instagram.updatedAt]);
+  }, [instagram.currentUrl, instagram.status, instagram.updatedAt, streamRetry]);
 
   async function sendInput(payload) {
     await fetch("/api/instagram/input", {
@@ -154,6 +160,15 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
     sendSwipe(nextDeltaY > 0 ? "up" : "down", "wheel");
   }
 
+  function handleStreamError() {
+    setStreamError("STREAM RECONECTANDO");
+    clearTimeout(streamRetryTimerRef.current);
+    streamRetryTimerRef.current = setTimeout(() => {
+      setStreamError("");
+      setStreamRetry((retry) => retry + 1);
+    }, 900);
+  }
+
   return (
     <aside className={styles.panel} aria-label="Instagram real embutido">
       <header className={styles.header}>
@@ -189,7 +204,7 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
           <img
             alt="Instagram real controlado pelo Playwright"
             draggable="false"
-            onError={() => setStreamError("STREAM INDISPONIVEL")}
+            onError={handleStreamError}
             onLoad={(event) => {
               const { naturalWidth, naturalHeight } = event.currentTarget;
               if (naturalWidth && naturalHeight) {

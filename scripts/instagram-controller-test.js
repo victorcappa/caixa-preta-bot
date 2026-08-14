@@ -115,6 +115,36 @@ async function main() {
   assert.equal(textFollowState.label, "Seguir");
   assert.equal(await textFollowState.locator.isVisible(), true);
 
+  const mediaOpenController = new controllerModule.InstagramController({ config });
+  let mediaClicked = false;
+  const mediaLink = createFakeLocator({
+    visible: true,
+    click: async () => {
+      mediaClicked = true;
+    }
+  });
+  mediaOpenController.page = createMediaOpenPage({ mediaLink });
+  mediaOpenController.dismissKnownModals = async () => {};
+  mediaOpenController.theatricalDelay = async () => {};
+  assert.equal(await mediaOpenController.openLatestProfileMedia("cappavictor"), true);
+  assert.equal(mediaClicked, true);
+
+  const failedFollowController = new controllerModule.InstagramController({ config });
+  let recoveredProfileFor = null;
+  failedFollowController.openProfile = async () => ({ status: "ready" });
+  failedFollowController.getFollowButtonState = async () => ({ state: null, label: "", locator: null });
+  failedFollowController.openLatestProfileMedia = async () => true;
+  failedFollowController.saveDebugArtifact = async () => {};
+  failedFollowController.recoverProfileView = async (username) => {
+    recoveredProfileFor = username;
+  };
+  failedFollowController.theatricalDelay = async () => {};
+  assert.deepEqual(await failedFollowController.follow("@cappavictor"), {
+    status: "unconfirmed",
+    message: "INSTAGRAM: nao foi possivel confirmar a acao"
+  });
+  assert.equal(recoveredProfileFor, "cappavictor");
+
   console.log("Instagram controller tests passed");
 }
 
@@ -143,10 +173,33 @@ function createFakeLocator(overrides = {}) {
     getByRole: () => locator,
     getByText: () => locator,
     isVisible: async () => Boolean(overrides.visible),
+    waitFor: async () => {
+      if (!overrides.visible) {
+        throw new Error("not visible");
+      }
+    },
     allTextContents: async () => overrides.textContents || [],
     ...overrides
   };
   return locator;
+}
+
+function createMediaOpenPage({ mediaLink }) {
+  const hiddenLocator = createFakeLocator({
+    visible: false,
+    waitFor: async () => {
+      throw new Error("not visible");
+    }
+  });
+
+  return {
+    url: () => "https://www.instagram.com/cappavictor/",
+    locator: (selector) => selector.includes("a[href*=") ? mediaLink : hiddenLocator,
+    getByRole: () => hiddenLocator,
+    waitForURL: async () => null,
+    waitForTimeout: async () => {},
+    evaluate: async () => {}
+  };
 }
 
 main().catch((error) => {

@@ -41,13 +41,11 @@ export async function GET() {
           consecutiveErrors = 0;
         } catch {
           consecutiveErrors += 1;
-          if (closed || consecutiveErrors >= 10) {
-            closed = true;
-            streamController.close();
+          if (closed) {
             return;
           }
 
-          await sleep(250);
+          await sleep(Math.min(1200, 250 + (consecutiveErrors * 100)));
         }
 
         await sleep(Math.max(0, frameIntervalMs - (Date.now() - startedAt)));
