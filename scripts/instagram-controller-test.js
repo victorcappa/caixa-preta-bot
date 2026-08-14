@@ -76,6 +76,28 @@ async function main() {
   assert.equal(dispatchedTouchEvents.at(-1).payload.type, "touchEnd");
   assert.deepEqual(pressedKeys, ["ArrowDown"]);
 
+  const clickController = new controllerModule.InstagramController({ config });
+  const tappedPoints = [];
+  const mouseClicks = [];
+  clickController.page = {
+    viewportSize: () => ({ width: 430, height: 760 }),
+    setExtraHTTPHeaders: async () => {},
+    bringToFront: async () => {},
+    touchscreen: {
+      tap: async (x, y) => {
+        tappedPoints.push({ x, y });
+      }
+    },
+    mouse: {
+      click: async (x, y) => {
+        mouseClicks.push({ x, y });
+      }
+    }
+  };
+  assert.deepEqual(await clickController.sendEmbeddedInput({ type: "click", x: 0.5, y: 0.25 }), { ok: true });
+  assert.deepEqual(tappedPoints, [{ x: 215, y: 190 }]);
+  assert.deepEqual(mouseClicks, []);
+
   const fallbackFollowController = new controllerModule.InstagramController({ config });
   let openedMediaFor = null;
   let clickedFollow = false;

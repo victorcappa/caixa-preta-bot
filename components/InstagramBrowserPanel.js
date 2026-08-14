@@ -202,12 +202,7 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
       <div
         aria-label="Frame interativo do Instagram"
         className={styles.viewport}
-        onClick={handleClick}
         onKeyDown={handleKeyDown}
-        onPointerCancel={handlePointerCancel}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
         onWheel={handleWheel}
         ref={viewportRef}
         role="application"
@@ -231,6 +226,15 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
             src={streamSrc}
           />
         )}
+        <div
+          aria-hidden="true"
+          className={styles.interactionLayer}
+          onClick={handleClick}
+          onPointerCancel={handlePointerCancel}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+        />
       </div>
     </aside>
   );
