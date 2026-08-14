@@ -404,6 +404,10 @@ export async function POST(request) {
           return Response.json({ error: "INSTAGRAM REQUEST TIMEOUT" }, { status: 504 });
         }
 
+        if (/Timeout|page\.goto|Navigation/i.test(message)) {
+          return Response.json({ error: "INSTAGRAM NAVIGATION TIMEOUT" }, { status: 504 });
+        }
+
         console.error("INSTAGRAM OPERATOR ERROR", error);
         showState.updateInstagram({
           status: "ERROR",

@@ -314,6 +314,30 @@ async function main() {
     () => busyController.captureJpegFrame(),
     /INSTAGRAM_ACTION_IN_PROGRESS/
   );
+  busyController.actionInProgress = false;
+  busyController.commandInProgress = true;
+  await assert.rejects(
+    () => busyController.captureJpegFrame(),
+    /INSTAGRAM_COMMAND_IN_PROGRESS/
+  );
+
+  let allowedBusyCapture = false;
+  busyController.page = {
+    viewportSize: () => ({ width: 430, height: 760 }),
+    screenshot: async () => {
+      allowedBusyCapture = true;
+      return Buffer.from("frame");
+    },
+    url: () => "https://www.instagram.com/reels/"
+  };
+  assert.deepEqual(
+    await busyController.captureJpegFrame({ allowCommandInProgress: true }),
+    {
+      image: Buffer.from("frame"),
+      viewport: { width: 430, height: 760 }
+    }
+  );
+  assert.equal(allowedBusyCapture, true);
 
   const textFollowController = new controllerModule.InstagramController({ config });
   textFollowController.targetProfile = "cappavictor";
