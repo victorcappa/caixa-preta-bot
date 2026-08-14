@@ -59,6 +59,13 @@ async function main() {
     question: "ultima foto do perfil",
     error: null
   });
+  assert.deepEqual(commands.parseInstagramCommand("entrar no perfil de cappavictor e analisar os ultimos tres post"), {
+    valid: true,
+    action: "analyze_recent_posts",
+    username: "cappavictor",
+    question: "os ultimos tres post",
+    error: null
+  });
 
   const config = controllerModule.getInstagramConfig({
     INSTAGRAM_ENABLED: "true",

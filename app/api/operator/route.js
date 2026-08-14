@@ -82,6 +82,17 @@ async function executeInstagramAnalysis(controller, instagramCommand) {
       if (opened.status !== "ready") {
         return opened;
       }
+
+      await controller.waitForProfileGridMedia({ minCount: 1, timeoutMs: 8000 });
+    }
+
+    if (instagramCommand.action === "analyze_recent_posts") {
+      const opened = await controller.openProfile(instagramCommand.username);
+      if (opened.status !== "ready") {
+        return opened;
+      }
+
+      await controller.waitForProfileGridMedia({ minCount: 3, timeoutMs: 12000 });
     }
 
     if (instagramCommand.action === "analyze_latest_media") {
