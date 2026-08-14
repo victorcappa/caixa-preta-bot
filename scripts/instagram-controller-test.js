@@ -211,6 +211,31 @@ async function main() {
   reelDelayController.stopReelsAutoplay({ silent: true });
   assert.equal(reelDelayController.reelsAutoplayActive, false);
 
+  const audioController = new controllerModule.InstagramController({ config });
+  const evaluatedPayloads = [];
+  audioController.page = {
+    evaluate: async (callback, payload) => {
+      evaluatedPayloads.push(payload ?? "pause");
+    }
+  };
+  audioController.updateStatus = () => {};
+  assert.deepEqual(await audioController.setAudioMuted(false), {
+    status: "ready",
+    muted: false,
+    message: "INSTAGRAM: audio ligado"
+  });
+  assert.equal(audioController.audioMuted, false);
+  assert.deepEqual(evaluatedPayloads, [false]);
+  audioController.startReelsAutoplay(2000);
+  assert.equal(audioController.reelsAutoplayActive, true);
+  assert.deepEqual(await audioController.stopAllRoutines(), {
+    status: "stopped",
+    message: "INSTAGRAM: rotinas paradas"
+  });
+  assert.equal(audioController.reelsAutoplayActive, false);
+  assert.equal(audioController.commandInProgress, false);
+  assert.equal(audioController.actionInProgress, false);
+
   const clickController = new controllerModule.InstagramController({ config });
   const tappedPoints = [];
   const mouseClicks = [];

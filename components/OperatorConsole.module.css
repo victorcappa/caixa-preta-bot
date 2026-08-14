@@ -121,6 +121,17 @@
   margin: 0 0 18px;
 }
 
+.inlineControls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.inlineControls .approveButton,
+.inlineControls .panicButton {
+  margin-bottom: 0;
+}
+
 .controlGrid button {
   margin: 0;
   min-height: 34px;
@@ -183,5 +194,9 @@
     border-top: 1px solid var(--green-soft);
     padding-left: 0;
     padding-top: 14px;
+  }
+
+  .inlineControls {
+    grid-template-columns: 1fr;
   }
 }

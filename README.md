@@ -125,6 +125,9 @@ esperando de 2 a 10 segundos conforme a duracao visivel do video.
 `/instagram analisar ultima foto do perfil marcusgarcia`. A analise visual
 captura o Instagram real e publica o resultado como fala no chat, fora do iframe,
 sem clicar, seguir ou comentar.
+O card `INSTAGRAM` no operator tem botao `SOUND ON/OFF` para ligar/desligar o
+audio dos videos no browser controlado. Use `/stopall` ou o botao `STOP ALL`
+para interromper rotinas continuas, limpar eventos/atividades e parar autoplay.
 `INSTAGRAM_ALLOWED_PROFILES` e uma whitelist opcional: se ficar vazia, qualquer
 username valido pode ser alvo; se tiver perfis separados por virgula, apenas eles
 sao aceitos. O painel operator mostra `INSTAGRAM >` com progresso, URL, estado do

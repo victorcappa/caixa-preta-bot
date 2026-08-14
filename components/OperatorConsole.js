@@ -112,7 +112,8 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       "/instagram",
       "/phone",
       "/clear",
-      "/clear-performance"
+      "/clear-performance",
+      "/stopall"
     ].includes(commandName)) {
       addLog(`UNKNOWN COMMAND: ${commandName}`, "error");
       return;
@@ -175,6 +176,33 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       addLog(data.message, "ok");
     } catch (error) {
       addLog(error.name === "AbortError" ? "OPERATOR REQUEST TIMEOUT" : "SERVER CONNECTION FAILED", "error");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function toggleInstagramAudio() {
+    const muted = !(state.instagram?.audioMuted === false);
+    const nextMuted = !muted;
+    addLog(`> INSTAGRAM AUDIO ${nextMuted ? "OFF" : "ON"}`, "input");
+    setPending(true);
+
+    try {
+      const response = await fetch("/api/instagram/audio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ muted: nextMuted })
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        addLog(data.error || "INSTAGRAM AUDIO ERROR", "error");
+        return;
+      }
+
+      addLog(data.message, "ok");
+    } catch {
+      addLog("INSTAGRAM AUDIO ERROR", "error");
     } finally {
       setPending(false);
     }
@@ -285,6 +313,24 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             >
               FOLLOW @CAPPAVICTOR
             </button>
+            <div className={styles.inlineControls}>
+              <button
+                className={styles.approveButton}
+                disabled={pending || instagram.status === "DISCONNECTED"}
+                onClick={toggleInstagramAudio}
+                type="button"
+              >
+                {instagram.audioMuted === false ? "SOUND ON" : "SOUND OFF"}
+              </button>
+              <button
+                className={styles.panicButton}
+                disabled={pending}
+                onClick={() => sendOperatorCommand("/stopall", "STOPALL ERROR")}
+                type="button"
+              >
+                STOP ALL
+              </button>
+            </div>
           </article>
           {instagramLogs.length ? (
             <article className={styles.memory}>

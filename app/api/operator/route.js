@@ -1,7 +1,7 @@
 import { analyzeInstagramScreenshot, generateCaixaPretaTurn } from "@/lib/openai";
 import { normalizeGameCommand } from "@/lib/host/GameDirector";
 import { interpretInstagramCommand } from "@/lib/instagram/commands";
-import { getInstagramController } from "@/lib/instagram/InstagramController";
+import { getExistingInstagramController, getInstagramController } from "@/lib/instagram/InstagramController";
 import { normalizeOpenAIModel } from "@/lib/openaiModels";
 import { showState } from "@/lib/showState";
 import { SHOW_MODES } from "@/prompts/modes";
@@ -245,6 +245,35 @@ export async function POST(request) {
     if (name === "/clear-performance" || name === "/clear") {
       showState.clearPerformance();
       return Response.json({ message: "PERFORMANCE CLEARED" });
+    }
+
+    if (name === "/stopall") {
+      const stopped = [];
+      const controller = getExistingInstagramController();
+
+      if (controller) {
+        const instagramStop = await controller.stopAllRoutines();
+        showState.updateInstagram({
+          ...controller.getStatus(),
+          message: instagramStop.message
+        });
+        stopped.push("instagram");
+      }
+
+      showState.clearPerformance();
+      showState.stopActivities("operator_stopped");
+
+      if (showState.snapshot().game?.active) {
+        showState.stopGame({ status: "operator_stopped", source: "operator" });
+        stopped.push("game");
+      }
+
+      if (showState.snapshot().suitcase?.active) {
+        showState.abortSuitcases({ source: "operator" });
+        stopped.push("suitcase");
+      }
+
+      return Response.json({ message: `STOPALL ${stopped.length ? stopped.join(" ") : "idle"}`.toUpperCase() });
     }
 
     if (name === "/intensity") {
