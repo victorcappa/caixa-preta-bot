@@ -49,8 +49,10 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
           if (data.viewport?.width && data.viewport?.height) {
             setFrameViewport(data.viewport);
           }
-          hasFrameImageRef.current = Boolean(data.image);
-          setFrameImage(data.image || "");
+          if (data.image) {
+            hasFrameImageRef.current = true;
+            setFrameImage(data.image);
+          }
           setFrameError("");
         }
       } catch (error) {
