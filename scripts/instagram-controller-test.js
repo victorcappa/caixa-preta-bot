@@ -158,6 +158,13 @@ async function main() {
   assert(config.profileDir.endsWith(".runtime/instagram-profile"));
   assert(config.debugDir.endsWith(".runtime/instagram-debug"));
 
+  const defaultEmbeddedConfig = controllerModule.getInstagramConfig({
+    INSTAGRAM_EMBEDDED: "true"
+  });
+  assert.equal(defaultEmbeddedConfig.headless, true);
+  assert.equal(defaultEmbeddedConfig.streamFps, 30);
+  assert.equal(defaultEmbeddedConfig.streamQuality, 55);
+
   const controller = new controllerModule.InstagramController({ config });
   assert.equal(controller.assertAllowedUsername("@cappavictor"), "cappavictor");
   assert.throws(

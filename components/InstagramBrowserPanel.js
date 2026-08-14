@@ -33,44 +33,29 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
   }, [instagram.status, instagram.updatedAt, instagram.viewport]);
 
   useEffect(() => {
-    let cancelled = false;
-    let timer = null;
-
-    async function loadFrame() {
-      try {
-        const response = await fetch(`/api/instagram/frame?t=${Date.now()}`, { cache: "no-store" });
-
-        if (!response.ok) {
-          throw new Error("FRAME UNAVAILABLE");
-        }
-
-        const data = await response.json();
-        if (!cancelled) {
-          if (data.viewport?.width && data.viewport?.height) {
-            setFrameViewport(data.viewport);
-          }
-          hasFrameImageRef.current = Boolean(data.image);
-          setFrameImage(data.image || "");
-          setFrameError("");
-        }
-      } catch (error) {
-        if (!cancelled && !hasFrameImageRef.current) {
-          setFrameError("FRAME RECONECTANDO");
-        }
-      } finally {
-        if (!cancelled) {
-          timer = setTimeout(loadFrame, instagram.status === "ACTING" || instagram.status === "NAVIGATING" ? 120 : 180);
-        }
-      }
+    if (!instagram.status || instagram.status === "DISCONNECTED") {
+      setFrameImage("");
+      return undefined;
     }
 
-    loadFrame();
+    hasFrameImageRef.current = false;
+    setFrameError("");
+    setFrameImage(`/api/instagram/stream?stream=${encodeURIComponent([
+      instagram.updatedAt || Date.now(),
+      instagram.currentUrl || "",
+      instagram.status || ""
+    ].join("|"))}`);
+
+    const reconnectTimer = setTimeout(() => {
+      if (!hasFrameImageRef.current) {
+        setFrameError("STREAM RECONECTANDO");
+      }
+    }, 1400);
 
     return () => {
-      cancelled = true;
-      clearTimeout(timer);
+      clearTimeout(reconnectTimer);
     };
-  }, [instagram.status]);
+  }, [instagram.status, instagram.currentUrl, instagram.updatedAt]);
 
   async function sendInput(payload) {
     await fetch("/api/instagram/input", {
@@ -245,6 +230,8 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
             if (naturalWidth && naturalHeight) {
               setFrameViewport({ width: naturalWidth, height: naturalHeight });
             }
+            hasFrameImageRef.current = true;
+            setFrameError("");
           }}
           src={frameImage}
         />
