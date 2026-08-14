@@ -61,6 +61,12 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     ]);
   }
 
+  function emitStopAllSignal(raw) {
+    if (raw.trim().split(/\s+/)[0] === "/stopall") {
+      window.dispatchEvent(new CustomEvent("caixa-preta:stopall"));
+    }
+  }
+
   async function postOperatorCommand(raw, timeoutMs = 50000) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -89,6 +95,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
 
     setCommand("");
     addLog(`> ${raw}`, "input");
+    emitStopAllSignal(raw);
 
     if (!raw.startsWith("/")) {
       addLog("COMMAND REQUIRED", "error");
@@ -163,6 +170,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
 
   async function sendOperatorCommand(raw, fallback = "OPERATOR ERROR") {
     addLog(`> ${raw}`, "input");
+    emitStopAllSignal(raw);
     setPending(true);
 
     try {

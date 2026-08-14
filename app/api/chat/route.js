@@ -1,6 +1,7 @@
 import { applyHangmanGuess } from "@/lib/activities";
 import { generateCaixaPretaTurn } from "@/lib/openai";
 import { showState } from "@/lib/showState";
+import { getStopAllVersion } from "@/lib/stopAllSignal";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -30,6 +31,7 @@ export async function POST(request) {
     });
 
     showState.addMessage("user", message, "projection");
+    const stopAllVersion = getStopAllVersion();
 
     const suitcaseWasActive = showState.snapshot().suitcase?.active;
     let suitcaseAdvance = null;
@@ -69,6 +71,10 @@ export async function POST(request) {
         suitcaseAdvance?.result ? `SUITCASE_ADVANCE_RESULT:\n${JSON.stringify(suitcaseAdvance.result)}` : ""
       ].filter(Boolean).join("\n\n")
     });
+
+    if (getStopAllVersion() !== stopAllVersion) {
+      return Response.json({ stopped: true, message: null, events: [] });
+    }
 
     if (turn.suitcase && showState.snapshot().suitcase?.active) {
       showState.applySuitcaseMove(turn.suitcase, { source: "agent" });

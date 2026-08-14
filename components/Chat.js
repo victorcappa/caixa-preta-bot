@@ -59,6 +59,8 @@ export default function Chat() {
   const typingTimersRef = useRef(new Map());
   const introTimerRef = useRef(null);
   const introDotsTimerRef = useRef(null);
+  const chatRequestControllerRef = useRef(null);
+  const stoppedTypingIdsRef = useRef(new Set());
 
   useEffect(() => {
     function hydrateInitialMessages(nextMessages) {
@@ -163,6 +165,7 @@ export default function Chat() {
 
       typingTimersRef.current.clear();
       seenMessageIdsRef.current.clear();
+      stoppedTypingIdsRef.current.clear();
       setTypedReplies({});
     }
 
@@ -176,6 +179,7 @@ export default function Chat() {
       }
 
       seenMessageIdsRef.current.add(message.id);
+      stoppedTypingIdsRef.current.delete(message.id);
 
       if (message.role !== "assistant") {
         continue;
@@ -213,7 +217,28 @@ export default function Chat() {
 
       clearInterval(introTimerRef.current);
       clearInterval(introDotsTimerRef.current);
+      chatRequestControllerRef.current?.abort();
     };
+  }, []);
+
+  useEffect(() => {
+    function stopChatOutput() {
+      chatRequestControllerRef.current?.abort();
+      chatRequestControllerRef.current = null;
+
+      for (const [messageId, timer] of typingTimersRef.current.entries()) {
+        clearInterval(timer);
+        stoppedTypingIdsRef.current.add(messageId);
+      }
+
+      typingTimersRef.current.clear();
+      clearInterval(introTimerRef.current);
+      clearInterval(introDotsTimerRef.current);
+      setPending(false);
+    }
+
+    window.addEventListener("caixa-preta:stopall", stopChatOutput);
+    return () => window.removeEventListener("caixa-preta:stopall", stopChatOutput);
   }, []);
 
   useEffect(() => {
@@ -303,11 +328,15 @@ export default function Chat() {
     setError("");
     setPending(true);
 
+    const controller = new AbortController();
+    chatRequestControllerRef.current = controller;
+
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: content })
+        body: JSON.stringify({ message: content }),
+        signal: controller.signal
       });
 
       if (!response.ok) {
@@ -315,8 +344,13 @@ export default function Chat() {
         throw new Error(data.error || "Falha ao conversar com a Caixa Preta.");
       }
     } catch (requestError) {
-      setError(requestError.message);
+      if (requestError.name !== "AbortError") {
+        setError(requestError.message);
+      }
     } finally {
+      if (chatRequestControllerRef.current === controller) {
+        chatRequestControllerRef.current = null;
+      }
       setPending(false);
     }
   }
@@ -472,7 +506,9 @@ export default function Chat() {
   }
 
   const activeTypingAssistant = [...messages].reverse().find((message) => (
-    message.role === "assistant" && typedReplies[message.id] !== message.content
+    message.role === "assistant" &&
+    typedReplies[message.id] !== message.content &&
+    !stoppedTypingIdsRef.current.has(message.id)
   ));
   const machineBusy = pending || performancePending || Boolean(activeTypingAssistant);
   const footer = (

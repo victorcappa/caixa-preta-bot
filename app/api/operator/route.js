@@ -4,6 +4,7 @@ import { interpretInstagramCommand } from "@/lib/instagram/commands";
 import { getExistingInstagramController, getInstagramController } from "@/lib/instagram/InstagramController";
 import { normalizeOpenAIModel } from "@/lib/openaiModels";
 import { showState } from "@/lib/showState";
+import { markStopAll } from "@/lib/stopAllSignal";
 import { SHOW_MODES } from "@/prompts/modes";
 
 export const dynamic = "force-dynamic";
@@ -249,6 +250,7 @@ export async function POST(request) {
 
     if (name === "/stopall") {
       const stopped = [];
+      markStopAll();
       const controller = getExistingInstagramController();
 
       if (controller) {
