@@ -49,11 +49,9 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
           if (data.viewport?.width && data.viewport?.height) {
             setFrameViewport(data.viewport);
           }
-          if (data.image) {
-            hasFrameImageRef.current = true;
-            setFrameImage(data.image);
-          }
-          setFrameError(data.pending && !hasFrameImageRef.current ? "FRAME CARREGANDO" : "");
+          hasFrameImageRef.current = Boolean(data.image);
+          setFrameImage(data.image || "");
+          setFrameError("");
         }
       } catch (error) {
         if (!cancelled && !hasFrameImageRef.current) {
@@ -61,7 +59,7 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
         }
       } finally {
         if (!cancelled) {
-          timer = setTimeout(loadFrame, instagram.status === "ACTING" || instagram.status === "NAVIGATING" ? 90 : 120);
+          timer = setTimeout(loadFrame, instagram.status === "ACTING" || instagram.status === "NAVIGATING" ? 120 : 180);
         }
       }
     }
@@ -247,8 +245,6 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
               if (naturalWidth && naturalHeight) {
                 setFrameViewport({ width: naturalWidth, height: naturalHeight });
               }
-              hasFrameImageRef.current = true;
-              setFrameError("");
             }}
             src={frameImage}
           />

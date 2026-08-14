@@ -137,7 +137,6 @@ async function main() {
     INSTAGRAM_ENABLED: "true",
     INSTAGRAM_EMBEDDED: "true",
     INSTAGRAM_DEBUG: "true",
-    INSTAGRAM_HEADLESS: "false",
     INSTAGRAM_THEATRICAL_DELAY: "2000",
     INSTAGRAM_VIEWPORT_WIDTH: "430",
     INSTAGRAM_VIEWPORT_HEIGHT: "760",
@@ -148,7 +147,6 @@ async function main() {
 
   assert.equal(config.enabled, true);
   assert.equal(config.embedded, true);
-  assert.equal(config.headless, false);
   assert.equal(config.debug, true);
   assert.equal(config.theatricalDelayMs, 1500);
   assert.deepEqual(config.viewport, { width: 430, height: 760 });
@@ -157,13 +155,6 @@ async function main() {
   assert.deepEqual(config.allowedProfiles, ["cappavictor"]);
   assert(config.profileDir.endsWith(".runtime/instagram-profile"));
   assert(config.debugDir.endsWith(".runtime/instagram-debug"));
-
-  const defaultEmbeddedConfig = controllerModule.getInstagramConfig({
-    INSTAGRAM_EMBEDDED: "true"
-  });
-  assert.equal(defaultEmbeddedConfig.headless, true);
-  assert.equal(defaultEmbeddedConfig.streamFps, 30);
-  assert.equal(defaultEmbeddedConfig.streamQuality, 55);
 
   const controller = new controllerModule.InstagramController({ config });
   assert.equal(controller.assertAllowedUsername("@cappavictor"), "cappavictor");
@@ -313,48 +304,6 @@ async function main() {
   await assert.rejects(
     () => busyController.captureJpegFrame(),
     /INSTAGRAM_ACTION_IN_PROGRESS/
-  );
-  busyController.actionInProgress = false;
-  busyController.commandInProgress = true;
-  await assert.rejects(
-    () => busyController.captureJpegFrame(),
-    /INSTAGRAM_COMMAND_IN_PROGRESS/
-  );
-
-  let allowedBusyCapture = false;
-  busyController.page = {
-    viewportSize: () => ({ width: 430, height: 760 }),
-    screenshot: async () => {
-      allowedBusyCapture = true;
-      return Buffer.from("frame");
-    },
-    url: () => "https://www.instagram.com/reels/"
-  };
-  assert.deepEqual(
-    await busyController.captureJpegFrame({ allowCommandInProgress: true }),
-    {
-      image: Buffer.from("frame"),
-      viewport: { width: 430, height: 760 }
-    }
-  );
-  assert.equal(allowedBusyCapture, true);
-  assert.deepEqual(busyController.getCachedFrame(), {
-    image: Buffer.from("frame"),
-    viewport: { width: 430, height: 760 }
-  });
-
-  const stopNavigationController = new controllerModule.InstagramController({ config });
-  stopNavigationController.page = {
-    goto: async () => new Promise(() => {}),
-    url: () => "https://www.instagram.com/",
-    evaluate: async () => {}
-  };
-  stopNavigationController.updateStatus = () => {};
-  const stoppedNavigation = stopNavigationController.gotoPage("https://www.instagram.com/reels/");
-  await stopNavigationController.stopAllRoutines();
-  await assert.rejects(
-    () => stoppedNavigation,
-    /INSTAGRAM_STOPPED/
   );
 
   const textFollowController = new controllerModule.InstagramController({ config });

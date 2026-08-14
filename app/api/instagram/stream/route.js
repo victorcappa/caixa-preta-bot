@@ -17,7 +17,7 @@ export async function GET() {
   const boundary = "caixa-preta-instagram-frame";
   const encoder = new TextEncoder();
   const status = controller.getStatus();
-  const frameIntervalMs = Math.round(1000 / Math.max(1, status.streamFps || 30));
+  const frameIntervalMs = Math.round(1000 / Math.max(1, status.streamFps || 24));
   let closed = false;
   let consecutiveErrors = 0;
 
@@ -27,14 +27,7 @@ export async function GET() {
         const startedAt = Date.now();
 
         try {
-          const frame = controller.commandInProgress || controller.actionInProgress
-            ? controller.getCachedFrame?.({ maxAgeMs: 10000 })
-            : await controller.captureJpegFrame({ quality: status.streamQuality || 62 });
-
-          if (!frame) {
-            throw new Error("INSTAGRAM_FRAME_PENDING");
-          }
-
+          const frame = await controller.captureJpegFrame({ quality: status.streamQuality || 62 });
           streamController.enqueue(encoder.encode([
             `--${boundary}`,
             "Content-Type: image/jpeg",
