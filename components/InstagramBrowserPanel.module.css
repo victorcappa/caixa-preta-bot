@@ -77,6 +77,7 @@
   background: #050505;
   cursor: crosshair;
   overflow: hidden;
+  touch-action: none;
 }
 
 .viewport:focus-visible {

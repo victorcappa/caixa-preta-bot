@@ -19,6 +19,9 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
   const [frameViewport, setFrameViewport] = useState(instagram.viewport || { width: 430, height: 760 });
   const [streamError, setStreamError] = useState("");
   const viewportRef = useRef(null);
+  const pointerRef = useRef(null);
+  const ignoreNextClickRef = useRef(false);
+  const wheelRef = useRef({ deltaY: 0, sentAt: 0 });
 
   useEffect(() => {
     if (instagram.viewport?.width && instagram.viewport?.height) {
@@ -40,7 +43,18 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
     }).catch(() => null);
   }
 
+  function sendSwipe(direction, source = "pointer") {
+    viewportRef.current?.focus();
+    sendInput({ type: "swipe", direction, source });
+  }
+
   function handleClick(event) {
+    if (ignoreNextClickRef.current) {
+      ignoreNextClickRef.current = false;
+      event.preventDefault();
+      return;
+    }
+
     const point = normalizedPointInFrame(
       viewportRef.current?.getBoundingClientRect(),
       frameViewport,
@@ -71,6 +85,75 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
     }
   }
 
+  function handlePointerDown(event) {
+    if (event.button !== undefined && event.button !== 0) {
+      return;
+    }
+
+    viewportRef.current?.focus();
+    pointerRef.current = {
+      id: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      moved: false
+    };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  }
+
+  function handlePointerMove(event) {
+    const pointer = pointerRef.current;
+    if (!pointer || pointer.id !== event.pointerId) {
+      return;
+    }
+
+    if (Math.abs(event.clientY - pointer.y) > 12 || Math.abs(event.clientX - pointer.x) > 12) {
+      pointer.moved = true;
+    }
+  }
+
+  function handlePointerUp(event) {
+    const pointer = pointerRef.current;
+    if (!pointer || pointer.id !== event.pointerId) {
+      return;
+    }
+
+    pointerRef.current = null;
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+
+    const deltaX = event.clientX - pointer.x;
+    const deltaY = event.clientY - pointer.y;
+    if (Math.abs(deltaY) < 48 || Math.abs(deltaY) < Math.abs(deltaX) * 1.4) {
+      return;
+    }
+
+    ignoreNextClickRef.current = true;
+    sendSwipe(deltaY < 0 ? "up" : "down");
+  }
+
+  function handlePointerCancel(event) {
+    if (pointerRef.current?.id === event.pointerId) {
+      pointerRef.current = null;
+    }
+  }
+
+  function handleWheel(event) {
+    if (Math.abs(event.deltaY) < Math.abs(event.deltaX) || Math.abs(event.deltaY) < 8) {
+      return;
+    }
+
+    event.preventDefault();
+    const now = Date.now();
+    const nextDeltaY = wheelRef.current.deltaY + event.deltaY;
+    wheelRef.current = { deltaY: nextDeltaY, sentAt: wheelRef.current.sentAt };
+
+    if (Math.abs(nextDeltaY) < 120 || now - wheelRef.current.sentAt < 450) {
+      return;
+    }
+
+    wheelRef.current = { deltaY: 0, sentAt: now };
+    sendSwipe(nextDeltaY > 0 ? "up" : "down", "wheel");
+  }
+
   return (
     <aside className={styles.panel} aria-label="Instagram real embutido">
       <header className={styles.header}>
@@ -89,6 +172,11 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
         className={styles.viewport}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
+        onPointerCancel={handlePointerCancel}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onWheel={handleWheel}
         ref={viewportRef}
         role="application"
         style={{ aspectRatio: `${frameViewport.width || 430} / ${frameViewport.height || 760}` }}

@@ -49,6 +49,33 @@ async function main() {
     /INSTAGRAM_PROFILE_NOT_ALLOWED:outra_conta/
   );
 
+  const dispatchedTouchEvents = [];
+  const pressedKeys = [];
+  const fakeSession = {
+    send: async (method, payload) => {
+      dispatchedTouchEvents.push({ method, payload });
+    },
+    detach: async () => {}
+  };
+  controller.context = {
+    newCDPSession: async () => fakeSession
+  };
+  controller.page = {
+    viewportSize: () => ({ width: 430, height: 760 }),
+    setExtraHTTPHeaders: async () => {},
+    url: () => "https://www.instagram.com/reels/example/",
+    keyboard: {
+      press: async (key) => {
+        pressedKeys.push(key);
+      }
+    }
+  };
+
+  assert.deepEqual(await controller.sendEmbeddedInput({ type: "swipe", direction: "up" }), { ok: true });
+  assert.equal(dispatchedTouchEvents[0].payload.touchPoints[0].y > dispatchedTouchEvents.at(-2).payload.touchPoints[0].y, true);
+  assert.equal(dispatchedTouchEvents.at(-1).payload.type, "touchEnd");
+  assert.deepEqual(pressedKeys, ["ArrowDown"]);
+
   console.log("Instagram controller tests passed");
 }
 
