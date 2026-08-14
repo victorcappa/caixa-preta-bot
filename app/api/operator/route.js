@@ -392,6 +392,10 @@ export async function POST(request) {
           return Response.json({ error: "INSTAGRAM DIRECT MESSAGE EMPTY" }, { status: 400 });
         }
 
+        if (message === "INSTAGRAM_STOPPED") {
+          return Response.json({ error: "INSTAGRAM STOPPED" }, { status: 409 });
+        }
+
         if (message === "INSTAGRAM_REQUEST_TIMEOUT") {
           showState.updateInstagram({
             status: "ERROR",

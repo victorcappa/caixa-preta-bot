@@ -338,6 +338,24 @@ async function main() {
     }
   );
   assert.equal(allowedBusyCapture, true);
+  assert.deepEqual(busyController.getCachedFrame(), {
+    image: Buffer.from("frame"),
+    viewport: { width: 430, height: 760 }
+  });
+
+  const stopNavigationController = new controllerModule.InstagramController({ config });
+  stopNavigationController.page = {
+    goto: async () => new Promise(() => {}),
+    url: () => "https://www.instagram.com/",
+    evaluate: async () => {}
+  };
+  stopNavigationController.updateStatus = () => {};
+  const stoppedNavigation = stopNavigationController.gotoPage("https://www.instagram.com/reels/");
+  await stopNavigationController.stopAllRoutines();
+  await assert.rejects(
+    () => stoppedNavigation,
+    /INSTAGRAM_STOPPED/
+  );
 
   const textFollowController = new controllerModule.InstagramController({ config });
   textFollowController.targetProfile = "cappavictor";

@@ -27,7 +27,14 @@ export async function GET() {
         const startedAt = Date.now();
 
         try {
-          const frame = await controller.captureJpegFrame({ quality: status.streamQuality || 62 });
+          const frame = controller.commandInProgress || controller.actionInProgress
+            ? controller.getCachedFrame?.({ maxAgeMs: 10000 })
+            : await controller.captureJpegFrame({ quality: status.streamQuality || 62 });
+
+          if (!frame) {
+            throw new Error("INSTAGRAM_FRAME_PENDING");
+          }
+
           streamController.enqueue(encoder.encode([
             `--${boundary}`,
             "Content-Type: image/jpeg",

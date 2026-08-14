@@ -89,7 +89,8 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     event.preventDefault();
 
     const raw = command.trim();
-    if (!raw || pending) {
+    const commandName = raw.split(/\s+/)[0];
+    if (!raw || (pending && commandName !== "/stopall")) {
       return;
     }
 
@@ -102,7 +103,6 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       return;
     }
 
-    const commandName = raw.split(/\s+/)[0];
     if (![
       "/memory",
       "/say",
@@ -239,7 +239,6 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
         autoComplete="off"
         value={command}
         onChange={(event) => setCommand(event.target.value)}
-        disabled={pending}
       />
     </form>
   );
@@ -332,7 +331,6 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
               </button>
               <button
                 className={styles.panicButton}
-                disabled={pending}
                 onClick={() => sendOperatorCommand("/stopall", "STOPALL ERROR")}
                 type="button"
               >
