@@ -17,7 +17,7 @@ export async function GET() {
   const boundary = "caixa-preta-instagram-frame";
   const encoder = new TextEncoder();
   const status = controller.getStatus();
-  const frameIntervalMs = Math.round(1000 / Math.max(1, status.streamFps || 18));
+  const frameIntervalMs = Math.round(1000 / Math.max(1, status.streamFps || 24));
   let closed = false;
   let consecutiveErrors = 0;
 
