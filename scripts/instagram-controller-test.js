@@ -203,10 +203,15 @@ async function main() {
   let commentClickedInput = false;
   let commentFilled = "";
   let commentSubmitted = false;
+  let openedComments = false;
   commentController.openProfile = async () => ({ status: "ready" });
   commentController.waitForEmbeddedFrameReady = async () => true;
   commentController.openLatestProfileMedia = async (username) => {
     commentOpenedMediaFor = username;
+    return true;
+  };
+  commentController.openCommentsSurface = async () => {
+    openedComments = true;
     return true;
   };
   commentController.findCommentInput = async () => ({
@@ -227,6 +232,7 @@ async function main() {
     message: "INSTAGRAM: comentario enviado para @cappavictor"
   });
   assert.equal(commentOpenedMediaFor, "cappavictor");
+  assert.equal(openedComments, true);
   assert.equal(commentClickedInput, true);
   assert.equal(commentFilled, "biscoiteiro");
   assert.equal(commentSubmitted, true);
