@@ -33,29 +33,44 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
   }, [instagram.status, instagram.updatedAt, instagram.viewport]);
 
   useEffect(() => {
-    if (!instagram.status || instagram.status === "DISCONNECTED") {
-      setFrameImage("");
-      return undefined;
+    let cancelled = false;
+    let timer = null;
+
+    async function loadFrame() {
+      try {
+        const response = await fetch(`/api/instagram/frame?t=${Date.now()}`, { cache: "no-store" });
+
+        if (!response.ok) {
+          throw new Error("FRAME UNAVAILABLE");
+        }
+
+        const data = await response.json();
+        if (!cancelled) {
+          if (data.viewport?.width && data.viewport?.height) {
+            setFrameViewport(data.viewport);
+          }
+          hasFrameImageRef.current = Boolean(data.image);
+          setFrameImage(data.image || "");
+          setFrameError("");
+        }
+      } catch (error) {
+        if (!cancelled && !hasFrameImageRef.current) {
+          setFrameError("FRAME RECONECTANDO");
+        }
+      } finally {
+        if (!cancelled) {
+          timer = setTimeout(loadFrame, instagram.status === "ACTING" || instagram.status === "NAVIGATING" ? 90 : 120);
+        }
+      }
     }
 
-    hasFrameImageRef.current = false;
-    setFrameError("");
-    setFrameImage(`/api/instagram/stream?stream=${encodeURIComponent([
-      instagram.updatedAt || Date.now(),
-      instagram.currentUrl || "",
-      instagram.status || ""
-    ].join("|"))}`);
-
-    const reconnectTimer = setTimeout(() => {
-      if (!hasFrameImageRef.current) {
-        setFrameError("STREAM RECONECTANDO");
-      }
-    }, 1400);
+    loadFrame();
 
     return () => {
-      clearTimeout(reconnectTimer);
+      cancelled = true;
+      clearTimeout(timer);
     };
-  }, [instagram.status, instagram.currentUrl, instagram.updatedAt]);
+  }, [instagram.status]);
 
   async function sendInput(payload) {
     await fetch("/api/instagram/input", {

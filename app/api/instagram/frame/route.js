@@ -13,6 +13,16 @@ export async function GET() {
   try {
     return Response.json(await controller.captureFrame());
   } catch {
+    const cachedFrame = controller.getCachedFrame?.({ maxAgeMs: 10000 });
+    if (cachedFrame) {
+      return Response.json({
+        image: `data:image/jpeg;base64,${cachedFrame.image.toString("base64")}`,
+        viewport: cachedFrame.viewport,
+        status: controller.getStatus(),
+        cached: true
+      });
+    }
+
     return Response.json({ error: "INSTAGRAM FRAME UNAVAILABLE" }, { status: 503 });
   }
 }
