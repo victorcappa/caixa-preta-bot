@@ -107,7 +107,46 @@ async function main() {
   assert.equal(openedMediaFor, "cappavictor");
   assert.equal(clickedFollow, true);
 
+  const textFollowController = new controllerModule.InstagramController({ config });
+  textFollowController.targetProfile = "cappavictor";
+  textFollowController.page = createTextFollowPage();
+  const textFollowState = await textFollowController.getFollowButtonState();
+  assert.equal(textFollowState.state, "follow");
+  assert.equal(textFollowState.label, "Seguir");
+  assert.equal(await textFollowState.locator.isVisible(), true);
+
   console.log("Instagram controller tests passed");
+}
+
+function createTextFollowPage() {
+  const hiddenLocator = createFakeLocator({ visible: false });
+  const textLocator = createFakeLocator({ visible: true });
+  const contextLocator = createFakeLocator({
+    visible: false,
+    getByRole: () => hiddenLocator,
+    getByText: (pattern) => pattern.test("Seguir") ? textLocator : hiddenLocator,
+    locator: () => hiddenLocator
+  });
+
+  return {
+    getByRole: () => contextLocator,
+    getByText: (pattern) => pattern.test("Seguir") ? textLocator : hiddenLocator,
+    locator: () => contextLocator
+  };
+}
+
+function createFakeLocator(overrides = {}) {
+  const locator = {
+    first: () => locator,
+    filter: () => locator,
+    locator: () => locator,
+    getByRole: () => locator,
+    getByText: () => locator,
+    isVisible: async () => Boolean(overrides.visible),
+    allTextContents: async () => overrides.textContents || [],
+    ...overrides
+  };
+  return locator;
 }
 
 main().catch((error) => {
