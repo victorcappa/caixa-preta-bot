@@ -38,6 +38,18 @@ async function main() {
     username: "cappavictor",
     error: null
   });
+  assert.deepEqual(commands.parseInstagramCommand("assistir reels"), {
+    valid: true,
+    action: "watch_reels",
+    username: "",
+    error: null
+  });
+  assert.deepEqual(commands.parseInstagramCommand("ver reels"), {
+    valid: true,
+    action: "watch_reels",
+    username: "",
+    error: null
+  });
   assert.deepEqual(commands.parseInstagramCommand("analisar o instagram"), {
     valid: true,
     action: "analyze_current",

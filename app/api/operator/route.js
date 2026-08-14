@@ -31,6 +31,10 @@ async function executeInstagramCommand(controller, instagramCommand) {
     return executeInstagramAnalysis(controller, instagramCommand);
   }
 
+  if (instagramCommand.action === "watch_reels") {
+    return controller.openReels();
+  }
+
   if (instagramCommand.action === "comment_latest") {
     return controller.commentLatestMedia(instagramCommand.username, instagramCommand.comment);
   }

@@ -107,8 +107,10 @@ salva em `.runtime/instagram-profile/` para as proximas execucoes.
 Depois de `/instagram`, o operador pode escrever em linguagem natural; o modelo
 interpreta a intencao e escolhe uma acao pre-definida (`follow`, `open_profile`,
 `comment_latest`, `follow_and_comment_latest`, `analyze_current`,
-`analyze_profile`, `analyze_recent_posts` ou `analyze_latest_media`). Exemplos:
+`analyze_profile`, `analyze_recent_posts`, `analyze_latest_media` ou
+`watch_reels`). Exemplos:
 `/instagram seguir perfil do marcusgarcia e comentar na ultima foto algo engracado`.
+`/instagram assistir reels`.
 `/instagram analisar a tela atual` ou
 `/instagram analisar os ultimos tres posts do perfil marcusgarcia` ou
 `/instagram analisar ultima foto do perfil marcusgarcia`. A analise visual
