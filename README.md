@@ -106,11 +106,18 @@ fecha apenas o painel embutido; a sessao Playwright continua viva. A sessao fica
 salva em `.runtime/instagram-profile/` para as proximas execucoes.
 Depois de `/instagram`, o operador pode escrever em linguagem natural; o modelo
 interpreta a intencao e escolhe uma acao pre-definida (`follow`, `open_profile`,
-`comment_latest`, `follow_and_comment_latest`, `analyze_current`,
+`open_latest_media`, `open_nth_media`, `comment_latest`, `comment_nth_media`,
+`follow_and_comment_latest`, `analyze_current`,
 `analyze_profile`, `analyze_recent_posts`, `analyze_latest_media` ou
-`watch_reels`). Exemplos:
+`watch_reels`, `send_direct_latest`, `send_direct_thread`, `like_latest_media`
+ou `like_nth_media`). Exemplos:
 `/instagram seguir perfil do marcusgarcia e comentar na ultima foto algo engracado`.
 `/instagram assistir reels`.
+`/instagram entrar na ultima mensagem e escrever uma mensagem para o grupo: ola, mundo`.
+`/instagram escrever no chat group com livinha, janaina e marcus: oi grupo`.
+`/instagram olhar ultimo post do perfil cappavictor`.
+`/instagram comentar o terceiro post do perfil cappavictor: biscoiteiro`.
+`/instagram curtir o terceiro post do perfil cappavictor`.
 `/instagram analisar a tela atual` ou
 `/instagram analisar os ultimos tres posts do perfil marcusgarcia` ou
 `/instagram analisar ultima foto do perfil marcusgarcia`. A analise visual

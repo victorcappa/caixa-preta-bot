@@ -50,6 +50,48 @@ async function main() {
     username: "",
     error: null
   });
+  assert.deepEqual(commands.parseInstagramCommand("entrar na ultima mensagem e escrever uma mensagem para o grupo: olá, mundo"), {
+    valid: true,
+    action: "send_direct_latest",
+    username: "",
+    message: "olá, mundo",
+    error: null
+  });
+  assert.deepEqual(commands.parseInstagramCommand("escrever algo no chat group com livinha, janaina e marcus: oi grupo"), {
+    valid: true,
+    action: "send_direct_thread",
+    username: "",
+    message: "oi grupo",
+    thread: "livinha, janaina e marcus",
+    error: null
+  });
+  assert.deepEqual(commands.parseInstagramCommand("curtir o terceiro post do perfil cappavictor"), {
+    valid: true,
+    action: "like_nth_media",
+    username: "cappavictor",
+    postIndex: 3,
+    error: null
+  });
+  assert.deepEqual(commands.parseInstagramCommand("curtir ultimo post do perfil cappavictor"), {
+    valid: true,
+    action: "like_latest_media",
+    username: "cappavictor",
+    error: null
+  });
+  assert.deepEqual(commands.parseInstagramCommand("olhar ultimo post do perfil cappavictor"), {
+    valid: true,
+    action: "open_latest_media",
+    username: "cappavictor",
+    error: null
+  });
+  assert.deepEqual(commands.parseInstagramCommand("comentar o terceiro post do perfil cappavictor: biscoiteiro"), {
+    valid: true,
+    action: "comment_nth_media",
+    username: "cappavictor",
+    comment: "biscoiteiro",
+    postIndex: 3,
+    error: null
+  });
   assert.deepEqual(commands.parseInstagramCommand("analisar o instagram"), {
     valid: true,
     action: "analyze_current",
@@ -269,7 +311,7 @@ async function main() {
   };
   commentController.openProfile = async () => ({ status: "ready" });
   commentController.waitForEmbeddedFrameReady = async () => true;
-  commentController.openLatestProfileMedia = async (username) => {
+  commentController.openProfileMediaAt = async (username) => {
     commentOpenedMediaFor = username;
     return true;
   };
@@ -300,6 +342,67 @@ async function main() {
   assert.equal(commentFilled, "");
   assert.equal(commentTyped, "biscoiteiro");
   assert.equal(commentSubmitted, true);
+
+  const directController = new controllerModule.InstagramController({ config });
+  let directOpenedInbox = false;
+  let directOpenedLatest = false;
+  let directTyped = "";
+  let directSubmitted = false;
+  directController.openDirectInbox = async () => {
+    directOpenedInbox = true;
+    return { status: "ready" };
+  };
+  directController.openLatestDirectThread = async () => {
+    directOpenedLatest = true;
+    return true;
+  };
+  directController.findDirectMessageInput = async () => ({});
+  directController.typeCommentText = async (input, text) => {
+    directTyped = text;
+  };
+  directController.submitDirectMessage = async () => {
+    directSubmitted = true;
+  };
+  directController.theatricalDelay = async () => {};
+
+  assert.deepEqual(await directController.sendDirectMessage({ message: "olá, mundo" }), {
+    status: "sent",
+    message: "INSTAGRAM: direct enviado"
+  });
+  assert.equal(directOpenedInbox, true);
+  assert.equal(directOpenedLatest, true);
+  assert.equal(directTyped, "olá, mundo");
+  assert.equal(directSubmitted, true);
+
+  const likeController = new controllerModule.InstagramController({ config });
+  let openedLikeMedia = null;
+  let clickedLike = false;
+  const likeStates = [
+    {
+      state: "like",
+      locator: {
+        click: async () => {
+          clickedLike = true;
+        }
+      }
+    },
+    { state: "liked", locator: null }
+  ];
+  likeController.openProfile = async () => ({ status: "ready" });
+  likeController.waitForEmbeddedFrameReady = async () => true;
+  likeController.openProfileMediaAt = async (username, index) => {
+    openedLikeMedia = { username, index };
+    return true;
+  };
+  likeController.getLikeButtonState = async () => likeStates.shift();
+  likeController.theatricalDelay = async () => {};
+
+  assert.deepEqual(await likeController.likeProfileMedia("@cappavictor", 3), {
+    status: "liked",
+    message: "INSTAGRAM: post curtido"
+  });
+  assert.deepEqual(openedLikeMedia, { username: "cappavictor", index: 3 });
+  assert.equal(clickedLike, true);
 
   console.log("Instagram controller tests passed");
 }
@@ -348,9 +451,14 @@ function createMediaOpenPage({ mediaLink }) {
     }
   });
 
+  const mediaLocator = {
+    first: () => mediaLink,
+    nth: () => mediaLink
+  };
+
   return {
     url: () => "https://www.instagram.com/cappavictor/",
-    locator: (selector) => selector.includes("a[href*=") ? mediaLink : hiddenLocator,
+    locator: (selector) => selector.includes("a[href*=") ? mediaLocator : hiddenLocator,
     getByRole: () => hiddenLocator,
     waitForURL: async () => null,
     waitForTimeout: async () => {},

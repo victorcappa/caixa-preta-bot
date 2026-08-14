@@ -35,8 +35,39 @@ async function executeInstagramCommand(controller, instagramCommand) {
     return controller.openReels();
   }
 
+  if (instagramCommand.action === "send_direct_latest") {
+    return controller.sendDirectMessage({ message: instagramCommand.message });
+  }
+
+  if (instagramCommand.action === "send_direct_thread") {
+    return controller.sendDirectMessage({
+      message: instagramCommand.message,
+      thread: instagramCommand.thread
+    });
+  }
+
+  if (instagramCommand.action === "like_latest_media") {
+    return controller.likeProfileMedia(instagramCommand.username, 1);
+  }
+
+  if (instagramCommand.action === "like_nth_media") {
+    return controller.likeProfileMedia(instagramCommand.username, instagramCommand.postIndex);
+  }
+
+  if (instagramCommand.action === "open_latest_media") {
+    return controller.openProfileMedia(instagramCommand.username, 1);
+  }
+
+  if (instagramCommand.action === "open_nth_media") {
+    return controller.openProfileMedia(instagramCommand.username, instagramCommand.postIndex);
+  }
+
   if (instagramCommand.action === "comment_latest") {
     return controller.commentLatestMedia(instagramCommand.username, instagramCommand.comment);
+  }
+
+  if (instagramCommand.action === "comment_nth_media") {
+    return controller.commentProfileMedia(instagramCommand.username, instagramCommand.comment, instagramCommand.postIndex);
   }
 
   if (instagramCommand.action === "follow_and_comment_latest") {
@@ -316,6 +347,10 @@ export async function POST(request) {
 
         if (message === "INSTAGRAM_COMMENT_EMPTY") {
           return Response.json({ error: "INSTAGRAM COMMENT EMPTY" }, { status: 400 });
+        }
+
+        if (message === "INSTAGRAM_DIRECT_MESSAGE_EMPTY") {
+          return Response.json({ error: "INSTAGRAM DIRECT MESSAGE EMPTY" }, { status: 400 });
         }
 
         if (message === "INSTAGRAM_REQUEST_TIMEOUT") {
