@@ -17,6 +17,13 @@
 .chatPane {
   min-width: 0;
   height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.chatPaneWithInstagram {
+  grid-template-columns: minmax(360px, 0.92fr) minmax(420px, 1.08fr);
 }
 
 .embeddedTerminal {
@@ -292,5 +299,12 @@
 
   .status {
     grid-column: 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .chatPaneWithInstagram {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(42vh, 1fr) minmax(38vh, 0.9fr);
   }
 }

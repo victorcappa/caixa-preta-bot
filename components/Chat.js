@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import InstagramBrowserPanel from "./InstagramBrowserPanel";
 import OperatorConsole from "./OperatorConsole";
 import PerformanceLayer from "./PerformanceLayer";
 import Terminal from "./Terminal";
@@ -30,6 +31,7 @@ export default function Chat() {
   const [manualOpen, setManualOpen] = useState(false);
   const [operatorMounted, setOperatorMounted] = useState(false);
   const [operatorOpen, setOperatorOpen] = useState(false);
+  const [instagramPanelClosed, setInstagramPanelClosed] = useState(false);
   const scrollRef = useRef(null);
   const initializedMessagesRef = useRef(false);
   const seenMessageIdsRef = useRef(new Set());
@@ -115,6 +117,12 @@ export default function Chat() {
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [manualOpen]);
+
+  useEffect(() => {
+    if (instagram.status === "STARTING" || instagram.status === "DISCONNECTED") {
+      setInstagramPanelClosed(false);
+    }
+  }, [instagram.status]);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ block: "end" });
@@ -321,6 +329,7 @@ export default function Chat() {
       event.source !== "agent" || new Date(event.createdAt).getTime() < activeTypingStartedAt
     ))
     : performanceEvents;
+  const visibleInstagramPanel = instagram?.embedded && instagram.status && instagram.status !== "DISCONNECTED" && !instagramPanelClosed;
 
   return (
     <div className={`${styles.workspace} ${operatorOpen ? styles.workspaceWithOperator : ""}`}>
@@ -330,7 +339,6 @@ export default function Chat() {
         game={game}
         suitcase={suitcase}
         onMachineBusyChange={setPerformancePending}
-        instagram={instagram}
         phoneProjection={phoneProjection}
       />
 
@@ -426,7 +434,7 @@ export default function Chat() {
         </div>
       ) : null}
 
-      <section className={styles.chatPane} aria-label="Chat publico">
+      <section className={`${styles.chatPane} ${visibleInstagramPanel ? styles.chatPaneWithInstagram : ""}`} aria-label="Chat publico">
         <Terminal title="CAIXA PRETA" footer={footer} className={styles.embeddedTerminal}>
           <div className={styles.messages}>
             {messages.length === 0 && introStep === "cursor" ? (
@@ -469,6 +477,12 @@ export default function Chat() {
             <div ref={scrollRef} />
           </div>
         </Terminal>
+        {visibleInstagramPanel ? (
+          <InstagramBrowserPanel
+            instagram={instagram}
+            onClose={() => setInstagramPanelClosed(true)}
+          />
+        ) : null}
       </section>
 
       {operatorMounted ? (

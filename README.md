@@ -95,9 +95,11 @@ Abrir o Instagram real em Chromium visivel e seguir o perfil autorizado:
 ```
 
 Na primeira execucao, o Chromium abre `instagram.com` por tras da interface e o
-chat mostra um espelho embutido do Instagram real. Se o Instagram pedir login,
-clique no espelho, digite ali e faca login manualmente como `@caixapretabot`.
-A sessao fica salva em `.runtime/instagram-profile/` para as proximas execucoes.
+chat mostra um painel lateral com o espelho embutido do Instagram real, mantendo
+a fala da Caixa Preta visivel ao lado. Se o Instagram pedir login, clique no
+espelho, digite ali e faca login manualmente como `@caixapretabot`. O botao `X`
+fecha apenas o painel embutido; a sessao Playwright continua viva. A sessao fica
+salva em `.runtime/instagram-profile/` para as proximas execucoes.
 O comando so aceita perfis listados em `INSTAGRAM_ALLOWED_PROFILES`; por padrao,
 apenas `cappavictor`. O painel operator mostra `INSTAGRAM >` com progresso, URL,
 estado do botao e necessidade de intervencao manual quando houver checkpoint,
