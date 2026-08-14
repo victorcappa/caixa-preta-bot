@@ -497,6 +497,13 @@ export default function Chat() {
     ))
     : performanceEvents;
   const visibleInstagramPanel = instagram?.embedded && instagram.status && instagram.status !== "DISCONNECTED" && !instagramPanelClosed;
+  const instagramPanelKey = [
+    instagram?.targetProfile || instagram?.account || "instagram",
+    instagram?.status || "DISCONNECTED",
+    instagram?.currentUrl || "",
+    instagram?.lastButtonState || "",
+    instagram?.message || ""
+  ].join("|");
   const layoutStyle = {
     "--operator-width": `${operatorWidth}px`,
     "--instagram-width": `${instagramWidth}px`,
@@ -669,6 +676,7 @@ export default function Chat() {
               tabIndex={0}
             />
             <InstagramBrowserPanel
+              key={instagramPanelKey}
               instagram={instagram}
               onClose={() => setInstagramPanelClosed(true)}
             />
