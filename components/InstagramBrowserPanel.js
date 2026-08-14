@@ -14,6 +14,8 @@ const INPUT_KEYS = [
   "ArrowUp",
   "ArrowDown"
 ];
+const MIN_FRAME_DELAY_MS = 34;
+const MAX_FRAME_DELAY_MS = 250;
 
 export default function InstagramBrowserPanel({ instagram, onClose }) {
   const [frameViewport, setFrameViewport] = useState(instagram.viewport || { width: 430, height: 760 });
@@ -35,8 +37,15 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
   useEffect(() => {
     let cancelled = false;
     let timer = null;
+    const targetFps = Number(instagram.streamFps) || 24;
+    const frameDelayMs = Math.min(
+      MAX_FRAME_DELAY_MS,
+      Math.max(MIN_FRAME_DELAY_MS, Math.round(1000 / targetFps))
+    );
 
     async function loadFrame() {
+      const startedAt = Date.now();
+
       try {
         const response = await fetch(`/api/instagram/frame?t=${Date.now()}`, { cache: "no-store" });
 
@@ -59,7 +68,7 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
         }
       } finally {
         if (!cancelled) {
-          timer = setTimeout(loadFrame, instagram.status === "ACTING" || instagram.status === "NAVIGATING" ? 120 : 180);
+          timer = setTimeout(loadFrame, Math.max(0, frameDelayMs - (Date.now() - startedAt)));
         }
       }
     }
@@ -70,7 +79,7 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [instagram.status]);
+  }, [instagram.status, instagram.streamFps]);
 
   async function sendInput(payload) {
     await fetch("/api/instagram/input", {

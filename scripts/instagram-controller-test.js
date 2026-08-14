@@ -306,6 +306,22 @@ async function main() {
     /INSTAGRAM_ACTION_IN_PROGRESS/
   );
 
+  const fastFrameController = new controllerModule.InstagramController({ config });
+  let setupCalled = false;
+  fastFrameController.configurePage = async () => {
+    setupCalled = true;
+  };
+  fastFrameController.applyAudioMuted = async () => {
+    setupCalled = true;
+  };
+  fastFrameController.page = {
+    viewportSize: () => ({ width: 430, height: 760 }),
+    screenshot: async () => Buffer.from("frame"),
+    url: () => "https://www.instagram.com/reels/"
+  };
+  assert.equal((await fastFrameController.captureFrame({ fast: true })).image.includes("ZnJhbWU="), true);
+  assert.equal(setupCalled, false);
+
   const textFollowController = new controllerModule.InstagramController({ config });
   textFollowController.targetProfile = "cappavictor";
   textFollowController.page = createTextFollowPage();
