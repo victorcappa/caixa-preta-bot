@@ -87,6 +87,7 @@
 }
 
 .viewport img {
+  grid-area: 1 / 1;
   display: block;
   width: 100%;
   height: 100%;
@@ -95,7 +96,12 @@
   user-select: none;
 }
 
+.hiddenFrame {
+  opacity: 0;
+}
+
 .placeholder {
+  grid-area: 1 / 1;
   display: grid;
   place-items: center;
   width: 100%;
