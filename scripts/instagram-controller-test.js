@@ -25,6 +25,13 @@ async function main() {
     comment: "biscoiteiro",
     error: null
   });
+  assert.deepEqual(commands.parseInstagramCommand("seguir perfil do marcusgarcia e comentar na ultima foto algo engraçado"), {
+    valid: true,
+    action: "follow_and_comment_latest",
+    username: "marcusgarcia",
+    comment: "biscoiteiro profissional em horario comercial",
+    error: null
+  });
   assert.deepEqual(commands.parseInstagramCommand("entrar no perfil @cappavictor"), {
     valid: true,
     action: "open_profile",
@@ -61,6 +68,13 @@ async function main() {
     () => controller.assertAllowedUsername("outra_conta"),
     /INSTAGRAM_PROFILE_NOT_ALLOWED:outra_conta/
   );
+
+  const openConfig = controllerModule.getInstagramConfig({
+    INSTAGRAM_ALLOWED_PROFILES: ""
+  });
+  const openController = new controllerModule.InstagramController({ config: openConfig });
+  assert.deepEqual(openConfig.allowedProfiles, []);
+  assert.equal(openController.assertAllowedUsername("marcusgarcia"), "marcusgarcia");
 
   const dispatchedTouchEvents = [];
   const pressedKeys = [];

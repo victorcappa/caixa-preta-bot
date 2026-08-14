@@ -1,6 +1,6 @@
 import { generateCaixaPretaTurn } from "@/lib/openai";
 import { normalizeGameCommand } from "@/lib/host/GameDirector";
-import { parseInstagramCommand } from "@/lib/instagram/commands";
+import { interpretInstagramCommand } from "@/lib/instagram/commands";
 import { getInstagramController } from "@/lib/instagram/InstagramController";
 import { normalizeOpenAIModel } from "@/lib/openaiModels";
 import { showState } from "@/lib/showState";
@@ -24,6 +24,33 @@ function withTimeout(promise, ms, errorMessage) {
       setTimeout(() => reject(new Error(errorMessage)), ms);
     })
   ]);
+}
+
+async function executeInstagramCommand(controller, instagramCommand) {
+  if (instagramCommand.action === "comment_latest") {
+    return controller.commentLatestMedia(instagramCommand.username, instagramCommand.comment);
+  }
+
+  if (instagramCommand.action === "follow_and_comment_latest") {
+    const followResult = await controller.follow(instagramCommand.username);
+    const canContinue = new Set(["following", "already_following", "requested"]);
+
+    if (!canContinue.has(followResult.status)) {
+      return followResult;
+    }
+
+    const commentResult = await controller.commentLatestMedia(instagramCommand.username, instagramCommand.comment);
+    return {
+      ...commentResult,
+      message: `${followResult.message}\n${commentResult.message}`
+    };
+  }
+
+  if (instagramCommand.action === "open_profile") {
+    return controller.openProfile(instagramCommand.username);
+  }
+
+  return controller.follow(instagramCommand.username);
 }
 
 function eventFromCommand(kind, content) {
@@ -157,7 +184,7 @@ export async function POST(request) {
     }
 
     if (name === "/instagram") {
-      const instagramCommand = parseInstagramCommand(content);
+      const instagramCommand = await interpretInstagramCommand(content);
 
       if (!instagramCommand.valid) {
         return Response.json({
@@ -173,12 +200,11 @@ export async function POST(request) {
         const controller = getInstagramController({
           reporter: (instagram) => showState.updateInstagram(instagram)
         });
-        const action = instagramCommand.action === "comment_latest"
-          ? controller.commentLatestMedia(instagramCommand.username, instagramCommand.comment)
-          : instagramCommand.action === "open_profile"
-            ? controller.openProfile(instagramCommand.username)
-            : controller.follow(instagramCommand.username);
-        const result = await withTimeout(action, 45000, "INSTAGRAM_REQUEST_TIMEOUT");
+        const result = await withTimeout(
+          executeInstagramCommand(controller, instagramCommand),
+          60000,
+          "INSTAGRAM_REQUEST_TIMEOUT"
+        );
         showState.updateInstagram({
           ...controller.getStatus(),
           message: result.message

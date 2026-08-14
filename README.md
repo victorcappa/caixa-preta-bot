@@ -104,10 +104,15 @@ a fala da Caixa Preta visivel ao lado. Se o Instagram pedir login, clique no
 espelho, digite ali e faca login manualmente como `@caixapretabot`. O botao `X`
 fecha apenas o painel embutido; a sessao Playwright continua viva. A sessao fica
 salva em `.runtime/instagram-profile/` para as proximas execucoes.
-O comando so aceita perfis listados em `INSTAGRAM_ALLOWED_PROFILES`; por padrao,
-apenas `cappavictor`. O painel operator mostra `INSTAGRAM >` com progresso, URL,
-estado do botao e necessidade de intervencao manual quando houver checkpoint,
-captcha, 2FA ou tela desconhecida.
+Depois de `/instagram`, o operador pode escrever em linguagem natural; o modelo
+interpreta a intencao e escolhe uma acao pre-definida (`follow`, `open_profile`,
+`comment_latest` ou `follow_and_comment_latest`). Exemplo:
+`/instagram seguir perfil do marcusgarcia e comentar na ultima foto algo engracado`.
+`INSTAGRAM_ALLOWED_PROFILES` e uma whitelist opcional: se ficar vazia, qualquer
+username valido pode ser alvo; se tiver perfis separados por virgula, apenas eles
+sao aceitos. O painel operator mostra `INSTAGRAM >` com progresso, URL, estado do
+botao e necessidade de intervencao manual quando houver checkpoint, captcha, 2FA
+ou tela desconhecida.
 
 Variaveis relacionadas:
 
@@ -120,7 +125,7 @@ INSTAGRAM_VIEWPORT_WIDTH=430
 INSTAGRAM_VIEWPORT_HEIGHT=760
 INSTAGRAM_STREAM_FPS=18
 INSTAGRAM_STREAM_QUALITY=62
-INSTAGRAM_ALLOWED_PROFILES=cappavictor
+INSTAGRAM_ALLOWED_PROFILES=
 ```
 
 Com `INSTAGRAM_EMBEDDED=false`, o Playwright volta a abrir uma janela Chromium
