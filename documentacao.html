@@ -290,6 +290,7 @@
             <a href="#uso-pratico">USO PRATICO</a>
             <a href="#operator">OPERATOR</a>
             <a href="#comandos">COMANDOS</a>
+            <a href="#malas">MALAS</a>
             <a href="#conteudo">CONTEUDO DA IA</a>
             <a href="#operacao">ROTEIRO DE OPERACAO</a>
             <a href="#problemas">PROBLEMAS COMUNS</a>
@@ -473,9 +474,18 @@ npm run dev</code></pre>
                   <strong>/mala</strong>
                   <p>
                     Entra no modo MALAS e gera uma transicao contextual na projecao sem revelar o
-                    comando tecnico. <code>/malas</code> tambem funciona como alias.
+                    comando tecnico. Tambem inicia o controlador das tres malas e deixa o estado
+                    aguardando escolha publica. <code>/malas</code> tambem funciona como alias.
                   </p>
-                  <pre><code>/mala</code></pre>
+                  <pre><code>/mala
+/mala abort
+/mala reset
+/mala 1
+/mala 2
+/mala 3
+/mala next
+/mala win
+/mala lose</code></pre>
                 </article>
 
                 <article class="command">
@@ -491,6 +501,60 @@ npm run dev</code></pre>
               <p class="note">
                 No operator, texto sem barra retorna <code>COMMAND REQUIRED</code>. Comandos nao
                 reconhecidos retornam <code>UNKNOWN COMMAND</code>.
+              </p>
+            </section>
+
+            <section class="section" id="malas">
+              <h2>&gt; SISTEMA DAS MALAS</h2>
+              <p>
+                O controlador fica em <code>lib/suitcases/SuitcaseDirector.js</code>. Ele separa
+                interpretacao da entrada, estado da experiencia, logica dos jogos, acoes visuais e
+                debug. A fala continua vindo da chamada normal da Caixa Preta; o modelo recebe o
+                estado estruturado e improvisa sem virar menu.
+              </p>
+
+              <div class="panels">
+                <article class="panel">
+                  <h3>MALA 1 / NOME</h3>
+                  <p>
+                    Papel, bilhete, folha, cartao, algo escrito ou nome escrito ativa Maria
+                    Antonieta. Se ainda faltar confirmar que e nome de pessoa, a Caixa faz uma
+                    unica clarificacao e entra no jogo assim que houver confirmacao. Ela joga como
+                    20 Questions: ignora a conversa anterior como pista, comeca amplo, separa
+                    dominio/meio/papel publico, evita repetir pergunta e so chuta nome quando os
+                    fatos convergem. Palpite errado elimina o candidato e o jogo continua sem
+                    voltar para a escolha de mala; termina por acerto, revelacao explicita, pedido
+                    de parada ou transicao externa.
+                  </p>
+                </article>
+
+                <article class="panel">
+                  <h3>MALA 2 / INSTAGRAM</h3>
+                  <p>
+                    Usa <code>data/instagram-participants.json</code>. Pessoas com
+                    <code>enabled: true</code> entram no sorteio. A projecao mostra vida escolhida,
+                    feed preparado e timer de 60 segundos; ao final aparece <code>ACESSO
+                    ENCERRADO</code>.
+                  </p>
+                </article>
+
+                <article class="panel">
+                  <h3>MALA 3 / JOGO</h3>
+                  <p>
+                    Escolhe um minigame extensivel: <code>hangman</code>,
+                    <code>drawing_guess</code>, <code>scrambled_word</code>, <code>riddle</code> ou
+                    <code>guess_the_rule</code>. Para adicionar outro, implemente estado, avanco e
+                    visual em <code>SuitcaseDirector</code>.
+                  </p>
+                </article>
+              </div>
+
+              <pre><code>npm run test:suitcases</code></pre>
+
+              <p class="note">
+                O operator mostra debug em tempo real: experiencia atual, jogo, estado, ultimo
+                input, intencao do bot, perguntas, timer, pessoa, palavra e resultado. Use
+                <code>/mala abort</code> ou <code>/mala reset</code> para recuperar a apresentacao.
               </p>
             </section>
 

@@ -84,6 +84,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       "/reset",
       "/malas",
       "/mala",
+      "/suitcase",
       "/event",
       "/draw",
       "/game",
@@ -180,6 +181,8 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   const activities = state.performance?.activities || [];
   const phoneProjection = state.performance?.phoneProjection || { status: "hidden" };
   const game = state.game || { active: false, id: null, cooldownTurnsRemaining: 0 };
+  const suitcase = state.suitcase || { active: false, phase: "IDLE" };
+  const suitcaseGame = suitcase.currentGame || null;
   const participantCounts = state.participants?.counts || { team: 0, audience: 0, session: 0, available: 0 };
   const participantHistory = Object.values(state.participants?.history || {})
     .sort((a, b) => (b.selectedCount || 0) - (a.selectedCount || 0))
@@ -212,6 +215,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             <span className={styles.modeBadge}>MODE: {(state.mode || "host").toUpperCase()}</span>
             <span>INTENSITY: {(state.performance?.intensity || "calm").toUpperCase()}</span>
             <span>GAME: {game.active ? `${game.id} / ${game.startSource}`.toUpperCase() : `COOLDOWN ${game.cooldownTurnsRemaining || 0}`}</span>
+            <span>SUITCASE: {suitcase.active ? `${suitcase.phase} / ${suitcase.activeExperience || "none"}` : suitcase.phase}</span>
             <span>PARTICIPANTS: T{participantCounts.team} A{participantCounts.audience} S{participantCounts.session}</span>
             <span>ACTIVITIES: {activities.length}</span>
             <span>EVENTS: {state.performance?.events?.length || 0}</span>
@@ -256,6 +260,32 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
           ))}
 
           <h2>PERFORMANCE</h2>
+          <article className={styles.memory}>
+            <strong>SUITCASE DEBUG</strong>
+            <p>
+              CURRENT EXPERIENCE: {suitcase.activeExperience || "NONE"}
+              {"\n"}CURRENT GAME: {suitcaseGame?.id || "NONE"}
+              {"\n"}CURRENT STATE: {suitcase.phase || "IDLE"}
+              {"\n"}LAST USER INPUT: {suitcase.lastUserInput || "-"}
+              {"\n"}LAST BOT INTENT: {suitcase.lastBotIntent || "-"}
+              {"\n"}QUESTION COUNT: {suitcase.guessWho?.questionCount ?? "-"}
+              {"\n"}TIMER: {suitcase.instagram?.remainingTime ?? "-"}
+              {"\n"}SELECTED PERSON: {suitcase.instagram?.selectedPerson?.name || "-"}
+              {"\n"}SELECTED WORD: {suitcaseGame?.publicState?.progress || suitcaseGame?.publicState?.scrambled || suitcaseGame?.publicState?.prompt || "-"}
+              {"\n"}GAME RESULT: {suitcase.result || "-"}
+            </p>
+          </article>
+          <div className={styles.controlGrid}>
+            <button disabled={pending} onClick={() => sendOperatorCommand("/mala start", "MALA ERROR")} type="button">START SUITCASES</button>
+            <button disabled={pending} onClick={() => sendOperatorCommand("/mala abort", "MALA ERROR")} type="button">ABORT CURRENT GAME</button>
+            <button disabled={pending} onClick={() => sendOperatorCommand("/mala reset", "MALA ERROR")} type="button">RESET GAME</button>
+            <button disabled={pending} onClick={() => sendOperatorCommand("/mala 1", "MALA ERROR")} type="button">FORCE SUITCASE 1 / NAME</button>
+            <button disabled={pending} onClick={() => sendOperatorCommand("/mala 2", "MALA ERROR")} type="button">FORCE SUITCASE 2 / INSTAGRAM</button>
+            <button disabled={pending} onClick={() => sendOperatorCommand("/mala 3", "MALA ERROR")} type="button">FORCE SUITCASE 3 / RANDOM GAME</button>
+            <button disabled={pending} onClick={() => sendOperatorCommand("/mala next", "MALA ERROR")} type="button">NEXT INSTAGRAM PERSON</button>
+            <button disabled={pending} onClick={() => sendOperatorCommand("/mala win", "MALA ERROR")} type="button">FORCE WIN</button>
+            <button disabled={pending} onClick={() => sendOperatorCommand("/mala lose", "MALA ERROR")} type="button">FORCE LOSE</button>
+          </div>
           <article className={styles.memory}>
             <strong>GAME DIRECTOR</strong>
             <p>

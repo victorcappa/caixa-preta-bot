@@ -111,7 +111,39 @@ Entrar no modo MALAS e gerar uma transicao contextual na projecao:
 /mala
 ```
 
-`/malas` tambem funciona como alias.
+`/malas` tambem funciona como alias. Esse comando tambem inicia o controlador
+das tres malas e deixa o estado aguardando a escolha publica.
+
+Controles de ensaio e recuperacao das malas:
+
+```text
+/mala start
+/mala abort
+/mala reset
+/mala 1
+/mala 2
+/mala 3
+/mala next
+/mala win
+/mala lose
+```
+
+`/mala 1` forca Jogo do Nome / Maria Antonieta. `/mala 2` forca Instagram /
+Um Minuto de Vida. `/mala 3` escolhe um minigame aleatorio. Tambem e possivel
+forcar um minigame especifico para ensaio:
+
+```text
+/mala 3 hangman
+/mala 3 drawing_guess
+/mala 3 scrambled_word
+/mala 3 riddle
+/mala 3 guess_the_rule
+```
+
+O operator tambem mostra botoes equivalentes: `START SUITCASES`, `ABORT CURRENT
+GAME`, `RESET GAME`, `FORCE SUITCASE 1 / NAME`, `FORCE SUITCASE 2 /
+INSTAGRAM`, `FORCE SUITCASE 3 / RANDOM GAME`, `NEXT INSTAGRAM PERSON`, `FORCE
+WIN` e `FORCE LOSE`.
 
 Apagar a memoria, conversa e variaveis da sessao atual:
 
@@ -141,6 +173,127 @@ O estado inicial fica em memoria no servidor e e reiniciado quando o processo do
 O modo inicial da apresentacao e `host`.
 O modelo selecionado tambem fica no estado em memoria do servidor. `/reset`
 limpa a sessao, mas preserva o modelo escolhido.
+
+## Sistema das malas
+
+A arquitetura das malas fica em `lib/suitcases/SuitcaseDirector.js`. Ela separa:
+
+- interpretacao da entrada publica
+- estado da experiencia
+- logica de jogos e limites
+- acoes visuais
+- logging/debug
+
+O estado fica em `showState.suitcase` e aparece em `/api/state`, SSE e operator.
+A fala da Caixa continua vindo da chamada normal em `lib/openai.js`; o modelo
+recebe `SUITCASE EXPERIENCE STATE` e pode improvisar. Quando uma fala altera
+regra formal, o modelo usa o campo estruturado `suitcase` no envelope JSON, por
+exemplo `ask_question` ou `guess`.
+
+Fluxo normal:
+
+```text
+/mala
+publico: mala 1
+publico: tem um papel com um nome
+```
+
+O sistema reconhece semanticamente papel/nome, Instagram ou jogo/desafio/puzzle.
+Se nao houver confianca, a Caixa pode pedir uma clarificacao curta sem revelar
+as categorias internas.
+
+### Mala 1
+
+Jogo do Nome / Maria Antonieta usa estado proprio com `gameType`, `active`,
+`questionCount`, `guesses`, `knownFacts`, `rejectedHypotheses`,
+`currentHypothesis`, `winner` e `finished`.
+O bot joga como 20 Questions: ignora a conversa anterior como pista da pessoa,
+faz uma pergunta fechada por vez, comeca por dimensoes amplas, refina dominio,
+meio, profissao e papel publico, evita repetir pergunta e so arrisca nome
+quando os fatos convergem.
+
+Papel, bilhete, folha, cartao, algo escrito ou nome escrito dentro da mala
+acionam Maria Antonieta automaticamente. Se ainda nao estiver claro se o papel
+contem nome de pessoa, a Caixa faz uma unica clarificacao curta e entra no jogo
+assim que houver confirmacao. Depois disso a mala deixa de ser assunto.
+
+Perguntas formais sao registradas por `suitcase.action = "ask_question"`.
+Palpites sao registrados por `suitcase.action = "guess"`. Resposta `sim` a um
+palpite gera vitoria da maquina. Palpite errado nao encerra o jogo: o nome e
+adicionado a `rejectedHypotheses` e a Caixa continua buscando sem pedir
+permissao, sem voltar para escolha de mala e sem metralhar nomes. O jogo so
+termina por acerto, revelacao explicita da resposta, pedido explicito de parada
+ou transicao externa/operator.
+
+### Mala 2
+
+Instagram / Um Minuto de Vida usa `data/instagram-participants.json`.
+
+Formato:
+
+```json
+{
+  "id": "janaina",
+  "name": "Janaína Leite",
+  "instagramHandle": "@janainaleite",
+  "instagramUrl": "",
+  "enabled": true,
+  "preparedFeed": [
+    { "id": "1", "label": "POST 01", "caption": "conteudo autorizado" }
+  ]
+}
+```
+
+Somente participantes com `enabled: true` entram no sorteio. O sistema evita
+repetir a mesma pessoa enquanto houver outras disponiveis. A projecao mostra
+`ESCOLHENDO UMA VIDA...`, a pessoa selecionada, uma representacao visual do feed
+preparado e timer de 60 segundos. Ao final, dispara `ACESSO ENCERRADO` e retorna
+ao chat.
+
+### Mala 3
+
+Minigames iniciais:
+
+- `hangman`
+- `drawing_guess`
+- `scrambled_word`
+- `riddle`
+- `guess_the_rule`
+
+Para adicionar um novo minigame, acrescente o id em `MINI_GAME_IDS`, implemente
+o estado em `createMiniGame`, a visualizacao em `visualActionsForMiniGame` e o
+avanco em `advanceMiniGame`. O segredo pode ir em `privateState`; a UI publica
+recebe apenas `publicState`.
+
+## Arquivos das malas
+
+Criados:
+
+- `lib/suitcases/SuitcaseDirector.js`
+- `data/instagram-participants.json`
+- `scripts/suitcase-director-test.js`
+
+Alterados:
+
+- `lib/showState.js`
+- `lib/openai.js`
+- `lib/performanceEvents.js`
+- `app/api/chat/route.js`
+- `app/api/operator/route.js`
+- `app/api/performance/interaction/route.js`
+- `components/Chat.js`
+- `components/PerformanceLayer.js`
+- `components/PerformanceLayer.module.css`
+- `components/OperatorConsole.js`
+- `components/OperatorConsole.module.css`
+- `prompts/modes.js`
+- `package.json`
+
+Teste focado:
+
+```bash
+npm run test:suitcases
+```
 
 ## Arquitetura de contexto
 

@@ -31,12 +31,19 @@ export async function POST(request) {
 
     showState.addMessage("user", message, "projection");
 
+    const suitcaseWasActive = showState.snapshot().suitcase?.active;
+    let suitcaseAdvance = null;
+
+    if (suitcaseWasActive) {
+      suitcaseAdvance = showState.advanceSuitcases(message, { source: "public" });
+    }
+
     const gameWasActive = showState.snapshot().game?.active;
     let gameAdvance = null;
 
-    if (gameWasActive) {
+    if (!suitcaseWasActive && gameWasActive) {
       gameAdvance = showState.advanceGame(message, { source: "public" });
-    } else {
+    } else if (!suitcaseWasActive) {
       const opportunity = showState.getGameOpportunity(message);
       if (opportunity.shouldStartAutomatic) {
         showState.startGame({ source: "automatic" });
@@ -46,7 +53,7 @@ export async function POST(request) {
     const activeHangman = showState.snapshot().performance.activities.find((activity) => (
       activity.type === "HANGMAN" && activity.status === "active"
     ));
-    if (!gameWasActive && activeHangman && /^[\p{L}0-9]{1,18}$/u.test(message)) {
+    if (!suitcaseWasActive && !gameWasActive && activeHangman && /^[\p{L}0-9]{1,18}$/u.test(message)) {
       const result = applyHangmanGuess(activeHangman, message);
       if (result) {
         showState.updateActivity(result.activity, { source: "public", result: result.result });
@@ -56,10 +63,16 @@ export async function POST(request) {
 
     const turn = await generateCaixaPretaTurn({
       state: showState.privateSnapshot(),
-      userMessage: gameAdvance?.result
-        ? `${message}\n\nGAME_ADVANCE_RESULT:\n${JSON.stringify(gameAdvance.result)}`
-        : message
+      userMessage: [
+        message,
+        gameAdvance?.result ? `GAME_ADVANCE_RESULT:\n${JSON.stringify(gameAdvance.result)}` : "",
+        suitcaseAdvance?.result ? `SUITCASE_ADVANCE_RESULT:\n${JSON.stringify(suitcaseAdvance.result)}` : ""
+      ].filter(Boolean).join("\n\n")
     });
+
+    if (turn.suitcase && showState.snapshot().suitcase?.active) {
+      showState.applySuitcaseMove(turn.suitcase, { source: "agent" });
+    }
 
     if (turn.salience.length) {
       showState.addSalience(turn.salience, "agent");
@@ -70,12 +83,12 @@ export async function POST(request) {
     }
 
     const currentGame = showState.snapshot().game;
-    if (turn.game?.startGame && !currentGame?.active && (currentGame?.cooldownTurnsRemaining || 0) <= 0) {
+    if (!showState.snapshot().suitcase?.active && turn.game?.startGame && !currentGame?.active && (currentGame?.cooldownTurnsRemaining || 0) <= 0) {
       showState.startGame({
         requestedGame: turn.game.requestedGame || turn.game.gameSuggestion || null,
         source: "ai"
       });
-    } else if (turn.game?.gameMove && showState.snapshot().game?.active) {
+    } else if (!showState.snapshot().suitcase?.active && turn.game?.gameMove && showState.snapshot().game?.active) {
       showState.applyGameMove(turn.game, { source: "agent" });
     }
 

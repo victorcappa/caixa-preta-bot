@@ -24,6 +24,7 @@ export default function Chat() {
   const [performanceActivities, setPerformanceActivities] = useState([]);
   const [phoneProjection, setPhoneProjection] = useState({ status: "hidden" });
   const [game, setGame] = useState(null);
+  const [suitcase, setSuitcase] = useState(null);
   const [introStep, setIntroStep] = useState("cursor");
   const [manualOpen, setManualOpen] = useState(false);
   const [operatorMounted, setOperatorMounted] = useState(false);
@@ -58,6 +59,7 @@ export default function Chat() {
         setPerformanceActivities(data.performance?.activities || []);
         setPhoneProjection(data.performance?.phoneProjection || { status: "hidden" });
         setGame(data.game || null);
+        setSuitcase(data.suitcase || null);
 
         if (!initializedMessagesRef.current) {
           hydrateInitialMessages(data.conversation || []);
@@ -79,6 +81,7 @@ export default function Chat() {
         setPerformanceActivities(payload.state.performance?.activities || []);
         setPhoneProjection(payload.state.performance?.phoneProjection || { status: "hidden" });
         setGame(payload.state.game || null);
+        setSuitcase(payload.state.suitcase || null);
         hydrateInitialMessages(payload.state.conversation || []);
         return;
       }
@@ -88,6 +91,7 @@ export default function Chat() {
       setPerformanceActivities(payload.state.performance?.activities || []);
       setPhoneProjection(payload.state.performance?.phoneProjection || { status: "hidden" });
       setGame(payload.state.game || null);
+      setSuitcase(payload.state.suitcase || null);
     };
 
     return () => events.close();
@@ -320,6 +324,7 @@ export default function Chat() {
         activities={performanceActivities}
         events={visiblePerformanceEvents}
         game={game}
+        suitcase={suitcase}
         onMachineBusyChange={setPerformancePending}
         phoneProjection={phoneProjection}
       />

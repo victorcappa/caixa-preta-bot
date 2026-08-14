@@ -28,8 +28,12 @@ export async function POST(request) {
         return Response.json({ interaction, ignored: true });
       }
 
+      if (completion.event.payload?.experience === "instagram") {
+        showState.finishInstagramTimer();
+      }
+
       const turn = await generateCaixaPretaTurn({
-        state: showState.snapshot(),
+        state: showState.privateSnapshot(),
         operatorInstruction: [
           "Uma contagem exibida na projecao acabou agora.",
           "Continue a conversa automaticamente, sem esperar comando do operador.",
@@ -41,6 +45,10 @@ export async function POST(request) {
 
       if (turn.salience.length) {
         showState.addSalience(turn.salience, "agent");
+      }
+
+      if (turn.suitcase && showState.snapshot().suitcase?.active) {
+        showState.applySuitcaseMove(turn.suitcase, { source: "agent" });
       }
 
       showState.addMessage("assistant", turn.text, "countdown");
