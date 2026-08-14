@@ -38,6 +38,27 @@ async function main() {
     username: "cappavictor",
     error: null
   });
+  assert.deepEqual(commands.parseInstagramCommand("analisar o instagram"), {
+    valid: true,
+    action: "analyze_current",
+    username: "",
+    question: "o instagram",
+    error: null
+  });
+  assert.deepEqual(commands.parseInstagramCommand("analisar perfil do marcusgarcia"), {
+    valid: true,
+    action: "analyze_profile",
+    username: "marcusgarcia",
+    question: "",
+    error: null
+  });
+  assert.deepEqual(commands.parseInstagramCommand("analisar ultima foto do perfil @cappavictor"), {
+    valid: true,
+    action: "analyze_latest_media",
+    username: "cappavictor",
+    question: "ultima foto do perfil",
+    error: null
+  });
 
   const config = controllerModule.getInstagramConfig({
     INSTAGRAM_ENABLED: "true",

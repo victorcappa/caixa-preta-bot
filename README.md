@@ -106,8 +106,13 @@ fecha apenas o painel embutido; a sessao Playwright continua viva. A sessao fica
 salva em `.runtime/instagram-profile/` para as proximas execucoes.
 Depois de `/instagram`, o operador pode escrever em linguagem natural; o modelo
 interpreta a intencao e escolhe uma acao pre-definida (`follow`, `open_profile`,
-`comment_latest` ou `follow_and_comment_latest`). Exemplo:
+`comment_latest`, `follow_and_comment_latest`, `analyze_current`,
+`analyze_profile` ou `analyze_latest_media`). Exemplos:
 `/instagram seguir perfil do marcusgarcia e comentar na ultima foto algo engracado`.
+`/instagram analisar a tela atual` ou
+`/instagram analisar ultima foto do perfil marcusgarcia`. A analise visual
+captura o Instagram real e publica o resultado como fala no chat, fora do iframe,
+sem clicar, seguir ou comentar.
 `INSTAGRAM_ALLOWED_PROFILES` e uma whitelist opcional: se ficar vazia, qualquer
 username valido pode ser alvo; se tiver perfis separados por virgula, apenas eles
 sao aceitos. O painel operator mostra `INSTAGRAM >` com progresso, URL, estado do

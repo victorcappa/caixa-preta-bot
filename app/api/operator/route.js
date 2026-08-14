@@ -1,4 +1,4 @@
-import { generateCaixaPretaTurn } from "@/lib/openai";
+import { analyzeInstagramScreenshot, generateCaixaPretaTurn } from "@/lib/openai";
 import { normalizeGameCommand } from "@/lib/host/GameDirector";
 import { interpretInstagramCommand } from "@/lib/instagram/commands";
 import { getInstagramController } from "@/lib/instagram/InstagramController";
@@ -27,6 +27,10 @@ function withTimeout(promise, ms, errorMessage) {
 }
 
 async function executeInstagramCommand(controller, instagramCommand) {
+  if (instagramCommand.action?.startsWith("analyze_")) {
+    return executeInstagramAnalysis(controller, instagramCommand);
+  }
+
   if (instagramCommand.action === "comment_latest") {
     return controller.commentLatestMedia(instagramCommand.username, instagramCommand.comment);
   }
@@ -51,6 +55,68 @@ async function executeInstagramCommand(controller, instagramCommand) {
   }
 
   return controller.follow(instagramCommand.username);
+}
+
+async function executeInstagramAnalysis(controller, instagramCommand) {
+  if (controller.commandInProgress || controller.actionInProgress) {
+    return { status: "busy", message: "INSTAGRAM: acao em andamento" };
+  }
+
+  controller.commandInProgress = true;
+  controller.lastAction = instagramCommand.action;
+  controller.targetProfile = instagramCommand.username || controller.targetProfile;
+  controller.updateStatus("STARTING", "analise visual solicitada");
+
+  try {
+    if (instagramCommand.action === "analyze_current") {
+      if (!controller.page) {
+        const opened = await controller.open();
+        if (opened.status !== "ready") {
+          return opened;
+        }
+      }
+    }
+
+    if (instagramCommand.action === "analyze_profile") {
+      const opened = await controller.openProfile(instagramCommand.username);
+      if (opened.status !== "ready") {
+        return opened;
+      }
+    }
+
+    if (instagramCommand.action === "analyze_latest_media") {
+      const opened = await controller.openProfile(instagramCommand.username);
+      if (opened.status !== "ready") {
+        return opened;
+      }
+
+      if (!await controller.openLatestProfileMedia(instagramCommand.username)) {
+        await controller.saveDebugArtifact("analysis-media-unavailable");
+        await controller.recoverProfileView(instagramCommand.username);
+        controller.updateStatus("MANUAL_INTERVENTION", "midia recente nao encontrada para analise");
+        return { status: "unconfirmed", message: "INSTAGRAM: nao foi possivel analisar a ultima midia" };
+      }
+    }
+
+    await controller.waitForEmbeddedFrameReady("tela pronta para analise");
+    controller.updateStatus("ACTING", "analisando visualmente...");
+    const frame = await controller.captureFrame();
+    const chatMessage = await analyzeInstagramScreenshot({
+      imageDataUrl: frame.image,
+      url: frame.status?.currentUrl,
+      question: instagramCommand.question,
+      state: showState.privateSnapshot()
+    });
+
+    controller.updateStatus("READY", "analise visual publicada no chat");
+    return {
+      status: "analyzed",
+      message: "INSTAGRAM: analise publicada no chat",
+      chatMessage
+    };
+  } finally {
+    controller.commandInProgress = false;
+  }
 }
 
 function eventFromCommand(kind, content) {
@@ -209,6 +275,9 @@ export async function POST(request) {
           ...controller.getStatus(),
           message: result.message
         });
+        if (result.chatMessage) {
+          showState.addMessage("assistant", result.chatMessage, "operator");
+        }
         return Response.json({ message: result.message });
       } catch (error) {
         const message = error.message || "";
