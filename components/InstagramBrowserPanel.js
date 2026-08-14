@@ -53,7 +53,7 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
             hasFrameImageRef.current = true;
             setFrameImage(data.image);
           }
-          setFrameError("");
+          setFrameError(data.pending && !hasFrameImageRef.current ? "FRAME CARREGANDO" : "");
         }
       } catch (error) {
         if (!cancelled && !hasFrameImageRef.current) {
