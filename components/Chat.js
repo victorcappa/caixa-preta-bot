@@ -23,6 +23,7 @@ export default function Chat() {
   const [performanceEvents, setPerformanceEvents] = useState([]);
   const [performanceActivities, setPerformanceActivities] = useState([]);
   const [phoneProjection, setPhoneProjection] = useState({ status: "hidden" });
+  const [instagram, setInstagram] = useState({ status: "DISCONNECTED", embedded: true });
   const [game, setGame] = useState(null);
   const [suitcase, setSuitcase] = useState(null);
   const [introStep, setIntroStep] = useState("cursor");
@@ -58,6 +59,7 @@ export default function Chat() {
         setPerformanceEvents(data.performance?.events || []);
         setPerformanceActivities(data.performance?.activities || []);
         setPhoneProjection(data.performance?.phoneProjection || { status: "hidden" });
+        setInstagram(data.instagram || { status: "DISCONNECTED", embedded: true });
         setGame(data.game || null);
         setSuitcase(data.suitcase || null);
 
@@ -80,6 +82,7 @@ export default function Chat() {
         setPerformanceEvents(payload.state.performance?.events || []);
         setPerformanceActivities(payload.state.performance?.activities || []);
         setPhoneProjection(payload.state.performance?.phoneProjection || { status: "hidden" });
+        setInstagram(payload.state.instagram || { status: "DISCONNECTED", embedded: true });
         setGame(payload.state.game || null);
         setSuitcase(payload.state.suitcase || null);
         hydrateInitialMessages(payload.state.conversation || []);
@@ -90,6 +93,7 @@ export default function Chat() {
       setPerformanceEvents(payload.state.performance?.events || []);
       setPerformanceActivities(payload.state.performance?.activities || []);
       setPhoneProjection(payload.state.performance?.phoneProjection || { status: "hidden" });
+      setInstagram(payload.state.instagram || { status: "DISCONNECTED", embedded: true });
       setGame(payload.state.game || null);
       setSuitcase(payload.state.suitcase || null);
     };
@@ -326,6 +330,7 @@ export default function Chat() {
         game={game}
         suitcase={suitcase}
         onMachineBusyChange={setPerformancePending}
+        instagram={instagram}
         phoneProjection={phoneProjection}
       />
 
@@ -399,6 +404,10 @@ export default function Chat() {
                 <div>
                   <dt>/phone approve|hide</dt>
                   <dd>Confirma ou corta imediatamente uma solicitacao de projecao de celular.</dd>
+                </div>
+                <div>
+                  <dt>/instagram follow cappavictor</dt>
+                  <dd>Mostra o Instagram real embutido no chat e aciona o follow permitido.</dd>
                 </div>
                 <div>
                   <dt>/mala</dt>

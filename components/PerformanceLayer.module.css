@@ -159,6 +159,92 @@
   overflow-wrap: anywhere;
 }
 
+.instagramBrowser {
+  position: absolute;
+  inset: clamp(12px, 3vh, 34px) clamp(12px, 4vw, 60px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  pointer-events: auto;
+  color: var(--green);
+  background: #000000;
+  border: 1px solid var(--green);
+  box-shadow: 0 0 36px rgba(0, 255, 102, 0.16);
+  text-transform: uppercase;
+}
+
+.instagramBrowserHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 58px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--green-soft);
+  background: #000000;
+}
+
+.instagramBrowserHeader div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.instagramBrowserHeader span,
+.instagramBrowserHeader p {
+  color: var(--green-dim);
+  font-size: clamp(0.72rem, 1.2vw, 0.95rem);
+}
+
+.instagramBrowserHeader strong {
+  font-size: clamp(1rem, 2vw, 1.7rem);
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.instagramBrowserHeader p {
+  max-width: min(42vw, 560px);
+  margin: 0;
+  text-align: right;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.instagramBrowserViewport {
+  min-height: 0;
+  margin: 0 14px 14px;
+  aspect-ratio: 1280 / 900;
+  align-self: center;
+  justify-self: center;
+  width: min(100%, calc((100vh - 130px) * 1.422));
+  max-height: calc(100vh - 130px);
+  outline: 1px solid var(--green-soft);
+  background: #050505;
+  cursor: crosshair;
+}
+
+.instagramBrowserViewport:focus-visible {
+  outline-color: var(--green);
+  box-shadow: 0 0 0 2px rgba(0, 255, 102, 0.16);
+}
+
+.instagramBrowserViewport img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  user-select: none;
+}
+
+.instagramBrowserPlaceholder {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: var(--green-dim);
+  font-size: clamp(1rem, 2vw, 1.6rem);
+}
+
 .phoneProjection span,
 .phoneProjection small {
   color: var(--green-dim);
@@ -326,6 +412,25 @@
     inset: 16px;
     gap: 14px;
     padding: 14px;
+  }
+
+  .instagramBrowser {
+    inset: 10px;
+  }
+
+  .instagramBrowserHeader {
+    align-items: start;
+    display: grid;
+  }
+
+  .instagramBrowserHeader p {
+    max-width: none;
+    text-align: left;
+  }
+
+  .instagramBrowserViewport {
+    width: calc(100vw - 48px);
+    max-height: calc(100vh - 150px);
   }
 
   .instagramGrid {

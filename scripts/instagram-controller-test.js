@@ -21,12 +21,14 @@ async function main() {
 
   const config = controllerModule.getInstagramConfig({
     INSTAGRAM_ENABLED: "true",
+    INSTAGRAM_EMBEDDED: "true",
     INSTAGRAM_DEBUG: "true",
     INSTAGRAM_THEATRICAL_DELAY: "2000",
     INSTAGRAM_ALLOWED_PROFILES: "cappavictor"
   });
 
   assert.equal(config.enabled, true);
+  assert.equal(config.embedded, true);
   assert.equal(config.debug, true);
   assert.equal(config.theatricalDelayMs, 1500);
   assert.deepEqual(config.allowedProfiles, ["cappavictor"]);

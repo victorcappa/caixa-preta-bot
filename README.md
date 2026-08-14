@@ -94,23 +94,27 @@ Abrir o Instagram real em Chromium visivel e seguir o perfil autorizado:
 /instagram follow cappavictor
 ```
 
-Na primeira execucao, o Chromium abre `instagram.com` usando o perfil persistente
-em `.runtime/instagram-profile/`. Se o Instagram pedir login, faca login
-manualmente como `@caixapretabot` na janela aberta. O navegador permanece aberto
-para a cena e a sessao fica salva para as proximas execucoes. O comando so aceita
-perfis listados em `INSTAGRAM_ALLOWED_PROFILES`; por padrao, apenas
-`cappavictor`. O painel operator mostra `INSTAGRAM >` com progresso, URL, estado
-do botao e necessidade de intervencao manual quando houver checkpoint, captcha,
-2FA ou tela desconhecida.
+Na primeira execucao, o Chromium abre `instagram.com` por tras da interface e o
+chat mostra um espelho embutido do Instagram real. Se o Instagram pedir login,
+clique no espelho, digite ali e faca login manualmente como `@caixapretabot`.
+A sessao fica salva em `.runtime/instagram-profile/` para as proximas execucoes.
+O comando so aceita perfis listados em `INSTAGRAM_ALLOWED_PROFILES`; por padrao,
+apenas `cappavictor`. O painel operator mostra `INSTAGRAM >` com progresso, URL,
+estado do botao e necessidade de intervencao manual quando houver checkpoint,
+captcha, 2FA ou tela desconhecida.
 
 Variaveis relacionadas:
 
 ```bash
 INSTAGRAM_ENABLED=true
+INSTAGRAM_EMBEDDED=true
 INSTAGRAM_DEBUG=false
 INSTAGRAM_THEATRICAL_DELAY=700
 INSTAGRAM_ALLOWED_PROFILES=cappavictor
 ```
+
+Com `INSTAGRAM_EMBEDDED=false`, o Playwright volta a abrir uma janela Chromium
+separada. O padrao cenico agora e embutido no chat.
 
 Com `INSTAGRAM_DEBUG=true`, erros salvam screenshot e metadados seguros em
 `.runtime/instagram-debug/`. O projeto nunca salva usuario, senha, cookies,
