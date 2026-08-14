@@ -93,6 +93,7 @@ async function main() {
     }
   ];
   fallbackFollowController.openProfile = async () => ({ status: "ready" });
+  fallbackFollowController.waitForEmbeddedFrameReady = async () => true;
   fallbackFollowController.getFollowButtonState = async () => followStates.shift() || { state: "following", label: "Following", locator: null };
   fallbackFollowController.openLatestProfileMedia = async (username) => {
     openedMediaFor = username;
@@ -148,6 +149,7 @@ async function main() {
   const failedFollowController = new controllerModule.InstagramController({ config });
   let recoveredProfileFor = null;
   failedFollowController.openProfile = async () => ({ status: "ready" });
+  failedFollowController.waitForEmbeddedFrameReady = async () => true;
   failedFollowController.getFollowButtonState = async () => ({ state: null, label: "", locator: null });
   failedFollowController.openLatestProfileMedia = async () => true;
   failedFollowController.saveDebugArtifact = async () => {};

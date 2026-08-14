@@ -61,6 +61,24 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     ]);
   }
 
+  async function postOperatorCommand(raw, timeoutMs = 50000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch("/api/operator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command: raw }),
+        signal: controller.signal
+      });
+      const data = await response.json();
+      return { response, data };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   async function submitCommand(event) {
     event.preventDefault();
 
@@ -103,12 +121,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     setPending(true);
 
     try {
-      const response = await fetch("/api/operator", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command: raw })
-      });
-      const data = await response.json();
+      const { response, data } = await postOperatorCommand(raw);
 
       if (!response.ok) {
         addLog(data.error || "OPERATOR ERROR", "error");
@@ -116,8 +129,8 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       }
 
       addLog(data.message, "ok");
-    } catch {
-      addLog("SERVER CONNECTION FAILED", "error");
+    } catch (error) {
+      addLog(error.name === "AbortError" ? "OPERATOR REQUEST TIMEOUT" : "SERVER CONNECTION FAILED", "error");
     } finally {
       setPending(false);
     }
@@ -132,12 +145,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     setPending(true);
 
     try {
-      const response = await fetch("/api/operator", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command: `/model ${model}` })
-      });
-      const data = await response.json();
+      const { response, data } = await postOperatorCommand(`/model ${model}`);
 
       if (!response.ok) {
         addLog(data.error || "MODEL ERROR", "error");
@@ -145,8 +153,8 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       }
 
       addLog(data.message, "ok");
-    } catch {
-      addLog("SERVER CONNECTION FAILED", "error");
+    } catch (error) {
+      addLog(error.name === "AbortError" ? "OPERATOR REQUEST TIMEOUT" : "SERVER CONNECTION FAILED", "error");
     } finally {
       setPending(false);
     }
@@ -157,12 +165,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     setPending(true);
 
     try {
-      const response = await fetch("/api/operator", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command: raw })
-      });
-      const data = await response.json();
+      const { response, data } = await postOperatorCommand(raw);
 
       if (!response.ok) {
         addLog(data.error || fallback, "error");
@@ -170,8 +173,8 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       }
 
       addLog(data.message, "ok");
-    } catch {
-      addLog("SERVER CONNECTION FAILED", "error");
+    } catch (error) {
+      addLog(error.name === "AbortError" ? "OPERATOR REQUEST TIMEOUT" : "SERVER CONNECTION FAILED", "error");
     } finally {
       setPending(false);
     }

@@ -97,6 +97,7 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
     }
 
     viewportRef.current?.focus();
+    event.preventDefault();
     pointerRef.current = {
       id: event.pointerId,
       x: event.clientX,
@@ -125,10 +126,26 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
 
     pointerRef.current = null;
     event.currentTarget.releasePointerCapture?.(event.pointerId);
+    event.preventDefault();
 
     const deltaX = event.clientX - pointer.x;
     const deltaY = event.clientY - pointer.y;
     if (Math.abs(deltaY) < 48 || Math.abs(deltaY) < Math.abs(deltaX) * 1.4) {
+      const point = normalizedPointInFrame(
+        viewportRef.current?.getBoundingClientRect(),
+        frameViewport,
+        event.clientX,
+        event.clientY
+      );
+
+      if (point) {
+        ignoreNextClickRef.current = true;
+        sendInput({
+          type: "click",
+          x: point.x,
+          y: point.y
+        });
+      }
       return;
     }
 
