@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./InstagramBrowserPanel.module.css";
 
 const INPUT_KEYS = [
@@ -16,47 +16,21 @@ const INPUT_KEYS = [
 ];
 
 export default function InstagramBrowserPanel({ instagram, onClose }) {
-  const [frame, setFrame] = useState(null);
-  const [frameError, setFrameError] = useState("");
+  const [frameViewport, setFrameViewport] = useState(instagram.viewport || { width: 430, height: 760 });
+  const [streamError, setStreamError] = useState("");
   const viewportRef = useRef(null);
 
   useEffect(() => {
-    let cancelled = false;
-    let timer = null;
-
-    async function loadFrame() {
-      try {
-        const response = await fetch(`/api/instagram/frame?t=${Date.now()}`, {
-          cache: "no-store"
-        });
-
-        if (!response.ok) {
-          throw new Error("FRAME UNAVAILABLE");
-        }
-
-        const data = await response.json();
-        if (!cancelled) {
-          setFrame(data);
-          setFrameError("");
-        }
-      } catch {
-        if (!cancelled) {
-          setFrameError("FRAME UNAVAILABLE");
-        }
-      } finally {
-        if (!cancelled) {
-          timer = setTimeout(loadFrame, instagram.status === "ACTING" || instagram.status === "NAVIGATING" ? 500 : 900);
-        }
-      }
+    if (instagram.viewport?.width && instagram.viewport?.height) {
+      setFrameViewport(instagram.viewport);
     }
+    setStreamError("");
+  }, [instagram.status, instagram.updatedAt, instagram.viewport]);
 
-    loadFrame();
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [instagram.status]);
+  const streamSrc = useMemo(() => {
+    const key = [instagram.updatedAt, instagram.status, instagram.currentUrl].filter(Boolean).join("-");
+    return `/api/instagram/stream?stream=${encodeURIComponent(key || "active")}`;
+  }, [instagram.currentUrl, instagram.status, instagram.updatedAt]);
 
   async function sendInput(payload) {
     await fetch("/api/instagram/input", {
@@ -69,7 +43,7 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
   function handleClick(event) {
     const point = normalizedPointInFrame(
       viewportRef.current?.getBoundingClientRect(),
-      frame?.viewport,
+      frameViewport,
       event.clientX,
       event.clientY
     );
@@ -117,14 +91,25 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
         onKeyDown={handleKeyDown}
         ref={viewportRef}
         role="application"
-        style={{ aspectRatio: `${frame?.viewport?.width || 430} / ${frame?.viewport?.height || 760}` }}
+        style={{ aspectRatio: `${frameViewport.width || 430} / ${frameViewport.height || 760}` }}
         tabIndex={0}
       >
-        {frame?.image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img alt="Instagram real controlado pelo Playwright" draggable="false" src={frame.image} />
+        {streamError ? (
+          <div className={styles.placeholder}>{streamError}</div>
         ) : (
-          <div className={styles.placeholder}>{frameError || "CARREGANDO FRAME"}</div>
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            alt="Instagram real controlado pelo Playwright"
+            draggable="false"
+            onError={() => setStreamError("STREAM INDISPONIVEL")}
+            onLoad={(event) => {
+              const { naturalWidth, naturalHeight } = event.currentTarget;
+              if (naturalWidth && naturalHeight) {
+                setFrameViewport({ width: naturalWidth, height: naturalHeight });
+              }
+            }}
+            src={streamSrc}
+          />
         )}
       </div>
     </aside>
