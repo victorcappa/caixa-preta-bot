@@ -76,6 +76,37 @@ async function main() {
   assert.equal(dispatchedTouchEvents.at(-1).payload.type, "touchEnd");
   assert.deepEqual(pressedKeys, ["ArrowDown"]);
 
+  const fallbackFollowController = new controllerModule.InstagramController({ config });
+  let openedMediaFor = null;
+  let clickedFollow = false;
+  const followStates = [
+    { state: null, label: "", locator: null },
+    {
+      state: "follow",
+      label: "Follow",
+      locator: {
+        click: async () => {
+          clickedFollow = true;
+        }
+      }
+    }
+  ];
+  fallbackFollowController.openProfile = async () => ({ status: "ready" });
+  fallbackFollowController.getFollowButtonState = async () => followStates.shift() || { state: "following", label: "Following", locator: null };
+  fallbackFollowController.openLatestProfileMedia = async (username) => {
+    openedMediaFor = username;
+    return true;
+  };
+  fallbackFollowController.waitForFollowStateChange = async () => ({ state: "following", label: "Following", locator: null });
+  fallbackFollowController.theatricalDelay = async () => {};
+
+  assert.deepEqual(await fallbackFollowController.follow("@cappavictor"), {
+    status: "following",
+    message: "INSTAGRAM: seguindo @cappavictor"
+  });
+  assert.equal(openedMediaFor, "cappavictor");
+  assert.equal(clickedFollow, true);
+
   console.log("Instagram controller tests passed");
 }
 
