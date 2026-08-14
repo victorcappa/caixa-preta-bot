@@ -236,22 +236,23 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
         {frameError && !frameImage ? (
           <div className={styles.placeholder}>{frameError}</div>
         ) : null}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          alt="Instagram real controlado pelo Playwright"
-          className={frameImage ? "" : styles.hiddenFrame}
-          draggable="false"
-          onError={() => setFrameError("FRAME RECONECTANDO")}
-          onLoad={(event) => {
-            const { naturalWidth, naturalHeight } = event.currentTarget;
-            if (naturalWidth && naturalHeight) {
-              setFrameViewport({ width: naturalWidth, height: naturalHeight });
-            }
-            hasFrameImageRef.current = true;
-            setFrameError("");
-          }}
-          src={frameImage}
-        />
+        {frameImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            alt="Instagram real controlado pelo Playwright"
+            draggable="false"
+            onError={() => setFrameError("FRAME RECONECTANDO")}
+            onLoad={(event) => {
+              const { naturalWidth, naturalHeight } = event.currentTarget;
+              if (naturalWidth && naturalHeight) {
+                setFrameViewport({ width: naturalWidth, height: naturalHeight });
+              }
+              hasFrameImageRef.current = true;
+              setFrameError("");
+            }}
+            src={frameImage}
+          />
+        ) : null}
         <div
           aria-hidden="true"
           className={styles.interactionLayer}

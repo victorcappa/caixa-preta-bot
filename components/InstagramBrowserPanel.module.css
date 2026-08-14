@@ -96,10 +96,6 @@
   user-select: none;
 }
 
-.hiddenFrame {
-  opacity: 0;
-}
-
 .placeholder {
   grid-area: 1 / 1;
   display: grid;
