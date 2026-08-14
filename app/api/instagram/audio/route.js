@@ -11,6 +11,10 @@ export async function POST(request) {
     return Response.json({ error: "INSTAGRAM NOT STARTED" }, { status: 404 });
   }
 
+  if (typeof controller.setAudioMuted !== "function") {
+    return Response.json({ error: "INSTAGRAM CONTROLLER STALE" }, { status: 409 });
+  }
+
   try {
     const body = await request.json().catch(() => ({}));
     const result = await controller.setAudioMuted(Boolean(body.muted));
@@ -19,7 +23,8 @@ export async function POST(request) {
       message: result.message
     });
     return Response.json(result);
-  } catch {
+  } catch (error) {
+    console.error("INSTAGRAM AUDIO ERROR", error);
     return Response.json({ error: "INSTAGRAM AUDIO FAILED" }, { status: 503 });
   }
 }
