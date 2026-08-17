@@ -463,6 +463,20 @@ export async function POST(request) {
     if (name === "/game") {
       const gameCommand = normalizeGameCommand(content);
 
+      if (gameCommand.action === "control") {
+        const controlled = showState.controlStructuredGame(gameCommand.controlAction, gameCommand.payload, { source: "operator" });
+
+        if (!controlled.applied) {
+          return Response.json({
+            error: `GAME CONTROL NOT APPLIED: ${controlled.result?.reason || controlled.result?.type || gameCommand.controlAction}`
+          }, { status: 400 });
+        }
+
+        return Response.json({
+          message: `GAME CONTROL ${gameCommand.controlAction.toUpperCase()}\nSTATE ${controlled.gameState.phase || controlled.gameState.data?.state || "UNKNOWN"}`
+        });
+      }
+
       if (gameCommand.action === "stop") {
         const stopped = showState.stopGame({ status: "operator_stopped", source: "operator" });
         const turn = await generateCaixaPretaTurn({
@@ -525,6 +539,12 @@ export async function POST(request) {
 
       if (!started.gameState.id) {
         return Response.json({ error: "NO ELIGIBLE GAME" }, { status: 400 });
+      }
+
+      if (started.gameState.id === "verdade_ou_bolo") {
+        return Response.json({
+          message: `GAME START ${started.gameState.id}\nSTATE ${started.gameState.phase}`
+        });
       }
 
       const turn = await generateCaixaPretaTurn({

@@ -276,6 +276,50 @@ async function main() {
   assert.equal(scored.applied, true);
   assert.equal(scored.gameState.score.A, 2);
 
+  started = director.startGame(state, { requestedGame: "verdade-ou-bolo", source: "operator" });
+  assert.equal(started.gameState.id, "verdade_ou_bolo");
+  assert.equal(started.gameState.phase, "INTRO");
+  assert.equal(started.gameState.publicData.state, "INTRO");
+  assert.equal(started.gameState.publicData.totalRounds, 4);
+
+  let boloState = started.gameState;
+  let controlled = director.controlStructuredGame({ ...state, game: boloState }, "next");
+  assert.equal(controlled.applied, true);
+  assert.equal(controlled.gameState.phase, "QUESTION");
+  boloState = controlled.gameState;
+
+  controlled = director.controlStructuredGame({ ...state, game: boloState }, "select_answer", { answer: "verdade" });
+  assert.equal(controlled.applied, true);
+  assert.equal(controlled.gameState.phase, "ANSWER_LOCKED");
+  assert.equal(controlled.gameState.publicData.selectedAnswer, "verdade");
+  boloState = controlled.gameState;
+
+  controlled = director.controlStructuredGame({ ...state, game: boloState }, "reveal");
+  assert.equal(controlled.applied, true);
+  assert.equal(controlled.gameState.phase, "REVEAL");
+  assert.equal(controlled.gameState.publicData.roundResults.length, 1);
+  assert.equal(controlled.gameState.publicData.score, 1);
+  boloState = controlled.gameState;
+
+  controlled = director.controlStructuredGame({ ...state, game: boloState }, "reveal");
+  assert.equal(controlled.applied, true);
+  assert.equal(controlled.gameState.phase, "ROUND_RESULT");
+  assert.equal(controlled.gameState.publicData.roundResults.length, 1);
+  assert.equal(controlled.gameState.publicData.score, 1);
+  boloState = controlled.gameState;
+
+  controlled = director.controlStructuredGame({ ...state, game: boloState }, "next");
+  assert.equal(controlled.applied, true);
+  assert.equal(controlled.gameState.phase, "QUESTION");
+  assert.equal(controlled.gameState.publicData.currentRound.number, 2);
+  boloState = controlled.gameState;
+
+  controlled = director.controlStructuredGame({ ...state, game: boloState }, "previous_round");
+  assert.equal(controlled.applied, true);
+  assert.equal(controlled.gameState.publicData.currentRound.number, 1);
+  assert.equal(controlled.gameState.publicData.score, 1);
+  assert.equal(controlled.gameState.publicData.roundResults.length, 1);
+
   console.log("GAME DIRECTOR: PASS");
 }
 

@@ -260,6 +260,186 @@
   overflow-wrap: anywhere;
 }
 
+.verdadeOuBolo {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: clamp(12px, 2vh, 24px);
+  padding: clamp(22px, 4vw, 62px);
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 255, 102, 0.06) 0 1px, transparent 1px 5px),
+    #000000;
+  color: var(--green);
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.verdadeOuBolo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: clamp(8px, 1.2vw, 18px) solid rgba(0, 255, 102, 0.18);
+  box-shadow: inset 0 0 70px rgba(0, 255, 102, 0.16);
+}
+
+.vobHeader {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.vobHeader strong {
+  font-size: clamp(2.2rem, 7vw, 8rem);
+  line-height: 0.92;
+  text-shadow: 4px 0 rgba(0, 255, 102, 0.28);
+}
+
+.vobHeader span {
+  color: var(--green-dim);
+  font-size: clamp(1rem, 2.5vw, 3rem);
+  white-space: nowrap;
+}
+
+.vobVideoFrame {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  width: min(100%, 1440px);
+  justify-self: center;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--green);
+  background: #000000;
+  box-shadow: 0 0 40px rgba(0, 255, 102, 0.18);
+}
+
+.vobVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000000;
+}
+
+.vobMissingVideo {
+  display: grid;
+  gap: 10px;
+  text-align: center;
+}
+
+.vobMissingVideo strong {
+  font-size: clamp(2rem, 6vw, 7rem);
+}
+
+.vobMissingVideo span {
+  color: var(--green-dim);
+  font-size: clamp(0.9rem, 1.8vw, 1.4rem);
+}
+
+.vobChoices {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  gap: clamp(28px, 9vw, 160px);
+  font-size: clamp(1.8rem, 5vw, 6rem);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.vobChoices span {
+  padding: 0.08em 0.22em;
+  border: 1px solid transparent;
+}
+
+.vobChoiceSelected {
+  color: #000000;
+  background: var(--green);
+  box-shadow: 0 0 32px rgba(0, 255, 102, 0.34);
+}
+
+.vobReveal {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: clamp(16px, 3vh, 34px);
+  text-align: center;
+  background: rgba(0, 0, 0, 0.82);
+}
+
+.vobReveal strong {
+  font-size: clamp(5rem, 18vw, 22rem);
+  line-height: 0.82;
+  text-shadow: 8px 0 rgba(0, 255, 102, 0.24), -6px 0 rgba(255, 255, 255, 0.14);
+}
+
+.vobReveal span {
+  font-size: clamp(2rem, 7vw, 9rem);
+  font-weight: 900;
+}
+
+.vobRevealWin span {
+  color: var(--green);
+}
+
+.vobRevealLose span,
+.vobRevealLose strong {
+  color: var(--danger);
+}
+
+.verdadeOuBoloIntro,
+.verdadeOuBoloFinal {
+  grid-template-rows: 1fr;
+  place-items: center;
+  text-align: center;
+}
+
+.vobTitleStack {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: clamp(4px, 1vh, 12px);
+  font-size: clamp(5rem, 17vw, 22rem);
+  font-weight: 900;
+  line-height: 0.78;
+  animation: vobGlitch 900ms steps(2, start) infinite;
+}
+
+.verdadeOuBoloFinal {
+  align-content: center;
+  gap: clamp(12px, 3vh, 32px);
+}
+
+.verdadeOuBoloFinal .vobKicker {
+  position: relative;
+  z-index: 1;
+  color: var(--green-dim);
+  font-size: clamp(1.2rem, 3vw, 4rem);
+}
+
+.verdadeOuBoloFinal strong {
+  position: relative;
+  z-index: 1;
+  font-size: clamp(6rem, 20vw, 24rem);
+  line-height: 0.82;
+}
+
+.verdadeOuBoloFinal p {
+  position: relative;
+  z-index: 1;
+  max-width: min(90vw, 1100px);
+  margin: 0;
+  font-size: clamp(1.5rem, 5vw, 6rem);
+  font-weight: 900;
+  line-height: 1;
+}
+
 .ruleExamples {
   display: grid;
   gap: 6px;
@@ -369,5 +549,23 @@
 @keyframes draw {
   to {
     stroke-dashoffset: 0;
+  }
+}
+
+@keyframes vobGlitch {
+  0%,
+  68%,
+  100% {
+    transform: translate(0, 0);
+    text-shadow: 8px 0 rgba(0, 255, 102, 0.2), -6px 0 rgba(255, 255, 255, 0.12);
+  }
+
+  72% {
+    transform: translate(8px, -2px);
+    text-shadow: -8px 0 rgba(0, 255, 102, 0.24), 6px 0 rgba(255, 255, 255, 0.16);
+  }
+
+  76% {
+    transform: translate(-5px, 3px);
   }
 }
