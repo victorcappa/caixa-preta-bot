@@ -347,12 +347,39 @@ function VerdadeOuBoloShow({ game }) {
   const audioRef = useRef(null);
   const lastVideoSequenceRef = useRef(null);
   const lastAudioSequenceRef = useRef(null);
+  const [, setVideoReadyKey] = useState(0);
   const currentRound = data.currentRound || {};
   const video = currentRound.video || {};
   const state = data.state || game.phase;
   const selectedAnswer = data.selectedAnswer;
   const revealedAnswer = data.revealedAnswer;
   const result = data.result;
+
+  useEffect(() => {
+    const videoElement = videoRef.current;
+
+    if (!videoElement || !video.src) {
+      return;
+    }
+
+    videoElement.pause();
+    videoElement.load();
+
+    function markReady() {
+      try {
+        if (videoElement.currentTime === 0) {
+          videoElement.currentTime = 0.001;
+        }
+      } catch {
+        // Seeking before enough data exists is codec-dependent.
+      }
+
+      setVideoReadyKey((value) => value + 1);
+    }
+
+    videoElement.addEventListener("loadeddata", markReady, { once: true });
+    return () => videoElement.removeEventListener("loadeddata", markReady);
+  }, [video.src]);
 
   useEffect(() => {
     const videoElement = videoRef.current;
@@ -453,7 +480,7 @@ function VerdadeOuBoloShow({ game }) {
             controls={false}
             key={video.src}
             playsInline
-            preload="metadata"
+            preload="auto"
             ref={videoRef}
             src={video.src}
           />

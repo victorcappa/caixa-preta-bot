@@ -468,8 +468,8 @@ export async function POST(request) {
 
         if (!controlled.applied) {
           return Response.json({
-            error: `GAME CONTROL NOT APPLIED: ${controlled.result?.reason || controlled.result?.type || gameCommand.controlAction}`
-          }, { status: 400 });
+            message: `GAME CONTROL IGNORED ${gameCommand.controlAction.toUpperCase()}\nREASON ${controlled.result?.reason || controlled.result?.type || "not_applicable"}`
+          });
         }
 
         return Response.json({
@@ -517,6 +517,12 @@ export async function POST(request) {
       }
 
       const activeGame = showState.snapshot().game;
+      if (activeGame?.active && activeGame.id === "verdade_ou_bolo" && /verdade|bolo/i.test(gameCommand.requestedGame || "")) {
+        return Response.json({
+          message: `GAME ALREADY ACTIVE ${activeGame.id}\nSTATE ${activeGame.phase || activeGame.data?.state || "UNKNOWN"}`
+        });
+      }
+
       if (activeGame?.active && gameCommand.action !== "replace") {
         return Response.json({
           error: [

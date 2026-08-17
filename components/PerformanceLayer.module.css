@@ -1,7 +1,7 @@
 .layer {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  z-index: 2147483647;
+  z-index: 12;
   pointer-events: none;
   overflow: hidden;
   color: var(--green);
@@ -310,7 +310,7 @@
   display: grid;
   place-items: center;
   min-height: 0;
-  width: min(100%, 1440px);
+  width: min(100%, 1440px, calc(54vh * 16 / 9));
   justify-self: center;
   aspect-ratio: 16 / 9;
   border: 1px solid var(--green);

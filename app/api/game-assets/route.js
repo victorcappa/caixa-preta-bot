@@ -30,6 +30,41 @@ function safeAssetPath(rawFile = "") {
   return absolute;
 }
 
+function parseRange(range, size) {
+  const match = `${range || ""}`.match(/bytes=(\d*)-(\d*)/);
+
+  if (!match) {
+    return null;
+  }
+
+  const [, rawStart, rawEnd] = match;
+  if (!rawStart && !rawEnd) {
+    return null;
+  }
+
+  if (!rawStart) {
+    const suffixLength = Number(rawEnd);
+    if (!Number.isFinite(suffixLength) || suffixLength <= 0) {
+      return null;
+    }
+
+    const start = Math.max(0, size - suffixLength);
+    return { start, end: size - 1 };
+  }
+
+  const start = Number(rawStart);
+  const end = rawEnd ? Number(rawEnd) : size - 1;
+
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start >= size || start > end) {
+    return null;
+  }
+
+  return {
+    start,
+    end: Math.min(end, size - 1)
+  };
+}
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const file = searchParams.get("file");
@@ -49,15 +84,9 @@ export async function GET(request) {
   const range = request.headers.get("range");
 
   if (range) {
-    const match = range.match(/bytes=(\d+)-(\d*)/);
-    if (!match) {
-      return new Response("RANGE NOT SATISFIABLE", { status: 416 });
-    }
+    const parsedRange = parseRange(range, stat.size);
 
-    const start = Number(match[1]);
-    const end = match[2] ? Number(match[2]) : stat.size - 1;
-
-    if (!Number.isFinite(start) || !Number.isFinite(end) || start >= stat.size || end >= stat.size || start > end) {
+    if (!parsedRange) {
       return new Response("RANGE NOT SATISFIABLE", {
         status: 416,
         headers: {
@@ -66,6 +95,7 @@ export async function GET(request) {
       });
     }
 
+    const { start, end } = parsedRange;
     const stream = fs.createReadStream(absolute, { start, end });
     return new Response(Readable.toWeb(stream), {
       status: 206,

@@ -154,6 +154,15 @@ export default function Chat() {
   }, [instagram.status]);
 
   useEffect(() => {
+    if (game?.id !== "verdade_ou_bolo" || !game.active) {
+      return;
+    }
+
+    setOperatorMounted(true);
+    requestAnimationFrame(() => setOperatorOpen(true));
+  }, [game?.id, game?.active]);
+
+  useEffect(() => {
     scrollRef.current?.scrollIntoView({ block: "end" });
   }, [messages, pending, introStep, introDotsText, introText, typedReplies]);
 
@@ -552,15 +561,6 @@ export default function Chat() {
       ref={workspaceRef}
       style={layoutStyle}
     >
-      <PerformanceLayer
-        activities={performanceActivities}
-        events={visiblePerformanceEvents}
-        game={game}
-        suitcase={suitcase}
-        onMachineBusyChange={setPerformancePending}
-        phoneProjection={phoneProjection}
-      />
-
       <button
         aria-label="Abrir manual de comandos"
         className={styles.manualButton}
@@ -658,6 +658,15 @@ export default function Chat() {
         aria-label="Chat publico"
         ref={chatPaneRef}
       >
+        <PerformanceLayer
+          activities={performanceActivities}
+          events={visiblePerformanceEvents}
+          game={game}
+          suitcase={suitcase}
+          onMachineBusyChange={setPerformancePending}
+          phoneProjection={phoneProjection}
+        />
+
         <Terminal title="CAIXA PRETA" footer={footer} className={styles.embeddedTerminal}>
           <div className={styles.messages}>
             {messages.length === 0 && introStep === "cursor" ? (

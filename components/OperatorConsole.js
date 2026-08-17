@@ -264,16 +264,46 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       }
 
       const videoAction = verdadeOuBolo.data?.videoCommand?.action;
-      const shortcuts = {
-        " ": videoAction === "play" ? "/game pause" : "/game play",
-        "1": "/game verdade",
-        "2": "/game bolo",
-        Enter: "/game reveal",
-        ArrowRight: "/game next",
-        ArrowLeft: "/game previous",
-        Escape: "/game cancel"
-      };
-      const commandForKey = shortcuts[event.key];
+      const gameState = verdadeOuBolo.data?.state;
+      let commandForKey = null;
+
+      if (event.key === " ") {
+        commandForKey = gameState === "INTRO" ? null : videoAction === "play" ? "/game pause" : "/game play";
+      }
+
+      if (event.key === "1" && ["QUESTION", "ANSWER_LOCKED"].includes(gameState)) {
+        commandForKey = "/game verdade";
+      }
+
+      if (event.key === "2" && ["QUESTION", "ANSWER_LOCKED"].includes(gameState)) {
+        commandForKey = "/game bolo";
+      }
+
+      if (event.key === "Enter") {
+        if (gameState === "INTRO") {
+          commandForKey = "/game round";
+        } else if (["ANSWER_LOCKED", "REVEAL", "ROUND_RESULT"].includes(gameState)) {
+          commandForKey = "/game reveal";
+        }
+      }
+
+      if (event.key === "ArrowRight") {
+        if (gameState === "INTRO") {
+          commandForKey = "/game round";
+        } else if (gameState === "ANSWER_LOCKED") {
+          commandForKey = "/game reveal";
+        } else if (["REVEAL", "ROUND_RESULT"].includes(gameState)) {
+          commandForKey = "/game next";
+        }
+      }
+
+      if (event.key === "ArrowLeft") {
+        commandForKey = "/game previous";
+      }
+
+      if (event.key === "Escape") {
+        commandForKey = "/game cancel";
+      }
 
       if (!commandForKey) {
         return;
@@ -285,7 +315,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
 
     window.addEventListener("keydown", handleGameShortcut);
     return () => window.removeEventListener("keydown", handleGameShortcut);
-  }, [verdadeOuBolo?.active, verdadeOuBolo?.data?.videoCommand?.action, pending, sendOperatorCommand]);
+  }, [verdadeOuBolo?.active, verdadeOuBolo?.data?.state, verdadeOuBolo?.data?.videoCommand?.action, pending, sendOperatorCommand]);
 
   return (
     <Terminal title="OPERATOR" footer={footer} className={terminalClassName}>
