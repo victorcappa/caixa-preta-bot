@@ -347,6 +347,8 @@ function VerdadeOuBoloShow({ game }) {
   const audioRef = useRef(null);
   const lastVideoSequenceRef = useRef(null);
   const lastAudioSequenceRef = useRef(null);
+  const lastAutoAdvanceSequenceRef = useRef(null);
+  const lastVoteTimeoutRef = useRef(null);
   const [, setVideoReadyKey] = useState(0);
   const currentRound = data.currentRound || {};
   const video = currentRound.video || {};
@@ -355,6 +357,11 @@ function VerdadeOuBoloShow({ game }) {
   const revealedAnswer = data.revealedAnswer;
   const result = data.result;
   const revealArmed = Boolean(data.revealArmed);
+  const voteCountdown = data.voteCountdown || null;
+  const autoAdvanceCommand = data.autoAdvanceCommand || null;
+  const autoAdvanceAction = autoAdvanceCommand?.action || null;
+  const autoAdvanceSequence = autoAdvanceCommand?.sequence || null;
+  const autoAdvanceDelayMs = Number(autoAdvanceCommand?.delayMs || 0);
 
   useEffect(() => {
     const videoElement = videoRef.current;
@@ -460,6 +467,31 @@ function VerdadeOuBoloShow({ game }) {
     audio.play().catch(() => {});
   }, [data.audioCommand]);
 
+  useEffect(() => {
+    if (autoAdvanceAction !== "next" || !autoAdvanceSequence) {
+      return undefined;
+    }
+
+    if (lastAutoAdvanceSequenceRef.current === autoAdvanceSequence) {
+      return undefined;
+    }
+
+    lastAutoAdvanceSequenceRef.current = autoAdvanceSequence;
+    const timer = setTimeout(async () => {
+      try {
+        await fetch("/api/operator", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ command: "/game next" })
+        });
+      } catch {
+        // The operator can still recover with the manual next button.
+      }
+    }, Math.max(0, autoAdvanceDelayMs));
+
+    return () => clearTimeout(timer);
+  }, [autoAdvanceAction, autoAdvanceDelayMs, autoAdvanceSequence]);
+
   useEffect(() => () => {
     videoRef.current?.pause();
     if (audioRef.current) {
@@ -467,6 +499,26 @@ function VerdadeOuBoloShow({ game }) {
       audioRef.current.src = "";
     }
   }, []);
+
+  async function handleVoteTimeout(countdown) {
+    const timeoutKey = `${countdown?.startedAt || ""}:${countdown?.endsAt || ""}`;
+
+    if (!timeoutKey || lastVoteTimeoutRef.current === timeoutKey) {
+      return;
+    }
+
+    lastVoteTimeoutRef.current = timeoutKey;
+
+    try {
+      await fetch("/api/operator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command: "/game vote-timeout" })
+      });
+    } catch {
+      // The operator can still reveal/recover manually if this network hop fails.
+    }
+  }
 
   if (state === "INTRO") {
     return (
@@ -521,13 +573,65 @@ function VerdadeOuBoloShow({ game }) {
         <span className={selectedAnswer === "bolo" ? styles.vobChoiceSelected : ""}>BOLO</span>
       </div>
 
+      {state === "VOTING" && voteCountdown ? (
+        <VobVoteCountdown countdown={voteCountdown} onComplete={handleVoteTimeout} />
+      ) : null}
+
       {["REVEAL", "ROUND_RESULT"].includes(state) && result ? (
         <div className={`${styles.vobReveal} ${result.won ? styles.vobRevealWin : styles.vobRevealLose}`}>
           <strong>{revealedAnswer === "verdade" ? "VERDADE!" : "E BOLO!"}</strong>
-          <span>{result.won ? "ACERTARAM" : "ERRARAM"}</span>
+          <span>{result.noVote ? "SEM VOTO" : result.won ? "ACERTARAM" : "ERRARAM"}</span>
         </div>
       ) : null}
     </section>
+  );
+}
+
+function vobCountdownRemaining(countdown = {}) {
+  const endsAt = Number(countdown.endsAt || 0);
+
+  if (Number.isFinite(endsAt) && endsAt > 0) {
+    return Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+  }
+
+  const duration = Number(countdown.durationSeconds || 10);
+  const startedAt = Number(countdown.startedAt || Date.now());
+  const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+  return Math.max(0, duration - Math.max(0, elapsed));
+}
+
+function VobVoteCountdown({ countdown, onComplete }) {
+  const [value, setValue] = useState(() => vobCountdownRemaining(countdown));
+  const completedRef = useRef(false);
+  const onCompleteRef = useRef(onComplete);
+
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
+  useEffect(() => {
+    completedRef.current = false;
+
+    function updateValue() {
+      const nextValue = vobCountdownRemaining(countdown);
+      setValue(nextValue);
+
+      if (nextValue === 0 && !completedRef.current) {
+        completedRef.current = true;
+        onCompleteRef.current(countdown);
+      }
+    }
+
+    updateValue();
+    const timer = setInterval(updateValue, 200);
+    return () => clearInterval(timer);
+  }, [countdown]);
+
+  return (
+    <aside className={styles.vobVoteCountdown} aria-label="Tempo para votar">
+      <span>VOTO</span>
+      <strong>{value}</strong>
+    </aside>
   );
 }
 

@@ -271,18 +271,18 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
         commandForKey = gameState === "INTRO" ? null : videoAction === "play" ? "/game pause" : "/game play";
       }
 
-      if (event.key === "1" && ["QUESTION", "ANSWER_LOCKED"].includes(gameState)) {
+      if (event.key === "1" && ["QUESTION", "ANSWER_LOCKED", "VOTING"].includes(gameState)) {
         commandForKey = "/game verdade";
       }
 
-      if (event.key === "2" && ["QUESTION", "ANSWER_LOCKED"].includes(gameState)) {
+      if (event.key === "2" && ["QUESTION", "ANSWER_LOCKED", "VOTING"].includes(gameState)) {
         commandForKey = "/game bolo";
       }
 
       if (event.key === "Enter") {
         if (gameState === "INTRO") {
           commandForKey = "/game round";
-        } else if (["ANSWER_LOCKED", "REVEAL", "ROUND_RESULT"].includes(gameState)) {
+        } else if (["QUESTION", "ANSWER_LOCKED", "REVEAL", "ROUND_RESULT"].includes(gameState)) {
           commandForKey = "/game reveal";
         }
       }
@@ -290,7 +290,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       if (event.key === "ArrowRight") {
         if (gameState === "INTRO") {
           commandForKey = "/game round";
-        } else if (gameState === "ANSWER_LOCKED") {
+        } else if (["QUESTION", "ANSWER_LOCKED"].includes(gameState)) {
           commandForKey = "/game reveal";
         } else if (["REVEAL", "ROUND_RESULT"].includes(gameState)) {
           commandForKey = "/game next";
@@ -529,6 +529,10 @@ function VerdadeOuBoloControls({ game, pending, sendOperatorCommand }) {
   const round = data.currentRound || {};
   const result = data.result || null;
   const video = round.video || {};
+  const voteCountdown = data.voteCountdown || null;
+  const votingSeconds = voteCountdown
+    ? Math.max(0, Math.ceil((Number(voteCountdown.endsAt || 0) - Date.now()) / 1000))
+    : null;
 
   return (
     <>
@@ -540,6 +544,7 @@ function VerdadeOuBoloControls({ game, pending, sendOperatorCommand }) {
           {"\n"}VIDEO: {video.file || "AUSENTE"}
           {"\n"}ANSWER: {data.selectedAnswer || "null"}
           {"\n"}REVEAL ARMED: {data.revealArmed ? "YES" : "NO"}
+          {"\n"}VOTE COUNTDOWN: {votingSeconds ?? "-"}
           {"\n"}CORRECT: {operator.correctAnswer || "CONFIGURE"}
           {"\n"}SCORE: {data.score || 0}
         </p>
@@ -556,7 +561,7 @@ function VerdadeOuBoloControls({ game, pending, sendOperatorCommand }) {
         <button disabled={pending} onClick={() => sendOperatorCommand("/game restart", "GAME CONTROL ERROR")} type="button">RESTART VIDEO</button>
         <button
           className={data.selectedAnswer === "verdade" ? styles.vobSelected : ""}
-          disabled={pending || !["QUESTION", "ANSWER_LOCKED"].includes(data.state)}
+          disabled={pending || !["QUESTION", "ANSWER_LOCKED", "VOTING"].includes(data.state)}
           onClick={() => sendOperatorCommand("/game verdade", "GAME CONTROL ERROR")}
           type="button"
         >
@@ -564,7 +569,7 @@ function VerdadeOuBoloControls({ game, pending, sendOperatorCommand }) {
         </button>
         <button
           className={data.selectedAnswer === "bolo" ? styles.vobSelected : ""}
-          disabled={pending || !["QUESTION", "ANSWER_LOCKED"].includes(data.state)}
+          disabled={pending || !["QUESTION", "ANSWER_LOCKED", "VOTING"].includes(data.state)}
           onClick={() => sendOperatorCommand("/game bolo", "GAME CONTROL ERROR")}
           type="button"
         >
@@ -572,14 +577,14 @@ function VerdadeOuBoloControls({ game, pending, sendOperatorCommand }) {
         </button>
         <button
           className={styles.vobRevealButton}
-          disabled={pending || !data.selectedAnswer || !["ANSWER_LOCKED", "REVEAL", "ROUND_RESULT"].includes(data.state)}
+          disabled={pending || !["QUESTION", "ANSWER_LOCKED", "REVEAL", "ROUND_RESULT"].includes(data.state)}
           onClick={() => sendOperatorCommand("/game reveal", "GAME CONTROL ERROR")}
           type="button"
         >
           REVELAR RESPOSTA
         </button>
         <button
-          disabled={pending || data.revealArmed || !["INTRO", "REVEAL", "ROUND_RESULT"].includes(data.state)}
+          disabled={pending || data.revealArmed || Boolean(voteCountdown) || !["INTRO", "REVEAL", "ROUND_RESULT"].includes(data.state)}
           onClick={() => sendOperatorCommand("/game next", "GAME CONTROL ERROR")}
           type="button"
         >
@@ -610,7 +615,7 @@ function VerdadeOuBoloControls({ game, pending, sendOperatorCommand }) {
           <strong>ROUND RESULT</strong>
           <p>
             ROUND {result.round}: {result.selected} / CORRECT {result.correct}
-            {"\n"}{result.won ? "ACERTARAM" : "ERRARAM"}
+            {"\n"}{result.noVote ? "SEM VOTO / ERRARAM" : result.won ? "ACERTARAM" : "ERRARAM"}
           </p>
         </article>
       ) : null}

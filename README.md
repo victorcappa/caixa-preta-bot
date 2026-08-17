@@ -163,6 +163,7 @@ Forcar ou controlar um jogo do HOST:
 /game maria
 /game secret Anitta
 /game mestre
+/game verdade-ou-bolo
 /game stop
 /game replace forca
 ```
@@ -171,6 +172,10 @@ Se ja houver jogo ativo, `/game` nao empilha outro. Use `/game stop` para
 encerrar ou `/game replace tipo` para substituir explicitamente. Em Maria
 Antonieta no modo em que a Caixa adivinha, `/game secret texto` define o segredo
 no servidor/operator sem enviar esse segredo para o modelo.
+
+Em `Verdade ou Bolo?`, o operator usa `REVELAR RESPOSTA` para tocar o video da
+rodada. Quando o video termina, a projecao abre 10 segundos de voto no canto da
+tela; se ninguem votar, a rodada conta como erro e avanca automaticamente.
 
 Entrar no modo MALAS e gerar uma transicao contextual na projecao:
 
