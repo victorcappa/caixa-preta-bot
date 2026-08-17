@@ -61,23 +61,48 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     ]);
   }
 
+  function emitStopAllSignal(raw) {
+    if (raw.trim().split(/\s+/)[0] === "/stopall") {
+      window.dispatchEvent(new CustomEvent("caixa-preta:stopall"));
+    }
+  }
+
+  async function postOperatorCommand(raw, timeoutMs = 50000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch("/api/operator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command: raw }),
+        signal: controller.signal
+      });
+      const data = await response.json();
+      return { response, data };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   async function submitCommand(event) {
     event.preventDefault();
 
     const raw = command.trim();
-    if (!raw || pending) {
+    const commandName = raw.split(/\s+/)[0];
+    if (!raw || (pending && commandName !== "/stopall")) {
       return;
     }
 
     setCommand("");
     addLog(`> ${raw}`, "input");
+    emitStopAllSignal(raw);
 
     if (!raw.startsWith("/")) {
       addLog("COMMAND REQUIRED", "error");
       return;
     }
 
-    const commandName = raw.split(/\s+/)[0];
     if (![
       "/memory",
       "/say",
@@ -91,9 +116,11 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       "/activity",
       "/intensity",
       "/model",
+      "/instagram",
       "/phone",
       "/clear",
-      "/clear-performance"
+      "/clear-performance",
+      "/stopall"
     ].includes(commandName)) {
       addLog(`UNKNOWN COMMAND: ${commandName}`, "error");
       return;
@@ -102,12 +129,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     setPending(true);
 
     try {
-      const response = await fetch("/api/operator", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command: raw })
-      });
-      const data = await response.json();
+      const { response, data } = await postOperatorCommand(raw);
 
       if (!response.ok) {
         addLog(data.error || "OPERATOR ERROR", "error");
@@ -115,8 +137,8 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       }
 
       addLog(data.message, "ok");
-    } catch {
-      addLog("SERVER CONNECTION FAILED", "error");
+    } catch (error) {
+      addLog(error.name === "AbortError" ? "OPERATOR REQUEST TIMEOUT" : "SERVER CONNECTION FAILED", "error");
     } finally {
       setPending(false);
     }
@@ -131,12 +153,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     setPending(true);
 
     try {
-      const response = await fetch("/api/operator", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command: `/model ${model}` })
-      });
-      const data = await response.json();
+      const { response, data } = await postOperatorCommand(`/model ${model}`);
 
       if (!response.ok) {
         addLog(data.error || "MODEL ERROR", "error");
@@ -144,8 +161,8 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       }
 
       addLog(data.message, "ok");
-    } catch {
-      addLog("SERVER CONNECTION FAILED", "error");
+    } catch (error) {
+      addLog(error.name === "AbortError" ? "OPERATOR REQUEST TIMEOUT" : "SERVER CONNECTION FAILED", "error");
     } finally {
       setPending(false);
     }
@@ -153,15 +170,11 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
 
   async function sendOperatorCommand(raw, fallback = "OPERATOR ERROR") {
     addLog(`> ${raw}`, "input");
+    emitStopAllSignal(raw);
     setPending(true);
 
     try {
-      const response = await fetch("/api/operator", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command: raw })
-      });
-      const data = await response.json();
+      const { response, data } = await postOperatorCommand(raw);
 
       if (!response.ok) {
         addLog(data.error || fallback, "error");
@@ -169,8 +182,35 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       }
 
       addLog(data.message, "ok");
+    } catch (error) {
+      addLog(error.name === "AbortError" ? "OPERATOR REQUEST TIMEOUT" : "SERVER CONNECTION FAILED", "error");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function toggleInstagramAudio() {
+    const muted = !(state.instagram?.audioMuted === false);
+    const nextMuted = !muted;
+    addLog(`> INSTAGRAM AUDIO ${nextMuted ? "OFF" : "ON"}`, "input");
+    setPending(true);
+
+    try {
+      const response = await fetch("/api/instagram/audio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ muted: nextMuted })
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        addLog(data.error || "INSTAGRAM AUDIO ERROR", "error");
+        return;
+      }
+
+      addLog(data.message, "ok");
     } catch {
-      addLog("SERVER CONNECTION FAILED", "error");
+      addLog("INSTAGRAM AUDIO ERROR", "error");
     } finally {
       setPending(false);
     }
@@ -182,6 +222,8 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   const phoneProjection = state.performance?.phoneProjection || { status: "hidden" };
   const game = state.game || { active: false, id: null, cooldownTurnsRemaining: 0 };
   const suitcase = state.suitcase || { active: false, phase: "IDLE" };
+  const instagram = state.instagram || { status: "DISCONNECTED", logs: [] };
+  const instagramLogs = (instagram.logs || []).slice(-5).reverse();
   const suitcaseGame = suitcase.currentGame || null;
   const participantCounts = state.participants?.counts || { team: 0, audience: 0, session: 0, available: 0 };
   const participantHistory = Object.values(state.participants?.history || {})
@@ -197,7 +239,6 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
         autoComplete="off"
         value={command}
         onChange={(event) => setCommand(event.target.value)}
-        disabled={pending}
       />
     </form>
   );
@@ -216,6 +257,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             <span>INTENSITY: {(state.performance?.intensity || "calm").toUpperCase()}</span>
             <span>GAME: {game.active ? `${game.id} / ${game.startSource}`.toUpperCase() : `COOLDOWN ${game.cooldownTurnsRemaining || 0}`}</span>
             <span>SUITCASE: {suitcase.active ? `${suitcase.phase} / ${suitcase.activeExperience || "none"}` : suitcase.phase}</span>
+            <span>INSTAGRAM: {instagram.status || "DISCONNECTED"}</span>
             <span>PARTICIPANTS: T{participantCounts.team} A{participantCounts.audience} S{participantCounts.session}</span>
             <span>ACTIVITIES: {activities.length}</span>
             <span>EVENTS: {state.performance?.events?.length || 0}</span>
@@ -260,6 +302,48 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
           ))}
 
           <h2>PERFORMANCE</h2>
+          <article className={styles.memory}>
+            <strong>INSTAGRAM / {instagram.status || "DISCONNECTED"}</strong>
+            <p>
+              ACCOUNT: @{instagram.account || "caixapretabot"}
+              {"\n"}TARGET: {instagram.targetProfile ? `@${instagram.targetProfile}` : "-"}
+              {"\n"}ACTION: {instagram.lastAction || "-"}
+              {"\n"}BUTTON: {instagram.lastButtonState || "-"}
+              {"\n"}MESSAGE: {instagram.message || "-"}
+              {"\n"}URL: {instagram.currentUrl || "-"}
+            </p>
+            <button
+              className={styles.approveButton}
+              disabled={pending}
+              onClick={() => sendOperatorCommand("/instagram follow cappavictor", "INSTAGRAM ERROR")}
+              type="button"
+            >
+              FOLLOW @CAPPAVICTOR
+            </button>
+            <div className={styles.inlineControls}>
+              <button
+                className={styles.approveButton}
+                disabled={pending || instagram.status === "DISCONNECTED"}
+                onClick={toggleInstagramAudio}
+                type="button"
+              >
+                {instagram.audioMuted === false ? "SOUND ON" : "SOUND OFF"}
+              </button>
+              <button
+                className={styles.panicButton}
+                onClick={() => sendOperatorCommand("/stopall", "STOPALL ERROR")}
+                type="button"
+              >
+                STOP ALL
+              </button>
+            </div>
+          </article>
+          {instagramLogs.length ? (
+            <article className={styles.memory}>
+              <strong>INSTAGRAM LOG</strong>
+              <p>{instagramLogs.map((entry) => `${new Date(entry.timestamp).toLocaleTimeString("pt-BR")} ${entry.status}: ${entry.message}`).join("\n")}</p>
+            </article>
+          ) : null}
           <article className={styles.memory}>
             <strong>SUITCASE DEBUG</strong>
             <p>

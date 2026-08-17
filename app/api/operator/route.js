@@ -1,7 +1,10 @@
-import { generateCaixaPretaTurn } from "@/lib/openai";
+import { analyzeInstagramScreenshot, generateCaixaPretaTurn } from "@/lib/openai";
 import { normalizeGameCommand } from "@/lib/host/GameDirector";
+import { interpretInstagramCommand } from "@/lib/instagram/commands";
+import { getExistingInstagramController, getInstagramController } from "@/lib/instagram/InstagramController";
 import { normalizeOpenAIModel } from "@/lib/openaiModels";
 import { showState } from "@/lib/showState";
+import { markStopAll } from "@/lib/stopAllSignal";
 import { SHOW_MODES } from "@/prompts/modes";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +16,162 @@ function parseCommand(raw) {
   const content = trimmed.slice(name.length).trim();
 
   return { name, content };
+}
+
+function withTimeout(promise, ms, errorMessage) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error(errorMessage)), ms);
+    })
+  ]);
+}
+
+async function executeInstagramCommand(controller, instagramCommand) {
+  if (instagramCommand.action !== "watch_reels") {
+    controller.stopReelsAutoplay?.({ silent: true });
+  }
+
+  if (instagramCommand.action?.startsWith("analyze_")) {
+    return executeInstagramAnalysis(controller, instagramCommand);
+  }
+
+  if (instagramCommand.action === "watch_reels") {
+    return controller.openReels();
+  }
+
+  if (instagramCommand.action === "open_directs") {
+    return controller.openDirects();
+  }
+
+  if (instagramCommand.action === "send_direct_latest") {
+    return controller.sendDirectMessage({ message: instagramCommand.message });
+  }
+
+  if (instagramCommand.action === "send_direct_thread") {
+    return controller.sendDirectMessage({
+      message: instagramCommand.message,
+      thread: instagramCommand.thread
+    });
+  }
+
+  if (instagramCommand.action === "like_latest_media") {
+    return controller.likeProfileMedia(instagramCommand.username, 1);
+  }
+
+  if (instagramCommand.action === "like_nth_media") {
+    return controller.likeProfileMedia(instagramCommand.username, instagramCommand.postIndex);
+  }
+
+  if (instagramCommand.action === "open_latest_media") {
+    return controller.openProfileMedia(instagramCommand.username, 1);
+  }
+
+  if (instagramCommand.action === "open_nth_media") {
+    return controller.openProfileMedia(instagramCommand.username, instagramCommand.postIndex);
+  }
+
+  if (instagramCommand.action === "comment_latest") {
+    return controller.commentLatestMedia(instagramCommand.username, instagramCommand.comment);
+  }
+
+  if (instagramCommand.action === "comment_nth_media") {
+    return controller.commentProfileMedia(instagramCommand.username, instagramCommand.comment, instagramCommand.postIndex);
+  }
+
+  if (instagramCommand.action === "follow_and_comment_latest") {
+    const followResult = await controller.follow(instagramCommand.username);
+    const canContinue = new Set(["following", "already_following", "requested"]);
+
+    if (!canContinue.has(followResult.status)) {
+      return followResult;
+    }
+
+    const commentResult = await controller.commentLatestMedia(instagramCommand.username, instagramCommand.comment);
+    return {
+      ...commentResult,
+      message: `${followResult.message}\n${commentResult.message}`
+    };
+  }
+
+  if (instagramCommand.action === "open_profile") {
+    return controller.openProfile(instagramCommand.username);
+  }
+
+  return controller.follow(instagramCommand.username);
+}
+
+async function executeInstagramAnalysis(controller, instagramCommand) {
+  if (controller.commandInProgress || controller.actionInProgress) {
+    return { status: "busy", message: "INSTAGRAM: acao em andamento" };
+  }
+
+  controller.commandInProgress = true;
+  controller.lastAction = instagramCommand.action;
+  controller.targetProfile = instagramCommand.username || controller.targetProfile;
+  controller.updateStatus("STARTING", "analise visual solicitada");
+
+  try {
+    if (instagramCommand.action === "analyze_current") {
+      if (!controller.page) {
+        const opened = await controller.open();
+        if (opened.status !== "ready") {
+          return opened;
+        }
+      }
+    }
+
+    if (instagramCommand.action === "analyze_profile") {
+      const opened = await controller.openProfile(instagramCommand.username);
+      if (opened.status !== "ready") {
+        return opened;
+      }
+
+      await controller.waitForProfileGridMedia({ minCount: 1, timeoutMs: 8000 });
+    }
+
+    if (instagramCommand.action === "analyze_recent_posts") {
+      const opened = await controller.openProfile(instagramCommand.username);
+      if (opened.status !== "ready") {
+        return opened;
+      }
+
+      await controller.waitForProfileGridMedia({ minCount: 3, timeoutMs: 12000 });
+    }
+
+    if (instagramCommand.action === "analyze_latest_media") {
+      const opened = await controller.openProfile(instagramCommand.username);
+      if (opened.status !== "ready") {
+        return opened;
+      }
+
+      if (!await controller.openLatestProfileMedia(instagramCommand.username)) {
+        await controller.saveDebugArtifact("analysis-media-unavailable");
+        await controller.recoverProfileView(instagramCommand.username);
+        controller.updateStatus("MANUAL_INTERVENTION", "midia recente nao encontrada para analise");
+        return { status: "unconfirmed", message: "INSTAGRAM: nao foi possivel analisar a ultima midia" };
+      }
+    }
+
+    await controller.waitForEmbeddedFrameReady("tela pronta para analise");
+    controller.updateStatus("ACTING", "analisando visualmente...");
+    const frame = await controller.captureFrame();
+    const chatMessage = await analyzeInstagramScreenshot({
+      imageDataUrl: frame.image,
+      url: frame.status?.currentUrl,
+      question: instagramCommand.question,
+      state: showState.privateSnapshot()
+    });
+
+    controller.updateStatus("READY", "analise visual publicada no chat");
+    return {
+      status: "analyzed",
+      message: "INSTAGRAM: analise publicada no chat",
+      chatMessage
+    };
+  } finally {
+    controller.commandInProgress = false;
+  }
 }
 
 function eventFromCommand(kind, content) {
@@ -89,6 +248,36 @@ export async function POST(request) {
       return Response.json({ message: "PERFORMANCE CLEARED" });
     }
 
+    if (name === "/stopall") {
+      const stopped = [];
+      markStopAll();
+      const controller = getExistingInstagramController();
+
+      if (controller) {
+        const instagramStop = await controller.stopAllRoutines();
+        showState.updateInstagram({
+          ...controller.getStatus(),
+          message: instagramStop.message
+        });
+        stopped.push("instagram");
+      }
+
+      showState.clearPerformance();
+      showState.stopActivities("operator_stopped");
+
+      if (showState.snapshot().game?.active) {
+        showState.stopGame({ status: "operator_stopped", source: "operator" });
+        stopped.push("game");
+      }
+
+      if (showState.snapshot().suitcase?.active) {
+        showState.abortSuitcases({ source: "operator" });
+        stopped.push("suitcase");
+      }
+
+      return Response.json({ message: `STOPALL ${stopped.length ? stopped.join(" ") : "idle"}`.toUpperCase() });
+    }
+
     if (name === "/intensity") {
       const intensity = showState.setPerformanceIntensity(content);
       return Response.json({ message: `INTENSITY ${intensity.toUpperCase()}` });
@@ -143,6 +332,97 @@ export async function POST(request) {
       }
 
       return Response.json({ error: "PHONE COMMAND UNKNOWN" }, { status: 400 });
+    }
+
+    if (name === "/instagram") {
+      const instagramCommand = await interpretInstagramCommand(content);
+
+      if (!instagramCommand.valid) {
+        return Response.json({
+          error: [
+            "INSTAGRAM COMMAND UNKNOWN",
+            "Use /instagram follow cappavictor",
+            "Ou /instagram entrar no perfil @cappavictor e comentar na ultima foto 'biscoiteiro'"
+          ].join("\n")
+        }, { status: 400 });
+      }
+
+      try {
+        const controller = getInstagramController({
+          reporter: (instagram) => showState.updateInstagram(instagram)
+        });
+        const result = await withTimeout(
+          executeInstagramCommand(controller, instagramCommand),
+          60000,
+          "INSTAGRAM_REQUEST_TIMEOUT"
+        );
+        showState.updateInstagram({
+          ...controller.getStatus(),
+          message: result.message
+        });
+        if (result.chatMessage) {
+          showState.addMessage("assistant", result.chatMessage, "operator");
+        }
+        return Response.json({ message: result.message });
+      } catch (error) {
+        const message = error.message || "";
+
+        if (message.startsWith("INSTAGRAM_PROFILE_NOT_ALLOWED")) {
+          showState.updateInstagram({
+            status: "MANUAL_INTERVENTION",
+            message: `perfil fora da whitelist: @${instagramCommand.username}`,
+            targetProfile: instagramCommand.username,
+            lastAction: instagramCommand.action
+          });
+
+          return Response.json({
+            error: `INSTAGRAM PROFILE NOT ALLOWED: @${instagramCommand.username}`
+          }, { status: 403 });
+        }
+
+        if (message === "INSTAGRAM_USERNAME_INVALID") {
+          return Response.json({ error: "INSTAGRAM USERNAME INVALID" }, { status: 400 });
+        }
+
+        if (message === "INSTAGRAM_COMMENT_EMPTY") {
+          return Response.json({ error: "INSTAGRAM COMMENT EMPTY" }, { status: 400 });
+        }
+
+        if (message === "INSTAGRAM_DIRECT_MESSAGE_EMPTY") {
+          return Response.json({ error: "INSTAGRAM DIRECT MESSAGE EMPTY" }, { status: 400 });
+        }
+
+        if (message === "INSTAGRAM_STOPPED") {
+          return Response.json({ error: "INSTAGRAM STOPPED" }, { status: 409 });
+        }
+
+        if (message === "INSTAGRAM_REQUEST_TIMEOUT") {
+          showState.updateInstagram({
+            status: "ERROR",
+            message: "timeout no comando Instagram",
+            lastError: "operator timeout",
+            targetProfile: instagramCommand.username,
+            lastAction: instagramCommand.action
+          });
+
+          return Response.json({ error: "INSTAGRAM REQUEST TIMEOUT" }, { status: 504 });
+        }
+
+        if (/Timeout|page\.goto|Navigation/i.test(message)) {
+          return Response.json({ error: "INSTAGRAM NAVIGATION TIMEOUT" }, { status: 504 });
+        }
+
+        console.error("INSTAGRAM OPERATOR ERROR", error);
+        showState.updateInstagram({
+          status: "ERROR",
+          message: "erro Playwright",
+          lastError: `${message}`.slice(0, 180),
+          targetProfile: instagramCommand.username,
+          lastAction: instagramCommand.action
+        });
+
+        return Response.json({ error: "INSTAGRAM REQUEST FAILED" }, { status: 500 });
+      }
     }
 
     if (name === "/event") {

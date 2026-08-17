@@ -1,0 +1,140 @@
+.panel {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  border-left: 1px solid var(--green-soft);
+  background: #000000;
+  color: var(--green);
+  text-transform: uppercase;
+  overflow: hidden;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--green-soft);
+}
+
+.header div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.header span,
+.header p {
+  color: var(--green-dim);
+  font-size: clamp(0.7rem, 1vw, 0.9rem);
+}
+
+.header strong {
+  font-size: clamp(0.95rem, 1.45vw, 1.35rem);
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.header p {
+  margin: 0;
+  text-align: right;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.header button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--green-soft);
+  background: #000000;
+  color: var(--green);
+  cursor: pointer;
+  font: inherit;
+}
+
+.header button:hover,
+.header button:focus-visible {
+  border-color: var(--green);
+  outline: 0;
+}
+
+.viewport {
+  position: relative;
+  min-height: 0;
+  align-self: center;
+  justify-self: center;
+  display: grid;
+  place-items: center;
+  width: min(calc(100% - 24px), calc((100vh - 96px) * 0.566));
+  max-width: calc(100% - 24px);
+  max-height: calc(100% - 12px);
+  margin: 0 12px 12px;
+  outline: 1px solid var(--green-soft);
+  background: #050505;
+  cursor: crosshair;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.viewport:focus-visible {
+  outline-color: var(--green);
+  box-shadow: 0 0 0 2px rgba(0, 255, 102, 0.16);
+}
+
+.viewport img {
+  grid-area: 1 / 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.placeholder {
+  grid-area: 1 / 1;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: var(--green-dim);
+  font-size: clamp(1rem, 1.5vw, 1.4rem);
+}
+
+.interactionLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+@media (max-width: 1100px) {
+  .header {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .header p {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    text-align: left;
+  }
+}
+
+@media (max-width: 760px) {
+  .panel {
+    border-left: 0;
+    border-top: 1px solid var(--green-soft);
+    min-height: 52vh;
+  }
+
+  .viewport {
+    width: min(calc(100% - 20px), calc((52vh - 92px) * 0.566));
+    margin: 0 10px 10px;
+  }
+}

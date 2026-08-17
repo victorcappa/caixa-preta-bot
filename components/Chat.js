@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import InstagramBrowserPanel from "./InstagramBrowserPanel";
 import OperatorConsole from "./OperatorConsole";
 import PerformanceLayer from "./PerformanceLayer";
 import Terminal from "./Terminal";
@@ -9,6 +10,22 @@ import styles from "./Chat.module.css";
 const INTRO_READY_TEXT = "TEM ALGUEM AI?";
 const INTRO_DOTS_TEXT = "...";
 const TYPE_INTERVAL_MS = 42;
+const DEFAULT_OPERATOR_WIDTH = 520;
+const DEFAULT_INSTAGRAM_WIDTH = 520;
+const DEFAULT_INSTAGRAM_HEIGHT = 480;
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function storedNumber(key, fallback) {
+  if (typeof window === "undefined") {
+    return fallback;
+  }
+
+  const value = Number(window.localStorage.getItem(key));
+  return Number.isFinite(value) ? value : fallback;
+}
 
 export default function Chat() {
   const [messages, setMessages] = useState([]);
@@ -23,18 +40,27 @@ export default function Chat() {
   const [performanceEvents, setPerformanceEvents] = useState([]);
   const [performanceActivities, setPerformanceActivities] = useState([]);
   const [phoneProjection, setPhoneProjection] = useState({ status: "hidden" });
+  const [instagram, setInstagram] = useState({ status: "DISCONNECTED", embedded: true });
   const [game, setGame] = useState(null);
   const [suitcase, setSuitcase] = useState(null);
   const [introStep, setIntroStep] = useState("cursor");
   const [manualOpen, setManualOpen] = useState(false);
   const [operatorMounted, setOperatorMounted] = useState(false);
   const [operatorOpen, setOperatorOpen] = useState(false);
+  const [instagramPanelClosed, setInstagramPanelClosed] = useState(false);
+  const [operatorWidth, setOperatorWidth] = useState(DEFAULT_OPERATOR_WIDTH);
+  const [instagramWidth, setInstagramWidth] = useState(DEFAULT_INSTAGRAM_WIDTH);
+  const [instagramHeight, setInstagramHeight] = useState(DEFAULT_INSTAGRAM_HEIGHT);
+  const workspaceRef = useRef(null);
+  const chatPaneRef = useRef(null);
   const scrollRef = useRef(null);
   const initializedMessagesRef = useRef(false);
   const seenMessageIdsRef = useRef(new Set());
   const typingTimersRef = useRef(new Map());
   const introTimerRef = useRef(null);
   const introDotsTimerRef = useRef(null);
+  const chatRequestControllerRef = useRef(null);
+  const stoppedTypingIdsRef = useRef(new Set());
 
   useEffect(() => {
     function hydrateInitialMessages(nextMessages) {
@@ -58,6 +84,7 @@ export default function Chat() {
         setPerformanceEvents(data.performance?.events || []);
         setPerformanceActivities(data.performance?.activities || []);
         setPhoneProjection(data.performance?.phoneProjection || { status: "hidden" });
+        setInstagram(data.instagram || { status: "DISCONNECTED", embedded: true });
         setGame(data.game || null);
         setSuitcase(data.suitcase || null);
 
@@ -80,6 +107,7 @@ export default function Chat() {
         setPerformanceEvents(payload.state.performance?.events || []);
         setPerformanceActivities(payload.state.performance?.activities || []);
         setPhoneProjection(payload.state.performance?.phoneProjection || { status: "hidden" });
+        setInstagram(payload.state.instagram || { status: "DISCONNECTED", embedded: true });
         setGame(payload.state.game || null);
         setSuitcase(payload.state.suitcase || null);
         hydrateInitialMessages(payload.state.conversation || []);
@@ -90,11 +118,18 @@ export default function Chat() {
       setPerformanceEvents(payload.state.performance?.events || []);
       setPerformanceActivities(payload.state.performance?.activities || []);
       setPhoneProjection(payload.state.performance?.phoneProjection || { status: "hidden" });
+      setInstagram(payload.state.instagram || { status: "DISCONNECTED", embedded: true });
       setGame(payload.state.game || null);
       setSuitcase(payload.state.suitcase || null);
     };
 
     return () => events.close();
+  }, []);
+
+  useEffect(() => {
+    setOperatorWidth(storedNumber("caixa-preta.operatorWidth", DEFAULT_OPERATOR_WIDTH));
+    setInstagramWidth(storedNumber("caixa-preta.instagramWidth", DEFAULT_INSTAGRAM_WIDTH));
+    setInstagramHeight(storedNumber("caixa-preta.instagramHeight", DEFAULT_INSTAGRAM_HEIGHT));
   }, []);
 
   useEffect(() => {
@@ -113,6 +148,12 @@ export default function Chat() {
   }, [manualOpen]);
 
   useEffect(() => {
+    if (instagram.status === "STARTING" || instagram.status === "DISCONNECTED") {
+      setInstagramPanelClosed(false);
+    }
+  }, [instagram.status]);
+
+  useEffect(() => {
     scrollRef.current?.scrollIntoView({ block: "end" });
   }, [messages, pending, introStep, introDotsText, introText, typedReplies]);
 
@@ -124,6 +165,7 @@ export default function Chat() {
 
       typingTimersRef.current.clear();
       seenMessageIdsRef.current.clear();
+      stoppedTypingIdsRef.current.clear();
       setTypedReplies({});
     }
 
@@ -137,6 +179,7 @@ export default function Chat() {
       }
 
       seenMessageIdsRef.current.add(message.id);
+      stoppedTypingIdsRef.current.delete(message.id);
 
       if (message.role !== "assistant") {
         continue;
@@ -174,7 +217,28 @@ export default function Chat() {
 
       clearInterval(introTimerRef.current);
       clearInterval(introDotsTimerRef.current);
+      chatRequestControllerRef.current?.abort();
     };
+  }, []);
+
+  useEffect(() => {
+    function stopChatOutput() {
+      chatRequestControllerRef.current?.abort();
+      chatRequestControllerRef.current = null;
+
+      for (const [messageId, timer] of typingTimersRef.current.entries()) {
+        clearInterval(timer);
+        stoppedTypingIdsRef.current.add(messageId);
+      }
+
+      typingTimersRef.current.clear();
+      clearInterval(introTimerRef.current);
+      clearInterval(introDotsTimerRef.current);
+      setPending(false);
+    }
+
+    window.addEventListener("caixa-preta:stopall", stopChatOutput);
+    return () => window.removeEventListener("caixa-preta:stopall", stopChatOutput);
   }, []);
 
   useEffect(() => {
@@ -264,11 +328,15 @@ export default function Chat() {
     setError("");
     setPending(true);
 
+    const controller = new AbortController();
+    chatRequestControllerRef.current = controller;
+
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: content })
+        body: JSON.stringify({ message: content }),
+        signal: controller.signal
       });
 
       if (!response.ok) {
@@ -276,8 +344,13 @@ export default function Chat() {
         throw new Error(data.error || "Falha ao conversar com a Caixa Preta.");
       }
     } catch (requestError) {
-      setError(requestError.message);
+      if (requestError.name !== "AbortError") {
+        setError(requestError.message);
+      }
     } finally {
+      if (chatRequestControllerRef.current === controller) {
+        chatRequestControllerRef.current = null;
+      }
       setPending(false);
     }
   }
@@ -292,8 +365,150 @@ export default function Chat() {
     requestAnimationFrame(() => setOperatorOpen(true));
   }
 
+  function beginOperatorResize(event) {
+    const workspaceRect = workspaceRef.current?.getBoundingClientRect();
+    if (!workspaceRect) {
+      return;
+    }
+
+    event.preventDefault();
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    function onPointerMove(pointerEvent) {
+      const nextWidth = clamp(
+        workspaceRect.right - pointerEvent.clientX,
+        320,
+        Math.max(320, workspaceRect.width - 420)
+      );
+
+      setOperatorWidth(nextWidth);
+      window.localStorage.setItem("caixa-preta.operatorWidth", `${Math.round(nextWidth)}`);
+    }
+
+    function onPointerUp() {
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+    }
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp, { once: true });
+  }
+
+  function resizeOperatorByKeyboard(event) {
+    if (!["ArrowLeft", "ArrowRight"].includes(event.key)) {
+      return;
+    }
+
+    const workspaceRect = workspaceRef.current?.getBoundingClientRect();
+    if (!workspaceRect) {
+      return;
+    }
+
+    event.preventDefault();
+    const direction = event.key === "ArrowLeft" ? 1 : -1;
+    const nextWidth = clamp(
+      operatorWidth + (direction * 24),
+      320,
+      Math.max(320, workspaceRect.width - 420)
+    );
+
+    setOperatorWidth(nextWidth);
+    window.localStorage.setItem("caixa-preta.operatorWidth", `${Math.round(nextWidth)}`);
+  }
+
+  function beginInstagramResize(event) {
+    const chatPaneRect = chatPaneRef.current?.getBoundingClientRect();
+    if (!chatPaneRect) {
+      return;
+    }
+
+    const stacked = window.matchMedia("(max-width: 1100px)").matches;
+    event.preventDefault();
+    document.body.style.cursor = stacked ? "row-resize" : "col-resize";
+    document.body.style.userSelect = "none";
+
+    function onPointerMove(pointerEvent) {
+      if (stacked) {
+        const nextHeight = clamp(
+          chatPaneRect.bottom - pointerEvent.clientY,
+          280,
+          Math.max(280, chatPaneRect.height - 220)
+        );
+
+        setInstagramHeight(nextHeight);
+        window.localStorage.setItem("caixa-preta.instagramHeight", `${Math.round(nextHeight)}`);
+        return;
+      }
+
+      const nextWidth = clamp(
+        chatPaneRect.right - pointerEvent.clientX,
+        280,
+        Math.max(280, chatPaneRect.width - 280)
+      );
+
+      setInstagramWidth(nextWidth);
+      window.localStorage.setItem("caixa-preta.instagramWidth", `${Math.round(nextWidth)}`);
+    }
+
+    function onPointerUp() {
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+    }
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp, { once: true });
+  }
+
+  function resizeInstagramByKeyboard(event) {
+    const horizontalKeys = ["ArrowLeft", "ArrowRight"];
+    const verticalKeys = ["ArrowUp", "ArrowDown"];
+    const stacked = window.matchMedia("(max-width: 1100px)").matches;
+    const acceptedKeys = stacked ? verticalKeys : horizontalKeys;
+
+    if (!acceptedKeys.includes(event.key)) {
+      return;
+    }
+
+    const chatPaneRect = chatPaneRef.current?.getBoundingClientRect();
+    if (!chatPaneRect) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (stacked) {
+      const direction = event.key === "ArrowUp" ? 1 : -1;
+      const nextHeight = clamp(
+        instagramHeight + (direction * 24),
+        280,
+        Math.max(280, chatPaneRect.height - 220)
+      );
+
+      setInstagramHeight(nextHeight);
+      window.localStorage.setItem("caixa-preta.instagramHeight", `${Math.round(nextHeight)}`);
+      return;
+    }
+
+    const direction = event.key === "ArrowLeft" ? 1 : -1;
+    const nextWidth = clamp(
+      instagramWidth + (direction * 24),
+      280,
+      Math.max(280, chatPaneRect.width - 280)
+    );
+
+    setInstagramWidth(nextWidth);
+    window.localStorage.setItem("caixa-preta.instagramWidth", `${Math.round(nextWidth)}`);
+  }
+
   const activeTypingAssistant = [...messages].reverse().find((message) => (
-    message.role === "assistant" && typedReplies[message.id] !== message.content
+    message.role === "assistant" &&
+    typedReplies[message.id] !== message.content &&
+    !stoppedTypingIdsRef.current.has(message.id)
   ));
   const machineBusy = pending || performancePending || Boolean(activeTypingAssistant);
   const footer = (
@@ -317,9 +532,26 @@ export default function Chat() {
       event.source !== "agent" || new Date(event.createdAt).getTime() < activeTypingStartedAt
     ))
     : performanceEvents;
+  const visibleInstagramPanel = instagram?.embedded && instagram.status && instagram.status !== "DISCONNECTED" && !instagramPanelClosed;
+  const instagramPanelKey = [
+    instagram?.targetProfile || instagram?.account || "instagram",
+    instagram?.status || "DISCONNECTED",
+    instagram?.currentUrl || "",
+    instagram?.lastButtonState || "",
+    instagram?.message || ""
+  ].join("|");
+  const layoutStyle = {
+    "--operator-width": `${operatorWidth}px`,
+    "--instagram-width": `${instagramWidth}px`,
+    "--instagram-height": `${instagramHeight}px`
+  };
 
   return (
-    <div className={`${styles.workspace} ${operatorOpen ? styles.workspaceWithOperator : ""}`}>
+    <div
+      className={`${styles.workspace} ${operatorOpen ? styles.workspaceWithOperator : ""}`}
+      ref={workspaceRef}
+      style={layoutStyle}
+    >
       <PerformanceLayer
         activities={performanceActivities}
         events={visiblePerformanceEvents}
@@ -401,6 +633,10 @@ export default function Chat() {
                   <dd>Confirma ou corta imediatamente uma solicitacao de projecao de celular.</dd>
                 </div>
                 <div>
+                  <dt>/instagram follow cappavictor</dt>
+                  <dd>Mostra o Instagram real embutido no chat e aciona o follow permitido.</dd>
+                </div>
+                <div>
                   <dt>/mala</dt>
                   <dd>Entra no modo MALAS e gera uma transicao publica. /malas tambem funciona.</dd>
                 </div>
@@ -417,7 +653,11 @@ export default function Chat() {
         </div>
       ) : null}
 
-      <section className={styles.chatPane} aria-label="Chat publico">
+      <section
+        className={`${styles.chatPane} ${visibleInstagramPanel ? styles.chatPaneWithInstagram : ""}`}
+        aria-label="Chat publico"
+        ref={chatPaneRef}
+      >
         <Terminal title="CAIXA PRETA" footer={footer} className={styles.embeddedTerminal}>
           <div className={styles.messages}>
             {messages.length === 0 && introStep === "cursor" ? (
@@ -460,7 +700,37 @@ export default function Chat() {
             <div ref={scrollRef} />
           </div>
         </Terminal>
+        {visibleInstagramPanel ? (
+          <>
+            <div
+              aria-label="Redimensionar chat e Instagram"
+              aria-orientation="vertical"
+              className={styles.instagramResizeHandle}
+              onKeyDown={resizeInstagramByKeyboard}
+              onPointerDown={beginInstagramResize}
+              role="separator"
+              tabIndex={0}
+            />
+            <InstagramBrowserPanel
+              key={instagramPanelKey}
+              instagram={instagram}
+              onClose={() => setInstagramPanelClosed(true)}
+            />
+          </>
+        ) : null}
       </section>
+
+      {operatorMounted && operatorOpen ? (
+        <div
+          aria-label="Redimensionar chat e operator"
+          aria-orientation="vertical"
+          className={styles.operatorResizeHandle}
+          onKeyDown={resizeOperatorByKeyboard}
+          onPointerDown={beginOperatorResize}
+          role="separator"
+          tabIndex={0}
+        />
+      ) : null}
 
       {operatorMounted ? (
         <aside

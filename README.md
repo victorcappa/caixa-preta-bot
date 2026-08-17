@@ -48,6 +48,10 @@ O operator tambem pode ser aberto dentro da tela principal pelo botao `OP`,
 abaixo do botao `?`. Ele alterna entre chat em tela cheia e chat com terminal
 operador ao lado; em telas menores, aparece como gaveta animada.
 
+Quando o Instagram embutido e/ou o operator estiverem visiveis, arraste as
+divisorias entre `chat | Instagram | operator` para ajustar o palco. O tamanho
+fica salvo no navegador para o proximo reload.
+
 ## Comandos do operator
 
 Registrar uma memoria da apresentacao:
@@ -87,6 +91,69 @@ Confirmar ou cortar imediatamente essa camada:
 `/event phone Victor instagram_search high` tambem cria um
 `PHONE_PROJECTION_REQUEST`. Isso nunca projeta conteudo privado sozinho; apenas
 marca que ha uma confirmacao humana pendente.
+
+Abrir o Instagram real em Chromium visivel e seguir o perfil autorizado:
+
+```text
+/instagram follow cappavictor
+```
+
+Na primeira execucao, o Chromium abre `instagram.com` por tras da interface e o
+chat mostra um painel lateral com o espelho embutido do Instagram real, mantendo
+a fala da Caixa Preta visivel ao lado. Se o Instagram pedir login, clique no
+espelho, digite ali e faca login manualmente como `@caixapretabot`. O botao `X`
+fecha apenas o painel embutido; a sessao Playwright continua viva. A sessao fica
+salva em `.runtime/instagram-profile/` para as proximas execucoes.
+Depois de `/instagram`, o operador pode escrever em linguagem natural; o modelo
+interpreta a intencao e escolhe uma acao pre-definida (`follow`, `open_profile`,
+`open_latest_media`, `open_nth_media`, `comment_latest`, `comment_nth_media`,
+`follow_and_comment_latest`, `analyze_current`,
+`analyze_profile`, `analyze_recent_posts`, `analyze_latest_media` ou
+`watch_reels`, `send_direct_latest`, `send_direct_thread`, `like_latest_media`
+`like_nth_media` ou `open_directs`). Exemplos:
+`/instagram seguir perfil do marcusgarcia e comentar na ultima foto algo engracado`.
+`/instagram assistir reels` abre Reels e passa automaticamente entre videos,
+esperando de 2 a 10 segundos conforme a duracao visivel do video.
+`/instagram abrir directs`.
+`/instagram entrar na ultima mensagem e escrever uma mensagem para o grupo: ola, mundo`.
+`/instagram escrever no chat group com livinha, janaina e marcus: oi grupo`.
+`/instagram olhar ultimo post do perfil cappavictor`.
+`/instagram comentar o terceiro post do perfil cappavictor: biscoiteiro`.
+`/instagram curtir o terceiro post do perfil cappavictor`.
+`/instagram analisar a tela atual` ou
+`/instagram analisar os ultimos tres posts do perfil marcusgarcia` ou
+`/instagram analisar ultima foto do perfil marcusgarcia`. A analise visual
+captura o Instagram real e publica o resultado como fala no chat, fora do iframe,
+sem clicar, seguir ou comentar.
+O card `INSTAGRAM` no operator tem botao `SOUND ON/OFF` para ligar/desligar o
+audio dos videos no browser controlado. Use `/stopall` ou o botao `STOP ALL`
+para interromper rotinas continuas, limpar eventos/atividades e parar autoplay.
+`INSTAGRAM_ALLOWED_PROFILES` e uma whitelist opcional: se ficar vazia, qualquer
+username valido pode ser alvo; se tiver perfis separados por virgula, apenas eles
+sao aceitos. O painel operator mostra `INSTAGRAM >` com progresso, URL, estado do
+botao e necessidade de intervencao manual quando houver checkpoint, captcha, 2FA
+ou tela desconhecida.
+
+Variaveis relacionadas:
+
+```bash
+INSTAGRAM_ENABLED=true
+INSTAGRAM_EMBEDDED=true
+INSTAGRAM_DEBUG=false
+INSTAGRAM_THEATRICAL_DELAY=700
+INSTAGRAM_VIEWPORT_WIDTH=430
+INSTAGRAM_VIEWPORT_HEIGHT=760
+INSTAGRAM_STREAM_FPS=18
+INSTAGRAM_STREAM_QUALITY=62
+INSTAGRAM_ALLOWED_PROFILES=
+```
+
+Com `INSTAGRAM_EMBEDDED=false`, o Playwright volta a abrir uma janela Chromium
+separada. O padrao cenico agora e embutido no chat.
+
+Com `INSTAGRAM_DEBUG=true`, erros salvam screenshot e metadados seguros em
+`.runtime/instagram-debug/`. O projeto nunca salva usuario, senha, cookies,
+tokens ou headers em logs.
 
 Forcar ou controlar um jogo do HOST:
 

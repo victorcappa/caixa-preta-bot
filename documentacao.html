@@ -382,6 +382,9 @@ npm run dev</code></pre>
                 Alem de abrir <code>/operator</code> em outra aba, voce pode pressionar o botao
                 <code>OP</code> abaixo do guia <code>?</code>. Em telas largas, o terminal operador
                 aparece ao lado do chatbot; em telas menores, ele entra como gaveta animada.
+                Quando o Instagram embutido estiver visivel, arraste as divisorias entre chat,
+                Instagram e operator para ajustar a composicao de palco. O tamanho fica salvo no
+                navegador.
               </p>
 
               <div class="panels">
@@ -451,6 +454,18 @@ npm run dev</code></pre>
                   <pre><code>/phone request Victor instagram_search high
 /phone approve
 /phone hide</code></pre>
+                </article>
+
+                <article class="command">
+                  <strong>/instagram follow cappavictor</strong>
+                  <p>
+                    Abre o Instagram real em Chromium controlado pelo Playwright e mostra um painel
+                    lateral embutido, mantendo o chat visivel ao lado. Na primeira execucao, se
+                    necessario, clique no espelho e faca login manualmente como
+                    <code>@caixapretabot</code>. O botao <code>X</code> fecha apenas o painel; a
+                    sessao fica em <code>.runtime/instagram-profile/</code>.
+                  </p>
+                  <pre><code>/instagram follow cappavictor</code></pre>
                 </article>
 
                 <article class="command">
