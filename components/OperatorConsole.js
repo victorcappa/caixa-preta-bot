@@ -539,6 +539,7 @@ function VerdadeOuBoloControls({ game, pending, sendOperatorCommand }) {
           {"\n"}ROUND: {round.number || 1}/{round.total || data.totalRounds || 4}
           {"\n"}VIDEO: {video.file || "AUSENTE"}
           {"\n"}ANSWER: {data.selectedAnswer || "null"}
+          {"\n"}REVEAL ARMED: {data.revealArmed ? "YES" : "NO"}
           {"\n"}CORRECT: {operator.correctAnswer || "CONFIGURE"}
           {"\n"}SCORE: {data.score || 0}
         </p>
@@ -578,7 +579,7 @@ function VerdadeOuBoloControls({ game, pending, sendOperatorCommand }) {
           REVELAR RESPOSTA
         </button>
         <button
-          disabled={pending || !["INTRO", "REVEAL", "ROUND_RESULT"].includes(data.state)}
+          disabled={pending || data.revealArmed || !["INTRO", "REVEAL", "ROUND_RESULT"].includes(data.state)}
           onClick={() => sendOperatorCommand("/game next", "GAME CONTROL ERROR")}
           type="button"
         >

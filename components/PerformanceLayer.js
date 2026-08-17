@@ -354,6 +354,7 @@ function VerdadeOuBoloShow({ game }) {
   const selectedAnswer = data.selectedAnswer;
   const revealedAnswer = data.revealedAnswer;
   const result = data.result;
+  const revealArmed = Boolean(data.revealArmed);
 
   useEffect(() => {
     const videoElement = videoRef.current;
@@ -412,6 +413,29 @@ function VerdadeOuBoloShow({ game }) {
       }
     }
   }, [data.videoCommand, video.src]);
+
+  useEffect(() => {
+    const videoElement = videoRef.current;
+
+    if (!videoElement || !revealArmed) {
+      return undefined;
+    }
+
+    async function revealAfterVideoEnds() {
+      try {
+        await fetch("/api/operator", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ command: "/game video-ended" })
+        });
+      } catch {
+        // The operator can still reveal/recover manually if this network hop fails.
+      }
+    }
+
+    videoElement.addEventListener("ended", revealAfterVideoEnds, { once: true });
+    return () => videoElement.removeEventListener("ended", revealAfterVideoEnds);
+  }, [revealArmed, video.src]);
 
   useEffect(() => {
     const audioCommand = data.audioCommand;
