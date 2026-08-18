@@ -43,6 +43,8 @@ Depois abra:
 
 - `http://localhost:3000`
 - `http://localhost:3000/operator`
+- `http://localhost:3000/queda-aviao`, para a projecao textual isolada de Queda Aviao
+- `http://localhost:3000/queda-aviao-controller`, para controlar essa projecao em tempo real
 
 O operator tambem pode ser aberto dentro da tela principal pelo botao `OP`,
 abaixo do botao `?`. Ele alterna entre chat em tela cheia e chat com terminal
@@ -51,6 +53,15 @@ operador ao lado; em telas menores, aparece como gaveta animada.
 Quando o Instagram embutido e/ou o operator estiverem visiveis, arraste as
 divisorias entre `chat | Instagram | operator` para ajustar o palco. O tamanho
 fica salvo no navegador para o proximo reload.
+
+## Queda Aviao
+
+Abra `http://localhost:3000/queda-aviao` na tela publica e
+`http://localhost:3000/queda-aviao-controller` na maquina/aba de operacao. O
+controller altera a projecao via estado do servidor e SSE: tocar/pausar,
+avancar/voltar, ir para segmento, subdivisao do texto, fade, ritmo geral, tempo
+das rubricas, loop e texto base. A rota antiga `/queda-aviao/debug` continua
+apontando para o mesmo controller.
 
 ## Comandos do operator
 
