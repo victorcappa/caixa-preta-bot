@@ -264,6 +264,7 @@ export async function POST(request) {
 
       showState.clearPerformance();
       showState.controlGlitch("stop", {}, { source: "operator" });
+      showState.controlDisplayBlackout("all", false, { source: "operator" });
       showState.stopActivities("operator_stopped");
 
       if (showState.snapshot().game?.active) {
@@ -459,6 +460,23 @@ export async function POST(request) {
 
       const result = showState.controlGlitch("trigger", { preset: "normal" }, { source: "operator" });
       return Response.json({ message: `GLITCH\nSEQUENCE ${result.state.sequence}` });
+    }
+
+    if (name === "/blackout") {
+      const [rawTarget = "all", rawAction = "on"] = content.split(/\s+/).filter(Boolean);
+      const normalizedAction = rawAction.toLowerCase();
+      const enabled = normalizedAction === "toggle"
+        ? "toggle"
+        : !["off", "stop", "clear", "apagar", "desligar", "false", "0"].includes(normalizedAction);
+      const result = showState.controlDisplayBlackout(rawTarget, enabled, { source: "operator" });
+
+      if (!result.applied) {
+        return Response.json({ error: result.error || "BLACKOUT ERROR" }, { status: 400 });
+      }
+
+      return Response.json({
+        message: `BLACKOUT ${result.target.toUpperCase()} ${result.enabled ? "ON" : "OFF"}`
+      });
     }
 
     if (name === "/event") {

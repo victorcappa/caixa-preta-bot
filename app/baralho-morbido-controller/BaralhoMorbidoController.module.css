@@ -46,6 +46,13 @@
   letter-spacing: 0;
 }
 
+.headerActions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+}
+
 .connected,
 .disconnected {
   padding: 8px 10px;
@@ -115,6 +122,7 @@
 }
 
 .primaryButton:disabled,
+.restartButton:disabled,
 .resetButton:disabled {
   cursor: not-allowed;
   filter: grayscale(1);
@@ -205,6 +213,18 @@
   text-transform: uppercase;
 }
 
+.restartButton {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid #ff477d;
+  color: #ff8faf;
+  background: rgba(42, 0, 14, 0.68);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 @media (max-width: 760px) {
   .screen {
     padding: 14px;
@@ -222,6 +242,12 @@
   .connected,
   .disconnected {
     display: inline-block;
+    margin-top: 12px;
+  }
+
+  .headerActions {
+    align-items: flex-start;
+    flex-direction: column;
     margin-top: 12px;
   }
 

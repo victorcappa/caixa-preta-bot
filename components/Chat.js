@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import DisplayBlackout from "./DisplayBlackout";
 import InstagramBrowserPanel from "./InstagramBrowserPanel";
 import GlitchOverlay from "./GlitchOverlay";
 import OperatorConsole from "./OperatorConsole";
@@ -45,6 +46,7 @@ export default function Chat() {
   const [game, setGame] = useState(null);
   const [suitcase, setSuitcase] = useState(null);
   const [glitch, setGlitch] = useState(null);
+  const [displayBlackout, setDisplayBlackout] = useState(null);
   const [introStep, setIntroStep] = useState("cursor");
   const [manualOpen, setManualOpen] = useState(false);
   const [operatorMounted, setOperatorMounted] = useState(false);
@@ -90,6 +92,7 @@ export default function Chat() {
         setGame(data.game || null);
         setSuitcase(data.suitcase || null);
         setGlitch(data.glitch || null);
+        setDisplayBlackout(data.displayBlackout || null);
 
         if (!initializedMessagesRef.current) {
           hydrateInitialMessages(data.conversation || []);
@@ -100,11 +103,14 @@ export default function Chat() {
       })
       .catch(() => setStatus("DISCONNECTED"));
 
-    const events = new EventSource("/api/events");
+    const events = new EventSource("/api/events?client=chat");
     events.onopen = () => setStatus("CONNECTED");
     events.onerror = () => setStatus("DISCONNECTED");
     events.onmessage = (event) => {
       const payload = JSON.parse(event.data);
+      if (payload.event?.type === "baralho-morbido" || payload.event?.type === "baralho-morbido-display") {
+        return;
+      }
 
       if (!initializedMessagesRef.current && payload.event?.type === "snapshot") {
         setPerformanceEvents(payload.state.performance?.events || []);
@@ -114,6 +120,7 @@ export default function Chat() {
         setGame(payload.state.game || null);
         setSuitcase(payload.state.suitcase || null);
         setGlitch(payload.state.glitch || null);
+        setDisplayBlackout(payload.state.displayBlackout || null);
         hydrateInitialMessages(payload.state.conversation || []);
         return;
       }
@@ -126,6 +133,7 @@ export default function Chat() {
       setGame(payload.state.game || null);
       setSuitcase(payload.state.suitcase || null);
       setGlitch(payload.state.glitch || null);
+      setDisplayBlackout(payload.state.displayBlackout || null);
     };
 
     return () => events.close();
@@ -664,6 +672,7 @@ export default function Chat() {
         aria-label="Chat publico"
         ref={chatPaneRef}
       >
+        <DisplayBlackout blackout={displayBlackout} target="chatbot" />
         <PerformanceLayer
           activities={performanceActivities}
           events={visiblePerformanceEvents}

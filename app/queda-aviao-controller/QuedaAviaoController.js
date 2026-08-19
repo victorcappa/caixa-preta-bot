@@ -14,10 +14,10 @@ const INITIAL_STATE = {
   fadeMs: DEFAULT_FADE_MS,
   pace: 1,
   stageMultiplier: 1,
-  autoPlay: true,
+  autoPlay: false,
   loop: true,
   currentIndex: 0,
-  phase: "entering",
+  phase: "visible",
   segments: [],
   currentSegment: null,
   displayConnections: 0

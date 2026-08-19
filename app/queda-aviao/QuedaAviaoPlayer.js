@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import DisplayBlackout from "@/components/DisplayBlackout";
 import { buildSegments, DEFAULT_FADE_MS, scriptLines } from "./script";
 import styles from "./QuedaAviaoPlayer.module.css";
 
 export default function QuedaAviaoPlayer() {
   const fallbackSegments = useMemo(() => buildSegments(scriptLines), []);
   const [playback, setPlayback] = useState(null);
+  const [displayBlackout, setDisplayBlackout] = useState(null);
 
   useEffect(() => {
     fetch("/api/queda-aviao", {
@@ -24,6 +26,7 @@ export default function QuedaAviaoPlayer() {
     events.onmessage = (event) => {
       const payload = JSON.parse(event.data);
       setPlayback(payload.state?.quedaAviao || null);
+      setDisplayBlackout(payload.state?.displayBlackout || null);
     };
 
     return () => {
@@ -50,6 +53,7 @@ export default function QuedaAviaoPlayer() {
 
   return (
     <main className={styles.screen}>
+      <DisplayBlackout blackout={displayBlackout} target="legenda" />
       <p
         key={`${currentLine.id}-${playback?.playbackSequence || 0}`}
         className={[
