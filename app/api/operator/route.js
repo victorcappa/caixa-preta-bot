@@ -263,6 +263,7 @@ export async function POST(request) {
       }
 
       showState.clearPerformance();
+      showState.controlGlitch("stop", {}, { source: "operator" });
       showState.stopActivities("operator_stopped");
 
       if (showState.snapshot().game?.active) {
@@ -425,12 +426,52 @@ export async function POST(request) {
       }
     }
 
+    if (name === "/glitch") {
+      const [action = "trigger", ...rest] = content.split(/\s+/).filter(Boolean);
+      const normalizedAction = action.toLowerCase();
+
+      if (normalizedAction === "stop") {
+        showState.controlGlitch("stop", {}, { source: "operator" });
+        return Response.json({ message: "GLITCH STOPPED" });
+      }
+
+      if (normalizedAction === "video-stop" || normalizedAction === "stop-video" || normalizedAction === "bot") {
+        showState.controlGlitch("video-stop", {}, { source: "operator" });
+        return Response.json({ message: "GLITCH VIDEO STOPPED" });
+      }
+
+      if (normalizedAction === "continuous" || normalizedAction === "continuo" || normalizedAction === "start") {
+        const result = showState.controlGlitch("continuous", { preset: "continuous" }, { source: "operator" });
+        return Response.json({ message: `GLITCH CONTINUOUS\nSEQUENCE ${result.state.sequence}` });
+      }
+
+      if (normalizedAction === "strong" || normalizedAction === "forte") {
+        const result = showState.controlGlitch("trigger", { preset: "strong" }, { source: "operator" });
+        return Response.json({ message: `GLITCH STRONG\nSEQUENCE ${result.state.sequence}` });
+      }
+
+      if (normalizedAction === "video") {
+        const file = rest[0] || showState.snapshot().glitch?.video?.file || "painel-aeroporto.mp4";
+        const loop = rest.includes("loop");
+        const result = showState.controlGlitch("video", { file, loop, preset: "video" }, { source: "operator" });
+        return Response.json({ message: `GLITCH VIDEO\n${result.state.video.file || "NO VIDEO"}` });
+      }
+
+      const result = showState.controlGlitch("trigger", { preset: "normal" }, { source: "operator" });
+      return Response.json({ message: `GLITCH\nSEQUENCE ${result.state.sequence}` });
+    }
+
     if (name === "/event") {
       const [kind, ...rest] = content.split(/\s+/);
       const event = eventFromCommand(kind, rest.join(" "));
 
       if (!event) {
         return Response.json({ error: "EVENT UNKNOWN" }, { status: 400 });
+      }
+
+      if (event.type === "GLITCH") {
+        const result = showState.controlGlitch("trigger", { preset: "normal" }, { source: "operator" });
+        return Response.json({ message: `GLITCH\nSEQUENCE ${result.state.sequence}` });
       }
 
       const queued = showState.queuePerformanceEvents([event], "operator");

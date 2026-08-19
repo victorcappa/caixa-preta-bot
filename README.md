@@ -39,12 +39,17 @@ e `gpt-5-nano` sem reiniciar o servidor.
 npm run dev
 ```
 
+O servidor e obrigado a usar `http://localhost:3000`. Se a porta 3000 ja
+estiver ocupada, o comando falha e mostra como localizar o processo, em vez de
+subir automaticamente em outra porta.
+
 Depois abra:
 
 - `http://localhost:3000`
 - `http://localhost:3000/operator`
 - `http://localhost:3000/queda-aviao`, para a projecao textual isolada de Queda Aviao
 - `http://localhost:3000/queda-aviao-controller`, para controlar essa projecao em tempo real
+- `http://localhost:3000/glitch-controller`, para testar e ajustar o glitch visual em tempo real
 
 O operator tambem pode ser aberto dentro da tela principal pelo botao `OP`,
 abaixo do botao `?`. Ele alterna entre chat em tela cheia e chat com terminal
@@ -102,6 +107,26 @@ Confirmar ou cortar imediatamente essa camada:
 `/event phone Victor instagram_search high` tambem cria um
 `PHONE_PROJECTION_REQUEST`. Isso nunca projeta conteudo privado sozinho; apenas
 marca que ha uma confirmacao humana pendente.
+
+Disparar glitches visuais na projecao:
+
+```text
+/glitch
+/glitch forte
+/glitch continuous
+/glitch stop
+/glitch video painel-aeroporto.mp4
+/glitch video painel-aeroporto.mp4 loop
+/glitch video-stop
+```
+
+O operator tambem tem uma area `GLITCH` com botoes rapidos para `GLITCH`,
+`GLITCH FORTE`, modo continuo, `GLITCH + VIDEO` e volta ao bot. Videos finais
+ficam em `assets/videos/glitch/` e sao servidos por `/api/game-assets`, com
+`object-fit: cover`, sem controles HTML e com opcao de loop. Use
+`/glitch-controller` para editar intensidade, RGB split, tearing, blocos,
+flicker, scanlines, ruido, jitter, flashes, duracao, intervalo e perda de
+sincronia antes de enviar para a projecao.
 
 Abrir o Instagram real em Chromium visivel e seguir o perfil autorizado:
 

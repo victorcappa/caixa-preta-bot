@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import InstagramBrowserPanel from "./InstagramBrowserPanel";
+import GlitchOverlay from "./GlitchOverlay";
 import OperatorConsole from "./OperatorConsole";
 import PerformanceLayer from "./PerformanceLayer";
 import Terminal from "./Terminal";
@@ -43,6 +44,7 @@ export default function Chat() {
   const [instagram, setInstagram] = useState({ status: "DISCONNECTED", embedded: true });
   const [game, setGame] = useState(null);
   const [suitcase, setSuitcase] = useState(null);
+  const [glitch, setGlitch] = useState(null);
   const [introStep, setIntroStep] = useState("cursor");
   const [manualOpen, setManualOpen] = useState(false);
   const [operatorMounted, setOperatorMounted] = useState(false);
@@ -87,6 +89,7 @@ export default function Chat() {
         setInstagram(data.instagram || { status: "DISCONNECTED", embedded: true });
         setGame(data.game || null);
         setSuitcase(data.suitcase || null);
+        setGlitch(data.glitch || null);
 
         if (!initializedMessagesRef.current) {
           hydrateInitialMessages(data.conversation || []);
@@ -110,6 +113,7 @@ export default function Chat() {
         setInstagram(payload.state.instagram || { status: "DISCONNECTED", embedded: true });
         setGame(payload.state.game || null);
         setSuitcase(payload.state.suitcase || null);
+        setGlitch(payload.state.glitch || null);
         hydrateInitialMessages(payload.state.conversation || []);
         return;
       }
@@ -121,6 +125,7 @@ export default function Chat() {
       setInstagram(payload.state.instagram || { status: "DISCONNECTED", embedded: true });
       setGame(payload.state.game || null);
       setSuitcase(payload.state.suitcase || null);
+      setGlitch(payload.state.glitch || null);
     };
 
     return () => events.close();
@@ -556,11 +561,12 @@ export default function Chat() {
   };
 
   return (
-    <div
-      className={`${styles.workspace} ${operatorOpen ? styles.workspaceWithOperator : ""}`}
-      ref={workspaceRef}
-      style={layoutStyle}
-    >
+    <GlitchOverlay glitch={glitch}>
+      <div
+        className={`${styles.workspace} ${operatorOpen ? styles.workspaceWithOperator : ""}`}
+        ref={workspaceRef}
+        style={layoutStyle}
+      >
       <button
         aria-label="Abrir manual de comandos"
         className={styles.manualButton}
@@ -755,6 +761,7 @@ export default function Chat() {
           <OperatorConsole embedded terminalClassName={styles.embeddedTerminal} />
         </aside>
       ) : null}
-    </div>
+      </div>
+    </GlitchOverlay>
   );
 }

@@ -23,6 +23,9 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   });
   const [status, setStatus] = useState("CONNECTING");
   const [pending, setPending] = useState(false);
+  const [glitchVideos, setGlitchVideos] = useState([]);
+  const [selectedGlitchVideo, setSelectedGlitchVideo] = useState("painel-aeroporto.mp4");
+  const [glitchVideoLoop, setGlitchVideoLoop] = useState(false);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -30,6 +33,16 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       .then((response) => response.json())
       .then((data) => setState(data))
       .catch(() => setStatus("DISCONNECTED"));
+
+    fetch("/api/glitch")
+      .then((response) => response.json())
+      .then((data) => {
+        setGlitchVideos(data.videos || []);
+        if (data.glitch?.video?.file || data.videos?.[0]?.file) {
+          setSelectedGlitchVideo(data.glitch?.video?.file || data.videos[0].file);
+        }
+      })
+      .catch(() => {});
 
     const events = new EventSource("/api/events");
     events.onopen = () => setStatus("CONNECTED");
@@ -117,6 +130,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       "/intensity",
       "/model",
       "/instagram",
+      "/glitch",
       "/phone",
       "/clear",
       "/clear-performance",
@@ -229,6 +243,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   const suitcase = state.suitcase || { active: false, phase: "IDLE" };
   const instagram = state.instagram || { status: "DISCONNECTED", logs: [] };
   const instagramLogs = (instagram.logs || []).slice(-5).reverse();
+  const glitch = state.glitch || { active: false, mode: "idle", video: {} };
   const suitcaseGame = suitcase.currentGame || null;
   const participantCounts = state.participants?.counts || { team: 0, audience: 0, session: 0, available: 0 };
   const participantHistory = Object.values(state.participants?.history || {})
@@ -332,6 +347,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             <span>GAME: {game.active ? `${game.id} / ${game.startSource}`.toUpperCase() : `COOLDOWN ${game.cooldownTurnsRemaining || 0}`}</span>
             <span>SUITCASE: {suitcase.active ? `${suitcase.phase} / ${suitcase.activeExperience || "none"}` : suitcase.phase}</span>
             <span>INSTAGRAM: {instagram.status || "DISCONNECTED"}</span>
+            <span>GLITCH: {glitch.active ? `${glitch.mode || "active"} #${glitch.sequence || 0}`.toUpperCase() : "OFF"}</span>
             <span>PARTICIPANTS: T{participantCounts.team} A{participantCounts.audience} S{participantCounts.session}</span>
             <span>ACTIVITIES: {activities.length}</span>
             <span>EVENTS: {state.performance?.events?.length || 0}</span>
@@ -418,6 +434,56 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
               <p>{instagramLogs.map((entry) => `${new Date(entry.timestamp).toLocaleTimeString("pt-BR")} ${entry.status}: ${entry.message}`).join("\n")}</p>
             </article>
           ) : null}
+          <article className={styles.memory}>
+            <strong>GLITCH</strong>
+            <p>
+              MODE: {(glitch.mode || "idle").toUpperCase()}
+              {"\n"}SEQUENCE: {glitch.sequence || 0}
+              {"\n"}VIDEO: {glitch.video?.file || selectedGlitchVideo || "-"}
+            </p>
+            <label className={styles.glitchSelectField}>
+              VIDEO
+              <select
+                disabled={pending || glitchVideos.length === 0}
+                onChange={(event) => setSelectedGlitchVideo(event.target.value)}
+                value={selectedGlitchVideo}
+              >
+                {glitchVideos.length === 0 ? <option value="">SEM VIDEOS</option> : null}
+                {glitchVideos.map((video) => (
+                  <option key={video.file} value={video.file}>{video.file}</option>
+                ))}
+              </select>
+            </label>
+            <label className={styles.glitchLoopField}>
+              <input
+                checked={glitchVideoLoop}
+                onChange={(event) => setGlitchVideoLoop(event.target.checked)}
+                type="checkbox"
+              />
+              LOOP
+            </label>
+          </article>
+          <div className={styles.glitchControls}>
+            <button disabled={pending} onClick={() => sendOperatorCommand("/glitch", "GLITCH ERROR")} type="button">GLITCH</button>
+            <button disabled={pending} onClick={() => sendOperatorCommand("/glitch forte", "GLITCH ERROR")} type="button">GLITCH FORTE</button>
+            <button disabled={pending} onClick={() => sendOperatorCommand("/glitch continuous", "GLITCH ERROR")} type="button">START GLITCH CONTINUO</button>
+            <button disabled={pending} onClick={() => sendOperatorCommand("/glitch stop", "GLITCH ERROR")} type="button">STOP GLITCH</button>
+            <button
+              disabled={pending || !selectedGlitchVideo}
+              onClick={() => sendOperatorCommand(`/glitch video ${selectedGlitchVideo}${glitchVideoLoop ? " loop" : ""}`, "GLITCH VIDEO ERROR")}
+              type="button"
+            >
+              GLITCH + VIDEO
+            </button>
+            <button
+              className={styles.panicButton}
+              disabled={pending}
+              onClick={() => sendOperatorCommand("/glitch video-stop", "GLITCH VIDEO ERROR")}
+              type="button"
+            >
+              STOP VIDEO / VOLTAR AO BOT
+            </button>
+          </div>
           <article className={styles.memory}>
             <strong>SUITCASE DEBUG</strong>
             <p>

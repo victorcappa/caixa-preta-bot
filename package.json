@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/require-port-3000.js && next dev --port 3000",
     "build": "next build",
-    "start": "next start",
+    "start": "node scripts/require-port-3000.js && next start --port 3000",
     "lint": "eslint .",
     "test:host-mode": "node scripts/host-mode-simulation.js",
     "test:games": "node --no-warnings scripts/game-director-test.js",
