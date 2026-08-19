@@ -65,6 +65,7 @@ function projectionResponse(result, message) {
   return Response.json({
     message,
     state: result.state,
+    projectionWindowId: result.projectionWindowId || null,
     command: result.command || null
   });
 }

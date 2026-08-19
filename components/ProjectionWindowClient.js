@@ -28,7 +28,7 @@ function resolveProjectionWindowId() {
   return window.sessionStorage.getItem(STORAGE_KEY)?.trim() || "";
 }
 
-function postProjectionAction(action, projectionWindowId, path, keepalive = false) {
+async function postProjectionAction(action, projectionWindowId, path, keepalive = false) {
   return fetch("/api/projection", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -42,15 +42,25 @@ export default function ProjectionWindowClient() {
   const navigatingRef = useRef(false);
 
   useEffect(() => {
-    const projectionWindowId = resolveProjectionWindowId();
+    let projectionWindowId = resolveProjectionWindowId();
 
     if (!projectionWindowId) {
-      return undefined;
+      projectionWindowId = "";
     }
 
     let closed = false;
 
-    postProjectionAction("register", projectionWindowId, currentProjectionPath()).catch(() => {});
+    postProjectionAction("register", projectionWindowId, currentProjectionPath())
+      .then((response) => response.json())
+      .then((data) => {
+        const registeredId = data.projectionWindowId || data.state?.activeProjectionWindowId;
+
+        if (registeredId) {
+          projectionWindowId = registeredId;
+          window.sessionStorage.setItem(STORAGE_KEY, registeredId);
+        }
+      })
+      .catch(() => {});
 
     const heartbeat = window.setInterval(() => {
       if (closed) {
