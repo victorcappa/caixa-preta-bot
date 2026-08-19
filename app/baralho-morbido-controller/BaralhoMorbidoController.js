@@ -46,20 +46,42 @@ export default function BaralhoMorbidoController() {
   const [log, setLog] = useState("SYSTEM READY");
 
   useEffect(() => {
-    fetch("/api/baralho-morbido")
-      .then((response) => response.json())
-      .then((data) => setDeck(data || INITIAL_STATE))
-      .catch(() => setConnection("DISCONNECTED"));
+    let active = true;
+    let refreshing = false;
 
-    const events = new EventSource("/api/events?client=baralho-morbido-controller");
-    events.onopen = () => setConnection("CONNECTED");
-    events.onerror = () => setConnection("DISCONNECTED");
-    events.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
-      setDeck(payload.state?.baralhoMorbido || INITIAL_STATE);
+    async function refreshDeck() {
+      if (refreshing) {
+        return;
+      }
+
+      refreshing = true;
+
+      try {
+        const response = await fetch("/api/baralho-morbido", { cache: "no-store" });
+        const data = await response.json();
+
+        if (!active) {
+          return;
+        }
+
+        setDeck(data || INITIAL_STATE);
+        setConnection("CONNECTED");
+      } catch {
+        if (active) {
+          setConnection("DISCONNECTED");
+        }
+      } finally {
+        refreshing = false;
+      }
+    }
+
+    refreshDeck();
+    const timer = window.setInterval(refreshDeck, 500);
+
+    return () => {
+      active = false;
+      window.clearInterval(timer);
     };
-
-    return () => events.close();
   }, []);
 
   const statusLabel = STATUS_LABELS[deck.phase] || deck.phase || "AGUARDANDO";
@@ -94,6 +116,7 @@ export default function BaralhoMorbidoController() {
         return;
       }
 
+      setDeck(data.state || INITIAL_STATE);
       setLog(data.message || "CARTA SORTEADA");
     } catch {
       setLog("SERVER CONNECTION FAILED");
@@ -124,6 +147,7 @@ export default function BaralhoMorbidoController() {
         return;
       }
 
+      setDeck(data.state || INITIAL_STATE);
       setLog(data.message || "BARALHO RESETADO");
     } catch {
       setLog("SERVER CONNECTION FAILED");
@@ -140,7 +164,12 @@ export default function BaralhoMorbidoController() {
             <span>CONTROLLER PRIVADO</span>
             <h1>BARALHO MÓRBIDO — CONTROLLER</h1>
           </div>
-          <strong className={connection === "CONNECTED" ? styles.connected : styles.disconnected}>{connection}</strong>
+          <div className={styles.headerActions}>
+            <button className={styles.restartButton} disabled={pending} onClick={resetDeck} type="button">
+              REINICIAR BARALHO
+            </button>
+            <strong className={connection === "CONNECTED" ? styles.connected : styles.disconnected}>{connection}</strong>
+          </div>
         </header>
 
         <section className={styles.statusGrid} aria-label="Estado atual">

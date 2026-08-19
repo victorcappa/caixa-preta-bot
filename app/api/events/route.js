@@ -7,7 +7,47 @@ import { PROMPT_VERSION } from "@/prompts/buildSystemPrompt";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export async function GET() {
+function isBaralhoMorbidoClient(client) {
+  return client === "baralho-morbido-controller" || client === "baralho-morbido-display";
+}
+
+function ignoresBaralhoMorbidoEvents(client) {
+  return [
+    "chat",
+    "operator",
+    "glitch-controller",
+    "queda-aviao-controller",
+    "queda-aviao-display"
+  ].includes(client);
+}
+
+function isRelevantForBaralhoMorbido(payload) {
+  return [
+    "snapshot",
+    "baralho-morbido",
+    "baralho-morbido-display",
+    "display-blackout",
+    "reset"
+  ].includes(payload?.event?.type);
+}
+
+function isBaralhoMorbidoEvent(payload) {
+  return payload?.event?.type === "baralho-morbido" || payload?.event?.type === "baralho-morbido-display";
+}
+
+function stateForClient(state, client) {
+  if (!isBaralhoMorbidoClient(client)) {
+    return state;
+  }
+
+  return {
+    baralhoMorbido: state.baralhoMorbido,
+    displayBlackout: state.displayBlackout
+  };
+}
+
+export async function GET(request) {
+  const client = new URL(request.url).searchParams.get("client") || "";
   const encoder = new TextEncoder();
   let unsubscribe = () => {};
   let keepAlive;
@@ -40,10 +80,25 @@ export async function GET() {
 
   const stream = new ReadableStream({
     start(controller) {
-      send(controller, encodeSse(withContext({ event: { type: "snapshot" }, state: showState.snapshot() })));
+      const initialState = showState.snapshot();
+      send(controller, encodeSse(withContext({
+        event: { type: "snapshot" },
+        state: stateForClient(initialState, client)
+      })));
 
       unsubscribe = showState.subscribe((payload) => {
-        send(controller, encodeSse(withContext(payload)));
+        if (isBaralhoMorbidoClient(client) && !isRelevantForBaralhoMorbido(payload)) {
+          return;
+        }
+
+        if (ignoresBaralhoMorbidoEvents(client) && isBaralhoMorbidoEvent(payload)) {
+          return;
+        }
+
+        send(controller, encodeSse(withContext({
+          ...payload,
+          state: stateForClient(payload.state, client)
+        })));
       });
 
       keepAlive = setInterval(() => {

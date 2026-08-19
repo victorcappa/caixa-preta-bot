@@ -4,7 +4,11 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET() {
-  return Response.json(showState.snapshot().baralhoMorbido);
+  const snapshot = showState.snapshot();
+  return Response.json({
+    ...snapshot.baralhoMorbido,
+    displayBlackout: snapshot.displayBlackout
+  });
 }
 
 export async function POST(request) {

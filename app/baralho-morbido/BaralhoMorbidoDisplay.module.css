@@ -45,14 +45,29 @@
   height: 8px;
   content: "";
   background: linear-gradient(90deg, transparent, #ffd760, #ff2f6d, transparent);
-  filter: drop-shadow(0 0 10px rgba(255, 215, 96, 0.7));
-  animation: railSweep 4.6s linear infinite;
+  opacity: 0.6;
 }
 
 .sparkRail::after {
   top: auto;
   right: 0;
   bottom: -5px;
+}
+
+.phaseSHUFFLING .sparkRail::before,
+.phaseSELECTING .sparkRail::before,
+.phaseREVEALING .sparkRail::before,
+.phaseSHUFFLING .sparkRail::after,
+.phaseSELECTING .sparkRail::after,
+.phaseREVEALING .sparkRail::after {
+  filter: drop-shadow(0 0 10px rgba(255, 215, 96, 0.7));
+  opacity: 1;
+  animation: railSweep 4.6s linear infinite;
+}
+
+.phaseSHUFFLING .sparkRail::after,
+.phaseSELECTING .sparkRail::after,
+.phaseREVEALING .sparkRail::after {
   animation-delay: -2.3s;
 }
 

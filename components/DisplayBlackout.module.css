@@ -1,0 +1,7 @@
+.blackout {
+  position: absolute;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  background: #000000;
+}

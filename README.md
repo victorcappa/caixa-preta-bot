@@ -39,12 +39,27 @@ e `gpt-5-nano` sem reiniciar o servidor.
 npm run dev
 ```
 
+O servidor e obrigado a usar `http://localhost:3000`. Se a porta 3000 ja
+estiver ocupada, o comando falha e mostra como localizar o processo, em vez de
+subir automaticamente em outra porta.
+
 Depois abra:
 
 - `http://localhost:3000`
 - `http://localhost:3000/operator`
+- `http://localhost:3000/baralho-morbido`, para a tela publica do Baralho Morbido
+- `http://localhost:3000/baralho-morbido-controller`, para sortear e reiniciar o Baralho Morbido
 - `http://localhost:3000/queda-aviao`, para a projecao textual isolada de Queda Aviao
 - `http://localhost:3000/queda-aviao-controller`, para controlar essa projecao em tempo real
+- `http://localhost:3000/glitch-controller`, para testar e ajustar o glitch visual em tempo real
+
+Pontos importantes:
+
+- O projeto deve rodar sempre em `http://localhost:3000`; nao use porta alternativa para ensaio.
+- Se o Next ficar preso em chunks antigos, pare o servidor e rode `rm -rf .next` antes de `npm run dev`.
+- Nao rode `next build` ao mesmo tempo que `npm run dev`; isso pode quebrar manifests temporarios do dev server.
+- O operator e uma tela de recuperacao: blackouts escurecem telas publicas, mas nao escurecem o operator.
+- Baralho Morbido usa polling leve proprio, nao SSE global, para nao travar Operator/Chat quando a tela publica esta aberta.
 
 O operator tambem pode ser aberto dentro da tela principal pelo botao `OP`,
 abaixo do botao `?`. Ele alterna entre chat em tela cheia e chat com terminal
@@ -61,7 +76,24 @@ Abra `http://localhost:3000/queda-aviao` na tela publica e
 controller altera a projecao via estado do servidor e SSE: tocar/pausar,
 avancar/voltar, ir para segmento, subdivisao do texto, fade, ritmo geral, tempo
 das rubricas, loop e texto base. A rota antiga `/queda-aviao/debug` continua
-apontando para o mesmo controller.
+apontando para o mesmo controller. A projecao abre em modo manual; use
+`TOCAR` para autoplay ou `PRÓXIMA` para avancar segmento por segmento.
+
+## Baralho Morbido
+
+Abra `http://localhost:3000/baralho-morbido` na tela publica e
+`http://localhost:3000/baralho-morbido-controller` na maquina/aba de operacao.
+O controller privado sorteia as cartas, mostra cartas usadas/restantes, indica
+se a tela publica esta conectada e tem botoes para:
+
+- `EMBARALHAR / SORTEAR PROXIMA`, para iniciar a proxima rodada
+- `REINICIAR BARALHO`, no topo, para devolver as cartas ao pool
+- `RESETAR BARALHO`, no rodape, como zona de recuperacao
+
+Os videos das cartas ficam em `assets/videos/baralho-morbido/` e sao servidos
+por `/api/game-assets`. A tela publica nao depende de SSE global: ela consulta
+`/api/baralho-morbido` em intervalo curto, evitando que o Baralho trave as
+outras telas abertas.
 
 ## Comandos do operator
 
@@ -102,6 +134,47 @@ Confirmar ou cortar imediatamente essa camada:
 `/event phone Victor instagram_search high` tambem cria um
 `PHONE_PROJECTION_REQUEST`. Isso nunca projeta conteudo privado sozinho; apenas
 marca que ha uma confirmacao humana pendente.
+
+Disparar glitches visuais na projecao:
+
+```text
+/glitch
+/glitch forte
+/glitch continuous
+/glitch stop
+/glitch video painel-aeroporto.mp4
+/glitch video painel-aeroporto.mp4 loop
+/glitch video-stop
+```
+
+O operator tambem tem uma area `GLITCH` com botoes rapidos para `GLITCH`,
+`GLITCH FORTE`, modo continuo, `GLITCH + VIDEO` e volta ao bot. Videos finais
+ficam em `assets/videos/glitch/` e sao servidos por `/api/game-assets`, com
+`object-fit: contain`, sem controles HTML e com opcao de loop. Em
+`GLITCH + VIDEO`, o glitch invade a tela durante a transicao e para depois que
+o video esta estabelecido, deixando o video limpo e dentro da tela. Use
+`/glitch-controller` para editar intensidade, RGB split, tearing, blocos,
+flicker, scanlines, ruido, jitter, flashes, duracao, intervalo e perda de
+sincronia antes de enviar para a projecao.
+
+Escurecer telas publicas a partir do operator:
+
+```text
+/blackout chatbot on
+/blackout chatbot off
+/blackout baralho on
+/blackout baralho off
+/blackout legenda on
+/blackout legenda off
+/blackout todos on
+/blackout todos off
+```
+
+O topo do operator tem botoes dedicados para `BLACKOUT CHATBOT`,
+`BLACKOUT BARALHO`, `BLACKOUT LEGENDA` e `BLACKOUT TODOS`. Esses blackouts
+escurecem somente as telas publicas selecionadas; a tela do operator permanece
+visivel para recuperacao. Alvos aceitos incluem `chatbot`, `baralho`,
+`legenda`, `todos`, `chat`, `bot`, `baralho-morbido`, `queda-aviao` e `texto`.
 
 Abrir o Instagram real em Chromium visivel e seguir o perfil autorizado:
 
@@ -249,7 +322,9 @@ COMMAND REQUIRED
 ## Desenvolvimento
 
 ```bash
+npm run lint
 npm run build
+npm run test:baralho-morbido
 ```
 
 O estado inicial fica em memoria no servidor e e reiniciado quando o processo do Next.js reinicia.

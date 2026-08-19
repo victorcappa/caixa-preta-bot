@@ -23,6 +23,9 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   });
   const [status, setStatus] = useState("CONNECTING");
   const [pending, setPending] = useState(false);
+  const [glitchVideos, setGlitchVideos] = useState([]);
+  const [selectedGlitchVideo, setSelectedGlitchVideo] = useState("painel-aeroporto.mp4");
+  const [glitchVideoLoop, setGlitchVideoLoop] = useState(false);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -31,11 +34,25 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       .then((data) => setState(data))
       .catch(() => setStatus("DISCONNECTED"));
 
-    const events = new EventSource("/api/events");
+    fetch("/api/glitch")
+      .then((response) => response.json())
+      .then((data) => {
+        setGlitchVideos(data.videos || []);
+        if (data.glitch?.video?.file || data.videos?.[0]?.file) {
+          setSelectedGlitchVideo(data.glitch?.video?.file || data.videos[0].file);
+        }
+      })
+      .catch(() => {});
+
+    const events = new EventSource("/api/events?client=operator");
     events.onopen = () => setStatus("CONNECTED");
     events.onerror = () => setStatus("DISCONNECTED");
     events.onmessage = (event) => {
       const payload = JSON.parse(event.data);
+      if (payload.event?.type === "baralho-morbido" || payload.event?.type === "baralho-morbido-display") {
+        return;
+      }
+
       setState({
         ...payload.state,
         context: payload.context
@@ -117,6 +134,8 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       "/intensity",
       "/model",
       "/instagram",
+      "/glitch",
+      "/blackout",
       "/phone",
       "/clear",
       "/clear-performance",
@@ -168,7 +187,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     }
   }
 
-  const sendOperatorCommand = useCallback(async (raw, fallback = "OPERATOR ERROR") => {
+  const sendOperatorCommand = useCallback(async (raw, fallback = "OPERATOR ERROR", timeoutMs = 50000) => {
     if (pending && raw.trim().split(/\s+/)[0] !== "/stopall") {
       return;
     }
@@ -178,7 +197,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     setPending(true);
 
     try {
-      const { response, data } = await postOperatorCommand(raw);
+      const { response, data } = await postOperatorCommand(raw, timeoutMs);
 
       if (!response.ok) {
         addLog(data.error || fallback, "error");
@@ -229,6 +248,9 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   const suitcase = state.suitcase || { active: false, phase: "IDLE" };
   const instagram = state.instagram || { status: "DISCONNECTED", logs: [] };
   const instagramLogs = (instagram.logs || []).slice(-5).reverse();
+  const glitch = state.glitch || { active: false, mode: "idle", video: {} };
+  const displayBlackout = state.displayBlackout || { targets: {} };
+  const blackoutTargets = displayBlackout.targets || {};
   const suitcaseGame = suitcase.currentGame || null;
   const participantCounts = state.participants?.counts || { team: 0, audience: 0, session: 0, available: 0 };
   const participantHistory = Object.values(state.participants?.history || {})
@@ -321,6 +343,41 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     <Terminal title="OPERATOR" footer={footer} className={terminalClassName}>
       <div className={`${styles.operator} ${embedded ? styles.embeddedOperator : ""}`}>
         <section className={styles.console}>
+          <div className={styles.blackoutBar} aria-label="Blackout das telas publicas">
+            <button
+              className={blackoutTargets.chatbot ? styles.blackoutActive : ""}
+              disabled={pending}
+              onClick={() => sendOperatorCommand(`/blackout chatbot ${blackoutTargets.chatbot ? "off" : "on"}`, "BLACKOUT ERROR", 6000)}
+              type="button"
+            >
+              BLACKOUT CHATBOT
+            </button>
+            <button
+              className={blackoutTargets.baralho ? styles.blackoutActive : ""}
+              disabled={pending}
+              onClick={() => sendOperatorCommand(`/blackout baralho ${blackoutTargets.baralho ? "off" : "on"}`, "BLACKOUT ERROR", 6000)}
+              type="button"
+            >
+              BLACKOUT BARALHO
+            </button>
+            <button
+              className={blackoutTargets.legenda ? styles.blackoutActive : ""}
+              disabled={pending}
+              onClick={() => sendOperatorCommand(`/blackout legenda ${blackoutTargets.legenda ? "off" : "on"}`, "BLACKOUT ERROR", 6000)}
+              type="button"
+            >
+              BLACKOUT LEGENDA
+            </button>
+            <button
+              className={Object.values(blackoutTargets).some(Boolean) ? styles.blackoutAllActive : ""}
+              disabled={pending}
+              onClick={() => sendOperatorCommand(`/blackout todos ${Object.values(blackoutTargets).every(Boolean) ? "off" : "on"}`, "BLACKOUT ERROR", 6000)}
+              type="button"
+            >
+              BLACKOUT TODOS
+            </button>
+          </div>
+
           <div className={styles.meta}>
             <span className={status === "CONNECTED" ? styles.connected : styles.disconnected}>
               {status}
@@ -332,6 +389,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             <span>GAME: {game.active ? `${game.id} / ${game.startSource}`.toUpperCase() : `COOLDOWN ${game.cooldownTurnsRemaining || 0}`}</span>
             <span>SUITCASE: {suitcase.active ? `${suitcase.phase} / ${suitcase.activeExperience || "none"}` : suitcase.phase}</span>
             <span>INSTAGRAM: {instagram.status || "DISCONNECTED"}</span>
+            <span>GLITCH: {glitch.active ? `${glitch.mode || "active"} #${glitch.sequence || 0}`.toUpperCase() : "OFF"}</span>
             <span>PARTICIPANTS: T{participantCounts.team} A{participantCounts.audience} S{participantCounts.session}</span>
             <span>ACTIVITIES: {activities.length}</span>
             <span>EVENTS: {state.performance?.events?.length || 0}</span>
@@ -418,6 +476,56 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
               <p>{instagramLogs.map((entry) => `${new Date(entry.timestamp).toLocaleTimeString("pt-BR")} ${entry.status}: ${entry.message}`).join("\n")}</p>
             </article>
           ) : null}
+          <article className={styles.memory}>
+            <strong>GLITCH</strong>
+            <p>
+              MODE: {(glitch.mode || "idle").toUpperCase()}
+              {"\n"}SEQUENCE: {glitch.sequence || 0}
+              {"\n"}VIDEO: {glitch.video?.file || selectedGlitchVideo || "-"}
+            </p>
+            <label className={styles.glitchSelectField}>
+              VIDEO
+              <select
+                disabled={pending || glitchVideos.length === 0}
+                onChange={(event) => setSelectedGlitchVideo(event.target.value)}
+                value={selectedGlitchVideo}
+              >
+                {glitchVideos.length === 0 ? <option value="">SEM VIDEOS</option> : null}
+                {glitchVideos.map((video) => (
+                  <option key={video.file} value={video.file}>{video.file}</option>
+                ))}
+              </select>
+            </label>
+            <label className={styles.glitchLoopField}>
+              <input
+                checked={glitchVideoLoop}
+                onChange={(event) => setGlitchVideoLoop(event.target.checked)}
+                type="checkbox"
+              />
+              LOOP
+            </label>
+          </article>
+          <div className={styles.glitchControls}>
+            <button disabled={pending} onClick={() => sendOperatorCommand("/glitch", "GLITCH ERROR")} type="button">GLITCH</button>
+            <button disabled={pending} onClick={() => sendOperatorCommand("/glitch forte", "GLITCH ERROR")} type="button">GLITCH FORTE</button>
+            <button disabled={pending} onClick={() => sendOperatorCommand("/glitch continuous", "GLITCH ERROR")} type="button">START GLITCH CONTINUO</button>
+            <button disabled={pending} onClick={() => sendOperatorCommand("/glitch stop", "GLITCH ERROR")} type="button">STOP GLITCH</button>
+            <button
+              disabled={pending || !selectedGlitchVideo}
+              onClick={() => sendOperatorCommand(`/glitch video ${selectedGlitchVideo}${glitchVideoLoop ? " loop" : ""}`, "GLITCH VIDEO ERROR")}
+              type="button"
+            >
+              GLITCH + VIDEO
+            </button>
+            <button
+              className={styles.panicButton}
+              disabled={pending}
+              onClick={() => sendOperatorCommand("/glitch video-stop", "GLITCH VIDEO ERROR")}
+              type="button"
+            >
+              STOP VIDEO / VOLTAR AO BOT
+            </button>
+          </div>
           <article className={styles.memory}>
             <strong>SUITCASE DEBUG</strong>
             <p>

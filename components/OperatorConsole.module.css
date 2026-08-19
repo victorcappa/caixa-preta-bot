@@ -17,6 +17,41 @@
   flex-direction: column;
 }
 
+.blackoutBar {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--green-soft);
+}
+
+.blackoutBar button {
+  min-height: 40px;
+  border: 1px solid var(--green-soft);
+  background: #000000;
+  color: var(--green);
+  font: inherit;
+  cursor: pointer;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.blackoutBar button:hover,
+.blackoutBar button:focus-visible {
+  border-color: var(--green);
+  outline: 0;
+}
+
+.blackoutBar .blackoutActive,
+.blackoutBar .blackoutAllActive {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: #000000;
+  font-weight: 700;
+}
+
 .meta {
   flex: 0 0 auto;
   display: flex;
@@ -148,6 +183,54 @@
   margin: 0 0 18px;
 }
 
+.glitchControls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 18px;
+}
+
+.glitchControls button {
+  min-height: 42px;
+  border: 1px solid var(--green-soft);
+  background: transparent;
+  color: var(--green);
+  font: inherit;
+  cursor: pointer;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.glitchControls button:nth-child(3),
+.glitchControls button:nth-child(4),
+.glitchControls button:nth-child(5),
+.glitchControls button:nth-child(6) {
+  grid-column: span 2;
+}
+
+.glitchSelectField,
+.glitchLoopField {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+  color: var(--green-dim);
+  font-size: 0.85rem;
+}
+
+.glitchLoopField {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+
+.glitchSelectField select {
+  min-width: 0;
+  border: 1px solid var(--green-soft);
+  background: #020402;
+  color: var(--green);
+  font: inherit;
+  padding: 6px;
+}
+
 .vobControls button {
   min-height: 44px;
   border: 1px solid var(--green-soft);
@@ -188,6 +271,8 @@
 .panicButton:disabled,
 .approveButton:disabled,
 .controlGrid button:disabled,
+.blackoutBar button:disabled,
+.glitchControls button:disabled,
 .vobControls button:disabled {
   cursor: default;
   opacity: 0.5;
@@ -240,11 +325,23 @@
     grid-template-columns: 1fr;
   }
 
+  .blackoutBar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .vobControls {
     grid-template-columns: 1fr;
   }
 
   .vobControls button:nth-child(n) {
+    grid-column: auto;
+  }
+
+  .glitchControls {
+    grid-template-columns: 1fr;
+  }
+
+  .glitchControls button:nth-child(n) {
     grid-column: auto;
   }
 }

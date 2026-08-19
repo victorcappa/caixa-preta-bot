@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import DisplayBlackout from "@/components/DisplayBlackout";
 import styles from "./BaralhoMorbidoDisplay.module.css";
 
 const INITIAL_STATE = {
@@ -164,32 +165,54 @@ function SelectedCard({ phase, card }) {
 
 export default function BaralhoMorbidoDisplay() {
   const [deck, setDeck] = useState(INITIAL_STATE);
+  const [displayBlackout, setDisplayBlackout] = useState(null);
   const [connection, setConnection] = useState("CONNECTING");
   const [cursorHidden, setCursorHidden] = useState(false);
   const cursorTimerRef = useRef(null);
 
   useEffect(() => {
+    let active = true;
+    let refreshing = false;
+
+    async function refreshDeck() {
+      if (refreshing) {
+        return;
+      }
+
+      refreshing = true;
+
+      try {
+        const response = await fetch("/api/baralho-morbido", { cache: "no-store" });
+        const data = await response.json();
+
+        if (!active) {
+          return;
+        }
+
+        setDeck(data || INITIAL_STATE);
+        setDisplayBlackout(data?.displayBlackout || null);
+        setConnection("CONNECTED");
+      } catch {
+        if (active) {
+          setConnection("DISCONNECTED");
+        }
+      } finally {
+        refreshing = false;
+      }
+    }
+
     fetch("/api/baralho-morbido", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "display-connect" })
     }).catch(() => {});
 
-    fetch("/api/baralho-morbido")
-      .then((response) => response.json())
-      .then((data) => setDeck(data || INITIAL_STATE))
-      .catch(() => setConnection("DISCONNECTED"));
-
-    const events = new EventSource("/api/events?client=baralho-morbido-display");
-    events.onopen = () => setConnection("CONNECTED");
-    events.onerror = () => setConnection("DISCONNECTED");
-    events.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
-      setDeck(payload.state?.baralhoMorbido || INITIAL_STATE);
-    };
+    refreshDeck();
+    const timer = window.setInterval(refreshDeck, 400);
 
     return () => {
-      events.close();
+      active = false;
+      window.clearInterval(timer);
 
       const body = JSON.stringify({ action: "display-disconnect" });
       if (navigator.sendBeacon) {
@@ -253,6 +276,7 @@ export default function BaralhoMorbidoDisplay() {
 
   return (
     <main className={`${styles.screen} ${phaseClass(deck.phase)} ${cursorHidden ? styles.cursorHidden : ""}`}>
+      <DisplayBlackout blackout={displayBlackout} target="baralho" />
       <div className={styles.lightGrid} aria-hidden="true" />
       <div className={styles.sparkRail} aria-hidden="true" />
 
