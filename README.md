@@ -94,7 +94,8 @@ As telas privadas de operacao tem uma barra comum de abas no topo:
 `Operator` abre a cabine principal sem mudar a tela projetada. `Chatbot` volta
 a projecao para `/`. `Baralho` abre `/baralho-morbido` e `Queda Aviao` abre
 `/queda-aviao`. `Glitch` nao troca a cena projetada: ele abre o controller e o
-glitch continua sendo aplicado sobre a tela publica que ja estiver ativa.
+glitch continua sendo aplicado sobre a tela publica que ja estiver ativa
+(`Chatbot`, `Baralho` ou `Queda Aviao`).
 
 Quando o Instagram embutido e/ou o operator estiverem visiveis, arraste as
 divisorias entre `chat | Instagram | operator` para ajustar o palco. O tamanho

@@ -1,4 +1,5 @@
 import ProjectionWindowClient from "@/components/ProjectionWindowClient";
+import PublicGlitchLayer from "@/components/PublicGlitchLayer";
 import QuedaAviaoPlayer from "./QuedaAviaoPlayer";
 
 export const metadata = {
@@ -10,7 +11,9 @@ export default function QuedaAviaoPage() {
   return (
     <>
       <ProjectionWindowClient />
-      <QuedaAviaoPlayer />
+      <PublicGlitchLayer>
+        <QuedaAviaoPlayer />
+      </PublicGlitchLayer>
     </>
   );
 }
