@@ -34,7 +34,11 @@ export default function ControllerSurface({ children }) {
   const activeSurface = controllerSurfaces.find((surface) => isControllerSurfaceActive(surface, pathname));
 
   useEffect(() => {
-    navigateProjection(activeSurface?.projectionPath);
+    if (!activeSurface?.projectionPath) {
+      return;
+    }
+
+    navigateProjection(activeSurface.projectionPath);
   }, [activeSurface?.projectionPath]);
 
   return (

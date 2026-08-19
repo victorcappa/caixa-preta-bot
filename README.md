@@ -90,10 +90,9 @@ abaixo do botao `?`. Ele alterna entre chat em tela cheia e chat com terminal
 operador ao lado; em telas menores, aparece como gaveta animada.
 
 As telas privadas de operacao tem uma barra comum de abas no topo:
-`Chatbot`, `Baralho`, `Queda Aviao`, `Glitch` e `Treino`. Tocar em uma aba
-navega para o controller correspondente em tela cheia e, quando houver uma cena
-publica associada, tambem muda a janela de projecao ativa. `Chatbot` volta a
-projecao para `/`, `Baralho` abre `/baralho-morbido` e `Queda Aviao` abre
+`Operator`, `Chatbot`, `Baralho`, `Queda Aviao`, `Glitch` e `Treino`.
+`Operator` abre a cabine principal sem mudar a tela projetada. `Chatbot` volta
+a projecao para `/`. `Baralho` abre `/baralho-morbido` e `Queda Aviao` abre
 `/queda-aviao`. `Glitch` nao troca a cena projetada: ele abre o controller e o
 glitch continua sendo aplicado sobre a tela publica que ja estiver ativa.
 
