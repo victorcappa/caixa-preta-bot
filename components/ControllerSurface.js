@@ -11,10 +11,20 @@ function navigateProjection(path) {
     return;
   }
 
+  const body = JSON.stringify({ action: "navigate", path });
+
+  if (navigator.sendBeacon) {
+    const queued = navigator.sendBeacon("/api/projection", new Blob([body], { type: "application/json" }));
+
+    if (queued) {
+      return;
+    }
+  }
+
   fetch("/api/projection", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "navigate", path }),
+    body,
     keepalive: true
   }).catch(() => {});
 }

@@ -49,6 +49,28 @@ export default function ProjectionWindowClient() {
     }
 
     let closed = false;
+    const applyCommand = (command) => {
+      if (!command || command.type !== "projection:navigate") {
+        return;
+      }
+
+      if (command.projectionWindowId !== projectionWindowId || commandIdsRef.current.has(command.id)) {
+        return;
+      }
+
+      const nextUrl = projectionUrl(command.path, projectionWindowId);
+      const currentUrl = `${window.location.pathname || "/"}${window.location.search || ""}`;
+
+      if (currentUrl === nextUrl) {
+        commandIdsRef.current.add(command.id);
+        return;
+      }
+
+      commandIdsRef.current.add(command.id);
+      window.sessionStorage.setItem(STORAGE_KEY, projectionWindowId);
+      navigatingRef.current = true;
+      window.location.assign(nextUrl);
+    };
 
     postProjectionAction("register", projectionWindowId, currentProjectionPath())
       .then((response) => response.json())
@@ -59,6 +81,8 @@ export default function ProjectionWindowClient() {
           projectionWindowId = registeredId;
           window.sessionStorage.setItem(STORAGE_KEY, registeredId);
         }
+
+        applyCommand(data.state?.lastCommand);
       })
       .catch(() => {});
 
@@ -67,7 +91,10 @@ export default function ProjectionWindowClient() {
         return;
       }
 
-      postProjectionAction("heartbeat", projectionWindowId, currentProjectionPath()).catch(() => {});
+      postProjectionAction("heartbeat", projectionWindowId, currentProjectionPath())
+        .then((response) => response.json())
+        .then((data) => applyCommand(data.state?.lastCommand))
+        .catch(() => {});
     }, HEARTBEAT_INTERVAL_MS);
 
     const events = new EventSource("/api/events?client=projection-window");
@@ -79,14 +106,7 @@ export default function ProjectionWindowClient() {
         return;
       }
 
-      if (command.projectionWindowId !== projectionWindowId || commandIdsRef.current.has(command.id)) {
-        return;
-      }
-
-      commandIdsRef.current.add(command.id);
-      window.sessionStorage.setItem(STORAGE_KEY, projectionWindowId);
-      navigatingRef.current = true;
-      window.location.assign(projectionUrl(command.path, projectionWindowId));
+      applyCommand(command);
     };
 
     function disconnect() {
