@@ -64,7 +64,8 @@ Pontos importantes:
 ## Controle de telas de projecao
 
 No `/operator`, use `ABRIR NOVA JANELA COM` para criar uma janela publica
-controlada. A nova janela recebe um `projectionWindowId` no query parameter,
+controlada. Uma tela publica aberta diretamente em `http://localhost:3000`
+tambem se registra sozinha. A janela recebe ou solicita um `projectionWindowId`,
 salva o mesmo ID em `sessionStorage`, registra-se em `/api/projection` e passa
 a receber comandos pelo SSE existente em `/api/events`.
 
@@ -89,9 +90,11 @@ abaixo do botao `?`. Ele alterna entre chat em tela cheia e chat com terminal
 operador ao lado; em telas menores, aparece como gaveta animada.
 
 As telas privadas de operacao tem uma barra comum de abas no topo:
-`Operator`, `Baralho`, `Queda Aviao`, `Glitch` e `Treino`. Tocar em uma aba
-navega para o controller correspondente em tela cheia, permitindo trocar de
-cabine a qualquer momento sem voltar manualmente pela URL.
+`Chatbot`, `Baralho`, `Queda Aviao`, `Glitch` e `Treino`. Tocar em uma aba
+navega para o controller correspondente em tela cheia e, quando houver uma cena
+publica associada, tambem muda a janela de projecao ativa. `Chatbot` volta a
+projecao para `/`, `Baralho` abre `/baralho-morbido` e `Queda Aviao` abre
+`/queda-aviao`.
 
 Quando o Instagram embutido e/ou o operator estiverem visiveis, arraste as
 divisorias entre `chat | Instagram | operator` para ajustar o palco. O tamanho
