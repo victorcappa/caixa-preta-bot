@@ -52,6 +52,82 @@
   font-weight: 700;
 }
 
+.projectionBar {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: minmax(170px, auto) minmax(220px, auto) minmax(220px, 1fr);
+  gap: 8px;
+  align-items: start;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--green-soft);
+}
+
+.projectionMenu {
+  position: relative;
+  min-width: 0;
+}
+
+.projectionMenuButton {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid var(--green-soft);
+  background: #020402;
+  color: var(--green);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  padding: 6px 8px;
+}
+
+.projectionMenuButton:hover,
+.projectionMenuButton:focus-visible,
+.projectionMenuList button:hover,
+.projectionMenuList button:focus-visible {
+  border-color: var(--green);
+  outline: 0;
+}
+
+.projectionMenuList {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  display: grid;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--green);
+  background: #000000;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.72);
+}
+
+.projectionMenuList button {
+  min-height: 34px;
+  border: 1px solid var(--green-soft);
+  background: transparent;
+  color: var(--green);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  padding: 6px 8px;
+}
+
+.projectionStatus {
+  min-height: 36px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+  border: 1px solid var(--green-soft);
+  color: var(--green-dim);
+  padding: 6px 8px;
+}
+
+.projectionStatus strong {
+  color: var(--green);
+}
+
 .meta {
   flex: 0 0 auto;
   display: flex;

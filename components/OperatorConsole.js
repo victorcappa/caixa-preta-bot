@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { PROJECTION_WINDOW_PARAM, projectionScreens } from "@/lib/projectionScreens";
 import Terminal from "./Terminal";
 import styles from "./OperatorConsole.module.css";
 
@@ -26,7 +27,9 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   const [glitchVideos, setGlitchVideos] = useState([]);
   const [selectedGlitchVideo, setSelectedGlitchVideo] = useState("painel-aeroporto.mp4");
   const [glitchVideoLoop, setGlitchVideoLoop] = useState(false);
+  const [projectionMenu, setProjectionMenu] = useState(null);
   const scrollRef = useRef(null);
+  const projectionWindowRefs = useRef(new Map());
 
   useEffect(() => {
     fetch("/api/state")
@@ -251,6 +254,13 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   const glitch = state.glitch || { active: false, mode: "idle", video: {} };
   const displayBlackout = state.displayBlackout || { targets: {} };
   const blackoutTargets = displayBlackout.targets || {};
+  const projection = state.projection || { activeProjectionWindowId: null, windows: {} };
+  const projectionWindows = projection.windows || {};
+  const activeProjectionWindow = projection.activeProjectionWindowId
+    ? projectionWindows[projection.activeProjectionWindowId]
+    : null;
+  const activeProjectionLabel = activeProjectionWindow?.screenLabel || activeProjectionWindow?.currentLabel || "-";
+  const activeProjectionStatus = activeProjectionWindow?.status || "sem projecao";
   const suitcaseGame = suitcase.currentGame || null;
   const participantCounts = state.participants?.counts || { team: 0, audience: 0, session: 0, available: 0 };
   const participantHistory = Object.values(state.participants?.history || {})
@@ -339,6 +349,95 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     return () => window.removeEventListener("keydown", handleGameShortcut);
   }, [verdadeOuBolo?.active, verdadeOuBolo?.data?.state, verdadeOuBolo?.data?.videoCommand?.action, pending, sendOperatorCommand]);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      for (const [projectionWindowId, projectionWindow] of projectionWindowRefs.current.entries()) {
+        if (!projectionWindow.closed) {
+          continue;
+        }
+
+        projectionWindowRefs.current.delete(projectionWindowId);
+        fetch("/api/projection", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "disconnect", projectionWindowId })
+        }).catch(() => {});
+      }
+    }, 1500);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  function nextProjectionWindowId() {
+    let index = Object.keys(projectionWindows).length + 1;
+
+    while (projectionWindows[`projection-${index}`]) {
+      index += 1;
+    }
+
+    return `projection-${index}`;
+  }
+
+  function buildProjectionUrl(path, projectionWindowId) {
+    const url = new URL(path, window.location.origin);
+    url.searchParams.set(PROJECTION_WINDOW_PARAM, projectionWindowId);
+    return `${url.pathname}${url.search}`;
+  }
+
+  async function postProjectionAction(body) {
+    const response = await fetch("/api/projection", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    const data = await response.json();
+    return { response, data };
+  }
+
+  async function openProjectionWindow(screen) {
+    setProjectionMenu(null);
+    const projectionWindowId = nextProjectionWindowId();
+    const path = buildProjectionUrl(screen.path, projectionWindowId);
+    const projectionWindow = window.open(path, projectionWindowId);
+
+    addLog(`> ABRIR NOVA JANELA COM ${screen.label}`, "input");
+
+    if (!projectionWindow) {
+      addLog("POPUP BLOQUEADO: permita popups para este site", "error");
+      return;
+    }
+
+    projectionWindowRefs.current.set(projectionWindowId, projectionWindow);
+    addLog(`NOVA PROJECAO ABERTA -> ${screen.label}`, "ok");
+  }
+
+  async function navigateActiveProjection(screen) {
+    setProjectionMenu(null);
+    addLog(`> MUDAR PARA TELA ${screen.label}`, "input");
+
+    if (!projection.activeProjectionWindowId) {
+      addLog("SEM PROJECAO ATIVA", "error");
+      return;
+    }
+
+    try {
+      const { response, data } = await postProjectionAction({
+        action: "navigate",
+        projectionWindowId: projection.activeProjectionWindowId,
+        path: screen.path
+      });
+
+      if (!response.ok) {
+        addLog(data.error || "PROJECTION ERROR", "error");
+        return;
+      }
+
+      addLog(`PROJECAO -> ${screen.label}`, "ok");
+    } catch {
+      addLog("PROJECTION CONNECTION FAILED", "error");
+    }
+  }
+
   return (
     <Terminal title="OPERATOR" footer={footer} className={terminalClassName}>
       <div className={`${styles.operator} ${embedded ? styles.embeddedOperator : ""}`}>
@@ -376,6 +475,33 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             >
               BLACKOUT TODOS
             </button>
+          </div>
+
+          <div className={styles.projectionBar} aria-label="Controle das janelas de projecao">
+            <ProjectionMenuButton
+              disabled={false}
+              label="MUDAR PARA TELA"
+              menuId="change"
+              onSelect={navigateActiveProjection}
+              openMenu={projectionMenu}
+              screens={projectionScreens}
+              setOpenMenu={setProjectionMenu}
+            />
+            <ProjectionMenuButton
+              disabled={false}
+              label="ABRIR NOVA JANELA COM"
+              menuId="open"
+              onSelect={openProjectionWindow}
+              openMenu={projectionMenu}
+              screens={projectionScreens}
+              setOpenMenu={setProjectionMenu}
+            />
+            <div className={styles.projectionStatus}>
+              <strong>PROJECAO</strong>
+              <span>Janela: {projection.activeProjectionWindowId || "nenhuma"}</span>
+              <span>Tela atual: {activeProjectionWindow ? activeProjectionLabel : "-"}</span>
+              <span>Status: {projection.activeProjectionWindowId ? activeProjectionStatus : "sem projecao"}</span>
+            </div>
           </div>
 
           <div className={styles.meta}>
@@ -628,6 +754,38 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
         </aside>
       </div>
     </Terminal>
+  );
+}
+
+function ProjectionMenuButton({ disabled, label, menuId, onSelect, openMenu, screens, setOpenMenu }) {
+  const isOpen = openMenu === menuId;
+
+  return (
+    <div className={styles.projectionMenu}>
+      <button
+        aria-expanded={isOpen}
+        className={styles.projectionMenuButton}
+        disabled={disabled}
+        onClick={() => setOpenMenu(isOpen ? null : menuId)}
+        type="button"
+      >
+        {label} ▾
+      </button>
+      {isOpen ? (
+        <div className={styles.projectionMenuList} role="menu">
+          {screens.map((screen) => (
+            <button
+              key={screen.id}
+              onClick={() => onSelect(screen)}
+              role="menuitem"
+              type="button"
+            >
+              {screen.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }
 

@@ -1,3 +1,4 @@
+import ProjectionWindowClient from "@/components/ProjectionWindowClient";
 import BaralhoMorbidoDisplay from "./BaralhoMorbidoDisplay";
 
 export const metadata = {
@@ -6,5 +7,10 @@ export const metadata = {
 };
 
 export default function BaralhoMorbidoPage() {
-  return <BaralhoMorbidoDisplay />;
+  return (
+    <>
+      <ProjectionWindowClient />
+      <BaralhoMorbidoDisplay />
+    </>
+  );
 }

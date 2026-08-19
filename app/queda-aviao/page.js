@@ -1,3 +1,4 @@
+import ProjectionWindowClient from "@/components/ProjectionWindowClient";
 import QuedaAviaoPlayer from "./QuedaAviaoPlayer";
 
 export const metadata = {
@@ -6,5 +7,10 @@ export const metadata = {
 };
 
 export default function QuedaAviaoPage() {
-  return <QuedaAviaoPlayer />;
+  return (
+    <>
+      <ProjectionWindowClient />
+      <QuedaAviaoPlayer />
+    </>
+  );
 }
