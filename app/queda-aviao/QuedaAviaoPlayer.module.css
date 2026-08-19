@@ -1,0 +1,64 @@
+.screen {
+  align-items: center;
+  background: #000;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  overflow: hidden;
+  padding: clamp(24px, 7vw, 96px);
+  width: 100%;
+}
+
+.line {
+  color: #fff;
+  font-family: "Courier New", Courier, monospace;
+  letter-spacing: 0;
+  line-height: 1.28;
+  margin: 0;
+  max-width: min(1180px, 100%);
+  opacity: 0;
+  text-align: center;
+  text-wrap: balance;
+  transition: opacity var(--fade-ms) ease;
+  white-space: pre-wrap;
+}
+
+.dialogue {
+  font-size: clamp(1.35rem, 4.4vw, 4.4rem);
+  font-weight: 700;
+}
+
+.stage {
+  font-size: clamp(1.05rem, 3vw, 3rem);
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.42;
+  max-width: min(1040px, 100%);
+}
+
+.entering,
+.exiting {
+  opacity: 0;
+}
+
+.visible {
+  opacity: 1;
+}
+
+@media (max-width: 560px) {
+  .screen {
+    padding: 24px;
+  }
+
+  .line {
+    text-align: left;
+    text-wrap: pretty;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line {
+    transition-duration: 1ms;
+  }
+}

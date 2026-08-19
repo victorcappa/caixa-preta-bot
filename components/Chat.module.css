@@ -15,6 +15,7 @@
 }
 
 .chatPane {
+  position: relative;
   min-width: 0;
   height: 100vh;
   display: grid;

@@ -1,0 +1,545 @@
+.screen {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: minmax(92px, 13vh) 1fr minmax(46px, 7vh);
+  overflow: hidden;
+  user-select: none;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(170, 20, 48, 0.28), transparent 32%),
+    linear-gradient(140deg, #040403 0%, #0b0906 38%, #020506 100%);
+  color: #f6df9b;
+  font-family: "Courier New", Courier, monospace;
+}
+
+.cursorHidden {
+  cursor: none;
+}
+
+.lightGrid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 209, 92, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 209, 92, 0.06) 1px, transparent 1px);
+  background-size: 82px 82px;
+  mask-image: radial-gradient(circle at center, black, transparent 76%);
+}
+
+.sparkRail {
+  position: absolute;
+  inset: 2.2vh 2vw;
+  border: 1px solid rgba(255, 210, 92, 0.3);
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 34px rgba(255, 46, 99, 0.16),
+    0 0 44px rgba(0, 229, 255, 0.1);
+}
+
+.sparkRail::before,
+.sparkRail::after {
+  position: absolute;
+  top: -5px;
+  width: 22%;
+  height: 8px;
+  content: "";
+  background: linear-gradient(90deg, transparent, #ffd760, #ff2f6d, transparent);
+  filter: drop-shadow(0 0 10px rgba(255, 215, 96, 0.7));
+  animation: railSweep 4.6s linear infinite;
+}
+
+.sparkRail::after {
+  top: auto;
+  right: 0;
+  bottom: -5px;
+  animation-delay: -2.3s;
+}
+
+.header,
+.footer {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2vw;
+  padding: 2.4vh 4vw;
+  text-transform: uppercase;
+}
+
+.header h1 {
+  margin: 0;
+  color: #ffe8a6;
+  font-size: clamp(2.2rem, 6.2vh, 5.4rem);
+  line-height: 0.92;
+  letter-spacing: 0;
+  text-shadow:
+    0 0 12px rgba(255, 219, 115, 0.52),
+    0 0 34px rgba(255, 44, 103, 0.32);
+}
+
+.kicker {
+  display: block;
+  margin-bottom: 0.6vh;
+  color: #00f0ff;
+  font-size: clamp(0.8rem, 1.6vh, 1.4rem);
+  font-weight: 700;
+  text-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
+}
+
+.counter {
+  min-width: min(34vw, 390px);
+  padding: 1.2vh 1.4vw;
+  border: 1px solid rgba(255, 219, 115, 0.5);
+  background: linear-gradient(145deg, rgba(24, 18, 10, 0.86), rgba(93, 13, 38, 0.45));
+  box-shadow:
+    inset 0 0 20px rgba(255, 215, 96, 0.13),
+    0 0 24px rgba(255, 45, 100, 0.18);
+  text-align: right;
+}
+
+.counter span,
+.footer span {
+  display: block;
+  color: #74f5ff;
+  font-size: clamp(0.72rem, 1.45vh, 1.08rem);
+  font-weight: 700;
+}
+
+.counter strong {
+  display: block;
+  color: #fff3be;
+  font-size: clamp(1.8rem, 4.8vh, 4.4rem);
+  line-height: 1;
+  text-shadow: 0 0 18px rgba(255, 215, 96, 0.7);
+}
+
+.stage {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  perspective: 1500px;
+}
+
+.footer {
+  align-items: end;
+  color: #f5d474;
+  font-size: clamp(0.68rem, 1.4vh, 1rem);
+}
+
+.idleDeck,
+.shuffleDeck {
+  position: relative;
+  width: min(29vw, 47vh);
+  aspect-ratio: 2.5 / 3.5;
+  transform-style: preserve-3d;
+}
+
+.cardBack,
+.videoFace,
+.missingVideo {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  aspect-ratio: 2.5 / 3.5;
+  border: 2px solid rgba(255, 224, 137, 0.84);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(255, 214, 101, 0.13), transparent 22%, rgba(255, 47, 104, 0.19) 55%, transparent),
+    repeating-linear-gradient(45deg, rgba(255, 230, 142, 0.08) 0 2px, transparent 2px 11px),
+    linear-gradient(155deg, #130e09, #280815 50%, #031112);
+  box-shadow:
+    inset 0 0 0 7px rgba(0, 0, 0, 0.58),
+    inset 0 0 34px rgba(255, 215, 96, 0.16),
+    0 18px 48px rgba(0, 0, 0, 0.58),
+    0 0 38px rgba(255, 46, 102, 0.24);
+  transform-style: preserve-3d;
+}
+
+.compactCard {
+  border-radius: 12px;
+}
+
+.cardInnerBorder {
+  position: absolute;
+  inset: 8%;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 224, 137, 0.56);
+  background:
+    radial-gradient(circle, rgba(0, 240, 255, 0.12), transparent 40%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent);
+}
+
+.cornerMark {
+  position: absolute;
+  top: 6%;
+  left: 7%;
+  color: #ffe28a;
+  font-size: clamp(0.6rem, 1.6vh, 1rem);
+  font-weight: 900;
+}
+
+.cardInnerBorder strong,
+.cardInnerBorder small {
+  position: absolute;
+  color: #ffe49a;
+  text-shadow: 0 0 12px rgba(255, 215, 96, 0.62);
+}
+
+.cardInnerBorder strong {
+  bottom: 16%;
+  font-size: clamp(0.8rem, 2.2vh, 1.4rem);
+}
+
+.cardInnerBorder small {
+  bottom: 10%;
+  color: #ff5d8e;
+  font-size: clamp(0.58rem, 1.5vh, 0.9rem);
+  font-weight: 900;
+}
+
+.cardSigil {
+  position: relative;
+  width: 48%;
+  aspect-ratio: 1;
+  border: 2px solid rgba(255, 220, 112, 0.78);
+  transform: rotate(45deg);
+  box-shadow:
+    inset 0 0 22px rgba(255, 220, 112, 0.18),
+    0 0 24px rgba(0, 240, 255, 0.3);
+}
+
+.cardSigil::before,
+.cardSigil::after,
+.cardSigil span {
+  position: absolute;
+  inset: 18%;
+  content: "";
+  border: 1px solid rgba(0, 240, 255, 0.72);
+  border-radius: 50%;
+}
+
+.cardSigil::after {
+  inset: 36%;
+  border-color: #ff3b76;
+}
+
+.cardSigil span {
+  inset: 48% auto auto 0;
+  width: 100%;
+  height: 1px;
+  border: 0;
+  border-radius: 0;
+  background: #ffd760;
+}
+
+.idleDeckCard {
+  transform:
+    translate3d(calc((var(--card-index) - 4.5) * 1.2%), calc((var(--card-index) - 4.5) * -0.6%), calc(var(--card-index) * 2px))
+    rotateZ(calc((var(--card-index) - 4.5) * 2.2deg));
+}
+
+.shuffleDeck {
+  width: min(36vw, 58vh);
+  animation: deckPulse 0.64s ease-in-out infinite alternate;
+}
+
+.shuffleCard {
+  animation: shuffleFlight 2.9s cubic-bezier(0.16, 0.88, 0.22, 1) both;
+  animation-delay: calc(var(--card-index) * 37ms);
+}
+
+.selectedCardWrap {
+  position: relative;
+  width: min(32vw, 52vh);
+  aspect-ratio: 2.5 / 3.5;
+  animation: selectedEnter 0.82s cubic-bezier(0.15, 0.8, 0.18, 1) both;
+}
+
+.revealingCardWrap {
+  animation: revealGrow 1.25s cubic-bezier(0.18, 0.78, 0.2, 1) both;
+}
+
+.flipCard {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.flipCardRevealing {
+  animation: cardFlip 0.92s cubic-bezier(0.18, 0.75, 0.2, 1) both;
+}
+
+.flipFace {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+.flipFront {
+  transform: rotateY(180deg);
+}
+
+.winnerPulse {
+  position: absolute;
+  right: 50%;
+  bottom: -8vh;
+  width: max-content;
+  padding: 1vh 1.3vw;
+  color: #061111;
+  font-size: clamp(0.78rem, 1.8vh, 1.18rem);
+  font-weight: 900;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #00f0ff, #ffd760, #ff3672);
+  box-shadow: 0 0 26px rgba(255, 215, 96, 0.6);
+  transform: translateX(50%);
+  animation: winnerPulse 0.64s ease-in-out infinite alternate;
+}
+
+.expandedVideoCard {
+  position: relative;
+  width: min(72vw, 118vh);
+  aspect-ratio: 16 / 9;
+  animation: videoPrize 0.72s cubic-bezier(0.16, 0.82, 0.2, 1) both;
+}
+
+.videoFace,
+.missingVideo {
+  display: grid;
+  place-items: center;
+  background: #020202;
+}
+
+.videoFaceExpanded {
+  aspect-ratio: 16 / 9;
+  border-radius: 16px;
+}
+
+.video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+}
+
+.cardLabel {
+  position: absolute;
+  top: 1.2vh;
+  left: 1.1vw;
+  padding: 0.55vh 0.7vw;
+  color: #fff1b8;
+  font-size: clamp(0.62rem, 1.4vh, 0.95rem);
+  font-weight: 900;
+  background: rgba(0, 0, 0, 0.58);
+  border: 1px solid rgba(255, 218, 100, 0.58);
+}
+
+.videoLoading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #ffe49a;
+  font-size: clamp(0.78rem, 1.8vh, 1.2rem);
+  font-weight: 900;
+  background: #020202;
+}
+
+.missingVideo {
+  aspect-ratio: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1vh;
+  padding: 8%;
+  color: #ffe49a;
+  text-align: center;
+  border-style: dashed;
+}
+
+.missingVideo strong {
+  color: #ff477d;
+  font-size: clamp(1.2rem, 3.2vh, 2.6rem);
+}
+
+.missingVideo small {
+  color: #70f4ff;
+  font-size: clamp(0.62rem, 1.4vh, 0.9rem);
+  word-break: break-word;
+}
+
+.phaseSHUFFLING .header h1,
+.phaseREVEALING .header h1 {
+  animation: titleFlicker 0.32s steps(2) infinite;
+}
+
+.phaseIDLE {
+  background:
+    radial-gradient(circle at 50% 42%, rgba(170, 20, 48, 0.22), transparent 32%),
+    linear-gradient(140deg, #040403 0%, #0b0906 38%, #020506 100%);
+}
+
+.phaseSELECTING {
+  background:
+    radial-gradient(circle at 50% 46%, rgba(255, 216, 96, 0.2), transparent 30%),
+    linear-gradient(140deg, #040403 0%, #16090d 44%, #020506 100%);
+}
+
+.phasePLAYING,
+.phaseFINISHED {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.11), transparent 34%),
+    linear-gradient(140deg, #030303 0%, #100607 46%, #020909 100%);
+}
+
+@keyframes railSweep {
+  from {
+    transform: translateX(-18vw);
+  }
+
+  to {
+    transform: translateX(96vw);
+  }
+}
+
+@keyframes deckPulse {
+  from {
+    filter: drop-shadow(0 0 16px rgba(255, 215, 96, 0.28));
+    transform: translateY(0) rotateX(0deg);
+  }
+
+  to {
+    filter: drop-shadow(0 0 34px rgba(255, 54, 114, 0.42));
+    transform: translateY(-1.2vh) rotateX(6deg);
+  }
+}
+
+@keyframes shuffleFlight {
+  0% {
+    transform: translate3d(0, 0, calc(var(--card-index) * 2px)) rotateZ(0deg) rotateY(0deg);
+  }
+
+  18% {
+    transform: translate3d(calc((var(--card-index) - 5) * 7vw), calc((5 - var(--card-index)) * 2.8vh), 110px) rotateZ(calc(var(--card-index) * 19deg)) rotateY(38deg);
+  }
+
+  44% {
+    transform: translate3d(calc((5 - var(--card-index)) * 6vw), calc((var(--card-index) - 4) * 4vh), 60px) rotateZ(calc(var(--card-index) * -23deg)) rotateY(-36deg);
+  }
+
+  70% {
+    transform: translate3d(calc((var(--card-index) - 4) * 2.6vw), calc((var(--card-index) - 5) * -1.5vh), 32px) rotateZ(calc(var(--card-index) * 9deg)) rotateY(16deg);
+  }
+
+  86% {
+    transform: translate3d(calc((5 - var(--card-index)) * 0.9vw), calc((var(--card-index) - 5) * 0.5vh), 12px) rotateZ(calc(var(--card-index) * -3deg));
+  }
+
+  100% {
+    transform: translate3d(0, 0, calc(var(--card-index) * 2px)) rotateZ(calc((var(--card-index) - 4.5) * 1.4deg));
+  }
+}
+
+@keyframes selectedEnter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10vh, -240px) scale(0.5) rotateZ(-10deg);
+  }
+
+  68% {
+    opacity: 1;
+    transform: translate3d(0, -1vh, 40px) scale(1.06) rotateZ(2deg);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1) rotateZ(0);
+  }
+}
+
+@keyframes revealGrow {
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.12);
+  }
+}
+
+@keyframes cardFlip {
+  0% {
+    transform: rotateY(0deg);
+  }
+
+  48% {
+    transform: rotateY(88deg) scale(1.04);
+  }
+
+  100% {
+    transform: rotateY(180deg) scale(1.02);
+  }
+}
+
+@keyframes videoPrize {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 5vh, -160px) scale(0.62);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes winnerPulse {
+  from {
+    opacity: 0.72;
+    transform: translateX(50%) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(50%) scale(1.04);
+  }
+}
+
+@keyframes titleFlicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.82;
+  }
+}
+
+@media (max-aspect-ratio: 4 / 3) {
+  .screen {
+    grid-template-rows: minmax(86px, 12vh) 1fr minmax(44px, 7vh);
+  }
+
+  .header {
+    align-items: flex-start;
+  }
+
+  .counter {
+    min-width: 36vw;
+  }
+
+  .expandedVideoCard {
+    width: 88vw;
+  }
+
+  .selectedCardWrap {
+    width: min(58vw, 54vh);
+  }
+}

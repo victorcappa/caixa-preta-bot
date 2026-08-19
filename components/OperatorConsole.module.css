@@ -141,6 +141,45 @@
   padding: 6px 8px;
 }
 
+.vobControls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 18px;
+}
+
+.vobControls button {
+  min-height: 44px;
+  border: 1px solid var(--green-soft);
+  background: transparent;
+  color: var(--green);
+  font: inherit;
+  cursor: pointer;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.vobControls button:nth-child(6),
+.vobControls button:nth-child(7),
+.vobControls button:nth-child(8),
+.vobControls button:nth-child(9),
+.vobControls button:nth-child(12),
+.vobControls button:nth-child(13) {
+  grid-column: span 2;
+}
+
+.vobControls .vobSelected {
+  background: var(--green);
+  color: #000000;
+  border-color: var(--green);
+}
+
+.vobControls .vobRevealButton {
+  border-color: var(--green);
+  min-height: 54px;
+  font-weight: 700;
+}
+
 .panicButton {
   border-color: var(--danger);
   color: var(--danger);
@@ -148,7 +187,8 @@
 
 .panicButton:disabled,
 .approveButton:disabled,
-.controlGrid button:disabled {
+.controlGrid button:disabled,
+.vobControls button:disabled {
   cursor: default;
   opacity: 0.5;
 }
@@ -198,5 +238,13 @@
 
   .inlineControls {
     grid-template-columns: 1fr;
+  }
+
+  .vobControls {
+    grid-template-columns: 1fr;
+  }
+
+  .vobControls button:nth-child(n) {
+    grid-column: auto;
   }
 }

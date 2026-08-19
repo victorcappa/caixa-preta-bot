@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Terminal from "./Terminal";
 import styles from "./OperatorConsole.module.css";
 
@@ -49,7 +49,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     scrollRef.current?.scrollIntoView({ block: "end" });
   }, [logs, state]);
 
-  function addLog(line, kind = "line") {
+  const addLog = useCallback((line, kind = "line") => {
     setLogs((current) => [
       ...current,
       {
@@ -59,15 +59,15 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
         line
       }
     ]);
-  }
+  }, []);
 
-  function emitStopAllSignal(raw) {
+  const emitStopAllSignal = useCallback((raw) => {
     if (raw.trim().split(/\s+/)[0] === "/stopall") {
       window.dispatchEvent(new CustomEvent("caixa-preta:stopall"));
     }
-  }
+  }, []);
 
-  async function postOperatorCommand(raw, timeoutMs = 50000) {
+  const postOperatorCommand = useCallback(async (raw, timeoutMs = 50000) => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -83,7 +83,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     } finally {
       clearTimeout(timer);
     }
-  }
+  }, []);
 
   async function submitCommand(event) {
     event.preventDefault();
@@ -168,7 +168,11 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     }
   }
 
-  async function sendOperatorCommand(raw, fallback = "OPERATOR ERROR") {
+  const sendOperatorCommand = useCallback(async (raw, fallback = "OPERATOR ERROR") => {
+    if (pending && raw.trim().split(/\s+/)[0] !== "/stopall") {
+      return;
+    }
+
     addLog(`> ${raw}`, "input");
     emitStopAllSignal(raw);
     setPending(true);
@@ -187,7 +191,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     } finally {
       setPending(false);
     }
-  }
+  }, [addLog, emitStopAllSignal, pending, postOperatorCommand]);
 
   async function toggleInstagramAudio() {
     const muted = !(state.instagram?.audioMuted === false);
@@ -221,6 +225,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   const activities = state.performance?.activities || [];
   const phoneProjection = state.performance?.phoneProjection || { status: "hidden" };
   const game = state.game || { active: false, id: null, cooldownTurnsRemaining: 0 };
+  const verdadeOuBolo = game.id === "verdade_ou_bolo" ? game : null;
   const suitcase = state.suitcase || { active: false, phase: "IDLE" };
   const instagram = state.instagram || { status: "DISCONNECTED", logs: [] };
   const instagramLogs = (instagram.logs || []).slice(-5).reverse();
@@ -242,6 +247,75 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       />
     </form>
   );
+
+  useEffect(() => {
+    if (!verdadeOuBolo?.active) {
+      return undefined;
+    }
+
+    function isTypingTarget(target) {
+      const tagName = target?.tagName?.toLowerCase();
+      return ["input", "textarea", "select"].includes(tagName) || target?.isContentEditable;
+    }
+
+    function handleGameShortcut(event) {
+      if (isTypingTarget(event.target) || event.metaKey || event.ctrlKey || event.altKey) {
+        return;
+      }
+
+      const videoAction = verdadeOuBolo.data?.videoCommand?.action;
+      const gameState = verdadeOuBolo.data?.state;
+      let commandForKey = null;
+
+      if (event.key === " ") {
+        commandForKey = gameState === "INTRO" ? null : videoAction === "play" ? "/game pause" : "/game play";
+      }
+
+      if (event.key === "1" && ["QUESTION", "ANSWER_LOCKED", "VOTING"].includes(gameState)) {
+        commandForKey = "/game verdade";
+      }
+
+      if (event.key === "2" && ["QUESTION", "ANSWER_LOCKED", "VOTING"].includes(gameState)) {
+        commandForKey = "/game bolo";
+      }
+
+      if (event.key === "Enter") {
+        if (gameState === "INTRO") {
+          commandForKey = "/game round";
+        } else if (["QUESTION", "ANSWER_LOCKED", "REVEAL", "ROUND_RESULT"].includes(gameState)) {
+          commandForKey = "/game reveal";
+        }
+      }
+
+      if (event.key === "ArrowRight") {
+        if (gameState === "INTRO") {
+          commandForKey = "/game round";
+        } else if (["QUESTION", "ANSWER_LOCKED"].includes(gameState)) {
+          commandForKey = "/game reveal";
+        } else if (["REVEAL", "ROUND_RESULT"].includes(gameState)) {
+          commandForKey = "/game next";
+        }
+      }
+
+      if (event.key === "ArrowLeft") {
+        commandForKey = "/game previous";
+      }
+
+      if (event.key === "Escape") {
+        commandForKey = "/game cancel";
+      }
+
+      if (!commandForKey) {
+        return;
+      }
+
+      event.preventDefault();
+      sendOperatorCommand(commandForKey, "GAME CONTROL ERROR");
+    }
+
+    window.addEventListener("keydown", handleGameShortcut);
+    return () => window.removeEventListener("keydown", handleGameShortcut);
+  }, [verdadeOuBolo?.active, verdadeOuBolo?.data?.state, verdadeOuBolo?.data?.videoCommand?.action, pending, sendOperatorCommand]);
 
   return (
     <Terminal title="OPERATOR" footer={footer} className={terminalClassName}>
@@ -378,6 +452,13 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
               {"\n"}COOLDOWN: {game.cooldownTurnsRemaining || 0}
             </p>
           </article>
+          {verdadeOuBolo ? (
+            <VerdadeOuBoloControls
+              game={verdadeOuBolo}
+              pending={pending}
+              sendOperatorCommand={sendOperatorCommand}
+            />
+          ) : null}
           {game.participants?.length ? (
             <article className={styles.memory}>
               <strong>GAME PARTICIPANTS</strong>
@@ -439,5 +520,105 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
         </aside>
       </div>
     </Terminal>
+  );
+}
+
+function VerdadeOuBoloControls({ game, pending, sendOperatorCommand }) {
+  const data = game.data || {};
+  const operator = data.operator || {};
+  const round = data.currentRound || {};
+  const result = data.result || null;
+  const video = round.video || {};
+  const voteCountdown = data.voteCountdown || null;
+  const votingSeconds = voteCountdown
+    ? Math.max(0, Math.ceil((Number(voteCountdown.endsAt || 0) - Date.now()) / 1000))
+    : null;
+
+  return (
+    <>
+      <article className={styles.memory}>
+        <strong>VERDADE OU BOLO / CONTROLS</strong>
+        <p>
+          STATE: {data.state || game.phase || "-"}
+          {"\n"}ROUND: {round.number || 1}/{round.total || data.totalRounds || 4}
+          {"\n"}VIDEO: {video.file || "AUSENTE"}
+          {"\n"}ANSWER: {data.selectedAnswer || "null"}
+          {"\n"}REVEAL ARMED: {data.revealArmed ? "YES" : "NO"}
+          {"\n"}VOTE COUNTDOWN: {votingSeconds ?? "-"}
+          {"\n"}CORRECT: {operator.correctAnswer || "CONFIGURE"}
+          {"\n"}SCORE: {data.score || 0}
+        </p>
+        {!video.src ? (
+          <p className={styles.error}>VIDEO AUSENTE EM assets/videos/verdade-ou-bolo/</p>
+        ) : null}
+      </article>
+
+      <div className={styles.vobControls}>
+        <button disabled={pending} onClick={() => sendOperatorCommand("/game intro", "GAME CONTROL ERROR")} type="button">INICIAR INTRO</button>
+        <button disabled={pending} onClick={() => sendOperatorCommand("/game round", "GAME CONTROL ERROR")} type="button">INICIAR RODADA</button>
+        <button disabled={pending} onClick={() => sendOperatorCommand("/game play", "GAME CONTROL ERROR")} type="button">PLAY VIDEO</button>
+        <button disabled={pending} onClick={() => sendOperatorCommand("/game pause", "GAME CONTROL ERROR")} type="button">PAUSE VIDEO</button>
+        <button disabled={pending} onClick={() => sendOperatorCommand("/game restart", "GAME CONTROL ERROR")} type="button">RESTART VIDEO</button>
+        <button
+          className={data.selectedAnswer === "verdade" ? styles.vobSelected : ""}
+          disabled={pending || !["QUESTION", "ANSWER_LOCKED", "VOTING"].includes(data.state)}
+          onClick={() => sendOperatorCommand("/game verdade", "GAME CONTROL ERROR")}
+          type="button"
+        >
+          VERDADE
+        </button>
+        <button
+          className={data.selectedAnswer === "bolo" ? styles.vobSelected : ""}
+          disabled={pending || !["QUESTION", "ANSWER_LOCKED", "VOTING"].includes(data.state)}
+          onClick={() => sendOperatorCommand("/game bolo", "GAME CONTROL ERROR")}
+          type="button"
+        >
+          BOLO
+        </button>
+        <button
+          className={styles.vobRevealButton}
+          disabled={pending || !["QUESTION", "ANSWER_LOCKED", "REVEAL", "ROUND_RESULT"].includes(data.state)}
+          onClick={() => sendOperatorCommand("/game reveal", "GAME CONTROL ERROR")}
+          type="button"
+        >
+          REVELAR RESPOSTA
+        </button>
+        <button
+          disabled={pending || data.revealArmed || Boolean(voteCountdown) || !["INTRO", "REVEAL", "ROUND_RESULT"].includes(data.state)}
+          onClick={() => sendOperatorCommand("/game next", "GAME CONTROL ERROR")}
+          type="button"
+        >
+          PROXIMA
+        </button>
+        <button disabled={pending} onClick={() => sendOperatorCommand("/game previous", "GAME CONTROL ERROR")} type="button">{"<- RODADA ANTERIOR"}</button>
+        <button disabled={pending} onClick={() => sendOperatorCommand("/game nextround", "GAME CONTROL ERROR")} type="button">{"-> PROXIMA RODADA"}</button>
+        <button
+          className={styles.panicButton}
+          disabled={pending}
+          onClick={() => sendOperatorCommand("/game finish", "GAME CONTROL ERROR")}
+          type="button"
+        >
+          ENCERRAR GAME SHOW
+        </button>
+        <button
+          className={styles.panicButton}
+          disabled={pending}
+          onClick={() => sendOperatorCommand("/game cancel", "GAME CONTROL ERROR")}
+          type="button"
+        >
+          CANCELAR
+        </button>
+      </div>
+
+      {result ? (
+        <article className={styles.memory}>
+          <strong>ROUND RESULT</strong>
+          <p>
+            ROUND {result.round}: {result.selected} / CORRECT {result.correct}
+            {"\n"}{result.noVote ? "SEM VOTO / ERRARAM" : result.won ? "ACERTARAM" : "ERRARAM"}
+          </p>
+        </article>
+      ) : null}
+    </>
   );
 }

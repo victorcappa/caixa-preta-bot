@@ -1,0 +1,239 @@
+.screen {
+  min-height: 100vh;
+  overflow: auto;
+  padding: 28px;
+  background:
+    radial-gradient(circle at 78% 14%, rgba(0, 229, 255, 0.12), transparent 28%),
+    linear-gradient(135deg, #050505 0%, #12090d 48%, #05090a 100%);
+  color: #ffe49a;
+  font-family: "Courier New", Courier, monospace;
+}
+
+.panel {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  border: 1px solid rgba(255, 216, 103, 0.36);
+  background: rgba(5, 5, 5, 0.78);
+  box-shadow:
+    inset 0 0 26px rgba(255, 216, 103, 0.08),
+    0 0 42px rgba(255, 47, 105, 0.12);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px;
+  border-bottom: 1px solid rgba(255, 216, 103, 0.22);
+}
+
+.header span,
+.statusGrid span,
+.usedPanel h2,
+.debug h2 {
+  color: #70f4ff;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.header h1 {
+  margin: 6px 0 0;
+  color: #fff1b8;
+  font-size: clamp(24px, 4vw, 46px);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.connected,
+.disconnected {
+  padding: 8px 10px;
+  border: 1px solid currentColor;
+  font-size: 12px;
+}
+
+.connected,
+.connectedText {
+  color: #00ff96;
+}
+
+.disconnected,
+.warningText {
+  color: #ff477d;
+}
+
+.statusGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 18px 22px 0;
+}
+
+.statusGrid article {
+  min-height: 104px;
+  padding: 16px;
+  border: 1px solid rgba(255, 216, 103, 0.24);
+  background: linear-gradient(145deg, rgba(255, 216, 103, 0.08), rgba(255, 47, 105, 0.08));
+}
+
+.statusGrid strong {
+  display: block;
+  margin-top: 12px;
+  color: #fff5ca;
+  font-size: clamp(22px, 4vw, 38px);
+  line-height: 1;
+}
+
+.finishedBanner {
+  margin: 18px 22px 0;
+  padding: 18px;
+  color: #080808;
+  font-size: clamp(20px, 3vw, 34px);
+  font-weight: 900;
+  text-align: center;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #ffd760, #ff477d, #70f4ff);
+}
+
+.primaryButton {
+  display: block;
+  width: calc(100% - 44px);
+  min-height: 118px;
+  margin: 22px;
+  border: 0;
+  color: #090909;
+  background: linear-gradient(90deg, #ffd760, #ff477d 52%, #70f4ff);
+  box-shadow:
+    0 0 26px rgba(255, 215, 96, 0.38),
+    0 0 42px rgba(255, 47, 105, 0.24);
+  cursor: pointer;
+  font-size: clamp(24px, 4.5vw, 54px);
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.primaryButton:disabled,
+.resetButton:disabled {
+  cursor: not-allowed;
+  filter: grayscale(1);
+  opacity: 0.52;
+}
+
+.usedPanel,
+.debug {
+  margin: 0 22px 22px;
+  padding: 18px;
+  border: 1px solid rgba(255, 216, 103, 0.24);
+  background: rgba(0, 0, 0, 0.36);
+}
+
+.usedPanel h2,
+.debug h2 {
+  margin: 0 0 10px;
+}
+
+.usedPanel p {
+  min-height: 24px;
+  margin: 0 0 14px;
+  color: #fff1b8;
+  white-space: pre-wrap;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(42px, 1fr));
+  gap: 8px;
+}
+
+.cardGrid span {
+  display: grid;
+  min-height: 54px;
+  place-items: center;
+  border: 1px solid rgba(255, 216, 103, 0.28);
+  color: rgba(255, 244, 198, 0.55);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.cardGrid .usedCard {
+  color: #090909;
+  background: #ffd760;
+}
+
+.cardGrid .currentCard {
+  outline: 3px solid #ff477d;
+  box-shadow: 0 0 22px rgba(255, 71, 125, 0.42);
+}
+
+.debug pre {
+  min-height: 170px;
+  margin: 0;
+  overflow: auto;
+  color: #00ff96;
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.log {
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 216, 103, 0.18);
+  color: #fff1b8;
+  white-space: pre-wrap;
+}
+
+.resetZone {
+  width: min(1120px, 100%);
+  margin: 28px auto 0;
+  padding-top: 20px;
+  border-top: 1px dashed rgba(255, 71, 125, 0.44);
+  text-align: right;
+}
+
+.resetButton {
+  min-width: 260px;
+  min-height: 54px;
+  border: 1px solid #ff477d;
+  color: #ff8faf;
+  background: rgba(42, 0, 14, 0.68);
+  cursor: pointer;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+@media (max-width: 760px) {
+  .screen {
+    padding: 14px;
+  }
+
+  .header,
+  .statusGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .header {
+    display: block;
+  }
+
+  .connected,
+  .disconnected {
+    display: inline-block;
+    margin-top: 12px;
+  }
+
+  .statusGrid {
+    display: grid;
+  }
+
+  .cardGrid {
+    grid-template-columns: repeat(5, minmax(42px, 1fr));
+  }
+
+  .resetZone {
+    text-align: left;
+  }
+}

@@ -43,6 +43,8 @@ Depois abra:
 
 - `http://localhost:3000`
 - `http://localhost:3000/operator`
+- `http://localhost:3000/queda-aviao`, para a projecao textual isolada de Queda Aviao
+- `http://localhost:3000/queda-aviao-controller`, para controlar essa projecao em tempo real
 
 O operator tambem pode ser aberto dentro da tela principal pelo botao `OP`,
 abaixo do botao `?`. Ele alterna entre chat em tela cheia e chat com terminal
@@ -51,6 +53,15 @@ operador ao lado; em telas menores, aparece como gaveta animada.
 Quando o Instagram embutido e/ou o operator estiverem visiveis, arraste as
 divisorias entre `chat | Instagram | operator` para ajustar o palco. O tamanho
 fica salvo no navegador para o proximo reload.
+
+## Queda Aviao
+
+Abra `http://localhost:3000/queda-aviao` na tela publica e
+`http://localhost:3000/queda-aviao-controller` na maquina/aba de operacao. O
+controller altera a projecao via estado do servidor e SSE: tocar/pausar,
+avancar/voltar, ir para segmento, subdivisao do texto, fade, ritmo geral, tempo
+das rubricas, loop e texto base. A rota antiga `/queda-aviao/debug` continua
+apontando para o mesmo controller.
 
 ## Comandos do operator
 
@@ -163,6 +174,7 @@ Forcar ou controlar um jogo do HOST:
 /game maria
 /game secret Anitta
 /game mestre
+/game verdade-ou-bolo
 /game stop
 /game replace forca
 ```
@@ -171,6 +183,10 @@ Se ja houver jogo ativo, `/game` nao empilha outro. Use `/game stop` para
 encerrar ou `/game replace tipo` para substituir explicitamente. Em Maria
 Antonieta no modo em que a Caixa adivinha, `/game secret texto` define o segredo
 no servidor/operator sem enviar esse segredo para o modelo.
+
+Em `Verdade ou Bolo?`, o operator usa `REVELAR RESPOSTA` para tocar o video da
+rodada. Quando o video termina, a projecao abre 10 segundos de voto no canto da
+tela; se ninguem votar, a rodada conta como erro e avanca automaticamente.
 
 Entrar no modo MALAS e gerar uma transicao contextual na projecao:
 
