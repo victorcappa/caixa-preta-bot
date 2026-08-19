@@ -94,7 +94,8 @@ As telas privadas de operacao tem uma barra comum de abas no topo:
 navega para o controller correspondente em tela cheia e, quando houver uma cena
 publica associada, tambem muda a janela de projecao ativa. `Chatbot` volta a
 projecao para `/`, `Baralho` abre `/baralho-morbido` e `Queda Aviao` abre
-`/queda-aviao`.
+`/queda-aviao`. `Glitch` nao troca a cena projetada: ele abre o controller e o
+glitch continua sendo aplicado sobre a tela publica que ja estiver ativa.
 
 Quando o Instagram embutido e/ou o operator estiverem visiveis, arraste as
 divisorias entre `chat | Instagram | operator` para ajustar o palco. O tamanho
@@ -108,7 +109,8 @@ controller altera a projecao via estado do servidor e SSE: tocar/pausar,
 avancar/voltar, ir para segmento, subdivisao do texto, fade, ritmo geral, tempo
 das rubricas, loop e texto base. A rota antiga `/queda-aviao/debug` continua
 apontando para o mesmo controller. A projecao abre em modo manual; use
-`TOCAR` para autoplay ou `PRÓXIMA` para avancar segmento por segmento.
+`TOCAR` para autoplay ou `PRÓXIMA` para avancar segmento por segmento. O fade
+padrao e `0ms`, para troca seca de texto.
 
 ## Baralho Morbido
 

@@ -210,7 +210,7 @@ export default function QuedaAviaoController() {
         <div className={styles.inlineActions}>
           <button disabled={pending} type="button" onClick={() => updatePlayback({ fadeMs: 0 })}>SEM FADE</button>
           <button disabled={pending} type="button" onClick={() => updatePlayback({ fadeMs: DEFAULT_FADE_MS })}>
-            FADE PADRÃO
+            PADRÃO
           </button>
         </div>
 
