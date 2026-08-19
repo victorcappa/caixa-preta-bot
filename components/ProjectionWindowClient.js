@@ -39,6 +39,7 @@ function postProjectionAction(action, projectionWindowId, path, keepalive = fals
 
 export default function ProjectionWindowClient() {
   const commandIdsRef = useRef(new Set());
+  const navigatingRef = useRef(false);
 
   useEffect(() => {
     const projectionWindowId = resolveProjectionWindowId();
@@ -62,7 +63,7 @@ export default function ProjectionWindowClient() {
     const events = new EventSource("/api/events?client=projection-window");
     events.onmessage = (event) => {
       const payload = JSON.parse(event.data);
-      const command = payload.command;
+      const command = payload.command || payload.event?.command;
 
       if (payload.event?.type !== "projection:navigate" || !command) {
         return;
@@ -74,10 +75,15 @@ export default function ProjectionWindowClient() {
 
       commandIdsRef.current.add(command.id);
       window.sessionStorage.setItem(STORAGE_KEY, projectionWindowId);
+      navigatingRef.current = true;
       window.location.assign(projectionUrl(command.path, projectionWindowId));
     };
 
     function disconnect() {
+      if (navigatingRef.current) {
+        return;
+      }
+
       closed = true;
       window.clearInterval(heartbeat);
 

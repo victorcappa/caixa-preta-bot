@@ -61,6 +61,29 @@ Pontos importantes:
 - O operator e uma tela de recuperacao: blackouts escurecem telas publicas, mas nao escurecem o operator.
 - Baralho Morbido usa polling leve proprio, nao SSE global, para nao travar Operator/Chat quando a tela publica esta aberta.
 
+## Controle de telas de projecao
+
+No `/operator`, use `ABRIR NOVA JANELA COM` para criar uma janela publica
+controlada. A nova janela recebe um `projectionWindowId` no query parameter,
+salva o mesmo ID em `sessionStorage`, registra-se em `/api/projection` e passa
+a receber comandos pelo SSE existente em `/api/events`.
+
+Depois de posicionar essa janela no monitor/projetor em modo Estender Tela, use
+`MUDAR PARA TELA` no `/operator` para trocar somente a janela de projecao ativa.
+O Operator nao navega nem recarrega. Abrir uma nova janela controlada torna essa
+janela a ativa; a estrutura do estado guarda multiplas janelas em
+`projection.windows`, entao comandos futuros podem ser direcionados por ID.
+
+Telas publicas controlaveis:
+
+- `Chatbot`: `/`
+- `Baralho Morbido`: `/baralho-morbido`
+- `Queda Aviao`: `/queda-aviao`
+
+Telas de controller, debug e treinamento nao entram no menu de projecao. Se o
+Safari bloquear `window.open()`, permita popups para `localhost:3000`; a abertura
+precisa acontecer a partir do clique do operador para ser aceita pelo navegador.
+
 O operator tambem pode ser aberto dentro da tela principal pelo botao `OP`,
 abaixo do botao `?`. Ele alterna entre chat em tela cheia e chat com terminal
 operador ao lado; em telas menores, aparece como gaveta animada.
