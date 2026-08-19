@@ -1,3 +1,4 @@
+import ControllerSurface from "@/components/ControllerSurface";
 import QuedaAviaoController from "../../queda-aviao-controller/QuedaAviaoController";
 
 export const metadata = {
@@ -6,5 +7,9 @@ export const metadata = {
 };
 
 export default function QuedaAviaoDebugPage() {
-  return <QuedaAviaoController />;
+  return (
+    <ControllerSurface>
+      <QuedaAviaoController />
+    </ControllerSurface>
+  );
 }

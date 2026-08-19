@@ -88,6 +88,11 @@ O operator tambem pode ser aberto dentro da tela principal pelo botao `OP`,
 abaixo do botao `?`. Ele alterna entre chat em tela cheia e chat com terminal
 operador ao lado; em telas menores, aparece como gaveta animada.
 
+As telas privadas de operacao tem uma barra comum de abas no topo:
+`Operator`, `Baralho`, `Queda Aviao`, `Glitch` e `Treino`. Tocar em uma aba
+navega para o controller correspondente em tela cheia, permitindo trocar de
+cabine a qualquer momento sem voltar manualmente pela URL.
+
 Quando o Instagram embutido e/ou o operator estiverem visiveis, arraste as
 divisorias entre `chat | Instagram | operator` para ajustar o palco. O tamanho
 fica salvo no navegador para o proximo reload.
