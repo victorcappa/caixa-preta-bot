@@ -4,7 +4,7 @@
 .airportContamination { z-index: 65; opacity: .23; mix-blend-mode: screen; animation: contaminate .8s steps(3) infinite; overflow: hidden; }
 .timerOverlay { z-index: 110; display: grid; place-content: center; justify-items: center; gap: 12px; color: #fff; background: rgba(0,0,0,.92); }
 .timerOverlay strong { font-family: var(--font-mono, monospace); font-size: min(46vw, 46vh); line-height: .8; }
-.timerOverlay small { max-width: min(1100px, 88vw); color: #00ff66; font-family: var(--font-mono, monospace); font-size: clamp(16px, 2vw, 30px); font-weight: 900; letter-spacing: .08em; text-align: center; text-wrap: balance; }
+.timerOverlay small { color: #00ff66; font-family: var(--font-mono, monospace); font-size: clamp(16px, 2vw, 30px); font-weight: 900; letter-spacing: .12em; }
 .timerOverlay span { color: #ff3155; font-family: var(--font-mono, monospace); font-size: clamp(36px, 8vw, 110px); font-weight: 900; letter-spacing: .16em; }
 .complete { animation: endFlash .5s steps(2) infinite; }
 .selectionOverlay { position: absolute; inset: 0; z-index: 115; display: grid; place-items: center; pointer-events: none; color: #fff; background: #030303; font-family: var(--font-mono, monospace); }

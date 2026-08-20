@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "test:host-mode": "node scripts/host-mode-simulation.js",
     "test:internet-voice": "node --no-warnings scripts/internet-voice-test.js",
+    "test:research": "node --no-warnings scripts/research-director-test.js",
     "test:internet-voice:live": "node --no-warnings --env-file-if-exists=.env.local scripts/internet-voice-live-evaluation.js",
     "test:games": "node --no-warnings scripts/game-director-test.js",
     "test:baralho-morbido": "node --no-warnings scripts/baralho-morbido-test.js",

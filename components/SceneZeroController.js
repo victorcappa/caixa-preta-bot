@@ -36,17 +36,18 @@ const SCENE_ZERO_INDEX = [
   ["scene-zero-collection", "PERGUNTAS / COLETA"],
   ["scene-zero-participant", "PARTICIPANTE"],
   ["scene-zero-suitcases", "MALAS"],
+  ["scene-zero-cake", "É BOLO?"],
   ["scene-zero-singing", "CANTAR 15s"],
   ["scene-zero-glitch", "GLITCH"],
   ["scene-zero-browser", "GOOGLE + INSTAGRAM"],
   ["scene-zero-airport", "AEROPORTO / TEA"]
 ];
 
-function remainingTimer(timer, now, fallback = 15) {
+function remainingTimer(timer, now) {
   if (timer?.status === "running" && timer.endsAt) {
     return Math.max(0, Math.ceil((Date.parse(timer.endsAt) - now) / 1000));
   }
-  return timer?.remainingSeconds ?? fallback;
+  return timer?.remainingSeconds ?? 15;
 }
 
 export default function SceneZeroController() {
@@ -55,7 +56,6 @@ export default function SceneZeroController() {
   const [detail, setDetail] = useState("");
   const [memoryText, setMemoryText] = useState("");
   const [collectionObservation, setCollectionObservation] = useState("");
-  const [gincanaObservation, setGincanaObservation] = useState("");
   const [personalityGuidance, setPersonalityGuidance] = useState("");
   const [personalityGuidanceDirty, setPersonalityGuidanceDirty] = useState(false);
   const [browserCommand, setBrowserCommand] = useState("");
@@ -270,11 +270,6 @@ export default function SceneZeroController() {
   const instagram = snapshot.instagram || {};
   const game = snapshot.game || {};
   const suitcase = snapshot.suitcase || {};
-  const suitcaseGame = sceneZero.suitcaseGame || {};
-  const gincana = suitcaseGame.gincana || {};
-  const gincanaTimer = gincana.timer || {};
-  const gincanaSeconds = remainingTimer(gincanaTimer, now, null);
-  const suitcaseInstagram = suitcaseGame.instagram || {};
   const globalGlitch = snapshot.glitch || {};
   const participantSelection = sceneZero.participantSelection || {};
   const participantSelectionBusy = ["preparing", "awaiting_invite", "countdown", "roulette"].includes(participantSelection.status);
@@ -497,95 +492,34 @@ export default function SceneZeroController() {
           <small>Marcus Garcia e Victor Cappa nunca entram no sorteio.</small>
         </ControlBlock>
 
-        <ControlBlock id="scene-zero-suitcases" title="JOGO DAS MALAS" wide>
-          <Readout label="PROGRESSÃO" value={`MANUAL · MALA ATUAL ${suitcaseGame.currentSuitcase || "—"} · ANTERIOR ${suitcaseGame.previousSuitcase || "—"}`} />
-          <Readout label="PARTICIPANTE" value={sceneZero.currentParticipant?.name} />
-          <div className={styles.suitcaseGrid}>
-            <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 1 ? styles.activeSuitcase : ""}`}>
-              <h3>MALA 1 — VERDADE OU BOLO</h3>
-              <Button primary onClick={() => sceneAction("suitcase-one-start")} pending={pending}>INICIAR VERDADE OU BOLO</Button>
-              <Readout label="JOGO EXISTENTE" value={game.id === "verdade_ou_bolo" ? `${game.phase || "ATIVO"}` : "INATIVO"} />
-              <Button onClick={() => sceneAction("cake-comment")} pending={pending}>COMENTAR</Button>
-              <Button onClick={() => sceneAction("cake-provoke")} pending={pending}>NOVA PROVOCAÇÃO</Button>
-              <Button onClick={() => operatorCommand("/game round")} pending={pending}>PRÓXIMA RODADA</Button>
-              <Button onClick={() => operatorCommand("/game verdade")} pending={pending}>VERDADE</Button>
-              <Button onClick={() => operatorCommand("/game bolo")} pending={pending}>BOLO</Button>
-              <Button onClick={() => operatorCommand("/game reveal")} pending={pending}>REVELAR</Button>
-              <Button danger onClick={() => sceneAction("cake-end")} pending={pending}>ENCERRAR</Button>
-            </section>
+        <ControlBlock id="scene-zero-suitcases" title="MALAS" wide>
+          <Readout label="ESTADO" value={`${suitcase.phase || "IDLE"} / ${suitcase.activeExperience || "—"}`} />
+          <Readout label="PESSOA PESQUISADA" value={instagram.browserMode === "person_research"
+            ? `${instagram.research?.person || sceneZero.currentParticipant?.name || "—"} / ${(instagram.research?.step || instagram.status || "idle").toUpperCase()}`
+            : sceneZero.currentParticipant?.name} />
+          <Button onClick={() => operatorCommand("/mala start")} pending={pending}>INICIAR / RETOMAR</Button>
+          <Button onClick={() => operatorCommand("/mala 1")} pending={pending}>MALA 1</Button>
+          <Button onClick={() => operatorCommand("/mala 2")} pending={pending}>MALA 2</Button>
+          <Button onClick={() => operatorCommand("/mala 3")} pending={pending}>MALA 3</Button>
+          <Button primary onClick={() => sceneAction("suitcase-research-person")} pending={pending || !sceneZero.currentParticipant?.name}>PESQUISAR PARTICIPANTE</Button>
+          <Button onClick={() => sceneAction("suitcase-research-stop")} pending={pending || instagram.browserMode !== "person_research"}>FECHAR PESQUISA</Button>
+          <Button danger onClick={() => operatorCommand("/mala abort")} pending={pending}>INTERROMPER JOGO</Button>
+          {instagram.browserMode === "person_research" && instagram.embedded && instagram.status !== "DISCONNECTED" ? (
+            <div className={styles.instagramPanel}>
+              <InstagramBrowserPanel instagram={instagram} onClose={() => sceneAction("suitcase-research-stop")} />
+            </div>
+          ) : null}
+        </ControlBlock>
 
-            <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 2 ? styles.activeSuitcase : ""}`}>
-              <h3>MALA 2 — GINCANA</h3>
-              <Button primary onClick={() => sceneAction("suitcase-two-start")} pending={pending}>INICIAR MALA 2</Button>
-              <Button onClick={() => sceneAction("gincana-draw")} pending={pending || suitcaseGame.currentSuitcase !== 2}>SORTEAR GINCANA</Button>
-              <Button onClick={() => sceneAction("gincana-draw")} pending={pending || suitcaseGame.currentSuitcase !== 2 || !gincana.currentTask}>SORTEAR OUTRA</Button>
-              <Readout label="TAREFA SORTEADA" value={gincana.currentTask?.instruction} />
-              <Readout label="DIFICULDADE / OBSERVAÇÕES" value={gincana.currentTask ? `${gincana.currentTask.difficulty} · ${gincana.currentTask.notes || "sem observações"}` : "—"} />
-              <div className={`${styles.timer} ${gincanaTimer.status === "complete" ? styles.timerComplete : ""}`}>{gincanaSeconds ?? "—"}</div>
-              <strong className={styles.timerStatus}>TEMPO: {gincana.durationSeconds ? `${gincana.durationSeconds}s` : "—"}<br />{(gincanaTimer.status || "idle").toUpperCase()}</strong>
-              <Button primary onClick={() => sceneAction("gincana-timer-start")} pending={pending || !gincana.currentTask}>INICIAR TIMER</Button>
-              <Button onClick={() => sceneAction("gincana-timer-pause")} pending={pending || gincanaTimer.status !== "running"}>PAUSAR</Button>
-              <Button onClick={() => sceneAction("gincana-timer-resume")} pending={pending || gincanaTimer.status !== "paused"}>CONTINUAR</Button>
-              <Button onClick={() => sceneAction("gincana-timer-restart")} pending={pending || !gincana.currentTask}>REINICIAR</Button>
-              <Button danger onClick={() => sceneAction("gincana-timer-cancel")} pending={pending || !gincana.currentTask}>CANCELAR</Button>
-              <label className={styles.observationField}>
-                O QUE ACONTECEU / OBJETOS / REAÇÃO
-                <input value={gincanaObservation} onChange={(event) => setGincanaObservation(event.target.value)} placeholder="Ex.: conseguiu; trouxe uma garrafa e dois tecidos; plateia riu" />
-              </label>
-              <Button onClick={async () => {
-                const result = await sceneAction("gincana-complete", { detail: gincanaObservation });
-                if (result) setGincanaObservation("");
-              }} pending={pending || !gincana.currentTask}>AÇÃO CONCLUÍDA</Button>
-              <Button danger onClick={async () => {
-                const result = await sceneAction("gincana-failed", { detail: gincanaObservation });
-                if (result) setGincanaObservation("");
-              }} pending={pending || !gincana.currentTask}>FALHOU / TEMPO ESGOTADO</Button>
-              <Readout label="RESULTADO" value={gincana.result ? `${gincana.result.toUpperCase()} · ${gincana.elapsedSeconds ?? 0}s decorridos` : "AGUARDANDO"} />
-              <Readout label="ÚLTIMO COMENTÁRIO DO BOT" value={gincana.lastComment} />
-            </section>
-
-            <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 3 ? styles.activeSuitcase : ""}`}>
-              <h3>MALA 3 — INSTAGRAM / GLITCH</h3>
-              <Button primary onClick={() => sceneAction("suitcase-three-start")} pending={pending}>INICIAR MALA 3</Button>
-              <div className={styles.levels}>
-                {SCENE_ZERO_GLITCH_LEVELS.map((level) => (
-                  <Button primary={sceneZero.glitchLevel === level} key={`mala-${level}`} onClick={() => sceneAction("set-glitch", { level })} pending={pending}>
-                    {level === "normal" ? "NORMAL" : level.replace("glitch-", "GLITCH ").toUpperCase()}
-                  </Button>
-                ))}
-              </div>
-              <Button onClick={() => sceneAction("step-glitch", { delta: 1 })} pending={pending}>GLITCH +</Button>
-              <Button onClick={() => sceneAction("step-glitch", { delta: -1 })} pending={pending}>GLITCH -</Button>
-              <Button onClick={() => sceneAction("suitcase-instagram-start", { target: "robson" })} pending={pending || suitcaseGame.currentSuitcase !== 3}>INSTAGRAM — ROBSON</Button>
-              <Button onClick={() => sceneAction("suitcase-instagram-start", { target: "janaina" })} pending={pending || suitcaseGame.currentSuitcase !== 3}>INSTAGRAM — JANAÍNA</Button>
-              <Readout label="PERFIL ATUAL" value={suitcaseInstagram.currentProfile ? `${suitcaseInstagram.currentProfile.label} / @${suitcaseInstagram.currentProfile.username}` : "INATIVO"} />
-              <Readout label="POST ATUAL" value={suitcaseInstagram.currentProfile ? `${suitcaseInstagram.currentPostIndex || 0} / ${suitcaseInstagram.maxPosts || 10}` : "—"} />
-              <Readout label="CONTEÚDO ANALISADO" value={suitcaseInstagram.currentPost?.visualAnalysis || suitcaseInstagram.currentPost?.digest} />
-              <Readout label="PREVIEW — AINDA NÃO ENVIADO" value={suitcaseInstagram.pendingComment} />
-              <Readout label="STATUS DO ENVIO" value={`${(suitcaseInstagram.status || "idle").toUpperCase()}${suitcaseInstagram.lastError ? ` · ${suitcaseInstagram.lastError}` : ""}`} />
-              <Button primary onClick={() => sceneAction("suitcase-instagram-send")} pending={pending || !suitcaseInstagram.pendingComment}>ENVIAR COMENTÁRIO</Button>
-              <Button onClick={() => sceneAction("suitcase-instagram-next")} pending={pending || !suitcaseInstagram.currentProfile || suitcaseInstagram.paused || suitcaseInstagram.currentPostIndex >= 10}>PRÓXIMO POST</Button>
-              <Button onClick={() => sceneAction("suitcase-instagram-pause")} pending={pending || !suitcaseInstagram.currentProfile || suitcaseInstagram.paused}>PAUSAR</Button>
-              <Button onClick={() => sceneAction("suitcase-instagram-resume")} pending={pending || !suitcaseInstagram.paused}>CONTINUAR</Button>
-              <Button danger onClick={() => sceneAction("suitcase-instagram-stop")} pending={pending || !suitcaseInstagram.currentProfile}>PARAR</Button>
-              <Readout label="POSTS PROCESSADOS / COMENTADOS" value={`${suitcaseInstagram.processedPostKeys?.length || 0} / ${suitcaseInstagram.commentedPostKeys?.length || 0}`} />
-              <Readout label="COMENTÁRIOS RECENTES" value={(suitcaseInstagram.recentComments || []).slice(-5).map((entry) => `${entry.profile} · POST ${entry.postIndex}: ${entry.comment} [${entry.status}]`).join("\n")} />
-              {instagram.embedded && instagram.status !== "DISCONNECTED" ? (
-                <div className={styles.instagramPanel}>
-                  <InstagramBrowserPanel instagram={instagram} onClose={() => sceneAction("suitcase-instagram-stop")} />
-                </div>
-              ) : null}
-            </section>
-          </div>
-
-          <details className={styles.legacySuitcaseControls}>
-            <summary>CONTROLES LEGADOS DAS MALAS / PESQUISA DO PARTICIPANTE</summary>
-            <Readout label="SUITCASE DIRECTOR EXISTENTE" value={`${suitcase.phase || "IDLE"} / ${suitcase.activeExperience || "—"}`} />
-            <Button onClick={() => operatorCommand("/mala start")} pending={pending}>INICIAR / RETOMAR LEGADO</Button>
-            <Button primary onClick={() => sceneAction("suitcase-research-person")} pending={pending || !sceneZero.currentParticipant?.name}>PESQUISAR PARTICIPANTE</Button>
-            <Button onClick={() => sceneAction("suitcase-research-stop")} pending={pending || instagram.browserMode !== "person_research"}>FECHAR PESQUISA</Button>
-            <Button danger onClick={() => operatorCommand("/mala abort")} pending={pending}>INTERROMPER JOGO LEGADO</Button>
-          </details>
+        <ControlBlock id="scene-zero-cake" title="É BOLO?">
+          <Readout label="ESTADO EXISTENTE" value={game.id === "verdade_ou_bolo" ? `${game.phase || "ATIVO"}` : "INATIVO"} />
+          <Button onClick={() => sceneAction("cake-comment")} pending={pending}>COMENTAR</Button>
+          <Button onClick={() => sceneAction("cake-provoke")} pending={pending}>NOVA PROVOCAÇÃO</Button>
+          <Button onClick={() => operatorCommand("/game round")} pending={pending}>PRÓXIMA RODADA</Button>
+          <Button onClick={() => operatorCommand("/game verdade")} pending={pending}>VERDADE</Button>
+          <Button onClick={() => operatorCommand("/game bolo")} pending={pending}>BOLO</Button>
+          <Button onClick={() => operatorCommand("/game reveal")} pending={pending}>REVELAR</Button>
+          <Button danger onClick={() => sceneAction("cake-end")} pending={pending}>ENCERRAR É BOLO</Button>
         </ControlBlock>
 
         <ControlBlock id="scene-zero-singing" title="CANTAR 15s" wide>

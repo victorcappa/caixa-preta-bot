@@ -4,16 +4,12 @@ async function main() {
   const sceneZero = await import("../lib/scene-zero/state.js");
   const collection = await import("../lib/scene-zero/collection.js");
   const browserCommand = await import("../lib/scene-zero/browserCommand.js");
-  const suitcaseGame = await import("../lib/scene-zero/suitcaseGame.js");
   const messageTiming = await import("../lib/messageTiming.js");
   const initial = sceneZero.createInitialSceneZeroState();
 
   assert.equal(initial.stage, "idle");
   assert.equal(initial.timer.remainingSeconds, 15);
   assert.equal(initial.glitchLevel, "normal");
-  assert.equal(initial.suitcaseGame.currentSuitcase, null);
-  assert.equal(initial.suitcaseGame.gincana.timer.status, "idle");
-  assert.equal(initial.suitcaseGame.instagram.maxPosts, 10);
   assert.equal(initial.collection.obedience.anticipated, 0);
   assert.equal(initial.personalityGuidance.text, "");
   assert.deepEqual(initial.personalityGuidance.quickDirections, []);
@@ -181,44 +177,6 @@ async function main() {
   assert.equal(sceneZero.sceneZeroGlitchCommand("glitch-4").action, "trigger");
   assert.equal(sceneZero.sceneZeroGlitchCommand("glitch-4").payload.durationMs, 1800);
   assert.equal(sceneZero.sceneZeroGlitchCommand("collapse").action, "continuous");
-  assert.match(sceneZero.sceneZeroGlitchLanguageDirection("glitch-1"), /pequena estranheza/);
-  assert.match(sceneZero.sceneZeroGlitchLanguageDirection("glitch-4"), /nomes ou fragmentos/);
-  assert.match(sceneZero.sceneZeroGlitchLanguageDirection("collapse"), /nunca gere caracteres aleatórios/);
-
-  const firstTask = suitcaseGame.chooseGincana(undefined, [], () => 0);
-  const secondTask = suitcaseGame.chooseGincana(undefined, [firstTask.id], () => 0);
-  assert.notEqual(firstTask.id, secondTask.id);
-  assert.equal(suitcaseGame.chooseGincana([firstTask], [firstTask.id], () => 0), null);
-  assert.equal(suitcaseGame.chooseGincanaDuration({ durationMin: 60, durationMax: 120 }, () => 0), 60);
-  assert.equal(suitcaseGame.chooseGincanaDuration({ durationMin: 60, durationMax: 120 }, () => 0.999), 120);
-  assert.equal(suitcaseGame.clampGincanaDuration(30), 60);
-  assert.equal(suitcaseGame.clampGincanaDuration(200), 120);
-  assert.equal(suitcaseGame.SCENE_ZERO_INSTAGRAM_TARGETS.robson.participantName, "Robinson Rogério");
-
-  const activeGincana = {
-    ...initial,
-    stage: "suitcases",
-    suitcaseGame: {
-      ...initial.suitcaseGame,
-      currentSuitcase: 2,
-      currentGame: "gincana",
-      gincana: {
-        ...initial.suitcaseGame.gincana,
-        currentTask: suitcaseGame.publicGincanaTask(firstTask),
-        durationSeconds: 90,
-        timer: { ...initial.suitcaseGame.gincana.timer, status: "running", durationSeconds: 90, remainingSeconds: 90 }
-      }
-    }
-  };
-  const gincanaContext = sceneZero.buildSceneZeroContext(activeGincana);
-  assert.match(gincanaContext, /Mala.*atual 2/i);
-  assert.match(gincanaContext, /tempo 90s/);
-  const gincanaDirection = sceneZero.buildSceneZeroDirection(activeGincana, "gincana_complete", "trouxe três objetos");
-  assert.match(gincanaDirection, /comentário sobre o resultado real/);
-  assert.match(gincanaDirection, /trouxe três objetos/);
-
-  const legacySnapshot = sceneZero.publicSceneZeroSnapshot({ ...initial, suitcaseGame: undefined });
-  assert.equal(legacySnapshot.suitcaseGame.instagram.maxPosts, 10);
 
   const messageSchedule = messageTiming.sequentialMessageSchedule(["12345", "1234567890"]);
   assert.equal(messageSchedule.offsets[0], 650);

@@ -25,8 +25,6 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
   const tea = sceneZero?.teaForTwo;
   const timer = sceneZero?.timer;
   const collectionTimer = sceneZero?.collection?.activeCountdown;
-  const gincana = sceneZero?.suitcaseGame?.gincana;
-  const gincanaTimer = gincana?.timer;
   const participantSelection = sceneZero?.participantSelection || {};
 
   useEffect(() => {
@@ -48,12 +46,10 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
     audio.play().catch(() => {});
   }, [tea?.sequence, tea?.status]);
 
-  const visibleTimer = sceneZero?.suitcaseGame?.currentSuitcase === 2 && ["running", "paused", "complete", "completed", "failed"].includes(gincanaTimer?.status)
-    ? gincanaTimer
-    : sceneZero?.stage === "collection" && ["running", "complete"].includes(collectionTimer?.status)
-      ? collectionTimer
-      : sceneZero?.stage === "singing" ? timer : null;
-  const showTimer = ["running", "paused", "complete", "completed", "failed"].includes(visibleTimer?.status);
+  const visibleTimer = sceneZero?.stage === "collection" && ["running", "complete"].includes(collectionTimer?.status)
+    ? collectionTimer
+    : sceneZero?.stage === "singing" ? timer : null;
+  const showTimer = ["running", "paused", "complete"].includes(visibleTimer?.status);
   const seconds = timerSeconds(visibleTimer, now);
   const airport = sceneZero?.stage === "airport" || sceneZero?.airportActive;
   const collapse = sceneZero?.stage === "collapse";
@@ -70,7 +66,7 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
 
   useCountdownSound(seconds, {
     active: Boolean(showTimer && ["running", "complete"].includes(visibleTimer?.status)),
-    countdownKey: `scene-zero:${visibleTimer === gincanaTimer ? "gincana" : visibleTimer === collectionTimer ? "collection" : "singing"}:${visibleTimer?.sequence || 0}`
+    countdownKey: `scene-zero:${visibleTimer === collectionTimer ? "collection" : "singing"}:${visibleTimer?.sequence || 0}`
   });
   useCountdownSound(participantSeconds, {
     active: participantSelection.status === "countdown",
@@ -93,9 +89,8 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
       {showTimer ? (
         <div className={`${styles.timerOverlay} ${visibleTimer.status === "complete" ? styles.complete : ""}`} aria-live="assertive">
           {visibleTimer === collectionTimer ? <small>COLETA EM CURSO</small> : null}
-          {visibleTimer === gincanaTimer ? <small>GINCANA · {gincana?.currentTask?.instruction}</small> : null}
           <strong>{seconds}</strong>
-          {["complete", "completed", "failed"].includes(visibleTimer.status) ? <span>{visibleTimer.status === "completed" ? "CONCLUÍDA" : visibleTimer.status === "failed" ? "FALHOU" : "FIM"}</span> : null}
+          {visibleTimer.status === "complete" ? <span>FIM</span> : null}
         </div>
       ) : null}
       {showParticipantSelection ? (
