@@ -185,7 +185,7 @@ try {
   }
 
   const existingControllers = [
-    ["/forca-g-samples-controller", "CENA 2A — FORÇA G / SAMPLES AUDIOVISUAIS"],
+    ["/forca-g-samples-controller", "SAMPLER — FORÇA G"],
     ["/forca-g-shaders-controller", "CENA 2B — FORÇA G / VÍDEOS E SHADERS"],
     ["/transicao-psicodelica-controller", "CENA 2D — TRANSIÇÃO PSICODÉLICA"],
     ["/tea-for-two-controller", "CENA 3 — TEA FOR TWO / TRANSIÇÃO"],
@@ -196,7 +196,11 @@ try {
   for (const [path, title] of existingControllers) {
     await controller.goto(`${BASE_URL}${path}`, { waitUntil: "domcontentloaded" });
     await controller.getByRole("heading", { name: title }).waitFor();
-    await controller.getByRole("button", { name: "SILÊNCIO / STOP ALL" }).waitFor();
+    if (path === "/forca-g-samples-controller") {
+      await controller.getByRole("button", { name: "STOP ALL", exact: true }).waitFor();
+    } else {
+      await controller.getByRole("button", { name: "SILÊNCIO / STOP ALL" }).waitFor();
+    }
   }
 
   console.log("scene one sampler browser tests passed");

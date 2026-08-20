@@ -1,5 +1,5 @@
 import ControllerSurface from "@/components/ControllerSurface";
-import EditableCueController from "@/components/EditableCueController";
+import ForcaGSamplerController from "@/components/ForcaGSamplerController";
 
 export const metadata = {
   title: "Força G Samples Controller",
@@ -9,7 +9,7 @@ export const metadata = {
 export default function ForcaGSamplesControllerPage() {
   return (
     <ControllerSurface>
-      <EditableCueController controllerId="forca-g-samples" />
+      <ForcaGSamplerController />
     </ControllerSurface>
   );
 }

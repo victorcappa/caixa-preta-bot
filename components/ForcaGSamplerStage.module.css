@@ -1,0 +1,64 @@
+.stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #000;
+}
+
+.videoLayer,
+.gLocLayer,
+.imageLayer,
+.shaderLayer,
+.textSlot {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.videoLayer { z-index: 10; }
+.gLocLayer { z-index: 20; }
+.imageLayer { z-index: 30; }
+.shaderLayer { z-index: 40; }
+.textSlot { z-index: 50; }
+
+.visualMedia {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+.fadeIn { animation: fadeIn var(--fade-in-ms, 0ms) ease-out both; }
+.fadeOut { animation: fadeOut var(--fade-out-ms, 0ms) linear both; }
+
+.textLayer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 7vw;
+  color: #fff;
+  font-family: "Courier New", Courier, monospace;
+  font-size: clamp(2.2rem, 8vw, 9rem);
+  font-weight: 800;
+  line-height: 1.02;
+  text-align: center;
+  white-space: pre-wrap;
+  text-shadow: 0 0 20px rgba(0, 0, 0, 0.9);
+}
+
+.shaderLayer { overflow: hidden; }
+.shaderTunnel { box-shadow: inset 0 0 min(40vw, 520px) rgba(0, 0, 0, var(--shader-tunnel)); }
+.shaderRedout { background: rgba(255, 24, 38, var(--shader-redout)); mix-blend-mode: screen; }
+.shaderDistortion {
+  background: repeating-linear-gradient(0deg, rgba(112, 244, 255, var(--shader-a)) 0, rgba(112, 244, 255, 0) 3px, rgba(255, 71, 125, var(--shader-b)) 7px);
+  animation: shaderDistort 180ms steps(2, end) infinite;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes shaderDistort { 50% { transform: translateX(var(--shader-shift)) skewX(-1deg); } }

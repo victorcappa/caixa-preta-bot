@@ -25,11 +25,13 @@ async function updateShader(shaderAction, payload = {}) {
   return { response, data };
 }
 
-export default function ForcaGShaderControls() {
+export default function ForcaGShaderControls({ externalShaders = null, onApply = null }) {
   const [shaders, setShaders] = useState(INITIAL_SHADERS);
   const [status, setStatus] = useState("SHADERS READY");
+  const displayedShaders = externalShaders || shaders;
 
   useEffect(() => {
+    if (externalShaders) return undefined;
     fetch("/api/state")
       .then((response) => response.json())
       .then((data) => setShaders(data.forcaGShaders || INITIAL_SHADERS))
@@ -46,12 +48,17 @@ export default function ForcaGShaderControls() {
     };
 
     return () => events.close();
-  }, []);
+  }, [externalShaders]);
 
   async function apply(shaderAction, payload = {}) {
     setStatus("SHADERS...");
 
     try {
+      if (onApply) {
+        await onApply(shaderAction, payload);
+        setStatus("SHADERS READY");
+        return;
+      }
       const { response, data } = await updateShader(shaderAction, payload);
 
       if (!response.ok) {
@@ -75,7 +82,7 @@ export default function ForcaGShaderControls() {
           ["distortion", "DEFORMAR"]
         ].map(([id, label]) => (
           <button
-            className={shaders[id] ? styles.active : styles.button}
+            className={displayedShaders[id] ? styles.active : styles.button}
             key={id}
             onClick={() => apply(id)}
             type="button"
@@ -86,14 +93,14 @@ export default function ForcaGShaderControls() {
         <button className={styles.clear} onClick={() => apply("clear")} type="button">LIMPAR</button>
       </div>
       <label className={styles.intensity}>
-        <span>INTENSIDADE {shaders.intensity}</span>
+        <span>INTENSIDADE {displayedShaders.intensity}</span>
         <input
           max="100"
           min="0"
           onChange={(event) => apply("intensity", { intensity: event.target.value })}
           step="1"
           type="range"
-          value={shaders.intensity}
+          value={displayedShaders.intensity}
         />
       </label>
       <small>{status}</small>

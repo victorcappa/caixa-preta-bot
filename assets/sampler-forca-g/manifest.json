@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "gLoc": [
+    {
+      "id": "g-loc-isabela",
+      "label": "ISABELA",
+      "file": "videos/forca-g/forca-g-isabela.mp4",
+      "shortcut": "1"
+    },
+    {
+      "id": "g-loc-robinson",
+      "label": "ROBINSON",
+      "file": "videos/forca-g/forca-g-robinson.mp4",
+      "shortcut": "2"
+    },
+    {
+      "id": "g-loc-ney",
+      "label": "NEY",
+      "file": "videos/forca-g/forca-g-ney.mp4",
+      "shortcut": "3"
+    }
+  ],
+  "audio": [],
+  "images": [],
+  "video": [],
+  "texts": [],
+  "presets": []
+}

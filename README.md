@@ -133,6 +133,84 @@ Shaders` mostram videos e imagens disparados no controller em tempo real.
 `Glitch Geral` nao troca a cena projetada: ele abre o controller e o glitch
 continua sendo aplicado sobre a tela publica que ja estiver ativa.
 
+## Cena 2A — Sampler Força G
+
+`/forca-g-samples-controller` é a central privada de disparo e
+`/forca-g-samples` é sua projeção pública. O sampler usa o `showState` e o SSE
+já existentes, mas mantém slots independentes para vídeo principal, G-LOC,
+imagens, shader, texto, glitch e vozes de áudio. Assim, trocar ou avançar outro
+conteúdo da cena não encerra samples; somente término natural, STOP individual,
+STOP AUDIO ou STOP ALL os remove. STOP ALL também neutraliza vídeos, imagens,
+texto, shaders e o glitch global sem resetar o restante do espetáculo.
+
+Os assets novos ficam em:
+
+```text
+assets/sampler-forca-g/
+├── manifest.json
+├── g-loc/
+├── videos/
+├── images/
+├── audio/
+└── texts/
+```
+
+Arquivos suportados colocados diretamente nessas pastas entram automaticamente
+como pads ao usar `RECARREGAR ASSETS` ou recarregar o controller. O label é
+derivado do nome do arquivo. Para customizar label, atalho, loop, volume, fade,
+modo de imagem ou texto, registre o item no `manifest.json`; `file` pode ser só
+o nome dentro da pasta da categoria ou um caminho relativo a `assets/`. Os três
+vídeos legados de `assets/videos/forca-g/` permanecem onde estavam e estão
+referenciados pelo manifest como G-LOC. Cues com arquivo que já tenham sido
+salvos pelo controller anterior em `data/controller-cues.json` também são
+incorporados quando ainda não aparecem no manifest, preservando compatibilidade.
+
+Exemplo compacto de configuração manual:
+
+```json
+{
+  "audio": [
+    { "id": "heartbeat", "label": "HEARTBEAT", "file": "heartbeat.mp3", "shortcut": "q", "loop": true, "volume": 0.8 }
+  ],
+  "texts": [
+    { "id": "quatro-g", "label": "4G", "text": "4G", "shortcut": "4", "durationMs": 2500 }
+  ],
+  "images": [
+    { "id": "diagrama", "label": "DIAGRAMA", "file": "g-force-diagram.png", "mode": "overlay", "fit": "contain" }
+  ],
+  "presets": [
+    {
+      "id": "g-mais-4",
+      "label": "G+ 4",
+      "shortcut": "f4",
+      "actions": [
+        { "type": "play", "item": "heartbeat" },
+        { "type": "play", "item": "quatro-g" },
+        { "type": "shader", "shader": "tunnel", "enabled": true }
+      ]
+    }
+  ]
+}
+```
+
+Para G-LOC, vídeo, imagem e áudio, copie o arquivo para a pasta correspondente;
+nenhum script move, converte ou apaga mídia. Textos podem ser itens inline no
+manifest ou arquivos `.txt` em `texts/`. Imagens `replace` substituem o conjunto
+visual atual; imagens `overlay` são acrescentadas e podem coexistir. Atalhos são
+locais ao controller, configuráveis, aparecem nos pads e ficam suspensos com
+foco em input, textarea, select ou conteúdo editável. Duplicatas são avisadas na
+tela e o primeiro item vence. O volume master atua em todas as vozes da projeção.
+Áudios e imagens são pré-carregados; vídeos carregam metadados antes do primeiro
+disparo para evitar manter vários arquivos grandes integralmente em memória.
+
+O manifest preserva itens inválidos como pads em erro, registra no console o
+caminho ausente e mantém os outros controles utilizáveis. A validação lógica
+rápida é `npm run test:forca-g-sampler`; para áudio remoto no Safari, desbloqueie
+a janela pública com uma interação antes do ensaio por causa da política de
+autoplay do navegador. Se o browser bloquear o primeiro play com áudio, o G-LOC
+faz fallback automático para `MUTED`, continua exibindo o vídeo e atualiza o
+controle de som sem classificar o arquivo como quebrado.
+
 ## Cena 1 — Queda / Emergência
 
 `/queda-aviao-controller` mantém o transporte manual e automático do texto da

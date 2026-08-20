@@ -15,7 +15,12 @@ const CONTENT_TYPES = {
   ".mp3": "audio/mpeg",
   ".wav": "audio/wav",
   ".ogg": "audio/ogg",
-  ".m4a": "audio/mp4"
+  ".m4a": "audio/mp4",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".webp": "image/webp",
+  ".gif": "image/gif"
 };
 
 function safeAssetPath(rawFile = "") {
