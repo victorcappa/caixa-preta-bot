@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import ControllerBlackoutBar from "./ControllerBlackoutBar";
 import ControllerGlobalVolume from "./ControllerGlobalVolume";
+import SceneNotes from "./SceneNotes";
 import {
   getControllerSurfaceGroups,
   sortedControllerSurfaces,
@@ -94,6 +95,7 @@ export default function ControllerSurface({ children }) {
       </nav>
       <ControllerBlackoutBar />
       <div className={styles.content}>{children}</div>
+      {activeSurface?.sceneNumber?.startsWith("CENA") ? <SceneNotes scene={activeSurface} /> : null}
     </div>
   );
 }

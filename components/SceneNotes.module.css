@@ -1,0 +1,86 @@
+.notes {
+  position: fixed;
+  z-index: 190;
+  right: 12px;
+  bottom: 12px;
+  width: min(420px, calc(100vw - 24px));
+  border: 1px solid var(--green);
+  background: rgba(0, 8, 3, 0.98);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.78);
+  font-family: "Courier New", Courier, monospace;
+}
+
+.header button {
+  width: 100%;
+  min-height: 38px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  border: 0;
+  background: rgba(0, 255, 102, 0.1);
+  color: var(--green);
+  cursor: pointer;
+  padding: 7px 9px;
+  text-align: left;
+}
+
+.header span {
+  min-width: 0;
+  font-weight: 700;
+}
+
+.header small {
+  color: var(--green-dim);
+  font-size: 0.66rem;
+}
+
+.header strong {
+  color: var(--green-dim);
+  font-size: 0.68rem;
+}
+
+.notes textarea {
+  width: 100%;
+  height: 150px;
+  min-height: 92px;
+  display: block;
+  resize: vertical;
+  border: 0;
+  border-top: 1px solid var(--green-soft);
+  outline: 0;
+  background: #020402;
+  color: #d8ffe6;
+  caret-color: var(--green);
+  padding: 10px;
+  line-height: 1.4;
+}
+
+.notes textarea::placeholder {
+  color: var(--green-dim);
+}
+
+.notes textarea:focus {
+  box-shadow: inset 0 0 0 1px var(--green);
+}
+
+.notes textarea:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.collapsed {
+  width: min(330px, calc(100vw - 24px));
+}
+
+@media (max-width: 640px) {
+  .notes {
+    right: 7px;
+    bottom: 7px;
+    width: calc(100vw - 14px);
+  }
+
+  .notes textarea {
+    height: 118px;
+  }
+}
