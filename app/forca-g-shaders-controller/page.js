@@ -1,5 +1,5 @@
 import ControllerSurface from "@/components/ControllerSurface";
-import EditableCueController from "@/components/EditableCueController";
+import ForcaGShadersController from "@/components/ForcaGShadersController";
 
 export const metadata = {
   title: "Força G Shaders Controller",
@@ -9,7 +9,7 @@ export const metadata = {
 export default function ForcaGShadersControllerPage() {
   return (
     <ControllerSurface>
-      <EditableCueController controllerId="forca-g-shaders" />
+      <ForcaGShadersController />
     </ControllerSurface>
   );
 }

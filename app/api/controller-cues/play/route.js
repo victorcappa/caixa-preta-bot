@@ -16,6 +16,22 @@ export async function POST(request) {
 
     const action = `${body.action || "play"}`.toLowerCase();
 
+    if (action === "shader") {
+      if (controllerId !== "forca-g-shaders") {
+        return Response.json({ error: "SCENE SHADER UNKNOWN" }, { status: 400 });
+      }
+
+      const result = showState.controlForcaGShaders(body.shaderAction, body.payload, {
+        source: "forca-g-shaders-controller"
+      });
+
+      if (!result.applied) {
+        return Response.json({ error: result.error || "SCENE SHADER ERROR" }, { status: 400 });
+      }
+
+      return Response.json({ message: "SCENE SHADER UPDATED", ...result });
+    }
+
     if (action === "stop") {
       const result = showState.stopSceneCue({
         controllerId,

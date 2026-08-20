@@ -92,7 +92,7 @@ async function postSceneCue(controllerId, action, cue = null) {
   return { response, data };
 }
 
-export default function EditableCueController({ controllerId }) {
+export default function EditableCueController({ controllerId, renderStageOverlay = null }) {
   const [config, setConfig] = useState(null);
   const [assets, setAssets] = useState(EMPTY_ASSETS);
   const [colors, setColors] = useState(["#00ff66"]);
@@ -447,6 +447,7 @@ export default function EditableCueController({ controllerId }) {
             </div>
           ) : null}
           {!preview ? <p>Selecione ou dispare um botão.</p> : null}
+          {renderStageOverlay ? <div className={styles.stageOverlay}>{renderStageOverlay()}</div> : null}
         </div>
 
         <section className={styles.cueGrid} aria-label="Botões de sample">

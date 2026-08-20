@@ -54,28 +54,7 @@ export default function ControllerSurface({ children }) {
   return (
     <div className={styles.surface}>
       <nav className={styles.tabs} aria-label="Controllers cênicos">
-        <div className={styles.sceneRow}>
-          {groupedSurfaces.map((group) => {
-            const activeGroup = group.surfaces.some((surface) => isControllerSurfaceActive(surface, pathname));
-            const primarySurface = group.surfaces[0];
-
-            return (
-              <Link
-                aria-current={activeGroup ? "page" : undefined}
-                className={activeGroup ? styles.activeSceneTab : styles.sceneTab}
-                href={primarySurface.path}
-                key={group.id}
-                onClick={() => navigateProjection(primarySurface.projectionPath)}
-                title={group.name}
-              >
-                <span>{group.label}</span>
-                <strong>{group.name}</strong>
-              </Link>
-            );
-          })}
-        </div>
-
-        <div className={styles.controllerRow}>
+        <div className={styles.controllerGroups}>
           {groupedSurfaces.map((group) => (
             <section className={styles.group} key={group.id} aria-label={`${group.label} — ${group.name}`}>
               {group.surfaces.map((surface) => {
@@ -91,7 +70,7 @@ export default function ControllerSurface({ children }) {
                     title={surface.name}
                   >
                     {surface.sceneNumber ? <span className={styles.tabSceneNumber}>{surface.sceneNumber}</span> : null}
-                    <span>{surface.shortName || surface.label}</span>
+                    <span>{surface.menuLabel || surface.shortName || surface.label}</span>
                   </Link>
                 );
               })}

@@ -11,74 +11,26 @@
 
 .tabs {
   min-width: 0;
-  display: grid;
   flex: 0 0 auto;
-  gap: 6px;
-  overflow: hidden;
+  overflow-x: auto;
   padding: 7px 10px 8px;
   border-bottom: 1px solid var(--green-soft);
   background: #000000;
   font-family: "Courier New", Courier, monospace;
 }
 
-.sceneRow,
-.controllerRow {
-  min-width: 0;
+.controllerGroups {
+  width: max-content;
+  min-width: 100%;
   display: flex;
   gap: 6px;
-  align-items: center;
-  overflow-x: auto;
-}
-
-.sceneRow {
-  padding-bottom: 1px;
-}
-
-.controllerRow {
-  padding-top: 6px;
-  border-top: 1px solid rgba(0, 255, 102, 0.12);
+  align-items: flex-start;
 }
 
 .group {
   flex: 0 0 auto;
-  display: flex;
+  display: grid;
   gap: 6px;
-  align-items: center;
-  padding-right: 9px;
-  border-right: 1px solid rgba(0, 255, 102, 0.12);
-}
-
-.group:last-child {
-  border-right: 0;
-  padding-right: 0;
-}
-
-.sceneTab,
-.activeSceneTab {
-  flex: 0 0 auto;
-  min-height: 30px;
-  display: inline-flex;
-  gap: 7px;
-  align-items: center;
-  border: 1px solid rgba(0, 255, 102, 0.12);
-  color: var(--green-dim);
-  padding: 5px 8px;
-  text-decoration: none;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.sceneTab span,
-.activeSceneTab span {
-  color: var(--green);
-  font-size: 0.7rem;
-  font-weight: 700;
-}
-
-.sceneTab strong,
-.activeSceneTab strong {
-  font-size: 0.68rem;
-  font-weight: 400;
 }
 
 .tab,
@@ -103,9 +55,6 @@
   font-weight: 700;
 }
 
-.sceneTab:hover,
-.sceneTab:focus-visible,
-.activeSceneTab,
 .tab:hover,
 .tab:focus-visible,
 .activeTab {
@@ -118,10 +67,6 @@
   background: rgba(0, 255, 102, 0.12);
 }
 
-.activeSceneTab {
-  background: rgba(0, 255, 102, 0.08);
-}
-
 .content {
   min-width: 0;
   min-height: 0;
@@ -131,22 +76,6 @@
 @media (max-width: 640px) {
   .tabs {
     padding: 7px;
-  }
-
-  .group {
-    padding-right: 7px;
-  }
-
-  .sceneTab,
-  .activeSceneTab {
-    min-height: 29px;
-    gap: 5px;
-    padding: 4px 7px;
-  }
-
-  .sceneTab strong,
-  .activeSceneTab strong {
-    display: none;
   }
 
   .tab,

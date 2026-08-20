@@ -53,8 +53,8 @@ Depois abra:
 - `http://localhost:3000/queda-aviao-controller`, para controlar essa projecao em tempo real
 - `http://localhost:3000/forca-g-samples`, tela publica de samples audiovisuais da Forca G
 - `http://localhost:3000/forca-g-samples-controller`, controller de samples audiovisuais
-- `http://localhost:3000/forca-g-shaders`, tela publica preta para videos e shaders da Forca G
-- `http://localhost:3000/forca-g-shaders-controller`, controller preparado para videos e shaders
+- `http://localhost:3000/forca-g-shaders`, tela publica de videos e shaders da Forca G
+- `http://localhost:3000/forca-g-shaders-controller`, controller editavel de videos e shaders
 - `http://localhost:3000/transicao-psicodelica`, tela publica preta da transicao psicodelica
 - `http://localhost:3000/transicao-psicodelica-controller`, controller preparado para a transicao psicodelica
 - `http://localhost:3000/tea-for-two`, tela publica preta de Tea For Two
@@ -107,11 +107,11 @@ abaixo do botao `?`. Ele alterna entre chat em tela cheia e chat com terminal
 operador ao lado; em telas menores, aparece como gaveta animada.
 
 As telas privadas de operacao tem um menu comum no topo, configurado em
-`lib/controllerSurfaces.js`. O `/operator` funciona como hub: a primeira linha
-mostra os grupos/cenas e a segunda linha mostra os controllers especificos.
-Cada rota carrega apenas o controller ativo, sem misturar todos os controles em
-uma tela unica. As abas especificas mostram o numero da cena antes do nome para
-facilitar a operacao ao vivo.
+`lib/controllerSurfaces.js`. O `/operator` funciona como hub e organiza os
+controllers em colunas por cena: uma cena com apenas um controller aparece uma
+vez; as quatro partes da Cena 2 ficam empilhadas na mesma coluna. Cada rota
+carrega apenas o controller ativo, sem misturar todos os controles em uma tela
+unica. As abas mostram `CENA 2A`, `CENA 2B` e assim por diante antes do nome.
 
 Grupos atuais:
 
@@ -127,10 +127,10 @@ Grupos atuais:
 Cada aba cenica troca a projecao para sua rota publica correspondente. `Bot /
 Malas` abre `/`, `Baralho Morbido` abre `/baralho-morbido`, `Queda /
 Emergencia` abre `/queda-aviao` e as demais cenas abrem uma tela preta propria
-enquanto sua logica publica ainda nao existe. `Forca G — Samples` e excecao:
-videos e imagens disparados no controller aparecem na tela publica em tempo
-real. `Glitch Geral` nao troca a cena projetada: ele abre o controller e o
-glitch continua sendo aplicado sobre a tela publica que ja estiver ativa.
+enquanto sua logica publica ainda nao existe. `Forca G — Samples` e `Forca G —
+Shaders` mostram videos e imagens disparados no controller em tempo real.
+`Glitch Geral` nao troca a cena projetada: ele abre o controller e o glitch
+continua sendo aplicado sobre a tela publica que ja estiver ativa.
 
 Abaixo das abas existe uma barra de blackout compartilhada em todas as telas de
 controller. Ela controla `CHATBOT`, `BARALHO`, `LEGENDA`, `CENAS`, `TECNOLOGIA` e
@@ -175,6 +175,11 @@ Na `CENA 2D`, o cue `Texto Subindo` tem tipo `TEXTO`: edite seu conteudo no
 campo `Texto projetado`, defina cor e duracao, salve o padrao e dispare o cue.
 A tela publica da Transicao Psicodelica sobe o texto pela projecao; os demais
 tipos continuam disponiveis para sons, videos e imagens.
+
+Na `CENA 2B`, os botoes `TÚNEL`, `REDOUT` e `DEFORMAR` aparecem sobre a previa
+do video. Eles aplicam a mesma camada sobre o video da projecao publica; use
+`LIMPAR` para remover os tres efeitos e o controle de intensidade para dosar a
+camada.
 
 O divisor entre o palco de cues e o editor tem uma alca redimensionavel, como o
 painel do bot. Arraste a alca ou use as setas `←` e `→` quando ela estiver em

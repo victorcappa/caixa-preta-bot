@@ -1,0 +1,56 @@
+.controls {
+  display: grid;
+  gap: 7px;
+  border: 1px solid rgba(112, 244, 255, 0.54);
+  background: rgba(0, 0, 0, 0.76);
+  padding: 8px;
+  color: #ffffff;
+  font-family: "Courier New", Courier, monospace;
+}
+
+.buttons {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.button,
+.active,
+.clear {
+  min-height: 29px;
+  border: 1px solid #507178;
+  background: #061014;
+  color: #bceff7;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.7rem;
+}
+
+.active {
+  border-color: #70f4ff;
+  background: rgba(112, 244, 255, 0.22);
+  color: #ffffff;
+}
+
+.clear {
+  border-color: #ff477d;
+  color: #ff9db8;
+}
+
+.intensity {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  color: #bceff7;
+  font-size: 0.68rem;
+}
+
+.intensity input {
+  width: 100%;
+}
+
+.controls small {
+  color: #70f4ff;
+  font-size: 0.62rem;
+}

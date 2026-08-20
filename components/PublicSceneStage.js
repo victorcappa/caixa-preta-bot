@@ -60,6 +60,7 @@ function PublicCueMedia({ cue }) {
 export default function PublicSceneStage({ blackoutTarget = "cenas", controllerId = "" }) {
   const [displayBlackout, setDisplayBlackout] = useState(null);
   const [sceneCue, setSceneCue] = useState(null);
+  const [forcaGShaders, setForcaGShaders] = useState(null);
 
   useEffect(() => {
     fetch("/api/state")
@@ -67,6 +68,7 @@ export default function PublicSceneStage({ blackoutTarget = "cenas", controllerI
       .then((data) => {
         setDisplayBlackout(data.displayBlackout || null);
         setSceneCue(data.sceneCue || null);
+        setForcaGShaders(data.forcaGShaders || null);
       })
       .catch(() => {});
 
@@ -75,6 +77,7 @@ export default function PublicSceneStage({ blackoutTarget = "cenas", controllerI
       const payload = JSON.parse(event.data);
       setDisplayBlackout(payload.state?.displayBlackout || payload.displayBlackout || null);
       setSceneCue(payload.state?.sceneCue || payload.sceneCue || null);
+      setForcaGShaders(payload.state?.forcaGShaders || payload.forcaGShaders || null);
     };
 
     return () => events.close();
@@ -83,10 +86,33 @@ export default function PublicSceneStage({ blackoutTarget = "cenas", controllerI
   const cue = sceneCue?.controllerId === controllerId && sceneCue.cue
     ? { ...sceneCue.cue, sequence: sceneCue.sequence }
     : null;
+  const shaderActive = controllerId === "forca-g-shaders"
+    && Boolean(forcaGShaders?.tunnel || forcaGShaders?.redout || forcaGShaders?.distortion);
+  const shaderClassName = [
+    styles.shaderOverlay,
+    forcaGShaders?.tunnel ? styles.shaderTunnel : "",
+    forcaGShaders?.redout ? styles.shaderRedout : "",
+    forcaGShaders?.distortion ? styles.shaderDistortion : ""
+  ].filter(Boolean).join(" ");
+  const shaderIntensity = Math.max(0, Math.min(100, Number(forcaGShaders?.intensity) || 0)) / 100;
+  const shaderStyle = {
+    "--shader-tunnel": `${0.72 + shaderIntensity * 0.26}`,
+    "--shader-redout": `${0.12 + shaderIntensity * 0.42}`,
+    "--shader-distortion-a": `${0.04 + shaderIntensity * 0.12}`,
+    "--shader-distortion-b": `${0.03 + shaderIntensity * 0.08}`,
+    "--shader-shift": `${shaderIntensity * 18}px`
+  };
 
   return (
     <main className={styles.stage} aria-label="Cena publica">
       {cue ? <PublicCueMedia cue={cue} key={cue.sequence} /> : null}
+      {shaderActive ? (
+        <div
+          aria-hidden="true"
+          className={shaderClassName}
+          style={shaderStyle}
+        />
+      ) : null}
       <DisplayBlackout blackout={displayBlackout} target={blackoutTarget} />
     </main>
   );
