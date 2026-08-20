@@ -249,6 +249,31 @@ Quando o Instagram embutido e/ou o operator estiverem visiveis, arraste as
 divisorias entre `chat | Instagram | operator` para ajustar o palco. O tamanho
 fica salvo no navegador para o proximo reload.
 
+## Sons procedurais do robô
+
+O `ROBOT SOUND ENGINE` fica no `/operator` e também no operator embutido da tela
+principal. Ele controla `SOUND ON/OFF`, volume geral, volume da digitação, som de
+encerramento e os presets `NORMAL`, `SECO`, `MECÂNICO` e `INSTÁVEL`. Os botões de
+teste cobrem digitação, `WAKE`, `THINKING`, `SUCCESS / OBEY`, `ERROR`, `GLITCH` e
+`IMPACT`. O teste soa na janela onde houve o clique; a projeção recebe os mesmos
+ajustes pelo estado compartilhado e pelo SSE existente.
+
+Os clicks são sintetizados pela Web Audio API em `lib/robot-sound/` e não usam
+arquivos do sampler. O motor mantém um único `AudioContext` por janela, ganho e
+compressor centrais e limite de vozes. Cada click é disparado no intervalo que
+revela visualmente o próximo caractere em `components/Chat.js`, não quando o
+texto chega do servidor. Pontuação, espaço e quebra de linha usam pequenas
+variações do mesmo sintetizador. O glitch global altera pitch, falhas, duplicação
+e ruído da digitação; os presets fortes podem habilitar clicks fantasmas sem
+letras visíveis. `STOP ALL`, reset, troca de tela e desmontagem encerram os
+timers locais.
+
+Por política de autoplay, Safari/Chrome podem manter o `AudioContext` suspenso
+até uma interação de teclado, toque ou mouse na própria janela pública. Fazer um
+click no operator desbloqueia os testes daquela janela, mas não garante o
+desbloqueio de outra janela de projeção. Antes do ensaio, interaja uma vez com a
+tela pública. Validação lógica rápida: `npm run test:robot-sound`.
+
 ## Queda Aviao
 
 Abra `http://localhost:3000/queda-aviao` na tela publica e

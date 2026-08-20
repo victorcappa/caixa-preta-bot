@@ -1,0 +1,101 @@
+.panel {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 20px;
+  padding: 12px;
+  border: 1px solid var(--green-soft);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--green-dim);
+  font-size: 0.85rem;
+}
+
+.enabledButton,
+.disabledButton,
+.tests button {
+  min-height: 36px;
+  border: 1px solid var(--green-soft);
+  background: transparent;
+  color: var(--green);
+  font: inherit;
+  cursor: pointer;
+}
+
+.enabledButton {
+  background: var(--green);
+  color: #000000;
+}
+
+.disabledButton {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 10px;
+  color: var(--green-dim);
+  font-size: 0.82rem;
+}
+
+.field input {
+  grid-column: 1 / -1;
+  width: 100%;
+  accent-color: var(--green);
+}
+
+.selectField {
+  display: grid;
+  gap: 6px;
+  color: var(--green-dim);
+  font-size: 0.82rem;
+}
+
+.selectField select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--green-soft);
+  background: #020402;
+  color: var(--green);
+  font: inherit;
+  padding: 6px;
+}
+
+.checkboxField {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--green-dim);
+  font-size: 0.82rem;
+}
+
+.checkboxField input {
+  accent-color: var(--green);
+}
+
+.tests {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.tests button {
+  padding: 5px;
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.tests button:first-child,
+.tests button:last-child {
+  grid-column: 1 / -1;
+}
+
+.note {
+  color: var(--green-dim);
+  line-height: 1.35;
+}

@@ -10,6 +10,7 @@ import SceneZeroProjectionLayer from "./SceneZeroProjectionLayer";
 import Terminal from "./Terminal";
 import styles from "./Chat.module.css";
 import { PUBLIC_TYPE_INTERVAL_MS } from "@/lib/messageTiming";
+import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
 
 const INTRO_READY_TEXT = "TEM ALGUEM AI?";
 const INTRO_DOTS_TEXT = "...";
@@ -48,6 +49,7 @@ export default function Chat() {
   const [game, setGame] = useState(null);
   const [suitcase, setSuitcase] = useState(null);
   const [glitch, setGlitch] = useState(null);
+  const [robotSound, setRobotSound] = useState(null);
   const [displayBlackout, setDisplayBlackout] = useState(null);
   const [sceneZero, setSceneZero] = useState(null);
   const [introStep, setIntroStep] = useState("cursor");
@@ -124,6 +126,7 @@ export default function Chat() {
         setGame(data.game || null);
         setSuitcase(data.suitcase || null);
         setGlitch(data.glitch || null);
+        setRobotSound(data.robotSound || null);
         setDisplayBlackout(data.displayBlackout || null);
         setSceneZero(data.sceneZero || null);
 
@@ -141,6 +144,13 @@ export default function Chat() {
     events.onerror = () => setStatus("DISCONNECTED");
     events.onmessage = (event) => {
       const payload = JSON.parse(event.data);
+      if (payload.event?.type === "stop-all") {
+        window.dispatchEvent(new CustomEvent("caixa-preta:stopall"));
+        return;
+      }
+      if (payload.event?.type === "reset") {
+        robotSoundEngine.stopAll();
+      }
       if (payload.event?.type === "baralho-morbido" || payload.event?.type === "baralho-morbido-display") {
         return;
       }
@@ -153,6 +163,7 @@ export default function Chat() {
         setGame(payload.state.game || null);
         setSuitcase(payload.state.suitcase || null);
         setGlitch(payload.state.glitch || null);
+        setRobotSound(payload.state.robotSound || null);
         setDisplayBlackout(payload.state.displayBlackout || null);
         setSceneZero(payload.state.sceneZero || null);
         hydrateInitialMessages(payload.state.conversation || []);
@@ -167,6 +178,7 @@ export default function Chat() {
       setGame(payload.state.game || null);
       setSuitcase(payload.state.suitcase || null);
       setGlitch(payload.state.glitch || null);
+      setRobotSound(payload.state.robotSound || null);
       setDisplayBlackout(payload.state.displayBlackout || null);
       setSceneZero(payload.state.sceneZero || null);
     };
@@ -179,6 +191,24 @@ export default function Chat() {
     setInstagramWidth(storedNumber("caixa-preta.instagramWidth", DEFAULT_INSTAGRAM_WIDTH));
     setInstagramHeight(storedNumber("caixa-preta.instagramHeight", DEFAULT_INSTAGRAM_HEIGHT));
   }, []);
+
+  useEffect(() => robotSoundEngine.armAutoUnlock(), []);
+
+  useEffect(() => {
+    if (robotSound) robotSoundEngine.setSettings(robotSound);
+  }, [robotSound]);
+
+  useEffect(() => {
+    robotSoundEngine.setGlitch(glitch || {});
+  }, [glitch]);
+
+  useEffect(() => {
+    if (pending) {
+      robotSoundEngine.startThinking();
+    } else {
+      robotSoundEngine.stopThinking();
+    }
+  }, [pending]);
 
   useEffect(() => {
     if (!manualOpen) {
@@ -220,6 +250,7 @@ export default function Chat() {
     }
 
     setTypedReplies((current) => ({ ...current, [message.id]: "" }));
+    robotSoundEngine.wake();
     let index = 0;
     const timer = setInterval(() => {
       index += 1;
@@ -227,10 +258,12 @@ export default function Chat() {
         ...current,
         [message.id]: message.content.slice(0, index)
       }));
+      robotSoundEngine.typing(message.content[index - 1]);
 
       if (index >= message.content.length) {
         clearInterval(timer);
         typingTimersRef.current.delete(message.id);
+        robotSoundEngine.complete();
         if (["scene-zero-collection", "scene-zero-roulette"].includes(message.source)) {
           notifySceneZeroMessageTyped(message.id);
         }
@@ -325,6 +358,7 @@ export default function Chat() {
       clearInterval(introTimerRef.current);
       clearInterval(introDotsTimerRef.current);
       chatRequestControllerRef.current?.abort();
+      robotSoundEngine.stopAll();
     };
   }, []);
 
@@ -342,6 +376,7 @@ export default function Chat() {
       typingQueueRef.current = [];
       clearInterval(introTimerRef.current);
       clearInterval(introDotsTimerRef.current);
+      robotSoundEngine.stopAll();
       setPending(false);
     }
 
@@ -385,6 +420,7 @@ export default function Chat() {
     introDotsTimerRef.current = setInterval(() => {
       index += 1;
       setIntroDotsText(INTRO_DOTS_TEXT.slice(0, index));
+      robotSoundEngine.typing(INTRO_DOTS_TEXT[index - 1]);
 
       if (index >= INTRO_DOTS_TEXT.length) {
         clearInterval(introDotsTimerRef.current);
@@ -406,15 +442,18 @@ export default function Chat() {
     }
 
     setIntroText("");
+    robotSoundEngine.wake();
 
     let index = 0;
     introTimerRef.current = setInterval(() => {
       index += 1;
       setIntroText(INTRO_READY_TEXT.slice(0, index));
+      robotSoundEngine.typing(INTRO_READY_TEXT[index - 1]);
 
       if (index >= INTRO_READY_TEXT.length) {
         clearInterval(introTimerRef.current);
         introTimerRef.current = null;
+        robotSoundEngine.complete();
       }
     }, TYPE_INTERVAL_MS);
 

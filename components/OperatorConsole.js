@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PROJECTION_WINDOW_PARAM, projectionScreens } from "@/lib/projectionScreens";
+import RobotSoundControls from "./RobotSoundControls";
 import Terminal from "./Terminal";
 import styles from "./OperatorConsole.module.css";
 
@@ -479,6 +480,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             <span>SUITCASE: {suitcase.active ? `${suitcase.phase} / ${suitcase.activeExperience || "none"}` : suitcase.phase}</span>
             <span>INSTAGRAM: {instagram.status || "DISCONNECTED"}</span>
             <span>GLITCH: {glitch.active ? `${glitch.mode || "active"} #${glitch.sequence || 0}`.toUpperCase() : "OFF"}</span>
+            <span>ROBOT SOUND: {state.robotSound?.enabled === false ? "OFF" : (state.robotSound?.preset || "normal").toUpperCase()}</span>
             <span>PARTICIPANTS: T{participantCounts.team} A{participantCounts.audience} S{participantCounts.session}</span>
             <span>ACTIVITIES: {activities.length}</span>
             <span>EVENTS: {state.performance?.events?.length || 0}</span>
@@ -523,6 +525,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
           ))}
 
           <h2>PERFORMANCE</h2>
+          <RobotSoundControls settings={state.robotSound} onLog={addLog} />
           <article className={styles.memory}>
             <strong>INSTAGRAM / {instagram.status || "DISCONNECTED"}</strong>
             <p>

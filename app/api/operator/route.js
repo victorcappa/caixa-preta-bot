@@ -251,6 +251,7 @@ export async function POST(request) {
     if (name === "/stopall") {
       const stopped = [];
       markStopAll();
+      showState.signalStopAll({ source: "operator" });
       const controller = getExistingInstagramController();
 
       if (controller) {
