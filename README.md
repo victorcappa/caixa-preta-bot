@@ -159,7 +159,9 @@ mesmo tempo no controller e na projeção `/queda-aviao`. Alterar loop ou volume
 durante a reprodução atualiza as instâncias ativas sem reiniciá-las. Atalhos são
 editáveis e não disparam com foco em input, textarea, select ou conteúdo
 editável. `SILÊNCIO / STOP ALL` para somente os áudios deste sampler, inclusive
-loops, sem mudar o bloco textual nem a projeção.
+loops, sem mudar o bloco textual nem a projeção. `FADE OUT` reduz durante dois
+segundos e encerra somente as instâncias ativas daquele pad no controller e na
+projeção; os demais samples continuam tocando.
 
 Abaixo do texto, a pedaleira processa ao vivo os samples que tocam no controller
 e na projeção. Cada pad guarda e salva automaticamente sua própria cadeia: ao

@@ -82,6 +82,16 @@ try {
   const saved = await cueConfig(context.request);
   assert.equal(saved.config.cues.find((cue) => cue.id === firstCue.id).audioEffects.phaser, 0.81);
   assert.equal(saved.config.cues.find((cue) => cue.id === secondCue.id).audioEffects.preset, "destruido");
+
+  await controller.getByRole("button", { name: `Fade out ${firstCue.label}` }).click();
+  await controller.waitForFunction(async ({ controllerId, firstCueId, secondCueId }) => {
+    const response = await fetch("/api/state", { cache: "no-store" });
+    const state = await response.json();
+    const active = state.sceneCue?.audioCues || [];
+    return !active.some((cue) => cue.controllerId === controllerId && cue.id === firstCueId)
+      && active.some((cue) => cue.controllerId === controllerId && cue.id === secondCueId);
+  }, { controllerId: CONTROLLER_ID, firstCueId: firstCue.id, secondCueId: secondCue.id });
+  await projection.waitForFunction(() => document.querySelectorAll("audio").length === 1);
   console.log("scene one per-sample pedalboard browser tests passed");
 } finally {
   if (context) {

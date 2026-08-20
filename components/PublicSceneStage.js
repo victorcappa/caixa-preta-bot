@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   attachSceneAudioEffects,
   detachSceneAudioEffects,
+  fadeOutMedia,
   updateSceneAudioEffects
 } from "@/lib/sceneAudioGraph";
 import DisplayBlackout from "./DisplayBlackout";
@@ -15,7 +16,9 @@ function assetSrc(assetPath = "") {
 
 function PublicCueMedia({ cue, onEnded = null }) {
   const mediaRef = useRef(null);
+  const onEndedRef = useRef(onEnded);
   const src = assetSrc(cue?.assetPath);
+  onEndedRef.current = onEnded;
 
   useEffect(() => {
     const media = mediaRef.current;
@@ -49,6 +52,12 @@ function PublicCueMedia({ cue, onEnded = null }) {
       void attachSceneAudioEffects(media, cue.audioEffects);
     }
   }, [cue.audioEffects, cue?.type]);
+
+  useEffect(() => {
+    const media = mediaRef.current;
+    if (!media || cue?.type !== "audio" || !cue.fadeOutSequence) return;
+    return fadeOutMedia(media, cue.fadeOutMs, () => onEndedRef.current?.());
+  }, [cue.fadeOutMs, cue.fadeOutSequence, cue?.type]);
 
   if (cue.type === "text") {
     return (

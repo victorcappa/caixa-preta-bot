@@ -4,6 +4,7 @@ import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState }
 import {
   attachSceneAudioEffects,
   detachSceneAudioEffects,
+  fadeOutMedia,
   updateSceneAudioEffects
 } from "@/lib/sceneAudioGraph";
 import { normalizeSceneAudioEffects, SCENE_AUDIO_EFFECT_DEFAULTS } from "@/lib/sceneAudioEffects";
@@ -147,6 +148,7 @@ const EditableCueController = forwardRef(function EditableCueController({
     }
 
     window.clearTimeout(instance.timeoutId);
+    instance.fadeCancel?.();
     instance.audio.pause();
     detachSceneAudioEffects(instance.audio);
     instance.audio.removeAttribute("src");
@@ -413,6 +415,24 @@ const EditableCueController = forwardRef(function EditableCueController({
     setPreview(null);
     setStatus(`STOP ${cue.label}`);
     void stopPublicCue(cue);
+  }
+
+  function fadeOutCue(cue) {
+    const instances = [...audioInstancesRef.current.entries()].filter(([, instance]) => instance.cueId === cue.id);
+    if (instances.length === 0) return;
+
+    setStatus(`FADE OUT — ${cue.label}`);
+    for (const [playbackId, instance] of instances) {
+      instance.fadeCancel?.();
+      instance.fadeCancel = fadeOutMedia(instance.audio, 2000, () => {
+        instance.fadeCancel = null;
+        releaseAudioInstance(playbackId);
+      });
+    }
+    void enqueuePublicCue("update-audio", null, {
+      cueId: cue.id,
+      patch: { fadeOutMs: 2000 }
+    });
   }
 
   function stopAllSamples() {
@@ -692,6 +712,14 @@ const EditableCueController = forwardRef(function EditableCueController({
                     type="button"
                   >
                     LOOP {cue.loop ? "ON" : "OFF"}
+                  </button>
+                  <button
+                    aria-label={`Fade out ${cue.label}`}
+                    disabled={!playing}
+                    onClick={() => fadeOutCue(cue)}
+                    type="button"
+                  >
+                    FADE OUT
                   </button>
                   <button
                     aria-label={`Parar ${cue.label}`}
