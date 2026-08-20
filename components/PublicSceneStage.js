@@ -28,6 +28,12 @@ function PublicCueMedia({ cue }) {
       media.muted = true;
       media.play().catch(() => {});
     });
+
+    return () => {
+      media.pause();
+      media.removeAttribute("src");
+      media.load();
+    };
   }, [cue?.sequence, cue?.type, src]);
 
   if (cue.type === "text") {

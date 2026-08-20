@@ -102,7 +102,9 @@ export default function EditableCueController({ controllerId, renderStageOverlay
   const [saving, setSaving] = useState(false);
   const [editorWidth, setEditorWidth] = useState(DEFAULT_EDITOR_WIDTH);
   const audioRef = useRef(null);
+  const previewMediaRef = useRef(null);
   const clearPreviewRef = useRef(null);
+  const publicCueRequestRef = useRef(Promise.resolve());
   const screenRef = useRef(null);
   const triggerCueRef = useRef(null);
 
@@ -228,6 +230,10 @@ export default function EditableCueController({ controllerId, renderStageOverlay
       audioRef.current = null;
     }
 
+    if (previewMediaRef.current) {
+      previewMediaRef.current.pause();
+    }
+
     const src = assetSrc(cue.assetPath);
     setPreview({ ...cue, src, sequence: crypto.randomUUID() });
     void triggerPublicCue(cue);
@@ -257,14 +263,24 @@ export default function EditableCueController({ controllerId, renderStageOverlay
       audioRef.current = null;
     }
 
+    if (previewMediaRef.current) {
+      previewMediaRef.current.pause();
+    }
+
     setPreview(null);
     setStatus(`STOP ${cue.label}`);
     void stopPublicCue(cue);
   }
 
+  function enqueuePublicCue(action, cue) {
+    const request = publicCueRequestRef.current.then(() => postSceneCue(controllerId, action, cue));
+    publicCueRequestRef.current = request.catch(() => {});
+    return request;
+  }
+
   async function triggerPublicCue(cue) {
     try {
-      const { response, data } = await postSceneCue(controllerId, "play", cue);
+      const { response, data } = await enqueuePublicCue("play", cue);
 
       if (!response.ok) {
         setStatus(data.error || "PUBLIC CUE ERROR");
@@ -276,7 +292,7 @@ export default function EditableCueController({ controllerId, renderStageOverlay
 
   async function stopPublicCue(cue) {
     try {
-      const { response, data } = await postSceneCue(controllerId, "stop", cue);
+      const { response, data } = await enqueuePublicCue("stop", cue);
 
       if (!response.ok) {
         setStatus(data.error || "PUBLIC STOP ERROR");
@@ -434,7 +450,7 @@ export default function EditableCueController({ controllerId, renderStageOverlay
 
         <div className={styles.stage}>
           {preview?.type === "video" && preview.src ? (
-            <video key={preview.sequence} autoPlay className={styles.media} src={preview.src} />
+            <video key={preview.sequence} autoPlay className={styles.media} ref={previewMediaRef} src={preview.src} />
           ) : null}
           {preview?.type === "image" && preview.src ? (
             // eslint-disable-next-line @next/next/no-img-element
