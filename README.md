@@ -369,12 +369,29 @@ Abrir o Instagram real em Chromium visivel e seguir o perfil autorizado:
 /instagram follow cappavictor
 ```
 
-Na primeira execucao, o Chromium abre `instagram.com` por tras da interface e o
-chat mostra um painel lateral com o espelho embutido do Instagram real, mantendo
-a fala da Caixa Preta visivel ao lado. Se o Instagram pedir login, clique no
-espelho, digite ali e faca login manualmente como `@caixapretabot`. O botao `X`
-fecha apenas o painel embutido; a sessao Playwright continua viva. A sessao fica
-salva em `.runtime/instagram-profile/` para as proximas execucoes.
+Na primeira execucao, preencha no servidor o arquivo ignorado pelo Git
+`config/instagram-credentials.local.json`:
+
+```json
+{
+  "username": "caixapretabot",
+  "password": "sua_senha"
+}
+```
+
+O Chromium abre `instagram.com` por tras da interface e faz o login sozinho. O
+arquivo e lido apenas por `InstagramController` no servidor; usuario e senha nao
+sao enviados em respostas, status ou logs e nao entram no bundle client. O
+arquivo versionado `config/instagram-credentials.example.json` serve apenas como
+modelo e nao contem uma senha real. Tambem e possivel apontar outro caminho
+server-only com `INSTAGRAM_CREDENTIALS_FILE`.
+
+O chat mostra um painel lateral com o espelho embutido do Instagram real,
+mantendo a fala da Caixa Preta visivel ao lado. Se o Instagram pedir captcha,
+checkpoint ou 2FA, o painel solicita intervencao manual; esses desafios nao sao
+contornados automaticamente. O botao `X` fecha apenas o painel embutido; a sessao
+Playwright continua viva. A sessao fica salva em
+`.runtime/instagram-profile/` para as proximas execucoes.
 Depois de `/instagram`, o operador pode escrever em linguagem natural; o modelo
 interpreta a intencao e escolhe uma acao pre-definida (`follow`, `open_profile`,
 `open_latest_media`, `open_nth_media`, `comment_latest`, `comment_nth_media`,
@@ -417,6 +434,8 @@ INSTAGRAM_VIEWPORT_HEIGHT=760
 INSTAGRAM_STREAM_FPS=18
 INSTAGRAM_STREAM_QUALITY=62
 INSTAGRAM_ALLOWED_PROFILES=
+# Opcional: caminho server-only alternativo para o JSON de credenciais
+# INSTAGRAM_CREDENTIALS_FILE=/caminho/instagram-credentials.local.json
 ```
 
 Com `INSTAGRAM_EMBEDDED=false`, o Playwright volta a abrir uma janela Chromium
@@ -424,7 +443,8 @@ separada. O padrao cenico agora e embutido no chat.
 
 Com `INSTAGRAM_DEBUG=true`, erros salvam screenshot e metadados seguros em
 `.runtime/instagram-debug/`. O projeto nunca salva usuario, senha, cookies,
-tokens ou headers em logs.
+tokens ou headers em logs ou artefatos de debug. Apenas a sessao do navegador e
+o arquivo local de credenciais mantem dados de autenticacao no servidor.
 
 Forcar ou controlar um jogo do HOST:
 

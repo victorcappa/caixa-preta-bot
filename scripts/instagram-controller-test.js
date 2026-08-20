@@ -155,6 +155,49 @@ async function main() {
   assert.deepEqual(config.allowedProfiles, ["cappavictor"]);
   assert(config.profileDir.endsWith(".runtime/instagram-profile"));
   assert(config.debugDir.endsWith(".runtime/instagram-debug"));
+  assert(config.credentialsPath.endsWith("config/instagram-credentials.local.json"));
+  assert.deepEqual(controllerModule.parseInstagramCredentials(JSON.stringify({
+    username: "@CaixaPretaBot",
+    password: "senha-teste"
+  })), {
+    username: "caixapretabot",
+    password: "senha-teste"
+  });
+  assert.equal(controllerModule.parseInstagramCredentials(JSON.stringify({
+    username: "caixapretabot",
+    password: "COLOQUE_A_SENHA_AQUI"
+  })), null);
+  assert.throws(() => controllerModule.parseInstagramCredentials("nao-json"), /INSTAGRAM_CREDENTIALS_INVALID_JSON/);
+
+  const loginEvents = [];
+  const loginValues = { username: "", password: "", submitted: false };
+  const loginController = new controllerModule.InstagramController({
+    config,
+    reporter: (event) => loginEvents.push(event),
+    credentialsLoader: async () => ({ username: "caixapretabot", password: "segredo-que-nao-pode-vazar" })
+  });
+  loginController.page = createLoginPage(loginValues);
+  loginController.getSessionState = async () => loginValues.submitted ? "authenticated" : "login_required";
+  loginController.dismissKnownModals = async () => {};
+  assert.deepEqual(await loginController.attemptAutomaticLogin(), {
+    status: "ready",
+    message: "INSTAGRAM: login automatico concluido"
+  });
+  assert.deepEqual(loginValues, {
+    username: "caixapretabot",
+    password: "segredo-que-nao-pode-vazar",
+    submitted: true
+  });
+  assert.equal(JSON.stringify(loginEvents).includes("segredo-que-nao-pode-vazar"), false);
+
+  const missingCredentialsController = new controllerModule.InstagramController({
+    config,
+    credentialsLoader: async () => null
+  });
+  assert.deepEqual(await missingCredentialsController.attemptAutomaticLogin(), {
+    status: "login_required",
+    message: "INSTAGRAM: credenciais locais ausentes"
+  });
 
   const controller = new controllerModule.InstagramController({ config });
   assert.equal(controller.assertAllowedUsername("@cappavictor"), "cappavictor");
@@ -501,6 +544,43 @@ function createTextFollowPage() {
     getByRole: () => contextLocator,
     getByText: (pattern) => pattern.test("Seguir") ? textLocator : hiddenLocator,
     locator: () => contextLocator
+  };
+}
+
+function createLoginPage(values) {
+  const body = createFakeLocator({
+    visible: true,
+    innerText: async () => "Log in"
+  });
+  const usernameInput = createFakeLocator({
+    visible: true,
+    fill: async (value) => {
+      values.username = value;
+    }
+  });
+  const passwordInput = createFakeLocator({
+    visible: true,
+    fill: async (value) => {
+      values.password = value;
+    }
+  });
+  const submit = createFakeLocator({
+    visible: true,
+    click: async () => {
+      values.submitted = true;
+    }
+  });
+
+  return {
+    url: () => "https://www.instagram.com/accounts/login/",
+    locator: (selector) => {
+      if (selector === "body") return body;
+      if (selector === "input[name='username']") return usernameInput;
+      if (selector === "input[name='password']") return passwordInput;
+      return submit;
+    },
+    getByRole: () => submit,
+    waitForTimeout: async () => {}
   };
 }
 
