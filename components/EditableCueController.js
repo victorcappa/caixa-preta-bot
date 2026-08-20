@@ -637,7 +637,7 @@ export default function EditableCueController({ controllerId, embedded = false, 
             </label>
             {selectedCue.type !== "text" ? (
               <label>
-                <span>Material</span>
+                <span>{selectedCue.type === "audio" ? "Arquivo de áudio" : "Material"}</span>
                 <select value={selectedCue.assetPath} onChange={(event) => updateCue(selectedCue.id, { assetPath: event.target.value })}>
                   <option value="">SEM MATERIAL</option>
                   {(availableAssets[selectedCue.type] || []).map((asset) => (

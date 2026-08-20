@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import { chromium } from "playwright";
 
 const BASE_URL = "http://localhost:3000";
+const SCENE_ONE_AUDIO_DIRECTORY = path.join(process.cwd(), "assets", "audios", "queda-aviao");
 
 async function sceneAudioCues(request) {
   const response = await request.get(`${BASE_URL}/api/state`);
@@ -48,11 +51,16 @@ try {
   const configResponse = await context.request.get(`${BASE_URL}/api/controller-cues?id=queda-aviao-sampler`);
   assert.equal(configResponse.ok(), true, "scene one sampler config should load");
   const configPayload = await configResponse.json();
-  assert.equal(configPayload.config.cues.length, 4);
-  assert.equal(configPayload.config.cues.every((cue) => cue.assetPath === ""), true);
+  const expectedBasePaths = fs.readdirSync(SCENE_ONE_AUDIO_DIRECTORY, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && [".mp3", ".wav", ".ogg", ".m4a"].includes(path.extname(entry.name).toLowerCase()))
+    .map((entry) => entry.name)
+    .sort((left, right) => left.localeCompare(right, "pt-BR", { sensitivity: "base" }))
+    .map((filename) => `audios/queda-aviao/${filename}`);
+  assert.ok(expectedBasePaths.length >= 1, "scene one base audio directory should not be empty");
+  assert.deepEqual(configPayload.config.cues.map((cue) => cue.assetPath), expectedBasePaths);
   assert.equal(configPayload.config.cues.every((cue) => cue.loop === false && cue.volume === 1), true);
-  assert.ok(configPayload.assets.audio.length >= 2, "test needs two already-existing repository audio files");
-  const [firstAsset, secondAsset] = configPayload.assets.audio;
+  assert.equal(expectedBasePaths.every((assetPath) => configPayload.assets.audio.some((asset) => asset.path === assetPath)), true);
+  const [firstCue, secondCue] = configPayload.config.cues;
 
   const projection = await context.newPage();
   await projection.goto(`${BASE_URL}/queda-aviao`, { waitUntil: "domcontentloaded" });
@@ -62,27 +70,31 @@ try {
   const sampler = controller.getByRole("region", { name: "SAMPLER — QUEDA / EMERGÊNCIA" });
   await sampler.getByText("CONFIGURAR SAMPLES / ATALHOS").click();
 
-  const playSample1 = sampler.getByRole("button", { name: "Tocar Sample 1" });
-  const playSample2 = sampler.getByRole("button", { name: "Tocar Sample 2" });
-  assert.equal(await playSample1.isDisabled(), true, "missing files must disable PLAY");
-  assert.equal(await sampler.getByText("SEM ARQUIVO").count(), 4);
-
   const cueSelector = sampler.getByLabel("Botão a editar");
-  const materialSelector = sampler.getByLabel("Material");
+  const materialSelector = sampler.getByLabel("Arquivo de áudio");
   const shortcutInput = sampler.getByLabel("Atalho");
 
-  await materialSelector.selectOption(firstAsset.path);
+  await sampler.getByRole("button", { name: "NOVO BOTÃO" }).click();
+  const emptyCue = sampler.getByRole("button", { name: "Tocar Novo Botão" });
+  assert.equal(await emptyCue.isDisabled(), true, "a newly-created cue without a file must disable PLAY");
+  assert.equal(await sampler.getByText("SEM ARQUIVO").count(), 1);
+  await materialSelector.selectOption(expectedBasePaths[2]);
+  assert.equal(await emptyCue.isEnabled(), true, "the editor must let a new button receive an existing audio file");
+
+  await cueSelector.selectOption(firstCue.id);
   await shortcutInput.fill("s");
-  await sampler.getByLabel("Volume Sample 1").fill("0");
-  const sample1Card = sampler.locator("article").filter({ hasText: "Sample 1" });
+  await sampler.getByLabel(`Volume ${firstCue.label}`).fill("0");
+  const sample1Card = sampler.locator("article").filter({ hasText: firstCue.label });
   await sample1Card.getByRole("button", { name: "LOOP OFF" }).click();
 
-  await cueSelector.selectOption({ label: "Sample 2" });
-  await materialSelector.selectOption(secondAsset.path);
+  await cueSelector.selectOption(secondCue.id);
   await shortcutInput.fill("a");
-  await sampler.getByLabel("Volume Sample 2").fill("0");
-  const sample2Card = sampler.locator("article").filter({ hasText: "Sample 2" });
+  await sampler.getByLabel(`Volume ${secondCue.label}`).fill("0");
+  const sample2Card = sampler.locator("article").filter({ hasText: secondCue.label });
   await sample2Card.getByRole("button", { name: "LOOP OFF" }).click();
+
+  const playSample1 = sampler.getByRole("button", { name: `Tocar ${firstCue.label}` });
+  const playSample2 = sampler.getByRole("button", { name: `Tocar ${secondCue.label}` });
 
   await playSample1.click();
   await playSample2.click();
@@ -120,7 +132,7 @@ try {
   await controller.waitForTimeout(100);
   assert.equal((await sceneAudioCues(context.request)).length, beforeTyping, "shortcuts must not fire while typing");
 
-  await sample1Card.getByRole("button", { name: "Parar Sample 1" }).click();
+  await sample1Card.getByRole("button", { name: `Parar ${firstCue.label}` }).click();
   await controller.waitForTimeout(150);
   audioCues = await sceneAudioCues(context.request);
   assert.equal(audioCues.length, 1, "per-sample STOP should leave other samples playing");
@@ -136,7 +148,10 @@ try {
 
   await controller.reload({ waitUntil: "domcontentloaded" });
   await controller.getByRole("region", { name: "SAMPLER — QUEDA / EMERGÊNCIA" }).waitFor();
-  assert.equal(await controller.getByText("SEM ARQUIVO").count(), 4, "reload should keep the safe empty default config");
+  assert.equal(await controller.getByText("SEM ARQUIVO").count(), 0, "reload should restore every configured base file");
+  for (const cue of configPayload.config.cues) {
+    await controller.getByRole("button", { name: `Tocar ${cue.label}` }).waitFor();
+  }
 
   const existingControllers = [
     ["/forca-g-samples-controller", "CENA 2A — FORÇA G / SAMPLES AUDIOVISUAIS"],

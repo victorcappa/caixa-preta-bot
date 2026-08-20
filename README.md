@@ -140,11 +140,14 @@ Queda Avião e inclui, na mesma tela, `SAMPLER — QUEDA / EMERGÊNCIA`. O sampl
 é uma instância do `EditableCueController` já usado nas outras cenas; ele não
 avança, retrocede, pausa nem reseta o texto.
 
-Os quatro slots iniciais ficam em `lib/controllerCueConfig.js`, na configuração
-`queda-aviao-sampler`, sem apontar para arquivos inexistentes. Na própria tela,
-abra `CONFIGURAR SAMPLES / ATALHOS`, selecione o botão a editar, escolha ou envie
-um arquivo real, ajuste nome/atalho e use `SALVAR PADRÃO`. A persistência segue
-o fluxo compartilhado em `data/controller-cues.json`; uploads ficam em
+Os pads iniciais ficam em `lib/controllerCueConfig.js`, na configuração
+`queda-aviao-sampler`, e são montados a partir dos arquivos reais de
+`assets/audios/queda-aviao/`. Enquanto ainda não houver um padrão salvo, novos
+MP3, WAV, OGG ou M4A colocados nessa pasta também aparecem como pads-base.
+Na própria tela, abra `CONFIGURAR SAMPLES / ATALHOS`, selecione o botão a editar,
+escolha ou envie outro arquivo, ajuste nome/atalho e use `SALVAR PADRÃO`. Também
+é possível criar novos botões. A persistência segue o fluxo compartilhado em
+`data/controller-cues.json`; uploads ficam em
 `assets/controller-cues/queda-aviao-sampler/`.
 
 Cada sample possui PLAY, STOP, LOOP ON/OFF e volume independentes. One-shots
