@@ -268,6 +268,7 @@ export default function SceneZeroController() {
   const timer = sceneZero.timer || {};
   const seconds = remainingTimer(timer, now);
   const instagram = snapshot.instagram || {};
+  const instagramLoginVerified = instagram.status === "READY" && instagram.lastAction === "manualLogin";
   const game = snapshot.game || {};
   const suitcase = snapshot.suitcase || {};
   const suitcaseGame = sceneZero.suitcaseGame || {};
@@ -556,8 +557,10 @@ export default function SceneZeroController() {
               </div>
               <Button onClick={() => sceneAction("step-glitch", { delta: 1 })} pending={pending}>GLITCH +</Button>
               <Button onClick={() => sceneAction("step-glitch", { delta: -1 })} pending={pending}>GLITCH -</Button>
-              <Button onClick={() => sceneAction("suitcase-instagram-start", { target: "robson" })} pending={pending || suitcaseGame.currentSuitcase !== 3}>INSTAGRAM — ROBSON</Button>
-              <Button onClick={() => sceneAction("suitcase-instagram-start", { target: "janaina" })} pending={pending || suitcaseGame.currentSuitcase !== 3}>INSTAGRAM — JANAÍNA</Button>
+              <Button primary onClick={() => sceneAction("instagram-manual-login")} pending={pending}>ABRIR / VERIFICAR LOGIN MANUAL</Button>
+              <Readout label="ORDEM OBRIGATÓRIA" value="1. ABRA O LOGIN MANUAL · 2. TOQUE EM CONTINUE/CONTINUAR NO PAINEL · 3. CONCLUA O LOGIN · 4. VERIFIQUE O LOGIN · 5. ABRA O PERFIL" />
+              <Button onClick={() => sceneAction("suitcase-instagram-start", { target: "robson" })} pending={pending || suitcaseGame.currentSuitcase !== 3 || !instagramLoginVerified}>INSTAGRAM — ROBSON</Button>
+              <Button onClick={() => sceneAction("suitcase-instagram-start", { target: "janaina" })} pending={pending || suitcaseGame.currentSuitcase !== 3 || !instagramLoginVerified}>INSTAGRAM — JANAÍNA</Button>
               <Readout label="PERFIL ATUAL" value={suitcaseInstagram.currentProfile ? `${suitcaseInstagram.currentProfile.label} / @${suitcaseInstagram.currentProfile.username}` : "INATIVO"} />
               <Readout label="POST ATUAL" value={suitcaseInstagram.currentProfile ? `${suitcaseInstagram.currentPostIndex || 0} / ${suitcaseInstagram.maxPosts || 10}` : "—"} />
               <Readout label="CONTEÚDO ANALISADO" value={suitcaseInstagram.currentPost?.visualAnalysis || suitcaseInstagram.currentPost?.digest} />
@@ -658,6 +661,8 @@ export default function SceneZeroController() {
         </ControlBlock>
 
         <ControlBlock id="scene-zero-browser" title="GOOGLE + INSTAGRAM / COMANDO LIVRE" wide>
+          <Button primary onClick={() => sceneAction("instagram-manual-login")} pending={pending}>ABRIR / VERIFICAR LOGIN MANUAL DO INSTAGRAM</Button>
+          <Readout label="LOGIN DO INSTAGRAM" value={instagramLoginVerified ? "SESSÃO AUTENTICADA · PERFIS LIBERADOS" : "USE O PAINEL ABAIXO PARA TOCAR EM CONTINUE/CONTINUAR E CONCLUIR O LOGIN. NENHUMA CREDENCIAL SERÁ PREENCHIDA AUTOMATICAMENTE."} />
           <label className={styles.browserCommandField}>
             COMANDO EM LINGUAGEM NATURAL
             <textarea

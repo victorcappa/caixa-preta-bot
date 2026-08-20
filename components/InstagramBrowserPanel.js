@@ -21,6 +21,7 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
   const personResearch = instagram.browserMode === "person_research";
   const googleGuidance = instagram.browserMode === "google_guidance";
   const browserCommand = instagram.browserMode === "browser_command";
+  const manualLogin = instagram.browserMode === "instagram_manual_login";
   const publicResearch = personResearch || googleGuidance || browserCommand;
   const researchPerson = instagram.research?.person || "pessoa escolhida";
   const researchLabel = googleGuidance || browserCommand
@@ -232,7 +233,7 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
     <aside className={styles.panel} aria-label={publicResearch ? "Pesquisa pública real embutida" : "Instagram real embutido"}>
       <header className={styles.header}>
         <div>
-          <span>{browserCommand ? "NAVEGADOR REAL" : publicResearch ? (googleGuidance ? "GOOGLE REAL" : "PESQUISA PÚBLICA REAL") : "INSTAGRAM REAL"}</span>
+          <span>{manualLogin ? "LOGIN MANUAL DO INSTAGRAM" : browserCommand ? "NAVEGADOR REAL" : publicResearch ? (googleGuidance ? "GOOGLE REAL" : "PESQUISA PÚBLICA REAL") : "INSTAGRAM REAL"}</span>
           <strong>{publicResearch
             ? researchLabel
             : instagram.targetProfile ? `@${instagram.targetProfile}` : `@${instagram.account || "caixapretabot"}`}</strong>

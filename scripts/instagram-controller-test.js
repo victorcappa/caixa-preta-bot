@@ -336,8 +336,9 @@ async function main() {
     interesting: null,
     instagram: "https://www.instagram.com/robinson.rogerio/"
   });
-  researchController.ensureInstagramSession = async () => {
+  researchController.ensureInstagramSession = async (options) => {
     researchLoginChecks += 1;
+    assert.deepEqual(options, { automatic: false });
     return { status: "ready", message: "INSTAGRAM: sessao encontrada" };
   };
   researchController.dismissKnownModals = async () => {};
@@ -352,6 +353,48 @@ async function main() {
   assert.equal((await researchController.researchPerson("Robinson Rogério")).status, "ready");
   assert.equal(researchLoginChecks, 1);
   assert.equal(researchNavigation.at(-1), "https://www.instagram.com/robinson.rogerio/");
+
+  let automaticLoginAttempted = false;
+  const manualSessionController = new controllerModule.InstagramController({ config });
+  manualSessionController.init = async () => manualSessionController.getStatus();
+  manualSessionController.ensurePage = () => {};
+  manualSessionController.configurePage = async () => {};
+  manualSessionController.dismissKnownModals = async () => {};
+  manualSessionController.getSessionState = async () => "login_required";
+  manualSessionController.attemptAutomaticLogin = async () => {
+    automaticLoginAttempted = true;
+    return { status: "ready" };
+  };
+  manualSessionController.page = {
+    url: () => "https://www.instagram.com/",
+    viewportSize: () => config.viewport
+  };
+  assert.deepEqual(await manualSessionController.ensureInstagramSession({ automatic: false }), {
+    status: "login_required",
+    message: "INSTAGRAM: conclua o login manual antes de abrir o perfil"
+  });
+  assert.equal(automaticLoginAttempted, false);
+
+  const manualLoginNavigation = [];
+  const manualLoginController = new controllerModule.InstagramController({ config });
+  manualLoginController.init = async () => manualLoginController.getStatus();
+  manualLoginController.ensurePage = () => {};
+  manualLoginController.configurePage = async () => {};
+  manualLoginController.closeSecondaryPage = async () => {};
+  manualLoginController.dismissKnownModals = async () => {};
+  manualLoginController.getSessionState = async () => "login_required";
+  manualLoginController.page = {
+    url: () => manualLoginNavigation.at(-1) || "about:blank",
+    goto: async (url) => manualLoginNavigation.push(url),
+    viewportSize: () => config.viewport
+  };
+  assert.deepEqual(await manualLoginController.prepareManualLogin(), {
+    status: "login_required",
+    message: "INSTAGRAM: toque em Continue/Continuar e conclua o login no painel"
+  });
+  assert.equal(manualLoginNavigation.at(-1), "https://www.instagram.com/");
+  assert.equal(manualLoginController.browserMode, "instagram_manual_login");
+  assert.equal(manualLoginController.lastAction, "manualLogin");
 
   let unsafeContinueClicked = false;
   const securityContinueController = new controllerModule.InstagramController({ config });
