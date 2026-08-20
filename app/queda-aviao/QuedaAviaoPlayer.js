@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import DisplayBlackout from "@/components/DisplayBlackout";
+import { PublicSceneAudioOutput } from "@/components/PublicSceneStage";
 import { buildSegments, DEFAULT_FADE_MS, scriptLines } from "./script";
 import styles from "./QuedaAviaoPlayer.module.css";
 
@@ -9,6 +10,7 @@ export default function QuedaAviaoPlayer() {
   const fallbackSegments = useMemo(() => buildSegments(scriptLines), []);
   const [playback, setPlayback] = useState(null);
   const [displayBlackout, setDisplayBlackout] = useState(null);
+  const [sceneCue, setSceneCue] = useState(null);
 
   useEffect(() => {
     fetch("/api/queda-aviao", {
@@ -22,11 +24,17 @@ export default function QuedaAviaoPlayer() {
       .then((data) => setPlayback(data))
       .catch(() => {});
 
+    fetch("/api/state")
+      .then((response) => response.json())
+      .then((data) => setSceneCue(data.sceneCue || null))
+      .catch(() => {});
+
     const events = new EventSource("/api/events?client=queda-aviao-display");
     events.onmessage = (event) => {
       const payload = JSON.parse(event.data);
       setPlayback(payload.state?.quedaAviao || null);
       setDisplayBlackout(payload.state?.displayBlackout || null);
+      setSceneCue(payload.state?.sceneCue || payload.sceneCue || null);
     };
 
     return () => {
@@ -53,6 +61,7 @@ export default function QuedaAviaoPlayer() {
 
   return (
     <main className={styles.screen}>
+      <PublicSceneAudioOutput controllerId="queda-aviao-sampler" sceneCue={sceneCue} />
       <DisplayBlackout blackout={displayBlackout} target="legenda" />
       <p
         key={`${currentLine.id}-${playback?.playbackSequence || 0}`}

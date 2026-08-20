@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import EditableCueController from "@/components/EditableCueController";
 import {
   DEFAULT_FADE_MS,
   scriptLines,
@@ -169,6 +170,8 @@ export default function QuedaAviaoController() {
             PRÓXIMA
           </button>
         </div>
+
+        <EditableCueController controllerId="queda-aviao-sampler" embedded />
 
         <label className={styles.field}>
           <span>FALA / SEGMENTO</span>

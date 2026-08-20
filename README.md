@@ -133,6 +133,28 @@ Shaders` mostram videos e imagens disparados no controller em tempo real.
 `Glitch Geral` nao troca a cena projetada: ele abre o controller e o glitch
 continua sendo aplicado sobre a tela publica que ja estiver ativa.
 
+## Cena 1 — Queda / Emergência
+
+`/queda-aviao-controller` mantém o transporte manual e automático do texto da
+Queda Avião e inclui, na mesma tela, `SAMPLER — QUEDA / EMERGÊNCIA`. O sampler
+é uma instância do `EditableCueController` já usado nas outras cenas; ele não
+avança, retrocede, pausa nem reseta o texto.
+
+Os quatro slots iniciais ficam em `lib/controllerCueConfig.js`, na configuração
+`queda-aviao-sampler`, sem apontar para arquivos inexistentes. Na própria tela,
+abra `CONFIGURAR SAMPLES / ATALHOS`, selecione o botão a editar, escolha ou envie
+um arquivo real, ajuste nome/atalho e use `SALVAR PADRÃO`. A persistência segue
+o fluxo compartilhado em `data/controller-cues.json`; uploads ficam em
+`assets/controller-cues/queda-aviao-sampler/`.
+
+Cada sample possui PLAY, STOP, LOOP ON/OFF e volume independentes. One-shots
+podem ser disparados repetidamente e samples distintos continuam tocando ao
+mesmo tempo no controller e na projeção `/queda-aviao`. Alterar loop ou volume
+durante a reprodução atualiza as instâncias ativas sem reiniciá-las. Atalhos são
+editáveis e não disparam com foco em input, textarea, select ou conteúdo
+editável. `SILÊNCIO / STOP ALL` para somente os áudios deste sampler, inclusive
+loops, sem mudar o bloco textual nem a projeção.
+
 ## Cena 0 — Bot / Malas
 
 `/cena-0-controller` é a superfície privada dedicada à Cena 0. `/operator`

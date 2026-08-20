@@ -32,14 +32,26 @@ export async function POST(request) {
       return Response.json({ message: "SCENE SHADER UPDATED", ...result });
     }
 
-    if (action === "stop") {
+    if (action === "stop" || action === "stop-all" || action === "stop-instance") {
       const result = showState.stopSceneCue({
         controllerId,
-        cueId: `${body.cueId || ""}`.trim(),
+        cueId: action === "stop-all" ? "" : `${body.cueId || ""}`.trim(),
+        playbackId: action === "stop-instance" ? `${body.playbackId || ""}`.trim() : "",
         source: "editable-cue-controller"
       });
 
       return Response.json({ message: "SCENE CUE STOPPED", ...result });
+    }
+
+    if (action === "update-audio") {
+      const result = showState.updateSceneAudioCue({
+        controllerId,
+        cueId: `${body.cueId || ""}`.trim(),
+        patch: body.patch || {},
+        source: "editable-cue-controller"
+      });
+
+      return Response.json({ message: "SCENE AUDIO UPDATED", ...result });
     }
 
     if (!controller.allowedTypes.includes(body.cue?.type)) {

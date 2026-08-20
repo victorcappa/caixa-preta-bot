@@ -8,7 +8,7 @@ function assetSrc(assetPath = "") {
   return assetPath ? `/api/game-assets?file=${encodeURIComponent(assetPath)}` : "";
 }
 
-function PublicCueMedia({ cue }) {
+function PublicCueMedia({ cue, onEnded = null }) {
   const mediaRef = useRef(null);
   const src = assetSrc(cue?.assetPath);
 
@@ -60,7 +60,43 @@ function PublicCueMedia({ cue }) {
     return <img alt="" className={styles.media} src={src} />;
   }
 
-  return <audio autoPlay ref={mediaRef} src={src} />;
+  return (
+    <audio
+      autoPlay
+      loop={Boolean(cue.loop)}
+      onEnded={onEnded || undefined}
+      ref={mediaRef}
+      src={src}
+      volume={Math.max(0, Math.min(1, Number(cue.volume ?? 1)))}
+    />
+  );
+}
+
+export function PublicSceneAudioOutput({ controllerId = "", sceneCue = null }) {
+  const audioCues = (sceneCue?.audioCues || []).filter((cue) => (
+    cue.controllerId === controllerId && cue.type === "audio" && cue.assetPath
+  ));
+
+  function reportEnded(cue) {
+    fetch("/api/controller-cues/play", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        controllerId,
+        action: "stop-instance",
+        cueId: cue.id,
+        playbackId: cue.playbackId
+      })
+    }).catch(() => {});
+  }
+
+  return audioCues.map((cue) => (
+    <PublicCueMedia
+      cue={cue}
+      key={cue.playbackId || `${cue.id}-${cue.sequence}`}
+      onEnded={() => reportEnded(cue)}
+    />
+  ));
 }
 
 export default function PublicSceneStage({ blackoutTarget = "cenas", controllerId = "" }) {
@@ -112,6 +148,7 @@ export default function PublicSceneStage({ blackoutTarget = "cenas", controllerI
   return (
     <main className={styles.stage} aria-label="Cena publica">
       {cue ? <PublicCueMedia cue={cue} key={cue.sequence} /> : null}
+      <PublicSceneAudioOutput controllerId={controllerId} sceneCue={sceneCue} />
       {shaderActive ? (
         <div
           aria-hidden="true"
