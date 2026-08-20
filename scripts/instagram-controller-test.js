@@ -19,7 +19,25 @@ async function main() {
       query: "o candidato do pl para eleições de 2026",
       durationSeconds: 15,
       openResult: true,
-      preferNews: true
+      preferNews: true,
+      wantsComment: false,
+      resultCount: 2,
+      subject: "o candidato do pl para eleições de 2026",
+      wantsInstagram: false
+    }
+  );
+  assert.deepEqual(
+    controllerModule.parseGoogleGuidance("buscar noticias sobre nicolas ferreira e escolher uma noticia e comentar algo sarcastico sobre"),
+    {
+      guidance: "buscar noticias sobre nicolas ferreira e escolher uma noticia e comentar algo sarcastico sobre",
+      query: "noticias sobre nicolas ferreira",
+      durationSeconds: 0,
+      openResult: true,
+      preferNews: true,
+      wantsComment: true,
+      resultCount: 2,
+      subject: "nicolas ferreira",
+      wantsInstagram: true
     }
   );
   assert.equal(controllerModule.normalizePublicResearchUrl("http://127.0.0.1/admin"), null);
@@ -39,6 +57,7 @@ async function main() {
   });
   assert.deepEqual(controllerModule.selectGuidedGoogleResult([
     { url: "https://www.google.com/search?q=eleicoes", text: "Google" },
+    { url: "https://jornal.example.com/tudo-sobre/candidato", text: "Arquivo do candidato" },
     { url: "https://example.org/arquivo", text: "Arquivo" },
     { url: "https://jornal.example.com/politica/candidato", text: "Notícia sobre candidato" }
   ], { preferNews: true }), {
@@ -272,14 +291,20 @@ async function main() {
   guidedController.page = {
     goto: async (url) => guidedNavigations.push(url),
     waitForTimeout: async () => {},
+    evaluate: async () => ({
+      title: "Notícia eleitoral",
+      text: "Trecho factual suficientemente longo da notícia eleitoral escolhida para o teste, com contexto adicional visível e uma segunda informação concreta que ultrapassa o mínimo exigido para considerar a página realmente lida.",
+      url: "https://jornal.example.com/politica/eleicoes"
+    }),
     url: () => guidedNavigations.at(-1) || "https://www.google.com/"
   };
   const guidedResult = await guidedController.followGoogleGuidance("buscar sobre eleições de 2026 e escolher uma notícia");
   assert.equal(guidedResult.status, "ready");
   assert.equal(guidedController.browserMode, "google_guidance");
-  assert.equal(guidedController.research.step, "result_ready");
+  assert.equal(guidedController.research.step, "research_ready");
   assert.deepEqual(guidedNavigations, ["https://jornal.example.com/politica/eleicoes"]);
-  assert.equal(guidedStatuses.at(-1).message, "GOOGLE: RESULTADO ABERTO");
+  assert.equal(guidedResult.articles.length, 1);
+  assert.equal(guidedStatuses.at(-1).message, "GOOGLE: 1 NOTÍCIA(S) LIDA(S)");
 
   const dispatchedTouchEvents = [];
   const pressedKeys = [];

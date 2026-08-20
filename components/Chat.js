@@ -242,6 +242,12 @@ export default function Chat() {
   }, [instagram.status]);
 
   useEffect(() => {
+    if (instagram.browserMode !== "google_guidance") return;
+    const halfScreen = Math.round(window.innerWidth / 2);
+    setInstagramWidth(halfScreen);
+  }, [instagram.browserMode]);
+
+  useEffect(() => {
     if (game?.id !== "verdade_ou_bolo" || !game.active) {
       return;
     }

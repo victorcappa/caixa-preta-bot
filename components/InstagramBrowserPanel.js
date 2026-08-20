@@ -23,6 +23,7 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
   const publicResearch = personResearch || googleGuidance;
   const researchPerson = instagram.research?.person || "pessoa escolhida";
   const researchLabel = googleGuidance ? (instagram.research?.query || "orientação do operador") : researchPerson;
+  const [activePane, setActivePane] = useState("primary");
   const [frameViewport, setFrameViewport] = useState(instagram.viewport || { width: 430, height: 760 });
   const [frameImage, setFrameImage] = useState("");
   const [frameError, setFrameError] = useState("");
@@ -40,6 +41,12 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
   }, [instagram.status, instagram.updatedAt, instagram.viewport]);
 
   useEffect(() => {
+    if (activePane === "secondary" && !instagram.secondaryBrowser?.active) setActivePane("primary");
+    setFrameImage("");
+    hasFrameImageRef.current = false;
+  }, [activePane, instagram.secondaryBrowser?.active]);
+
+  useEffect(() => {
     let cancelled = false;
     let timer = null;
     const targetFps = Number(instagram.streamFps) || 24;
@@ -52,7 +59,7 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
       const startedAt = Date.now();
 
       try {
-        const response = await fetch(`/api/instagram/frame?t=${Date.now()}`, { cache: "no-store" });
+        const response = await fetch(`/api/instagram/frame?pane=${activePane}&t=${Date.now()}`, { cache: "no-store" });
 
         if (!response.ok) {
           throw new Error("FRAME UNAVAILABLE");
@@ -84,13 +91,13 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [instagram.status, instagram.streamFps]);
+  }, [activePane, instagram.status, instagram.streamFps]);
 
   async function sendInput(payload) {
     await fetch("/api/instagram/input", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ ...payload, pane: activePane })
     }).catch(() => null);
   }
 
@@ -232,6 +239,12 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
             : instagram.targetProfile ? `@${instagram.targetProfile}` : `@${instagram.account || "caixapretabot"}`}</strong>
         </div>
         <p>{instagram.message || instagram.status}</p>
+        {googleGuidance && instagram.secondaryBrowser?.active ? (
+          <nav className={styles.tabs} aria-label="Abas da pesquisa">
+            <button className={activePane === "primary" ? styles.activeTab : ""} onClick={() => setActivePane("primary")} type="button">NOTÍCIAS</button>
+            <button className={activePane === "secondary" ? styles.activeTab : ""} onClick={() => setActivePane("secondary")} type="button">INSTAGRAM</button>
+          </nav>
+        ) : null}
         <button aria-label={publicResearch ? "Fechar pesquisa embutida" : "Fechar Instagram embutido"} onClick={onClose} type="button">
           X
         </button>
@@ -239,7 +252,7 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
 
       <div
         aria-label={publicResearch ? "Frame interativo da pesquisa pública" : "Frame interativo do Instagram"}
-        className={styles.viewport}
+        className={`${styles.viewport} ${googleGuidance && activePane === "primary" ? styles.googleViewport : ""}`}
         onKeyDown={handleKeyDown}
         onWheel={handleWheel}
         ref={viewportRef}

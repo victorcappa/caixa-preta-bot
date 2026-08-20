@@ -1,5 +1,5 @@
 import { getExistingInstagramController, getInstagramController } from "@/lib/instagram/InstagramController";
-import { generateCaixaPretaTurn, refreshSceneZeroLocalContext } from "@/lib/openai";
+import { generateCaixaPretaTurn, generateGoogleResearchComment, refreshSceneZeroLocalContext } from "@/lib/openai";
 import { collectionRepertoireBlock, parseCollectionIntervention } from "@/lib/scene-zero/collection";
 import { buildSceneZeroDirection, sceneZeroGlitchCommand } from "@/lib/scene-zero/state";
 import { showState } from "@/lib/showState";
@@ -346,7 +346,27 @@ export async function POST(request) {
     if (action === "google-guidance-start") {
       const guidance = `${body.guidance || ""}`.trim();
       const controller = getInstagramController({ reporter: (instagram) => showState.updateInstagram(instagram) });
-      const result = controller.startGoogleGuidance(guidance);
+      const result = controller.startGoogleGuidance(guidance, {
+        onComplete: async (research) => {
+          if (!research.plan?.wantsComment && !research.articles?.length) return;
+          let comment;
+          try {
+            comment = await generateGoogleResearchComment({
+              guidance,
+              articles: research.articles,
+              instagramUrl: research.instagramUrl,
+              state: showState.privateSnapshot()
+            });
+          } catch (error) {
+            const titles = research.articles.map((article) => article.title || article.resultText).filter(Boolean).slice(0, 2);
+            comment = titles.length
+              ? `NOTÍCIAS LIDAS, E A INTERNET CONSEGUIU O MILAGRE DE REPETIR ${titles.join(" / ")} E CHAMAR ISSO DE NOVIDADE.`
+              : "EU PROCUREI. A PÁGINA ENTREGOU MAIS INTERFACE DO QUE INFORMAÇÃO. ATÉ O SARCASMO PEDIU UMA FONTE MELHOR.";
+            console.error("SCENE ZERO GOOGLE COMMENT ERROR", error);
+          }
+          if (comment) showState.addMessage("assistant", comment, "scene-zero-google");
+        }
+      });
       const status = result.status === "invalid" ? 400 : result.status === "busy" ? 409 : 200;
       return Response.json({
         ...(status >= 400 ? { error: result.message } : { message: result.message }),
