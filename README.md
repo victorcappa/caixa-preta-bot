@@ -139,7 +139,7 @@ continua sendo aplicado sobre a tela publica que ja estiver ativa.
 continua disponível como console técnico e hub neutro; entrar nele não troca a
 projeção. O controller da Cena 0 organiza, sem timeline automática, os blocos
 `COLETA`, `PARTICIPANTE`, `MALAS`, `É BOLO`, `CANTAR 15s`, `GLITCH`,
-`INSTAGRAM` e `AEROPORTO / TEA FOR TWO`.
+`INSTAGRAM`, `GOOGLE` e `AEROPORTO / TEA FOR TWO`.
 
 Os dez botões grandes apenas definem em que etapa a apresentação está. Cada
 mudança registra etapa anterior, etapa atual, ação do operador, participante e
@@ -238,6 +238,16 @@ painel embutido e guardrails já usados por `/instagram`; não existe uma segund
 automação. Login, 2FA/checkpoints, whitelist e conectividade continuam sendo
 dependências da integração real. `INTERROMPER INSTAGRAM` corta as rotinas do
 controller sem obrigar mudança de etapa.
+
+O bloco `GOOGLE` recebe uma orientação completa, não apenas termos de busca.
+Por exemplo: `buscar sobre o candidato do PL para eleições de 2026 e escolher
+alguma notícia para ler por 15 segundos`. Ao executar, o mesmo navegador
+Playwright embedded abre a busca real, deriva dela os termos pesquisados,
+escolhe e abre um resultado público quando isso fizer parte da orientação e
+mantém a leitura/scroll pelo tempo solicitado. O frame permanece interativo
+para o operador. `FECHAR GOOGLE` interrompe a rotina e retira o painel; URLs
+locais, telas de login e agregadores pessoais bloqueados continuam protegidos
+pelos mesmos guardrails da pesquisa pública das malas.
 
 `PLAY`, `STOP` e `RESTART` usam
 `assets/audios/Doris Day - Tea For Two (1950).mp3`. O áudio toca no navegador
