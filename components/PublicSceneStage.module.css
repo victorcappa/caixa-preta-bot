@@ -28,6 +28,19 @@
   animation: rise var(--cue-text-duration, 15000ms) linear forwards;
 }
 
+.staticText {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 8vh 8vw;
+  color: var(--cue-color, #ffffff);
+  font-family: "Courier New", Courier, monospace;
+  font-size: clamp(1rem, 2vw, 2.15rem);
+  line-height: 1.38;
+  white-space: pre-wrap;
+}
+
 .shaderOverlay {
   position: absolute;
   inset: 0;

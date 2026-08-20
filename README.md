@@ -625,6 +625,11 @@ A tela publica da Transicao Psicodelica sobe o texto pela projecao; os demais
 tipos continuam disponiveis para sons, videos e imagens. O bloco nasce recortado
 abaixo da borda inferior e sobe ate desaparecer por completo acima da tela.
 
+Na `CENA 3`, o botão `Thomas Edson` toca
+`assets/audios/thomas-edson.mp3` e mantém seu texto estático na projeção durante
+o áudio. O texto também pode ser editado no campo `Texto estático projetado com
+o áudio`; `STOP`, `SILÊNCIO / STOP ALL` ou o fim natural do arquivo o removem.
+
 Os dois áudios iniciais da Cena 2D aparecem em ordem de duração: `Áudio Longo`
 (aproximadamente 229 segundos) e depois `Áudio Curto` (aproximadamente 31
 segundos). Ao selecionar um deles, a mesma pedaleira da Cena 1 aparece entre a

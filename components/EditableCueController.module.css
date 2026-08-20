@@ -102,6 +102,16 @@
   color: #d7d7d7;
 }
 
+.audioPreview .audioPreviewText {
+  max-width: 72ch;
+  margin: 10px auto 0;
+  color: #ffffff;
+  font-size: clamp(0.8rem, 1.25vw, 1.15rem);
+  line-height: 1.4;
+  text-align: left;
+  white-space: pre-wrap;
+}
+
 .cueGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));

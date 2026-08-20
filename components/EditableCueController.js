@@ -857,9 +857,9 @@ const EditableCueController = forwardRef(function EditableCueController({
                 </select>
               </label>
             ) : null}
-            {selectedCue.type === "text" ? (
+            {["audio", "text"].includes(selectedCue.type) ? (
               <label>
-                <span>Texto projetado</span>
+                <span>{selectedCue.type === "audio" ? "Texto estático projetado com o áudio" : "Texto projetado"}</span>
                 <textarea
                   onChange={(event) => updateCue(selectedCue.id, { text: event.target.value })}
                   rows="8"
@@ -961,6 +961,7 @@ const EditableCueController = forwardRef(function EditableCueController({
             <div className={styles.audioPreview}>
               <span style={{ color: preview.color }}>{preview.label}</span>
               <small>{preview.assetPath || "SEM ARQUIVO"}</small>
+              {preview.text ? <p className={styles.audioPreviewText}>{preview.text}</p> : null}
             </div>
           ) : null}
           {!preview ? <p>Selecione ou dispare um botão.</p> : null}

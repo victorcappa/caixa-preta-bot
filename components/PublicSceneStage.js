@@ -129,6 +129,22 @@ export function PublicSceneAudioOutput({ controllerId = "", globalVolume = 1, sc
   ));
 }
 
+function PublicAudioCueText({ controllerId = "", sceneCue = null }) {
+  const cue = (sceneCue?.audioCues || []).findLast((item) => (
+    item.controllerId === controllerId && item.type === "audio" && item.text
+  ));
+
+  if (!cue) {
+    return null;
+  }
+
+  return (
+    <div className={styles.staticText} style={{ "--cue-color": cue.color }}>
+      {cue.text}
+    </div>
+  );
+}
+
 export default function PublicSceneStage({ blackoutTarget = "cenas", controllerId = "" }) {
   const [displayBlackout, setDisplayBlackout] = useState(null);
   const [sceneCue, setSceneCue] = useState(null);
@@ -182,6 +198,7 @@ export default function PublicSceneStage({ blackoutTarget = "cenas", controllerI
     <main className={styles.stage} aria-label="Cena publica">
       {cue ? <PublicCueMedia cue={cue} globalVolume={globalVolume} key={cue.sequence} /> : null}
       <PublicSceneAudioOutput controllerId={controllerId} globalVolume={globalVolume} sceneCue={sceneCue} />
+      <PublicAudioCueText controllerId={controllerId} sceneCue={sceneCue} />
       {shaderActive ? (
         <div
           aria-hidden="true"

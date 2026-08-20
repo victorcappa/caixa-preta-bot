@@ -472,7 +472,7 @@
     "tea-for-two": {
       "id": "tea-for-two",
       "title": "CENA 3 — TEA FOR TWO / TRANSIÇÃO",
-      "description": "Músicas e sons editáveis da transição Tea For Two.",
+      "description": "Músicas, sons e textos estáticos da transição Tea For Two.",
       "allowedTypes": [
         "audio"
       ],
@@ -511,6 +511,38 @@
           },
           "color": "#ffd760",
           "text": ""
+        },
+        {
+          "id": "47bd2da1-01d1-4ea7-b2c8-392fbd1d48d2",
+          "label": "Thomas Edson",
+          "shortcut": "2",
+          "type": "audio",
+          "assetPath": "audios/thomas-edson.mp3",
+          "durationMs": 0,
+          "loop": false,
+          "volume": 1,
+          "audioEffects": {
+            "enabled": false,
+            "preset": "clean",
+            "driveEnabled": true,
+            "drive": 0.35,
+            "lowCut": 20,
+            "highCut": 20000,
+            "phaserEnabled": false,
+            "phaser": 0.45,
+            "phaserRate": 0.35,
+            "wahEnabled": false,
+            "wah": 0.55,
+            "wahRate": 0.7,
+            "echoEnabled": false,
+            "echo": 0,
+            "pitchEnabled": false,
+            "pitch": 0,
+            "mix": 0.7,
+            "output": 1
+          },
+          "color": "#ffffff",
+          "text": "Mesmo nesse estado, faz parte do protocolo os corpos serem fotografados e adicionados a um banco de dados digital. As fotografias possuem a finalidade de documentar a posição das vítimas e auxiliar na reconstrução do acidente. Outros métodos como identificação de impressões digitais, DNA, avaliação da arcada dentária e catalogação dos objetos pessoais farão parte desse museu online do acidente. Mesmo que você esteja morto e incapacitado de conceder ou não direitos autorais da sua imagem nesse estado, ela continuará lá nesse museu e deverá ser revisitada por inúmeros investigadores. Fique tranquilo! As imagens serão feitas por profissionais treinados. Imagens que serão acessadas por autoridades policiais e peritos. Também não são destinadas à divulgação pública. Na pior das hipóteses, vai parar no site assustador.com ou na deep web."
         }
       ]
     },
