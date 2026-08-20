@@ -4,6 +4,26 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./EditableCueController.module.css";
 
 const EMPTY_ASSETS = { audio: [], video: [], image: [] };
+const DEFAULT_EDITOR_WIDTH = 380;
+const MIN_EDITOR_WIDTH = 280;
+const MIN_PREVIEW_WIDTH = 320;
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function editorWidthStorageKey(controllerId) {
+  return `caixa-preta.cue-editor-width.${controllerId}`;
+}
+
+function storedEditorWidth(controllerId) {
+  if (typeof window === "undefined") {
+    return DEFAULT_EDITOR_WIDTH;
+  }
+
+  const value = Number(window.localStorage.getItem(editorWidthStorageKey(controllerId)));
+  return Number.isFinite(value) ? value : DEFAULT_EDITOR_WIDTH;
+}
 
 function isTypingTarget(target) {
   const tagName = target?.tagName?.toLowerCase();
@@ -64,8 +84,14 @@ export default function EditableCueController({ controllerId }) {
   const [preview, setPreview] = useState(null);
   const [status, setStatus] = useState("CONNECTING");
   const [saving, setSaving] = useState(false);
+  const [editorWidth, setEditorWidth] = useState(DEFAULT_EDITOR_WIDTH);
   const audioRef = useRef(null);
   const clearPreviewRef = useRef(null);
+  const screenRef = useRef(null);
+
+  useEffect(() => {
+    setEditorWidth(storedEditorWidth(controllerId));
+  }, [controllerId]);
 
   useEffect(() => {
     let active = true;
@@ -204,6 +230,65 @@ export default function EditableCueController({ controllerId }) {
     }
   }
 
+  function setStoredEditorWidth(nextWidth) {
+    setEditorWidth(nextWidth);
+    window.localStorage.setItem(editorWidthStorageKey(controllerId), `${Math.round(nextWidth)}`);
+  }
+
+  function beginEditorResize(event) {
+    const screenRect = screenRef.current?.getBoundingClientRect();
+
+    if (!screenRect) {
+      return;
+    }
+
+    event.preventDefault();
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    function onPointerMove(pointerEvent) {
+      const nextWidth = clamp(
+        screenRect.right - pointerEvent.clientX,
+        MIN_EDITOR_WIDTH,
+        Math.max(MIN_EDITOR_WIDTH, screenRect.width - MIN_PREVIEW_WIDTH)
+      );
+
+      setStoredEditorWidth(nextWidth);
+    }
+
+    function onPointerUp() {
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+    }
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp, { once: true });
+  }
+
+  function resizeEditorByKeyboard(event) {
+    if (!["ArrowLeft", "ArrowRight"].includes(event.key)) {
+      return;
+    }
+
+    const screenRect = screenRef.current?.getBoundingClientRect();
+
+    if (!screenRect) {
+      return;
+    }
+
+    event.preventDefault();
+    const direction = event.key === "ArrowLeft" ? 1 : -1;
+    const nextWidth = clamp(
+      editorWidth + (direction * 24),
+      MIN_EDITOR_WIDTH,
+      Math.max(MIN_EDITOR_WIDTH, screenRect.width - MIN_PREVIEW_WIDTH)
+    );
+
+    setStoredEditorWidth(nextWidth);
+  }
+
   async function saveDefault() {
     if (!config || saving) {
       return;
@@ -276,7 +361,11 @@ export default function EditableCueController({ controllerId }) {
   }
 
   return (
-    <main className={styles.screen}>
+    <main
+      className={styles.screen}
+      ref={screenRef}
+      style={{ "--cue-editor-width": `${editorWidth}px` }}
+    >
       <section className={styles.preview}>
         <header className={styles.header}>
           <div>
@@ -319,6 +408,16 @@ export default function EditableCueController({ controllerId }) {
           ))}
         </section>
       </section>
+
+      <div
+        aria-label="Redimensionar palco e editor de samples"
+        aria-orientation="vertical"
+        className={styles.editorResizeHandle}
+        onKeyDown={resizeEditorByKeyboard}
+        onPointerDown={beginEditorResize}
+        role="separator"
+        tabIndex={0}
+      />
 
       <aside className={styles.editor}>
         <div className={styles.editorActions}>

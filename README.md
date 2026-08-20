@@ -156,6 +156,10 @@ em `input`, `textarea`, `select` ou campo editavel. Os arquivos existentes em
 `assets/` aparecem na lista de material. O campo `Adicionar arquivo` salva novos
 arquivos em `assets/controller-cues/<controller>/` e atualiza a lista.
 
+O divisor entre o palco de cues e o editor tem uma alca redimensionavel, como o
+painel do bot. Arraste a alca ou use as setas `←` e `→` quando ela estiver em
+foco. A largura e lembrada no navegador, separadamente para cada controller.
+
 ## Baralho Morbido
 
 Abra `http://localhost:3000/baralho-morbido` na tela publica e
