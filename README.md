@@ -138,7 +138,7 @@ continua sendo aplicado sobre a tela publica que ja estiver ativa.
 `/cena-0-controller` é a superfície privada dedicada à Cena 0. `/operator`
 continua disponível como console técnico e hub neutro; entrar nele não troca a
 projeção. O controller da Cena 0 organiza, sem timeline automática, os blocos
-`COLETA`, `PARTICIPANTE`, `MALAS`, `É BOLO`, `CANTAR 15s`, `GLITCH`,
+`COLETA`, `PARTICIPANTE`, `JOGO DAS MALAS`, `CANTAR 15s` legado, `GLITCH`,
 `GOOGLE + INSTAGRAM` e `AEROPORTO / TEA FOR TWO`.
 Um índice fixo exclusivo dessa rota ocupa a lateral direita e navega com scroll
 suave entre topo, memória, personalidade, direção e cada bloco operacional. A seção
@@ -237,10 +237,58 @@ Garcia e Victor Cappa são sempre removidos do pool. `NOVA ROLETA / OUTRA
 PESSOA` exclui o nome atual quando há alternativa. Mudar para outra etapa
 interrompe imediatamente countdown, roleta e comentários pendentes.
 
-O bloco `MALAS` chama o `SuitcaseDirector` existente. `É BOLO?` inicia e
-controla o jogo `verdade_ou_bolo` já registrado no `GameDirector`; comentários
-e provocações continuam sendo falas geradas, enquanto rodada, resposta e
-revelação permanecem estados determinísticos do jogo.
+O bloco `JOGO DAS MALAS` mantém o `SuitcaseDirector` existente para recuperação
+e compatibilidade, mas organiza a dramaturgia atual em três cartões. A troca
+entre eles só acontece quando o operador pressiona o botão da mala; nenhum fim
+de jogo, timer ou rotina de Instagram avança para a mala seguinte.
+
+`MALA 1 — VERDADE OU BOLO` inicia e controla o jogo `verdade_ou_bolo` já
+registrado no `GameDirector`. Rodada, resposta, vídeo, votação, revelação e
+placar continuam determinísticos. Entrada, comentário e provocação são gerados
+pelo modelo com a personalidade, memória, participante e contexto atuais; não
+há lista fixa de piadas.
+
+`MALA 2 — GINCANA` usa o banco editável
+`data/scene-zero-gincanas.js`. Cada item define `id`, `description`,
+`instruction`, `durationMin`, `durationMax`, `difficulty` e `notes`. O sorteio
+escolhe somente tarefas ainda não usadas na sessão enquanto houver alternativas.
+Para acrescentar uma tarefa, adicione outro objeto exportado nesse arquivo.
+As durações configuradas são limitadas pelo sistema a 60–120 segundos e um
+valor inteiro é sorteado inclusivamente entre o mínimo e o máximo da tarefa.
+
+Depois do sorteio, o modelo reformula a instrução sem poder mudar objetivo,
+segurança ou tempo. O timer da gincana tem iniciar, pausar, continuar, reiniciar
+e cancelar, usa `endsAt` no servidor e mostra a contagem na projeção até zero.
+`AÇÃO CONCLUÍDA` e `FALHOU / TEMPO ESGOTADO` encerram o timer, registram tempo
+decorrido e a observação livre do operador, e só então pedem ao modelo um
+comentário. O comentário recebe tarefa, resultado, tempo, objetos e reações
+realmente informados; não existe comentário durante toda a busca nem avanço de
+mala ao chegar a zero.
+
+`MALA 3 — INSTAGRAM / GLITCH` começa em `GLITCH 1` somente quando o estado
+estava normal e não abre perfil sozinho. O operador controla manualmente
+`NORMAL`, `GLITCH 1–4`, `COLAPSO`, Robson, Janaína, próximo post, pausa,
+continuação e parada. O nível entra no prompt como degradação progressiva:
+pequena estranheza, repetição/associação deslocada, inadequação compreensível,
+mistura de contexto e, por fim, fragmentação com memória cruzada. Mesmo em
+colapso, a instrução proíbe caracteres aleatórios e exige algum vínculo com o
+post real.
+
+O botão de Robson resolve a entrada `Robinson Rogério` de
+`data/instagram-participants.json` (`@rogerio.robinson`); Janaína resolve
+`Janaína Leite` (`@janainaleite`). A rotina reutiliza o mesmo
+`InstagramController`, perfil persistente, login, iframe, whitelist e guardas
+de 2FA/checkpoint. Para cada perfil, abre por índice até dez posts. Cada post é
+capturado e analisado visualmente, o texto legível da página é extraído e o
+modelo produz um comentário de no máximo 220 caracteres.
+
+O comentário aparece primeiro como `PREVIEW — AINDA NÃO ENVIADO`. Somente
+`ENVIAR COMENTÁRIO` chama a publicação real. `PRÓXIMO POST` pode pular o preview
+sem enviar; chaves de posts processados e comentados ficam no estado da sessão,
+e o mesmo post não pode ser enviado duas vezes. O comentário só entra no chat/
+projeção depois que o controller retorna envio. `PAUSAR` e `PARAR` interrompem
+as rotinas; trocar entre Robson e Janaína preserva o histórico recente para o
+modelo não tratar a segunda visita como uma sessão sem passado.
 
 Ao entrar em `JOGO DAS MALAS`, o navegador Playwright embedded já usado pelo
 Instagram pesquisa automaticamente o nome do participante escolhido. A
@@ -253,7 +301,7 @@ para exploração manual; `PESQUISAR PARTICIPANTE` reinicia a sequência e
 `FECHAR PESQUISA` encerra a exibição. Sair da etapa das malas também fecha a
 pesquisa, preservando o perfil persistente para o uso normal do Instagram.
 
-O timer cênico usa duração fixa de 15 segundos e um `endsAt` mantido no estado
+O timer cênico legado de canto usa duração fixa de 15 segundos e um `endsAt` mantido no estado
 do servidor. A projeção calcula a contagem pelo relógio final e mostra
 explicitamente `0` e `FIM`. Pausar grava os segundos restantes; continuar
 recalcula o fim; reiniciar cria uma nova sequência; cancelar remove a camada.
@@ -662,8 +710,11 @@ Controles de ensaio e recuperacao das malas:
 /mala lose
 ```
 
-`/mala 1` forca Jogo do Nome / Maria Antonieta. `/mala 2` forca Instagram /
-Um Minuto de Vida. `/mala 3` escolhe um minigame aleatorio. Tambem e possivel
+Estes comandos continuam controlando o `SuitcaseDirector` legado: `/mala 1`
+forca Jogo do Nome / Maria Antonieta, `/mala 2` forca Instagram / Um Minuto de
+Vida e `/mala 3` escolhe um minigame aleatorio. A dramaturgia atual da Cena 0
+usa os três cartões em `/cena-0-controller`; os comandos legados são mantidos
+para ensaio e recuperação e não substituem os novos controles. Tambem e possivel
 forcar um minigame especifico para ensaio:
 
 ```text
