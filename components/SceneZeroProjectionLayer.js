@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { shouldShowGincanaTimer } from "@/lib/scene-zero/suitcaseGame";
 import useCountdownSound from "./useCountdownSound";
 import styles from "./SceneZeroProjectionLayer.module.css";
 
@@ -48,7 +49,7 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
     audio.play().catch(() => {});
   }, [tea?.sequence, tea?.status]);
 
-  const visibleTimer = sceneZero?.suitcaseGame?.currentSuitcase === 2 && ["running", "paused", "complete", "completed", "failed"].includes(gincanaTimer?.status)
+  const visibleTimer = sceneZero?.suitcaseGame?.currentSuitcase === 2 && shouldShowGincanaTimer(gincanaTimer)
     ? gincanaTimer
     : sceneZero?.stage === "collection" && ["running", "complete"].includes(collectionTimer?.status)
       ? collectionTimer

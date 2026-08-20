@@ -203,6 +203,9 @@ async function main() {
   assert.equal(suitcaseGame.chooseGincanaDuration({ durationMin: 60, durationMax: 120 }, () => 0.999), 120);
   assert.equal(suitcaseGame.clampGincanaDuration(30), 60);
   assert.equal(suitcaseGame.clampGincanaDuration(200), 120);
+  assert.equal(suitcaseGame.shouldShowGincanaTimer({ status: "running" }), true);
+  assert.equal(suitcaseGame.shouldShowGincanaTimer({ status: "complete" }), true);
+  assert.equal(suitcaseGame.shouldShowGincanaTimer({ status: "completed" }), false);
   assert.equal(
     gincanaBank.SCENE_ZERO_GINCANAS.find((task) => task.id === "colecao_improvavel").instruction,
     "Traga exatamente uma chave, uma moeda e uma caneta. Os três objetos devem caber juntos em uma das suas mãos."
