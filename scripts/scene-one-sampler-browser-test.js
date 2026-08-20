@@ -121,10 +121,20 @@ try {
   await controller.screenshot({ path: "/private/tmp/scene-one-sampler.png", fullPage: true });
 
   const beforeIndex = (await context.request.get(`${BASE_URL}/api/queda-aviao`).then((response) => response.json())).currentIndex;
+  const publicLine = projection.locator("main p");
+  const beforePublicText = await publicLine.textContent();
   await controller.getByRole("button", { name: "PRÓXIMA" }).click();
-  await controller.waitForTimeout(150);
+  await projection.waitForFunction(
+    (previousText) => document.querySelector("main p")?.textContent !== previousText,
+    beforePublicText
+  );
   const afterTextNavigation = await context.request.get(`${BASE_URL}/api/queda-aviao`).then((response) => response.json());
   assert.notEqual(afterTextNavigation.currentIndex, beforeIndex, "text should navigate normally");
+  assert.equal(
+    await publicLine.textContent(),
+    afterTextNavigation.currentSegment.text,
+    "public Scene 1 should advance without a page refresh"
+  );
   assert.equal((await sceneAudioCues(context.request)).length, 2, "text navigation must not stop samples");
 
   const beforeArrowIndex = afterTextNavigation.currentIndex;

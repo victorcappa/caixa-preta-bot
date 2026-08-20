@@ -4,8 +4,20 @@ import { saveQuedaAviaoDefaults } from "@/lib/queda-aviao/state";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export async function GET() {
-  return Response.json(showState.snapshot().quedaAviao);
+export async function GET(request) {
+  const snapshot = showState.snapshot();
+  const displayRequest = new URL(request.url).searchParams.get("display") === "1";
+
+  if (displayRequest) {
+    return Response.json({
+      ...snapshot.quedaAviao,
+      displayBlackout: snapshot.displayBlackout,
+      sceneCue: snapshot.sceneCue,
+      globalVolume: snapshot.globalVolume
+    });
+  }
+
+  return Response.json(snapshot.quedaAviao);
 }
 
 export async function POST(request) {
