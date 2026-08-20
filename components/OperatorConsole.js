@@ -525,7 +525,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
           ))}
 
           <h2>PERFORMANCE</h2>
-          <RobotSoundControls settings={state.robotSound} onLog={addLog} />
+          <RobotSoundControls settings={state.robotSound} onLog={addLog} relaySink={!embedded} />
           <article className={styles.memory}>
             <strong>INSTAGRAM / {instagram.status || "DISCONNECTED"}</strong>
             <p>

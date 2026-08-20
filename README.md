@@ -294,6 +294,12 @@ preservando o desbloqueio exigido pelo Safari; as outras janelas concluem o
 desbloqueio na próxima interação local, se necessário. Mudanças de dispositivo também tentam essa recuperação
 automaticamente. Validação lógica rápida: `npm run test:robot-sound`.
 
+Quando o `/operator` está em uma janela separada e seu status de áudio está
+`RUNNING`, essa janela funciona como saída estável para os sons da digitação
+real do bot. `WAKE`, cada caractere e `COMPLETE` são retransmitidos diretamente
+da animação pública; se não houver operator sonoro disponível, a própria
+projeção continua sendo a saída de fallback.
+
 ## Queda Aviao
 
 Abra `http://localhost:3000/queda-aviao` na tela publica e

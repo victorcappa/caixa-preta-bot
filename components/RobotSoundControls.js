@@ -22,7 +22,7 @@ async function postSettings(settings) {
   return data.robotSound;
 }
 
-export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, onLog = () => {} }) {
+export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, onLog = () => {}, relaySink = false }) {
   const [draft, setDraft] = useState(() => normalizeRobotSoundSettings(settings));
   const [audioStatus, setAudioStatus] = useState("LOCKED");
   const saveTimerRef = useRef(null);
@@ -42,6 +42,8 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
   }, [settings]);
 
   useEffect(() => robotSoundEngine.armAutoUnlock(), []);
+
+  useEffect(() => robotSoundEngine.armAudioRelay({ sink: relaySink }), [relaySink]);
 
   useEffect(() => robotSoundEngine.subscribeStatus(setAudioStatus), []);
 

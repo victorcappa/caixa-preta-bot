@@ -3,7 +3,8 @@ const { chromium } = require("playwright");
 
 async function main() {
   const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   const consoleProblems = [];
   const failedResponses = [];
 
@@ -133,6 +134,37 @@ async function main() {
     await page.goto("http://localhost:3000/operator", { waitUntil: "domcontentloaded" });
     await page.getByText("CONNECTED", { exact: true }).first().waitFor({ timeout: 10000 });
     await page.getByLabel("Robot Sound Engine").waitFor();
+    await page.getByRole("button", { name: "TEST DIGITAÇÃO" }).click();
+    await page.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.context?.state === "running");
+
+    const projectionPage = await context.newPage();
+    await projectionPage.goto("http://localhost:3000", { waitUntil: "domcontentloaded" });
+    await projectionPage.getByText("CONNECTED", { exact: true }).first().waitFor({ timeout: 10000 });
+    await projectionPage.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.lastRelaySinkAt > 0);
+    await page.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.activeSources?.size === 0);
+    await projectionPage.evaluate(() => {
+      window.__caixaPretaRobotSoundEngine.wake();
+      window.__caixaPretaRobotSoundEngine.typing("A", { force: true });
+    });
+    await page.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.activeSources?.size > 0);
+    assert.equal(await projectionPage.evaluate(() => window.__caixaPretaRobotSoundEngine.activeSources.size), 0);
+    await page.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.activeSources?.size === 0);
+    await page.evaluate(() => {
+      const sound = window.__caixaPretaRobotSoundEngine;
+      window.__relayedBotTypingCount = 0;
+      const originalTyping = sound.typing.bind(sound);
+      sound.typing = (...args) => {
+        window.__relayedBotTypingCount += 1;
+        return originalTyping(...args);
+      };
+    });
+    await projectionPage.evaluate(() => fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: "/reset" })
+    }));
+    await page.waitForFunction(() => window.__relayedBotTypingCount > 0, null, { timeout: 5000 });
+    await projectionPage.close();
 
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto("http://localhost:3000/cena-0-controller", { waitUntil: "domcontentloaded" });

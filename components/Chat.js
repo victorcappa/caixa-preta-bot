@@ -195,6 +195,8 @@ export default function Chat() {
 
   useEffect(() => robotSoundEngine.armAutoUnlock(), []);
 
+  useEffect(() => robotSoundEngine.armAudioRelay(), []);
+
   useEffect(() => {
     if (!robotSound) return;
 
