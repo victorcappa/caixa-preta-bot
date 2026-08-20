@@ -536,36 +536,34 @@ npm run dev</code></pre>
 
               <div class="panels">
                 <article class="panel">
-                  <h3>MALA 1 / NOME</h3>
+                  <h3>MALA 1 / VERDADE OU BOLO</h3>
                   <p>
-                    Papel, bilhete, folha, cartao, algo escrito ou nome escrito ativa Maria
-                    Antonieta. Se ainda faltar confirmar que e nome de pessoa, a Caixa faz uma
-                    unica clarificacao e entra no jogo assim que houver confirmacao. Ela joga como
-                    20 Questions: ignora a conversa anterior como pista, comeca amplo, separa
-                    dominio/meio/papel publico, evita repetir pergunta e so chuta nome quando os
-                    fatos convergem. Palpite errado elimina o candidato e o jogo continua sem
-                    voltar para a escolha de mala; termina por acerto, revelacao explicita, pedido
-                    de parada ou transicao externa.
+                    Reutiliza o jogo estruturado <code>verdade_ou_bolo</code> do
+                    <code>GameDirector</code>. O software controla rodada, resposta, video,
+                    revelacao e placar; o operador controla o timing; a Caixa improvisa entrada,
+                    comentarios e provocacoes com o contexto atual.
                   </p>
                 </article>
 
                 <article class="panel">
-                  <h3>MALA 2 / INSTAGRAM</h3>
+                  <h3>MALA 2 / GINCANA</h3>
                   <p>
-                    Usa <code>data/instagram-participants.json</code>. Pessoas com
-                    <code>enabled: true</code> entram no sorteio. A projecao mostra vida escolhida,
-                    feed preparado e timer de 60 segundos; ao final aparece <code>ACESSO
-                    ENCERRADO</code>.
+                    Sorteia sem repeticao durante a sessao a partir de
+                    <code>data/scene-zero-gincanas.js</code>. Cada tarefa configura instrucao,
+                    dificuldade, observacoes e faixa de duracao limitada a 60–120 segundos. O
+                    timer aparece na projecao; somente <code>ACAO CONCLUIDA</code> ou
+                    <code>FALHOU / TEMPO ESGOTADO</code> pede ao modelo o comentario posterior.
                   </p>
                 </article>
 
                 <article class="panel">
-                  <h3>MALA 3 / JOGO</h3>
+                  <h3>MALA 3 / GLITCH + INSTAGRAM</h3>
                   <p>
-                    Escolhe um minigame extensivel: <code>hangman</code>,
-                    <code>drawing_guess</code>, <code>scrambled_word</code>, <code>riddle</code> ou
-                    <code>guess_the_rule</code>. Para adicionar outro, implemente estado, avanco e
-                    visual em <code>SuitcaseDirector</code>.
+                    O operador inicia a mala, dosa <code>NORMAL</code>, <code>GLITCH 1–4</code> e
+                    <code>COLAPSO</code>, e abre manualmente Robson ou Janaina. O mesmo navegador
+                    real inspeciona ate dez posts por perfil. Cada comentario gerado aparece em
+                    preview e so e publicado pelo botao explicito de envio; posts comentados nao
+                    podem receber um segundo envio na sessao.
                   </p>
                 </article>
               </div>
@@ -573,9 +571,9 @@ npm run dev</code></pre>
               <pre><code>npm run test:suitcases</code></pre>
 
               <p class="note">
-                O operator mostra debug em tempo real: experiencia atual, jogo, estado, ultimo
-                input, intencao do bot, perguntas, timer, pessoa, palavra e resultado. Use
-                <code>/mala abort</code> ou <code>/mala reset</code> para recuperar a apresentacao.
+                A troca MALA 1 → MALA 2 → MALA 3 nunca e automatica. Os comandos
+                <code>/mala</code> continuam disponiveis para o <code>SuitcaseDirector</code> legado
+                e recuperacao; a dramaturgia atual e operada nos tres cartoes da Cena 0.
               </p>
             </section>
 
