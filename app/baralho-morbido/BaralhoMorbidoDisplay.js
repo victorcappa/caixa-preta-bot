@@ -35,8 +35,6 @@ function CardBack({ className = "", index = 0, compact = false }) {
         <div className={styles.cardSigil} aria-hidden="true">
           <span />
         </div>
-        <strong>BARALHO</strong>
-        <small>MORBIDO</small>
       </div>
     </div>
   );
@@ -290,7 +288,6 @@ export default function BaralhoMorbidoDisplay() {
       <header className={styles.header}>
         <div>
           <span className={styles.kicker}>JACKPOT SINISTRO</span>
-          <h1>BARALHO MÓRBIDO</h1>
         </div>
         <div className={styles.counter}>
           <span>{jackpotText}</span>
