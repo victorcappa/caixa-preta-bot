@@ -490,8 +490,10 @@ npm run dev</code></pre>
                   <p>
                     Em <code>Verdade ou Bolo?</code>, chat e jogo ficam lado a lado. A rodada mostra
                     primeiro o frame inicial pausado e so entao abre 10 segundos de voto.
-                    <code>REVELAR RESPOSTA</code> toca o video; ao fim, aparecem resultado e placar.
-                    Sem voto, a rodada conta como erro e avanca automaticamente.
+                    Ao chegar a zero, aparecem imediatamente resposta, acerto ou erro e placar;
+                    sem voto, aparece <code>SEM VOTO</code> e a rodada conta como erro.
+                    <code>REVELAR RESPOSTA</code> antecipa essa mesma resolucao durante a votacao.
+                    O video pode ser tocado separadamente depois da revelacao.
                   </p>
                 </article>
 
@@ -545,8 +547,9 @@ npm run dev</code></pre>
                     Reutiliza o jogo estruturado <code>verdade_ou_bolo</code> do
                     <code>GameDirector</code>. O jogo entra direto na primeira rodada e mostra
                     o frame inicial pausado antes de iniciar os 10 segundos de decisao. O video
-                    so toca depois de <code>REVELAR</code>; ao terminar, aparecem resultado e placar. O operador
-                    controla o timing e avanca diretamente com <code>PROXIMA RODADA</code>. A
+                    pode ser tocado separadamente; tanto o fim do timer quanto <code>REVELAR</code>
+                    exibem imediatamente resposta, resultado e placar. O operador controla o
+                    timing e avanca diretamente com <code>PROXIMA RODADA</code>. A
                     Caixa improvisa entrada, comentarios e provocacoes com o contexto atual, e
                     essas falas aparecem no chat ao lado da tela do jogo.
                   </p>
@@ -576,6 +579,11 @@ npm run dev</code></pre>
                   </p>
                 </article>
               </div>
+
+              <p>
+                Ao iniciar uma mala diferente, a mala anterior e interrompida: jogo ativo,
+                timer da gincana, rotina de Instagram e glitch associado nao continuam em paralelo.
+              </p>
 
               <pre><code>npm run test:suitcases</code></pre>
 

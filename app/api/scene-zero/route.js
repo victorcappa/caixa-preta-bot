@@ -210,7 +210,38 @@ async function speak(directionAction, detail = "") {
   return turn;
 }
 
+async function interruptPreviousSuitcase(nextSuitcaseNumber) {
+  const snapshot = showState.snapshot();
+  const previousSuitcase = snapshot.sceneZero.suitcaseGame?.currentSuitcase;
+
+  if (!previousSuitcase || previousSuitcase === nextSuitcaseNumber) return;
+
+  if (snapshot.game?.active) {
+    showState.stopGame({ status: "suitcase_replaced", source: "scene-zero-operator" });
+  }
+
+  if (["running", "paused"].includes(snapshot.sceneZero.suitcaseGame?.gincana?.timer?.status)) {
+    showState.controlSceneZero("gincana-timer-cancel", {}, { source: "scene-zero-operator" });
+  }
+
+  const instagramSession = showState.privateSnapshot().sceneZero.suitcaseGame?.instagram;
+  if (instagramSession?.currentProfile && instagramSession.status !== "stopped") {
+    const controller = getExistingInstagramController();
+    if (controller) {
+      const stopped = await controller.stopAllRoutines();
+      showState.updateInstagram({ ...controller.getStatus(), message: stopped.message });
+    }
+    showState.controlSceneZero("instagram-session-stop", {}, { source: "scene-zero-operator" });
+  }
+
+  if (previousSuitcase === 3 && snapshot.sceneZero.glitchLevel !== "normal") {
+    showState.controlSceneZero("set-glitch", { level: "normal" }, { source: "scene-zero-operator" });
+    applyGlitchLevel("normal");
+  }
+}
+
 async function activateSuitcase(suitcaseNumber, detail = "") {
+  await interruptPreviousSuitcase(suitcaseNumber);
   const current = showState.snapshot();
   if (current.sceneZero.stage !== "suitcases") {
     showState.controlSceneZero("set-stage", { stage: "suitcases", detail }, { source: "operator" });

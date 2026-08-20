@@ -913,7 +913,7 @@ function VerdadeOuBoloControls({ game, pending, sendOperatorCommand }) {
         </button>
         <button
           className={styles.vobRevealButton}
-          disabled={pending || !["QUESTION", "ANSWER_LOCKED", "REVEAL", "ROUND_RESULT"].includes(data.state)}
+          disabled={pending || !["QUESTION", "ANSWER_LOCKED", "VOTING", "REVEAL", "ROUND_RESULT"].includes(data.state)}
           onClick={() => sendOperatorCommand("/game reveal", "GAME CONTROL ERROR")}
           type="button"
         >
