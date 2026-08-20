@@ -597,10 +597,12 @@ arquivo versionado `config/instagram-credentials.example.json` serve apenas como
 modelo e nao contem uma senha real. Tambem e possivel apontar outro caminho
 server-only com `INSTAGRAM_CREDENTIALS_FILE`.
 
-As pesquisas públicas acionadas pelo jogo das malas também validam essa sessão
-antes de abrir o perfil encontrado. Se a sessão persistida tiver expirado, o
-controller faz o login local automaticamente; captcha, checkpoint e 2FA ainda
-param para intervenção manual.
+As pesquisas públicas e os posts acionados pela Cena 0 validam essa sessão antes
+de abrir qualquer perfil. Na tela `/cena-0-controller`, use primeiro `ABRIR /
+VERIFICAR LOGIN MANUAL`: o painel abre o Instagram sem preencher credenciais nem
+enviar o formulário. Toque em `Continue`/`Continuar`, conclua senha, checkpoint
+ou 2FA no próprio painel e pressione o botão novamente para confirmar. Os botões
+de perfil da Mala 3 só são liberados depois que a sessão aparece como `READY`.
 
 Quando o Instagram mostra uma conta lembrada, o controller reconhece e pressiona
 primeiro o botao exato `Continuar`, `Continue`, `Continuar como` ou `Continue as`.

@@ -324,6 +324,8 @@ async function prepareSceneZeroInstagramPost(index) {
   showState.controlSceneZero("instagram-post-loading", { index: safeIndex }, { source: "operator" });
 
   const controller = getInstagramController({ reporter: (instagram) => showState.updateInstagram(instagram) });
+  const login = await controller.ensureInstagramSession({ automatic: false });
+  if (login.status !== "ready") throw new Error(login.message || "INSTAGRAM LOGIN MANUAL REQUIRED");
   const opened = await controller.openProfileMedia(session.currentProfile.username, safeIndex);
   if (opened.status !== "ready") throw new Error(opened.message || "INSTAGRAM POST NOT AVAILABLE");
   const digest = await controller.extractCurrentPageDigest();
@@ -747,6 +749,16 @@ export async function POST(request) {
         result,
         sceneZero: showState.snapshot().sceneZero
       }, { status });
+    }
+
+    if (action === "instagram-manual-login") {
+      const controller = getInstagramController({ reporter: (instagram) => showState.updateInstagram(instagram) });
+      const result = await controller.prepareManualLogin();
+      return Response.json({
+        message: result.message,
+        result,
+        sceneZero: showState.snapshot().sceneZero
+      });
     }
 
     if (action === "browser-stop") {
