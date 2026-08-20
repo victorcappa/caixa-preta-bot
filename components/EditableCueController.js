@@ -9,6 +9,7 @@ import {
 } from "@/lib/sceneAudioGraph";
 import { normalizeSceneAudioEffects, SCENE_AUDIO_EFFECT_DEFAULTS } from "@/lib/sceneAudioEffects";
 import { nextSceneOneSampleShortcut } from "@/lib/sceneOneSampleShortcuts";
+import SceneAudioEffectsControls from "./SceneAudioEffectsControls";
 import styles from "./EditableCueController.module.css";
 
 const EMPTY_ASSETS = { audio: [], video: [], image: [] };
@@ -115,7 +116,8 @@ const EditableCueController = forwardRef(function EditableCueController({
   importDirectory = "",
   importType = "audio",
   onSelectedCueChange = null,
-  renderStageOverlay = null
+  renderStageOverlay = null,
+  showAudioEffects = false
 }, ref) {
   const [config, setConfig] = useState(null);
   const [assets, setAssets] = useState(EMPTY_ASSETS);
@@ -220,42 +222,42 @@ const EditableCueController = forwardRef(function EditableCueController({
     onSelectedCueChange?.(selectedCue);
   }, [onSelectedCueChange, selectedCue]);
 
-  useImperativeHandle(ref, () => ({
-    updateCueAudioEffects(cueId, settings, { persist = false } = {}) {
-      if (!config || !cueId) return Promise.resolve(null);
-      const normalized = normalizeSceneAudioEffects(settings);
-      const nextConfig = {
-        ...config,
-        cues: config.cues.map((cue) => cue.id === cueId
-          ? { ...cue, audioEffects: normalized }
-          : cue)
-      };
-      setConfig(nextConfig);
+  function updateCueAudioEffects(cueId, settings, { persist = false } = {}) {
+    if (!config || !cueId) return Promise.resolve(null);
+    const normalized = normalizeSceneAudioEffects(settings);
+    const nextConfig = {
+      ...config,
+      cues: config.cues.map((cue) => cue.id === cueId
+        ? { ...cue, audioEffects: normalized }
+        : cue)
+    };
+    setConfig(nextConfig);
 
-      for (const instance of audioInstancesRef.current.values()) {
-        if (instance.cueId !== cueId) continue;
-        if (!updateSceneAudioEffects(instance.audio, normalized) && normalized.enabled) {
-          void attachSceneAudioEffects(instance.audio, normalized);
-        }
+    for (const instance of audioInstancesRef.current.values()) {
+      if (instance.cueId !== cueId) continue;
+      if (!updateSceneAudioEffects(instance.audio, normalized) && normalized.enabled) {
+        void attachSceneAudioEffects(instance.audio, normalized);
       }
-      void enqueuePublicCue("update-audio", null, {
-        cueId,
-        patch: { audioEffects: normalized }
-      });
-
-      if (!persist) return Promise.resolve(normalized);
-      const request = effectsSaveRequestRef.current
-        .catch(() => {})
-        .then(() => saveCueConfig(controllerId, nextConfig))
-        .then(({ response, data }) => {
-          if (!response.ok) throw new Error(data.error || "EFFECT SAVE ERROR");
-          setStatus("EFEITOS SALVOS");
-          return data.config;
-        });
-      effectsSaveRequestRef.current = request.catch(() => {});
-      return request;
     }
-  }));
+    void enqueuePublicCue("update-audio", null, {
+      cueId,
+      patch: { audioEffects: normalized }
+    });
+
+    if (!persist) return Promise.resolve(normalized);
+    const request = effectsSaveRequestRef.current
+      .catch(() => {})
+      .then(() => saveCueConfig(controllerId, nextConfig))
+      .then(({ response, data }) => {
+        if (!response.ok) throw new Error(data.error || "EFFECT SAVE ERROR");
+        setStatus("EFEITOS SALVOS");
+        return data.config;
+      });
+    effectsSaveRequestRef.current = request.catch(() => {});
+    return request;
+  }
+
+  useImperativeHandle(ref, () => ({ updateCueAudioEffects }));
 
   const availableAssets = useMemo(() => {
     const grouped = {};
@@ -945,6 +947,16 @@ const EditableCueController = forwardRef(function EditableCueController({
           {!preview ? <p>Selecione ou dispare um botão.</p> : null}
           {renderStageOverlay ? <div className={styles.stageOverlay}>{renderStageOverlay()}</div> : null}
         </div>
+
+        {showAudioEffects ? (
+          <SceneAudioEffectsControls
+            cueId={selectedCue?.type === "audio" ? selectedCue.id : ""}
+            cueLabel={selectedCue?.type === "audio" ? selectedCue.label : ""}
+            onChange={(cueId, settings) => updateCueAudioEffects(cueId, settings)}
+            onPersist={(cueId, settings) => updateCueAudioEffects(cueId, settings, { persist: true })}
+            settings={selectedCue?.type === "audio" ? selectedCue.audioEffects : undefined}
+          />
+        ) : null}
 
         <button className={styles.stopAllButton} onClick={stopAllSamples} type="button">
           SILÊNCIO / STOP ALL

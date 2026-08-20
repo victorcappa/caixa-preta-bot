@@ -52,10 +52,8 @@ Depois abra:
 - `http://localhost:3000/baralho-morbido-controller`, para sortear e reiniciar o Baralho Morbido
 - `http://localhost:3000/queda-aviao`, para a projecao textual isolada de Queda Aviao
 - `http://localhost:3000/queda-aviao-controller`, para controlar essa projecao em tempo real
-- `http://localhost:3000/forca-g-samples`, tela publica de samples audiovisuais da Forca G
-- `http://localhost:3000/forca-g-samples-controller`, controller de samples audiovisuais
-- `http://localhost:3000/forca-g-shaders`, tela publica de videos e shaders da Forca G
-- `http://localhost:3000/forca-g-shaders-controller`, controller editavel de videos e shaders
+- `http://localhost:3000/forca-g-samples`, tela publica unificada de samples e shaders da Forca G
+- `http://localhost:3000/forca-g-samples-controller`, controller unificado de samples e shaders
 - `http://localhost:3000/transicao-psicodelica`, tela publica preta da transicao psicodelica
 - `http://localhost:3000/transicao-psicodelica-controller`, controller preparado para a transicao psicodelica
 - `http://localhost:3000/tea-for-two`, tela publica preta de Tea For Two
@@ -86,14 +84,15 @@ Depois de posicionar essa janela no monitor/projetor em modo Estender Tela, use
 O Operator nao navega nem recarrega. Abrir uma nova janela controlada torna essa
 janela a ativa; a estrutura do estado guarda multiplas janelas em
 `projection.windows`, entao comandos futuros podem ser direcionados por ID.
+Ao trocar de controller, a aplicação consulta primeiro uma janela realmente
+conectada; registros antigos ou fechados são ignorados, sem gerar conflito 409.
 
 Telas publicas controlaveis:
 
 - `Chatbot`: `/`
 - `Baralho Morbido`: `/baralho-morbido`
 - `Queda Aviao`: `/queda-aviao`
-- `Forca G Samples`: `/forca-g-samples`
-- `Forca G Shaders`: `/forca-g-shaders`
+- `Forca G — Sampler + Shaders`: `/forca-g-samples`
 - `Transicao Psicodelica`: `/transicao-psicodelica`
 - `Tea For Two`: `/tea-for-two`
 - `Piloto Videogame`: `/piloto-videogame`
@@ -110,15 +109,15 @@ operador ao lado; em telas menores, aparece como gaveta animada.
 As telas privadas de operacao tem um menu comum no topo, configurado em
 `lib/controllerSurfaces.js`. O `/operator` funciona como hub e organiza os
 controllers em colunas por cena: uma cena com apenas um controller aparece uma
-vez; as quatro partes da Cena 2 ficam empilhadas na mesma coluna. Cada rota
+vez; as partes da Cena 2 ficam empilhadas na mesma coluna. Cada rota
 carrega apenas o controller ativo, sem misturar todos os controles em uma tela
-unica. As abas mostram `CENA 2A`, `CENA 2B` e assim por diante antes do nome.
+unica. O sampler e os shaders da Força G compartilham a aba `CENA 2A`.
 
 Grupos atuais:
 
 - `CENA 0`: `Bot / Malas`, rota `/cena-0-controller`
 - `CENA 1`: `Queda / Emergencia`, rota `/queda-aviao-controller`
-- `CENA 2`: `Forca G — Samples`, `Forca G — Shaders`, `Baralho Morbido`,
+- `CENA 2`: `Forca G — Sampler + Shaders`, `Baralho Morbido`,
   `Transicao Psicodelica`
 - `CENA 3`: `Tea For Two`
 - `CENA 4`: `Piloto / Videogame`
@@ -128,8 +127,8 @@ Grupos atuais:
 Cada aba cenica troca a projecao para sua rota publica correspondente. `Bot /
 Malas` abre `/`, `Baralho Morbido` abre `/baralho-morbido`, `Queda /
 Emergencia` abre `/queda-aviao` e as demais cenas abrem uma tela preta propria
-enquanto sua logica publica ainda nao existe. `Forca G — Samples` e `Forca G —
-Shaders` mostram videos e imagens disparados no controller em tempo real.
+enquanto sua logica publica ainda nao existe. `Forca G — Sampler + Shaders`
+mostra vídeos, imagens e efeitos disparados no controller em tempo real.
 `Glitch Geral` nao troca a cena projetada: ele abre o controller e o glitch
 continua sendo aplicado sobre a tela publica que ja estiver ativa.
 
@@ -142,6 +141,8 @@ imagens, shader, texto, glitch e vozes de áudio. Assim, trocar ou avançar outr
 conteúdo da cena não encerra samples; somente término natural, STOP individual,
 STOP AUDIO ou STOP ALL os remove. STOP ALL também neutraliza vídeos, imagens,
 texto, shaders e o glitch global sem resetar o restante do espetáculo.
+As rotas antigas `/forca-g-shaders-controller` e `/forca-g-shaders`
+redirecionam para essas duas superfícies unificadas.
 
 Os assets novos ficam em:
 
@@ -164,6 +165,17 @@ vídeos legados de `assets/videos/forca-g/` permanecem onde estavam e estão
 referenciados pelo manifest como G-LOC. Cues com arquivo que já tenham sido
 salvos pelo controller anterior em `data/controller-cues.json` também são
 incorporados quando ainda não aparecem no manifest, preservando compatibilidade.
+
+Os áudios da cena 2 em `assets/audios/cena-2-efeitos/` também entram
+automaticamente na seção `SOM`, sem precisar duplicá-los no manifest. A ordem
+alfabética recebe inicialmente os atalhos `Q`, `W`, `E` e `R`; novos arquivos
+continuam pela grade de teclas disponível.
+
+Os vídeos de explicação ficam em `assets/videos/explicacoes-sampler/` e entram
+automaticamente na seção `VÍDEO`, com atalhos numéricos a partir de `4`. Cada
+pad usa a camada de vídeo independente do G-LOC, portanto os dois podem coexistir
+e receber os shaders integrados na própria Cena 2A. Não existe uma aba separada
+para shaders; as rotas antigas apenas redirecionam para o sampler unificado.
 
 Exemplo compacto de configuração manual:
 
@@ -203,9 +215,19 @@ tela e o primeiro item vence. O volume master atua em todas as vozes da projeç�
 Áudios e imagens são pré-carregados; vídeos carregam metadados antes do primeiro
 disparo para evitar manter vários arquivos grandes integralmente em memória.
 
+O painel de pedais abaixo dos pads de áudio é o mesmo da cena 1. Cada pad mantém
+sua própria combinação dos presets `LIMPO`, `RÁDIO`, `SATURADO`, `DESTRUÍDO` e
+`SUBMERSO`, dos pedais drive, phaser, wah-wah, echo e pitch, e dos controles de
+filtros, mix e saída. A alteração é aplicada ao vivo a todas as vozes ativas
+daquele pad, sem afetar os outros samples; um novo disparo do mesmo pad cria uma
+voz adicional. As regulagens são salvas automaticamente em
+`data/forca-g-sampler-settings.json` e voltam no próximo carregamento.
+
 O manifest preserva itens inválidos como pads em erro, registra no console o
 caminho ausente e mantém os outros controles utilizáveis. A validação lógica
-rápida é `npm run test:forca-g-sampler`; para áudio remoto no Safari, desbloqueie
+rápida é `npm run test:forca-g-sampler`; o fluxo completo pode ser validado com
+`npm run test:forca-g-sampler:browser` enquanto o servidor local estiver ativo.
+Para áudio remoto no Safari, desbloqueie
 a janela pública com uma interação antes do ensaio por causa da política de
 autoplay do navegador. Se o browser bloquear o primeiro play com áudio, o G-LOC
 faz fallback automático para `MUTED`, continua exibindo o vídeo e atualiza o
@@ -576,8 +598,8 @@ do controller e da projecao usa esse padrao salvo. O fade padrao inicial e
 
 ## Controllers editaveis de cues
 
-`Forca G — Samples`, `Forca G — Shaders`, `Transicao Psicodelica`, `Tea For
-Two`, `Piloto / Videogame` e `Tecnologia x Floresta` usam o editor persistente
+`Transicao Psicodelica`, `Tea For Two`, `Piloto / Videogame` e
+`Tecnologia x Floresta` usam o editor persistente
 de cues. Neles e possivel criar, duplicar e remover botoes, editar nome,
 atalho, cor, tipo, material e duracao em milissegundos. `SALVAR PADRÃO` grava a
 configuracao em `data/controller-cues.json`, para abrir igual na proxima sessao.
@@ -587,19 +609,26 @@ em `input`, `textarea`, `select` ou campo editavel. Os arquivos existentes em
 `assets/` aparecem na lista de material. O campo `Adicionar arquivo` salva novos
 arquivos em `assets/controller-cues/<controller>/` e atualiza a lista.
 Cada cue tem seu proprio botao `STOP`: ele corta a previa/arquivo local e o cue
-ativo na tela publica. No caso de `Forca G — Samples`, video e imagem sao
-reproduzidos na projecao publica correspondente; cues de audio mantem a tela
-preta e tentam tocar o arquivo no navegador da projecao.
+ativo na tela publica. O sampler específico da Força G usa o manifest e os
+controles descritos na seção `Cena 2A — Sampler Força G`.
 
 Na `CENA 2D`, o cue `Texto Subindo` tem tipo `TEXTO`: edite seu conteudo no
 campo `Texto projetado`, defina cor e duracao, salve o padrao e dispare o cue.
 A tela publica da Transicao Psicodelica sobe o texto pela projecao; os demais
 tipos continuam disponiveis para sons, videos e imagens.
 
-Na `CENA 2B`, os botoes `TÚNEL`, `REDOUT` e `DEFORMAR` aparecem sobre a previa
-do video. Eles aplicam a mesma camada sobre o video da projecao publica; use
-`LIMPAR` para remover os tres efeitos e o controle de intensidade para dosar a
-camada.
+Os dois áudios iniciais da Cena 2D aparecem em ordem de duração: `Áudio Longo`
+(aproximadamente 229 segundos) e depois `Áudio Curto` (aproximadamente 31
+segundos). Ao selecionar um deles, a mesma pedaleira da Cena 1 aparece entre a
+prévia e os pads, com presets, drive, phaser, wah-wah, echo, pitch, filtros, mix
+e saída. As regulagens são independentes por áudio, atualizam as vozes ativas no
+controller e na projeção e são salvas em `data/controller-cues.json`.
+
+Na `CENA 2A`, os botões `TÚNEL`, `REDOUT` e `DEFORMAR` ficam junto do sampler.
+Eles aplicam a mesma camada sobre a projeção; use `LIMPAR` para remover os três
+efeitos e o controle de intensidade para dosar a camada. Quando `TÚNEL` é
+acionado sem vídeo ou imagem, a projeção usa automaticamente
+`assets/imagens/forca-g/visao-tunel.jpeg` como base para o teste de visão.
 
 O divisor entre o palco de cues e o editor tem uma alca redimensionavel, como o
 painel do bot. Arraste a alca ou use as setas `←` e `→` quando ela estiver em

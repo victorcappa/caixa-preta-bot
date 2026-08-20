@@ -62,12 +62,16 @@ try {
     .sort((left, right) => left.localeCompare(right, "pt-BR", { sensitivity: "base" }));
   const expectedBasePaths = expectedFilenames.map((filename) => `audios/queda-aviao/${filename}`);
   assert.ok(expectedBasePaths.length >= 1, "scene one base audio directory should not be empty");
-  assert.deepEqual(configPayload.config.cues.map((cue) => cue.assetPath), expectedBasePaths);
-  assert.deepEqual(
-    configPayload.config.cues.map((cue) => cue.label),
-    expectedFilenames.map((filename) => path.basename(filename, path.extname(filename)))
-  );
-  assert.equal(configPayload.config.cues.every((cue) => cue.loop === false && cue.volume === 1), true);
+  const configuredPaths = new Set(configPayload.config.cues.map((cue) => cue.assetPath));
+  assert.equal(expectedBasePaths.every((assetPath) => configuredPaths.has(assetPath)), true, "folder audios should be present without removing additional saved pads");
+  for (const filename of expectedFilenames) {
+    const assetPath = `audios/queda-aviao/${filename}`;
+    assert.equal(
+      configPayload.config.cues.find((cue) => cue.assetPath === assetPath)?.label,
+      path.basename(filename, path.extname(filename))
+    );
+  }
+  assert.equal(configPayload.config.cues.every((cue) => typeof cue.loop === "boolean" && cue.volume >= 0 && cue.volume <= 1), true);
   assert.equal(expectedBasePaths.every((assetPath) => configPayload.assets.audio.some((asset) => asset.path === assetPath)), true);
   const [firstCue, secondCue] = configPayload.config.cues;
 
@@ -186,7 +190,6 @@ try {
 
   const existingControllers = [
     ["/forca-g-samples-controller", "SAMPLER — FORÇA G"],
-    ["/forca-g-shaders-controller", "CENA 2B — FORÇA G / VÍDEOS E SHADERS"],
     ["/transicao-psicodelica-controller", "CENA 2D — TRANSIÇÃO PSICODÉLICA"],
     ["/tea-for-two-controller", "CENA 3 — TEA FOR TWO / TRANSIÇÃO"],
     ["/piloto-videogame-controller", "CENA 4 — PILOTO / SONS DE VIDEOGAME"],

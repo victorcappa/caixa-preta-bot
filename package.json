@@ -21,6 +21,7 @@
     "test:scene-one-audio-effects": "node --no-warnings scripts/scene-one-audio-effects-browser-test.js",
     "test:forca-g-sampler": "node --no-warnings scripts/forca-g-sampler-test.js",
     "test:forca-g-sampler:browser": "node --no-warnings scripts/forca-g-sampler-browser-test.js",
+    "test:scene-two-d-audio-effects": "node --no-warnings scripts/scene-two-d-audio-effects-browser-test.js",
     "test:robot-sound": "node --no-warnings scripts/robot-sound-test.js",
     "test:robot-sound:browser": "node --no-warnings scripts/robot-sound-browser-test.js"
   },
