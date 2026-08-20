@@ -110,12 +110,17 @@ export default function QuedaAviaoController() {
 
   useEffect(() => {
     function handleKeydown(event) {
-      if (event.key !== "ArrowRight" || isTypingTarget(event.target)) {
+      const navigation = {
+        ArrowLeft: { action: "previous", message: "ANTERIOR" },
+        ArrowRight: { action: "next", message: "PROXIMA" }
+      }[event.key];
+
+      if (!navigation || isTypingTarget(event.target)) {
         return;
       }
 
       event.preventDefault();
-      void runActionRef.current?.("next", {}, "PROXIMA");
+      void runActionRef.current?.(navigation.action, {}, navigation.message);
     }
 
     window.addEventListener("keydown", handleKeydown, { capture: true });
