@@ -51,6 +51,12 @@ Depois abra:
 - `http://localhost:3000/baralho-morbido-controller`, para sortear e reiniciar o Baralho Morbido
 - `http://localhost:3000/queda-aviao`, para a projecao textual isolada de Queda Aviao
 - `http://localhost:3000/queda-aviao-controller`, para controlar essa projecao em tempo real
+- `http://localhost:3000/forca-g-samples-controller`, controller preparado para samples audiovisuais
+- `http://localhost:3000/forca-g-shaders-controller`, controller preparado para videos e shaders
+- `http://localhost:3000/transicao-psicodelica-controller`, controller preparado para a transicao psicodelica
+- `http://localhost:3000/tea-for-two-controller`, controller preparado para musica e transicao
+- `http://localhost:3000/piloto-videogame-controller`, controller preparado para soundboard do piloto
+- `http://localhost:3000/tecnologia-floresta-controller`, controller preparado para camada sonora transversal
 - `http://localhost:3000/glitch-controller`, para testar e ajustar o glitch visual em tempo real
 
 Pontos importantes:
@@ -89,13 +95,29 @@ O operator tambem pode ser aberto dentro da tela principal pelo botao `OP`,
 abaixo do botao `?`. Ele alterna entre chat em tela cheia e chat com terminal
 operador ao lado; em telas menores, aparece como gaveta animada.
 
-As telas privadas de operacao tem uma barra comum de abas no topo:
-`Operator`, `Chatbot`, `Baralho`, `Queda Aviao`, `Glitch` e `Treino`.
-`Operator` abre a cabine principal sem mudar a tela projetada. `Chatbot` volta
-a projecao para `/`. `Baralho` abre `/baralho-morbido` e `Queda Aviao` abre
-`/queda-aviao`. `Glitch` nao troca a cena projetada: ele abre o controller e o
-glitch continua sendo aplicado sobre a tela publica que ja estiver ativa
-(`Chatbot`, `Baralho` ou `Queda Aviao`).
+As telas privadas de operacao tem uma barra comum de abas no topo, configurada
+em `lib/controllerSurfaces.js`. O `/operator` funciona como hub: a barra lista
+controllers por grupo/cena e carrega apenas o controller ativo, sem misturar
+todos os controles em uma tela unica.
+
+Grupos atuais:
+
+- `CENA 0`: `Bot / Malas`, rota `/operator`
+- `CENA 1`: `Queda / Emergencia`, rota `/queda-aviao-controller`
+- `CENA 2`: `Forca G — Samples`, `Forca G — Shaders`, `Baralho Morbido`,
+  `Transicao Psicodelica`
+- `CENA 3`: `Tea For Two`
+- `CENA 4`: `Piloto / Videogame`
+- `CAMADAS`: `Tecnologia x Floresta`
+- `OUTROS`: `Glitch Geral` e `Treino`
+
+Clique em `Bot / Malas` para voltar a projecao para `/`; abrir ou recarregar
+`/operator` diretamente nao troca a projecao ativa. `Baralho Morbido` abre
+`/baralho-morbido` na projecao e `Queda / Emergencia` abre `/queda-aviao`.
+Controllers preparados ainda nao navegam a tela publica automaticamente ate
+existir uma projecao real para cada cena. `Glitch Geral` nao troca a cena
+projetada: ele abre o controller e o glitch continua sendo aplicado sobre a
+tela publica que ja estiver ativa.
 
 Quando o Instagram embutido e/ou o operator estiverem visiveis, arraste as
 divisorias entre `chat | Instagram | operator` para ajustar o palco. O tamanho
