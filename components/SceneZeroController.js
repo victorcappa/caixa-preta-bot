@@ -61,6 +61,7 @@ export default function SceneZeroController() {
   const [browserCommand, setBrowserCommand] = useState("");
   const [googleGuidance, setGoogleGuidance] = useState("");
   const [instagramGuidance, setInstagramGuidance] = useState("");
+  const [suitcaseInstagramPanelClosed, setSuitcaseInstagramPanelClosed] = useState(false);
   const [glitchVideos, setGlitchVideos] = useState([]);
   const [glitchVideoFile, setGlitchVideoFile] = useState("");
   const [glitchVideoLoop, setGlitchVideoLoop] = useState(false);
@@ -99,6 +100,12 @@ export default function SceneZeroController() {
   useEffect(() => robotSoundEngine.armAutoUnlock(), []);
 
   useEffect(() => robotSoundEngine.armAudioRelay(), []);
+
+  useEffect(() => {
+    if (snapshot.instagram?.embeddedPanelSequence > 0) {
+      setSuitcaseInstagramPanelClosed(false);
+    }
+  }, [snapshot.instagram?.embeddedPanelSequence]);
 
   const browserProcessing = ["STARTING", "NAVIGATING", "ACTING"].includes(snapshot.instagram?.status);
   const informationProcessing = Boolean(pending) || browserProcessing;
@@ -573,9 +580,9 @@ export default function SceneZeroController() {
               <Button danger onClick={() => sceneAction("suitcase-instagram-stop")} pending={pending || !suitcaseInstagram.currentProfile}>PARAR</Button>
               <Readout label="POSTS PROCESSADOS / COMENTADOS" value={`${suitcaseInstagram.processedPostKeys?.length || 0} / ${suitcaseInstagram.commentedPostKeys?.length || 0}`} />
               <Readout label="COMENTÁRIOS RECENTES" value={(suitcaseInstagram.recentComments || []).slice(-5).map((entry) => `${entry.profile} · POST ${entry.postIndex}: ${entry.comment} [${entry.status}]`).join("\n")} />
-              {instagram.embedded && instagram.status !== "DISCONNECTED" ? (
+              {instagram.embedded && instagram.status !== "DISCONNECTED" && !suitcaseInstagramPanelClosed ? (
                 <div className={styles.instagramPanel}>
-                  <InstagramBrowserPanel instagram={instagram} onClose={() => sceneAction("suitcase-instagram-stop")} />
+                  <InstagramBrowserPanel instagram={instagram} onClose={() => setSuitcaseInstagramPanelClosed(true)} />
                 </div>
               ) : null}
             </section>
