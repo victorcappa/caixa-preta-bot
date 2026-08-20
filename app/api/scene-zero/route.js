@@ -6,7 +6,7 @@ import { buildSceneZeroDirection, sceneZeroGlitchCommand } from "@/lib/scene-zer
 import { showState } from "@/lib/showState";
 import { SHOW_MODES } from "@/prompts/modes";
 import { findInstagramParticipantByName } from "@/lib/suitcases/SuitcaseDirector";
-import { chooseGincana, chooseGincanaDuration, SCENE_ZERO_INSTAGRAM_TARGETS } from "@/lib/scene-zero/suitcaseGame";
+import { buildGincanaPresentation, chooseGincana, chooseGincanaDuration, SCENE_ZERO_INSTAGRAM_TARGETS } from "@/lib/scene-zero/suitcaseGame";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -243,7 +243,7 @@ async function activateSuitcase(suitcaseNumber, detail = "") {
   return { applied: true, state: showState.snapshot().sceneZero, turn };
 }
 
-async function drawGincana(detail = "") {
+async function drawGincana() {
   const state = showState.privateSnapshot();
   const usedTaskIds = state.sceneZero.suitcaseGame?.gincana?.usedTaskIds || [];
   const task = chooseGincana(undefined, usedTaskIds);
@@ -251,7 +251,12 @@ async function drawGincana(detail = "") {
   const durationSeconds = chooseGincanaDuration(task);
   const selected = showState.controlSceneZero("gincana-draw", { task, durationSeconds }, { source: "operator" });
   if (!selected.applied) return selected;
-  const turn = await speak("gincana_present", [detail, `Tarefa sorteada: ${task.instruction}`, `Tempo definido pelo sistema: ${durationSeconds} segundos.`].filter(Boolean).join(" "));
+  const turn = {
+    text: buildGincanaPresentation(task, durationSeconds),
+    events: [],
+    salience: []
+  };
+  applyGeneratedTurn(turn);
   return { applied: true, state: showState.snapshot().sceneZero, turn, task, durationSeconds };
 }
 
@@ -513,7 +518,7 @@ export async function POST(request) {
       if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase !== 2) {
         return Response.json({ error: "INICIE A MALA 2 ANTES DO SORTEIO", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
       }
-      const result = await drawGincana(detail);
+      const result = await drawGincana();
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
       return Response.json({ message: `GINCANA SORTEADA — ${result.durationSeconds}s`, sceneZero: result.state, text: result.turn?.text });
     }

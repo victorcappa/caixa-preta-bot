@@ -256,9 +256,11 @@ Para acrescentar uma tarefa, adicione outro objeto exportado nesse arquivo.
 As durações configuradas são limitadas pelo sistema a 60–120 segundos e um
 valor inteiro é sorteado inclusivamente entre o mínimo e o máximo da tarefa.
 
-Depois do sorteio, o modelo reformula a instrução sem poder mudar objetivo,
-segurança ou tempo. O timer da gincana tem iniciar, pausar, continuar, reiniciar
-e cancelar, usa `endsAt` no servidor e mostra a contagem na projeção até zero.
+Depois do sorteio, o sistema anuncia literalmente a instrução do banco com a
+duração sorteada. A fala é uma ordem fechada: nunca devolve ao participante a
+escolha de objeto ou característica e não oferece exemplos ou alternativas. O
+modelo não pode reformular essa ordem. O timer da gincana tem iniciar, pausar, continuar,
+reiniciar e cancelar, usa `endsAt` no servidor e mostra a contagem na projeção até zero.
 `AÇÃO CONCLUÍDA` e `FALHOU / TEMPO ESGOTADO` encerram o timer, registram tempo
 decorrido e a observação livre do operador, e só então pedem ao modelo um
 comentário. O comentário recebe tarefa, resultado, tempo, objetos e reações

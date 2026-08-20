@@ -11,8 +11,8 @@ export const SCENE_ZERO_GINCANAS = [
   },
   {
     id: "objeto_com_historia",
-    description: "Localizar um objeto que pareça guardar uma história.",
-    instruction: "Encontre no espaço um objeto que pareça ter uma história e traga-o até aqui.",
+    description: "Localizar um papel impresso com uma data visível.",
+    instruction: "Encontre e traga um papel impresso que mostre uma data visível.",
     durationMin: 60,
     durationMax: 90,
     difficulty: "fácil",
@@ -20,8 +20,8 @@ export const SCENE_ZERO_GINCANAS = [
   },
   {
     id: "emprestimo_plateia",
-    description: "Negociar um empréstimo simples com alguém da plateia.",
-    instruction: "Consiga com alguém da plateia um objeto pequeno que essa pessoa aceite emprestar para a cena.",
+    description: "Negociar o empréstimo de uma caneta com alguém da plateia.",
+    instruction: "Consiga com alguém da plateia uma caneta emprestada para a cena e traga-a até aqui.",
     durationMin: 75,
     durationMax: 105,
     difficulty: "média",
@@ -38,8 +38,8 @@ export const SCENE_ZERO_GINCANAS = [
   },
   {
     id: "objeto_que_faz_som",
-    description: "Localizar um objeto cotidiano capaz de produzir um som simples.",
-    instruction: "Encontre e traga um objeto que produza um som sem precisar quebrar, bater forte ou ligar na tomada.",
+    description: "Localizar um molho de chaves capaz de produzir um som simples.",
+    instruction: "Encontre e traga um molho de chaves que possa produzir um som ao ser sacudido suavemente.",
     durationMin: 60,
     durationMax: 90,
     difficulty: "média",
@@ -47,11 +47,11 @@ export const SCENE_ZERO_GINCANAS = [
   },
   {
     id: "colecao_improvavel",
-    description: "Montar uma pequena coleção por uma característica visível.",
-    instruction: "Traga três objetos pequenos que tenham alguma característica visível em comum. Você decide qual.",
+    description: "Montar uma pequena coleção de três objetos determinados.",
+    instruction: "Traga exatamente uma chave, uma moeda e uma caneta. Os três objetos devem caber juntos em uma das suas mãos.",
     durationMin: 90,
     durationMax: 120,
     difficulty: "média",
-    notes: "A característica deve poder ser explicada rapidamente ao retornar."
+    notes: "Não substituir os três itens por outros; podem ser emprestados com consentimento e devem ser devolvidos."
   }
 ];

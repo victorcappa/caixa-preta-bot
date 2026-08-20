@@ -4,6 +4,7 @@ async function main() {
   const sceneZero = await import("../lib/scene-zero/state.js");
   const collection = await import("../lib/scene-zero/collection.js");
   const browserCommand = await import("../lib/scene-zero/browserCommand.js");
+  const gincanaBank = await import("../data/scene-zero-gincanas.js");
   const suitcaseGame = await import("../lib/scene-zero/suitcaseGame.js");
   const messageTiming = await import("../lib/messageTiming.js");
   const initial = sceneZero.createInitialSceneZeroState();
@@ -193,6 +194,17 @@ async function main() {
   assert.equal(suitcaseGame.chooseGincanaDuration({ durationMin: 60, durationMax: 120 }, () => 0.999), 120);
   assert.equal(suitcaseGame.clampGincanaDuration(30), 60);
   assert.equal(suitcaseGame.clampGincanaDuration(200), 120);
+  assert.equal(
+    gincanaBank.SCENE_ZERO_GINCANAS.find((task) => task.id === "colecao_improvavel").instruction,
+    "Traga exatamente uma chave, uma moeda e uma caneta. Os três objetos devem caber juntos em uma das suas mãos."
+  );
+  assert.equal(
+    suitcaseGame.buildGincanaPresentation(
+      gincanaBank.SCENE_ZERO_GINCANAS.find((task) => task.id === "colecao_improvavel"),
+      105
+    ),
+    "Gincana. Você tem 105 segundos. Traga exatamente uma chave, uma moeda e uma caneta. Os três objetos devem caber juntos em uma das suas mãos. Começar."
+  );
   assert.equal(suitcaseGame.SCENE_ZERO_INSTAGRAM_TARGETS.robson.participantName, "Robinson Rogério");
 
   const activeGincana = {
@@ -216,6 +228,9 @@ async function main() {
   const gincanaDirection = sceneZero.buildSceneZeroDirection(activeGincana, "gincana_complete", "trouxe três objetos");
   assert.match(gincanaDirection, /comentário sobre o resultado real/);
   assert.match(gincanaDirection, /trouxe três objetos/);
+  const gincanaPresentation = sceneZero.buildSceneZeroDirection(activeGincana, "gincana_present");
+  assert.match(gincanaPresentation, /ordem fechada/);
+  assert.match(gincanaPresentation, /não ofereça alternativas/);
 
   const legacySnapshot = sceneZero.publicSceneZeroSnapshot({ ...initial, suitcaseGame: undefined });
   assert.equal(legacySnapshot.suitcaseGame.instagram.maxPosts, 10);
