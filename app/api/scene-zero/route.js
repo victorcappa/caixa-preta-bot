@@ -343,6 +343,24 @@ export async function POST(request) {
       return Response.json({ message: result.message || "PESQUISA ENCERRADA", sceneZero: showState.snapshot().sceneZero });
     }
 
+    if (action === "google-guidance-start") {
+      const guidance = `${body.guidance || ""}`.trim();
+      const controller = getInstagramController({ reporter: (instagram) => showState.updateInstagram(instagram) });
+      const result = controller.startGoogleGuidance(guidance);
+      const status = result.status === "invalid" ? 400 : result.status === "busy" ? 409 : 200;
+      return Response.json({
+        ...(status >= 400 ? { error: result.message } : { message: result.message }),
+        result,
+        sceneZero: showState.snapshot().sceneZero
+      }, { status });
+    }
+
+    if (action === "google-guidance-stop") {
+      const controller = getExistingInstagramController();
+      const result = controller ? await controller.stopGoogleGuidance() : { status: "idle", message: "GOOGLE: navegador inativo" };
+      return Response.json({ message: result.message, sceneZero: showState.snapshot().sceneZero });
+    }
+
     if (["tea-play", "tea-restart", "tea-stop"].includes(action)) {
       const result = showState.controlSceneZero(action, body, { source: "operator" });
       return Response.json({ message: `TEA FOR TWO ${result.state.teaForTwo.status.toUpperCase()}`, sceneZero: result.state });

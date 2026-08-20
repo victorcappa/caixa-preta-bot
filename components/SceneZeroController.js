@@ -39,6 +39,7 @@ export default function SceneZeroController() {
   const [pending, setPending] = useState("");
   const [detail, setDetail] = useState("");
   const [collectionObservation, setCollectionObservation] = useState("");
+  const [googleGuidance, setGoogleGuidance] = useState("");
   const [notice, setNotice] = useState("SISTEMA PRONTO");
   const [now, setNow] = useState(Date.now());
   const teaAudioRef = useRef(null);
@@ -293,6 +294,34 @@ export default function SceneZeroController() {
           <Button primary onClick={() => sceneAction("instagram-start")} pending={pending}>INICIAR INSTAGRAM</Button>
           <Button danger onClick={() => sceneAction("instagram-stop")} pending={pending}>INTERROMPER INSTAGRAM</Button>
           {sceneZero.instagramActive && instagram.embedded && instagram.status !== "DISCONNECTED" ? (
+            <div className={styles.instagramPanel}><InstagramBrowserPanel instagram={instagram} /></div>
+          ) : null}
+        </ControlBlock>
+
+        <ControlBlock title="GOOGLE" wide>
+          <label className={styles.orientationField}>
+            ORIENTAÇÕES PARA O BOT
+            <textarea
+              value={googleGuidance}
+              onChange={(event) => setGoogleGuidance(event.target.value)}
+              placeholder="Ex.: buscar sobre o candidato do PL para eleições de 2026 e escolher alguma notícia para ler por 15 segundos"
+              rows={3}
+            />
+          </label>
+          <Button
+            primary
+            onClick={() => sceneAction("google-guidance-start", { guidance: googleGuidance })}
+            pending={pending || !googleGuidance.trim()}
+          >BUSCAR / EXECUTAR</Button>
+          <Button
+            danger
+            onClick={() => sceneAction("google-guidance-stop")}
+            pending={pending || instagram.browserMode !== "google_guidance"}
+          >FECHAR GOOGLE</Button>
+          <Readout label="ORIENTAÇÃO EM EXECUÇÃO" value={instagram.browserMode === "google_guidance"
+            ? `${instagram.research?.guidance || "—"}\n${(instagram.research?.step || instagram.status || "idle").toUpperCase()}`
+            : "INATIVA"} />
+          {instagram.browserMode === "google_guidance" && instagram.embedded && instagram.status !== "DISCONNECTED" ? (
             <div className={styles.instagramPanel}><InstagramBrowserPanel instagram={instagram} /></div>
           ) : null}
         </ControlBlock>

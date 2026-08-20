@@ -8,6 +8,20 @@ async function main() {
   assert.equal(controllerModule.normalizeUsername(" cappavictor "), "cappavictor");
   assert.equal(controllerModule.normalizeUsername("https://instagram.com/cappavictor"), "");
   assert.equal(controllerModule.normalizeResearchPersonName("  Janaína\n  Leite  "), "Janaína Leite");
+  assert.equal(
+    controllerModule.normalizeGoogleGuidance("  buscar  sobre eleições\n de 2026  "),
+    "buscar sobre eleições de 2026"
+  );
+  assert.deepEqual(
+    controllerModule.parseGoogleGuidance("buscar sobre o candidato do pl para eleições de 2026 e escolher alguma notícia para ler por 15 segundos"),
+    {
+      guidance: "buscar sobre o candidato do pl para eleições de 2026 e escolher alguma notícia para ler por 15 segundos",
+      query: "o candidato do pl para eleições de 2026",
+      durationSeconds: 15,
+      openResult: true,
+      preferNews: true
+    }
+  );
   assert.equal(controllerModule.normalizePublicResearchUrl("http://127.0.0.1/admin"), null);
   assert.equal(controllerModule.normalizePublicResearchUrl("https://www.jusbrasil.com.br/pessoa/teste"), null);
   assert.equal(
@@ -22,6 +36,14 @@ async function main() {
   ]), {
     interesting: "https://festival.example.org/artistas/janaina-leite",
     instagram: "https://www.instagram.com/janainaleite/"
+  });
+  assert.deepEqual(controllerModule.selectGuidedGoogleResult([
+    { url: "https://www.google.com/search?q=eleicoes", text: "Google" },
+    { url: "https://example.org/arquivo", text: "Arquivo" },
+    { url: "https://jornal.example.com/politica/candidato", text: "Notícia sobre candidato" }
+  ], { preferNews: true }), {
+    url: "https://jornal.example.com/politica/candidato",
+    text: "Notícia sobre candidato"
   });
 
   assert.deepEqual(commands.parseInstagramCommand("follow cappavictor"), {
@@ -228,6 +250,36 @@ async function main() {
   const openController = new controllerModule.InstagramController({ config: openConfig });
   assert.deepEqual(openConfig.allowedProfiles, []);
   assert.equal(openController.assertAllowedUsername("marcusgarcia"), "marcusgarcia");
+
+  const guidedController = new controllerModule.InstagramController({ config });
+  const guidedNavigations = [];
+  const guidedStatuses = [];
+  guidedController.init = async () => {};
+  guidedController.configurePage = async () => {};
+  guidedController.searchPublicWeb = async (query, options) => {
+    assert.equal(query, "eleições de 2026");
+    assert.deepEqual(options, { preferGoogle: true, news: true });
+    return "google";
+  };
+  guidedController.collectCurrentSearchResults = async () => [
+    { url: "https://jornal.example.com/politica/eleicoes", text: "Notícia eleitoral" }
+  ];
+  guidedController.updateStatus = (status, message) => {
+    guidedController.status = status;
+    guidedController.message = message;
+    guidedStatuses.push({ status, message });
+  };
+  guidedController.page = {
+    goto: async (url) => guidedNavigations.push(url),
+    waitForTimeout: async () => {},
+    url: () => guidedNavigations.at(-1) || "https://www.google.com/"
+  };
+  const guidedResult = await guidedController.followGoogleGuidance("buscar sobre eleições de 2026 e escolher uma notícia");
+  assert.equal(guidedResult.status, "ready");
+  assert.equal(guidedController.browserMode, "google_guidance");
+  assert.equal(guidedController.research.step, "result_ready");
+  assert.deepEqual(guidedNavigations, ["https://jornal.example.com/politica/eleicoes"]);
+  assert.equal(guidedStatuses.at(-1).message, "GOOGLE: RESULTADO ABERTO");
 
   const dispatchedTouchEvents = [];
   const pressedKeys = [];
