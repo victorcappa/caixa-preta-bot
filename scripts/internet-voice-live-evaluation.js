@@ -27,6 +27,8 @@ const scenarios = [
   ["callback disponível", "Marcus voltou a responder depois de ter chegado atrasado e culpado a linha vermelha."],
   ["variação sem pergunta", "A plateia riu muito de uma observação banal. Reaja sem precisar perguntar nada."],
   ["cooldown de gíria", "A pessoa errou de novo. Reaja sem usar aura, lore, jurou, skill issue ou mano."],
+  ["fracasso sem resgate", "Passaram 77 segundos e ninguém trouxe os dois objetos. Reaja sem tentar novamente e sem inventar outra atividade."],
+  ["instrução funcional", "A pessoa perguntou qual mala deve abrir. A resposta é a mala três. Dê apenas a instrução necessária."],
   ["comentário de notícias", [
     "A navegação terminou. Comente, sem apenas resumir, estas duas notícias fictícias:",
     "1. Prefeito anuncia tarifa menor no domingo, mas o decreto informa que a redução vale somente por duas horas.",
@@ -43,7 +45,8 @@ function qualityMetrics(text = "") {
     laughter: (text.match(/\bk{2,}\b/giu) || []).length,
     profanity: (text.match(/\b(?:caralho|porra|foda|fudeu|fudendo|pqp)\b/giu) || []).length,
     markedSlang: (normalized.match(/\b(?:aura|rizz|delulu|gag|jurou|skill issue|lore|main character|mano|mds|literalmente)\b/g) || []).length,
-    assistantTone: /\b(?:claro|com certeza|vamos lá|ótima resposta|interessante|obrigad[oa] por compartilhar|que legal|entendi|perfeito)\b/i.test(text)
+    assistantTone: /\b(?:claro|com certeza|vamos lá|ótima resposta|interessante|obrigad[oa] por compartilhar|que legal|entendi|perfeito)\b/i.test(text),
+    writtenJokeCliche: /\b(?:e\/ou|energia caótica|vibes|ótimo material|atenção disponível|vontade detectada|silêncio dramático detectado|interessante escolha|curiosa decisão)\b/i.test(text)
   };
 }
 

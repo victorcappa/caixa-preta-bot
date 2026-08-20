@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 const path = require("node:path");
 
 async function main() {
@@ -12,27 +13,27 @@ async function main() {
     {
       name: "plateia obedece imediatamente",
       message: "Quase toda a plateia levantou a mão imediatamente, sem hesitar.",
-      expect: { registers: "tiktok_reels", humor: "micro_observation", context: "audience_obedient" }
+      expect: { registers: "tiktok_reels", humor: "specific_observation", context: "audience_obedient" }
     },
     {
       name: "plateia não responde",
       message: "Silêncio. Ninguém respondeu à pergunta.",
-      expect: { registers: "tiktok_reels", humor: "micro_observation", context: "audience_quiet" }
+      expect: { registers: "tiktok_reels", humor: "specific_observation", context: "audience_quiet" }
     },
     {
       name: "apenas uma pessoa responde",
       message: "Só uma pessoa bateu palma sozinha.",
-      expect: { registers: "tiktok_reels", humor: "micro_observation" }
+      expect: { registers: "tiktok_reels", humor: "specific_observation" }
     },
     {
       name: "participante acerta",
       message: "Robinson acertou de primeira.",
-      expect: { humor: "deadpan_absurdity" }
+      expect: { humor: "understatement" }
     },
     {
       name: "participante erra",
       message: "Isa errou. A resposta está incorreta.",
-      expect: { humor: "status_game" }
+      expect: { humor: "understatement" }
     },
     {
       name: "operador muda de jogo",
@@ -42,12 +43,12 @@ async function main() {
     {
       name: "informação constrangedora",
       message: "Uma pessoa admitiu uma informação constrangedora sobre quanto gastou no almoço.",
-      expect: { humor: "false_bureaucracy" }
+      expect: { humor: "social_exposure" }
     },
     {
       name: "maioria veio de metrô",
       message: "A maioria da sala veio de metrô em São Paulo.",
-      expect: { context: "sao_paulo", humor: "false_bureaucracy" }
+      expect: { context: "sao_paulo", humor: "social_exposure" }
     },
     {
       name: "contradição anterior",
@@ -99,18 +100,22 @@ async function main() {
     userMessage: "oi, tudo bem?"
   });
   assert.ok(ordinaryConversation.systemContext.includes("Anti-cringe nao significa portugues neutro"), "conversa comum: regra positiva deve ter autoridade de sistema");
+  assert.ok(ordinaryConversation.systemContext.includes("REACAO > PIADA ESCRITA"), "conversa comum: reação deve ter prioridade sobre punchline escrita");
+  assert.ok(ordinaryConversation.systemContext.includes("Se uma versao 50% menor funcionar"), "conversa comum: regra de compressão deve ter autoridade de sistema");
+  assert.ok(ordinaryConversation.systemContext.includes("Nao use X e/ou Y como punchline"), "conversa comum: cacoete e/ou deve estar proibido");
   assert.ok(ordinaryConversation.debug.repertoireTokens.length > 0, "conversa comum: tokens reais dos registros devem ser enviados");
   assert.ok(ordinaryConversation.debug.repertoireExamples.length > 0, "conversa comum: exemplos reais dos registros devem ser enviados");
   assert.ok(ordinaryConversation.debug.repertoireMarkers.length > 0, "conversa comum: markers do JSON devem ser enviados");
   assert.equal(ordinaryConversation.debug.repertoireTerms.length, 0, "conversa comum: termos altamente marcados não devem entrar sem contexto");
-  assert.ok(ordinaryConversation.context.includes("não mano pera"), "conversa comum: uma construção concreta do JSON deve chegar ao prompt");
+  assert.ok(ordinaryConversation.context.includes("não. pera"), "conversa comum: uma construção concreta e reativa do JSON deve chegar ao prompt");
+  assert.ok(ordinaryConversation.context.includes('"productiveVerbs":{}') || ordinaryConversation.context.includes('"productiveVerbs":[]'), "conversa comum: verbos de gíria não devem ser oferecidos automaticamente");
 
   const gameVocabulary = buildInternetVoiceContext({
     state: { mode: "host", conversation: [], memories: [], game: { active: true, id: "cards" } },
     userMessage: "Robinson errou a rodada do jogo."
   });
   assert.ok(gameVocabulary.debug.registers.includes("discord"), "jogo: repertório Discord deve estar disponível");
-  assert.ok(gameVocabulary.debug.repertoireTerms.length > 0, "jogo: termos contemporâneos contextuais devem estar disponíveis");
+  assert.equal(gameVocabulary.debug.repertoireTerms.length, 0, "jogo: gíria marcada não deve ser oferecida automaticamente como menu");
 
   const varyingConversation = [
     { role: "assistant", content: "não." },
@@ -169,6 +174,17 @@ async function main() {
   assert.equal(fallback.systemContext, "", "fallback não deve alterar o system prompt atual");
   assert.equal(fallback.debug.reason, "guide_unavailable", "fallback deve ser diagnosticável");
   assert.equal(fallbackWarnings, 1, "fallback deve avisar uma única vez");
+
+  const rules = fs.readFileSync(path.resolve(__dirname, "../prompts/rules.js"), "utf8");
+  const collection = fs.readFileSync(path.resolve(__dirname, "../prompts/dataCollection.js"), "utf8");
+  const examples = fs.readFileSync(path.resolve(__dirname, "../prompts/examples.js"), "utf8");
+  for (const source of [rules, collection]) {
+    assert.ok(source.includes("REACAO > PIADA ESCRITA") || source.includes("Reacao e mais importante que piada escrita"), "prompts públicos: princípio reativo ausente");
+    assert.ok(source.includes("X e/ou Y"), "prompts públicos: proibição de punchline e/ou ausente");
+    assert.ok(source.includes("50% menor"), "prompts públicos: teste de compressão ausente");
+  }
+  assert.ok(examples.includes("eu nem terminei e voce ja tava correndo"), "few-shot: especificidade concreta ausente");
+  assert.ok(examples.includes("Remover a fala. Nao substituir automaticamente"), "few-shot: ação aleatória deve ser removida");
 
   console.log("INTERNET VOICE TESTS PASSED");
   console.log(formatInternetVoiceDebug(cooldown.debug));

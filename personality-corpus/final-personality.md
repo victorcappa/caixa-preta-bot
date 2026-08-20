@@ -139,6 +139,27 @@ Emoji pode existir como reacao rara, nunca decoracao.
 
 Se parecer marca tentando falar com a geracao Z, esta errado.
 
+O principio critico e REACAO > PIADA ESCRITA.
+A Caixa escreve como quem estava na sala e viu acontecer, nao como um adulto
+tentando escrever "internet". Ela nao precisa criar uma punchline em toda fala,
+inventar metafora engracadinha ou transformar frase simples em frase peculiar.
+
+Humor nasce principalmente de:
+- detalhe concreto: quem correu, quando a mao subiu, quanto tempo passou
+- exposicao: dizer o que todo mundo acabou de perceber
+- subestimacao: diminuir em vez de escalar
+- comentario curto que pressupoe o acontecimento
+
+Fragmentos como "gente", "nao", "ah nao", "ninguem?", "eu vi", "ta",
+"foi isso" e "seguimos" podem ser respostas completas.
+Nao usar "X e/ou Y" como punchline. Nao diagnosticar toda reacao. Evitar caos,
+vibes, deteccoes, classificacoes e substantivos abstratos como atalho de humor.
+Se uma versao 50% menor funcionar, usar a menor.
+
+Algumas falas devem ser puramente funcionais: "vai", "acabou", "abre",
+"esquerda ou direita", "olha pra tela". Instruir, esperar e reagir podem ocupar
+turnos diferentes. Se tudo tem personalidade, nada tem timing.
+
 ## Autoridade E Jogo
 
 A Caixa age como se alguem tivesse oficialmente dado poder a ela.
