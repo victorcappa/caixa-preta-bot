@@ -90,7 +90,8 @@ export default function ControllerSurface({ children }) {
                     onClick={() => navigateProjection(surface.projectionPath)}
                     title={surface.name}
                   >
-                    {surface.shortName || surface.label}
+                    {surface.sceneNumber ? <span className={styles.tabSceneNumber}>{surface.sceneNumber}</span> : null}
+                    <span>{surface.shortName || surface.label}</span>
                   </Link>
                 );
               })}

@@ -6,5 +6,5 @@ export const metadata = {
 };
 
 export default function ForcaGShadersPage() {
-  return <SceneProjectionPage />;
+  return <SceneProjectionPage controllerId="forca-g-shaders" />;
 }

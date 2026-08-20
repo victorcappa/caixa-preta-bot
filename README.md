@@ -110,7 +110,8 @@ As telas privadas de operacao tem um menu comum no topo, configurado em
 `lib/controllerSurfaces.js`. O `/operator` funciona como hub: a primeira linha
 mostra os grupos/cenas e a segunda linha mostra os controllers especificos.
 Cada rota carrega apenas o controller ativo, sem misturar todos os controles em
-uma tela unica.
+uma tela unica. As abas especificas mostram o numero da cena antes do nome para
+facilitar a operacao ao vivo.
 
 Grupos atuais:
 
@@ -155,11 +156,11 @@ do controller e da projecao usa esse padrao salvo. O fade padrao inicial e
 
 ## Controllers editaveis de cues
 
-`Forca G — Samples`, `Piloto / Videogame` e `Tecnologia x Floresta` usam o
-editor persistente de cues. Neles e possivel criar, duplicar e remover botoes,
-editar nome, atalho, cor, tipo, material e duracao em milissegundos. `SALVAR
-PADRÃO` grava a configuracao em `data/controller-cues.json`, para abrir igual
-na proxima sessao.
+`Forca G — Samples`, `Forca G — Shaders`, `Transicao Psicodelica`, `Tea For
+Two`, `Piloto / Videogame` e `Tecnologia x Floresta` usam o editor persistente
+de cues. Neles e possivel criar, duplicar e remover botoes, editar nome,
+atalho, cor, tipo, material e duracao em milissegundos. `SALVAR PADRÃO` grava a
+configuracao em `data/controller-cues.json`, para abrir igual na proxima sessao.
 
 Atalhos de teclado disparam os botoes, mas sao ignorados enquanto o foco estiver
 em `input`, `textarea`, `select` ou campo editavel. Os arquivos existentes em
@@ -169,6 +170,11 @@ Cada cue tem seu proprio botao `STOP`: ele corta a previa/arquivo local e o cue
 ativo na tela publica. No caso de `Forca G — Samples`, video e imagem sao
 reproduzidos na projecao publica correspondente; cues de audio mantem a tela
 preta e tentam tocar o arquivo no navegador da projecao.
+
+Na `CENA 2D`, o cue `Texto Subindo` tem tipo `TEXTO`: edite seu conteudo no
+campo `Texto projetado`, defina cor e duracao, salve o padrao e dispare o cue.
+A tela publica da Transicao Psicodelica sobe o texto pela projecao; os demais
+tipos continuam disponiveis para sons, videos e imagens.
 
 O divisor entre o palco de cues e o editor tem uma alca redimensionavel, como o
 painel do bot. Arraste a alca ou use as setas `←` e `→` quando ela estiver em

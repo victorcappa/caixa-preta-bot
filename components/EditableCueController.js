@@ -56,7 +56,8 @@ function createCue(allowedTypes, colors) {
     type: allowedTypes[0] || "audio",
     assetPath: "",
     durationMs: 0,
-    color: colors[0] || "#00ff66"
+    color: colors[0] || "#00ff66",
+    text: ""
   };
 }
 
@@ -506,15 +507,27 @@ export default function EditableCueController({ controllerId }) {
                 {allowedTypes.map((type) => <option key={type} value={type}>{type.toUpperCase()}</option>)}
               </select>
             </label>
-            <label>
-              <span>Material</span>
-              <select value={selectedCue.assetPath} onChange={(event) => updateCue(selectedCue.id, { assetPath: event.target.value })}>
-                <option value="">SEM MATERIAL</option>
-                {(availableAssets[selectedCue.type] || []).map((asset) => (
-                  <option key={asset.path} value={asset.path}>{asset.path}</option>
-                ))}
-              </select>
-            </label>
+            {selectedCue.type !== "text" ? (
+              <label>
+                <span>Material</span>
+                <select value={selectedCue.assetPath} onChange={(event) => updateCue(selectedCue.id, { assetPath: event.target.value })}>
+                  <option value="">SEM MATERIAL</option>
+                  {(availableAssets[selectedCue.type] || []).map((asset) => (
+                    <option key={asset.path} value={asset.path}>{asset.path}</option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+            {selectedCue.type === "text" ? (
+              <label>
+                <span>Texto projetado</span>
+                <textarea
+                  onChange={(event) => updateCue(selectedCue.id, { text: event.target.value })}
+                  rows="8"
+                  value={selectedCue.text || ""}
+                />
+              </label>
+            ) : null}
             <label>
               <span>Duração em ms</span>
               <input

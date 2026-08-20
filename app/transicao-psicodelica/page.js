@@ -6,5 +6,5 @@ export const metadata = {
 };
 
 export default function TransicaoPsicodelicaPage() {
-  return <SceneProjectionPage />;
+  return <SceneProjectionPage controllerId="transicao-psicodelica" />;
 }

@@ -30,6 +30,17 @@ function PublicCueMedia({ cue }) {
     });
   }, [cue?.sequence, cue?.type, src]);
 
+  if (cue.type === "text") {
+    return (
+      <div
+        className={styles.risingText}
+        style={{ "--cue-color": cue.color, "--cue-text-duration": `${Math.max(1000, cue.durationMs || 15000)}ms` }}
+      >
+        {cue.text || cue.label}
+      </div>
+    );
+  }
+
   if (!src) {
     return null;
   }
@@ -75,7 +86,7 @@ export default function PublicSceneStage({ blackoutTarget = "cenas", controllerI
 
   return (
     <main className={styles.stage} aria-label="Cena publica">
-      {cue ? <PublicCueMedia cue={cue} /> : null}
+      {cue ? <PublicCueMedia cue={cue} key={cue.sequence} /> : null}
       <DisplayBlackout blackout={displayBlackout} target={blackoutTarget} />
     </main>
   );

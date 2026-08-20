@@ -6,5 +6,5 @@ export const metadata = {
 };
 
 export default function TeaForTwoPage() {
-  return <SceneProjectionPage />;
+  return <SceneProjectionPage controllerId="tea-for-two" />;
 }

@@ -1,4 +1,5 @@
 .stage {
+  position: relative;
   width: 100vw;
   height: 100vh;
   min-height: 100vh;
@@ -11,4 +12,24 @@
   height: 100%;
   display: block;
   object-fit: contain;
+}
+
+.risingText {
+  position: absolute;
+  right: 8vw;
+  bottom: -30vh;
+  left: 8vw;
+  color: var(--cue-color, #ffffff);
+  font-family: "Courier New", Courier, monospace;
+  font-size: clamp(1.6rem, 5vw, 5.6rem);
+  line-height: 1.08;
+  white-space: pre-wrap;
+  text-align: center;
+  animation: rise var(--cue-text-duration, 15000ms) linear forwards;
+}
+
+@keyframes rise {
+  to {
+    transform: translateY(-150vh);
+  }
 }
