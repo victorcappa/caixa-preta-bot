@@ -292,9 +292,9 @@ de 2FA/checkpoint. Para cada perfil, abre por índice até dez posts. Cada post 
 capturado e analisado visualmente, o texto legível da página é extraído e o
 modelo produz um comentário de no máximo 220 caracteres.
 
-O `X` do navegador apenas recolhe o painel interativo no controller e não
-encerra o Chromium nem invalida o login. As duas cópias do painel na Cena 0
-seguem a mesma visibilidade; `MOSTRAR NAVEGADOR` torna ambas visíveis novamente.
+O `X` do navegador recolhe o painel interativo no operator e na tela pública sem
+encerrar o Chromium nem invalidar o login. A visibilidade passa pelo `showState`
+e pelo SSE; `MOSTRAR NAVEGADOR` torna o painel visível novamente em todas as telas.
 Para encerrar de fato a sessão do navegador, use o botão explícito
 `FECHAR NAVEGADOR`.
 

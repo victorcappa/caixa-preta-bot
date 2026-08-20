@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { PROJECTION_WINDOW_PARAM, projectionScreens } from "@/lib/projectionScreens";
 import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
 import InstagramBrowserPanel from "./InstagramBrowserPanel";
+import { setSharedInstagramPanelVisible } from "@/lib/instagram/panelClient";
 import RobotSoundControls from "./RobotSoundControls";
 import Terminal from "./Terminal";
 import styles from "./OperatorConsole.module.css";
@@ -91,6 +92,11 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     }
   }, [state.instagram?.embeddedPanelSequence]);
 
+  useEffect(() => {
+    if (state.instagram?.embeddedPanelVisible === false) setInstagramPanelClosed(true);
+    if (state.instagram?.embeddedPanelVisible === true) setInstagramPanelClosed(false);
+  }, [state.instagram?.embeddedPanelVisible]);
+
   const addLog = useCallback((line, kind = "line") => {
     setLogs((current) => [
       ...current,
@@ -102,6 +108,16 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       }
     ]);
   }, []);
+
+  const updateInstagramPanelVisibility = useCallback(async (visible) => {
+    setInstagramPanelClosed(!visible);
+    try {
+      await setSharedInstagramPanelVisible(visible);
+    } catch {
+      setInstagramPanelClosed(visible);
+      addLog("INSTAGRAM PANEL SYNC ERROR", "error");
+    }
+  }, [addLog]);
 
   const emitStopAllSignal = useCallback((raw) => {
     if (raw.trim().split(/\s+/)[0] === "/stopall") {
@@ -535,9 +551,9 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             <span>PROMPT VERSION: {state.context?.promptVersion || 1}</span>
           </div>
 
-          {!embedded && instagram.embedded && instagram.status !== "DISCONNECTED" && !instagramPanelClosed ? (
+          {!embedded && instagram.embedded && instagram.status !== "DISCONNECTED" && instagram.embeddedPanelVisible !== false && !instagramPanelClosed ? (
             <div className={styles.instagramBrowserPanel}>
-              <InstagramBrowserPanel instagram={instagram} onClose={() => setInstagramPanelClosed(true)} />
+              <InstagramBrowserPanel instagram={instagram} onClose={() => updateInstagramPanelVisibility(false)} />
             </div>
           ) : null}
 
@@ -659,7 +675,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             {!embedded && instagram.embedded && instagram.status !== "DISCONNECTED" && instagramPanelClosed ? (
               <button
                 className={styles.approveButton}
-                onClick={() => setInstagramPanelClosed(false)}
+                onClick={() => updateInstagramPanelVisibility(true)}
                 type="button"
               >
                 MOSTRAR NAVEGADOR INTERATIVO

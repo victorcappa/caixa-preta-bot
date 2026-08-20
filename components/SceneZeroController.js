@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import InstagramBrowserPanel from "./InstagramBrowserPanel";
+import { setSharedInstagramPanelVisible } from "@/lib/instagram/panelClient";
 import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
 import { SCENE_ZERO_GLITCH_LEVELS, SCENE_ZERO_PERSONALITY_DIRECTIONS, SCENE_ZERO_STAGES, sceneZeroStageLabel } from "@/lib/scene-zero/state";
 import styles from "./SceneZeroController.module.css";
@@ -107,6 +108,11 @@ export default function SceneZeroController() {
     }
   }, [snapshot.instagram?.embeddedPanelSequence]);
 
+  useEffect(() => {
+    if (snapshot.instagram?.embeddedPanelVisible === false) setInstagramPanelClosed(true);
+    if (snapshot.instagram?.embeddedPanelVisible === true) setInstagramPanelClosed(false);
+  }, [snapshot.instagram?.embeddedPanelVisible]);
+
   const browserProcessing = ["STARTING", "NAVIGATING", "ACTING"].includes(snapshot.instagram?.status);
   const informationProcessing = Boolean(pending) || browserProcessing;
 
@@ -202,6 +208,17 @@ export default function SceneZeroController() {
       setNotice(error.message);
     } finally {
       setPending("");
+    }
+  }
+
+  async function updateInstagramPanelVisibility(visible) {
+    setInstagramPanelClosed(!visible);
+    try {
+      await setSharedInstagramPanelVisible(visible);
+      setNotice(visible ? "PAINEL DO INSTAGRAM EXIBIDO" : "PAINEL DO INSTAGRAM OCULTADO NO OPERATOR E NO PÚBLICO");
+    } catch (error) {
+      setInstagramPanelClosed(visible);
+      setNotice(error.message);
     }
   }
 
@@ -602,9 +619,9 @@ export default function SceneZeroController() {
               <Button danger onClick={() => sceneAction("suitcase-instagram-stop")} pending={pending || !suitcaseInstagram.currentProfile}>PARAR</Button>
               <Readout label="POSTS PROCESSADOS / COMENTADOS" value={`${suitcaseInstagram.processedPostKeys?.length || 0} / ${suitcaseInstagram.commentedPostKeys?.length || 0}`} />
               <Readout label="COMENTÁRIOS RECENTES" value={(suitcaseInstagram.recentComments || []).slice(-5).map((entry) => `${entry.profile} · POST ${entry.postIndex}: ${entry.comment} [${entry.status}]`).join("\n")} />
-              {instagram.embedded && instagram.status !== "DISCONNECTED" && !instagramPanelClosed ? (
+              {instagram.embedded && instagram.status !== "DISCONNECTED" && instagram.embeddedPanelVisible !== false && !instagramPanelClosed ? (
                 <div className={styles.instagramPanel}>
-                  <InstagramBrowserPanel instagram={instagram} onClose={() => setInstagramPanelClosed(true)} />
+                  <InstagramBrowserPanel instagram={instagram} onClose={() => updateInstagramPanelVisibility(false)} />
                 </div>
               ) : null}
             </section>
@@ -741,16 +758,16 @@ export default function SceneZeroController() {
             pending={pending || instagram.status === "DISCONNECTED"}
           >FECHAR NAVEGADOR</Button>
           {instagram.embedded && instagram.status !== "DISCONNECTED" && instagramPanelClosed ? (
-            <Button onClick={() => setInstagramPanelClosed(false)} pending={pending}>MOSTRAR NAVEGADOR</Button>
+            <Button onClick={() => updateInstagramPanelVisibility(true)} pending={pending}>MOSTRAR NAVEGADOR</Button>
           ) : null}
           <Readout label="NAVEGADOR REAL" value={`${instagram.status || "DISCONNECTED"} / ${instagram.message || "—"}`} />
           <Readout label="COMANDO EM EXECUÇÃO" value={instagram.research?.guidance || instagram.research?.person || "INATIVO"} />
           {instagram.secondaryBrowser?.active ? (
             <Readout label="ABAS ABERTAS" value={`PRINCIPAL · ${instagram.secondaryBrowser.label || "SECUNDÁRIA"}`} />
           ) : null}
-          {instagram.embedded && instagram.status !== "DISCONNECTED" && !instagramPanelClosed ? (
+          {instagram.embedded && instagram.status !== "DISCONNECTED" && instagram.embeddedPanelVisible !== false && !instagramPanelClosed ? (
             <div className={styles.instagramPanel}>
-              <InstagramBrowserPanel instagram={instagram} onClose={() => setInstagramPanelClosed(true)} />
+              <InstagramBrowserPanel instagram={instagram} onClose={() => updateInstagramPanelVisibility(false)} />
             </div>
           ) : null}
         </ControlBlock>

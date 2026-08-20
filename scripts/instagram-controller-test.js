@@ -3,6 +3,11 @@ const assert = require("node:assert/strict");
 async function main() {
   const controllerModule = await import("../lib/instagram/InstagramController.js");
   const commands = await import("../lib/instagram/commands.js");
+  const panelState = await import("../lib/instagram/panelState.js");
+
+  assert.equal(panelState.resolveEmbeddedPanelVisible({ embeddedPanelSequence: 2, embeddedPanelVisible: false }, { embeddedPanelSequence: 3 }), true);
+  assert.equal(panelState.resolveEmbeddedPanelVisible({ embeddedPanelSequence: 3, embeddedPanelVisible: true }, { embeddedPanelVisible: false }), false);
+  assert.equal(panelState.resolveEmbeddedPanelVisible({ embeddedPanelSequence: 3, embeddedPanelVisible: false }, { status: "READY" }), false);
 
   assert.equal(controllerModule.normalizeUsername("@cappavictor"), "cappavictor");
   assert.equal(controllerModule.normalizeUsername(" cappavictor "), "cappavictor");

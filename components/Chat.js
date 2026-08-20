@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import DisplayBlackout from "./DisplayBlackout";
 import InstagramBrowserPanel from "./InstagramBrowserPanel";
+import { setSharedInstagramPanelVisible } from "@/lib/instagram/panelClient";
 import GlitchOverlay from "./GlitchOverlay";
 import OperatorConsole from "./OperatorConsole";
 import PerformanceLayer from "./PerformanceLayer";
@@ -250,6 +251,11 @@ export default function Chat() {
       setInstagramPanelClosed(false);
     }
   }, [instagram.embeddedPanelSequence]);
+
+  useEffect(() => {
+    if (instagram.embeddedPanelVisible === false) setInstagramPanelClosed(true);
+    if (instagram.embeddedPanelVisible === true) setInstagramPanelClosed(false);
+  }, [instagram.embeddedPanelVisible]);
 
   useEffect(() => {
     if (instagram.browserMode !== "google_guidance") return;
@@ -701,7 +707,11 @@ export default function Chat() {
       event.source !== "agent" || new Date(event.createdAt).getTime() < activeTypingStartedAt
     ))
     : performanceEvents;
-  const visibleInstagramPanel = instagram?.embedded && instagram.status && instagram.status !== "DISCONNECTED" && !instagramPanelClosed;
+  const visibleInstagramPanel = instagram?.embedded
+    && instagram.status
+    && instagram.status !== "DISCONNECTED"
+    && instagram.embeddedPanelVisible !== false
+    && !instagramPanelClosed;
   const instagramPanelKey = [
     instagram?.browserMode || "instagram",
     instagram?.research?.person || "",
@@ -896,7 +906,14 @@ export default function Chat() {
             <InstagramBrowserPanel
               key={instagramPanelKey}
               instagram={instagram}
-              onClose={() => setInstagramPanelClosed(true)}
+              onClose={async () => {
+                setInstagramPanelClosed(true);
+                try {
+                  await setSharedInstagramPanelVisible(false);
+                } catch {
+                  setInstagramPanelClosed(false);
+                }
+              }}
             />
           </>
         ) : null}
