@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+import ControllerBlackoutBar from "./ControllerBlackoutBar";
 import {
   getControllerSurfaceGroups,
   sortedControllerSurfaces,
@@ -53,13 +54,30 @@ export default function ControllerSurface({ children }) {
   return (
     <div className={styles.surface}>
       <nav className={styles.tabs} aria-label="Controllers cênicos">
-        {groupedSurfaces.map((group) => (
-          <section className={styles.group} key={group.id} aria-label={`${group.label} — ${group.name}`}>
-            <div className={styles.groupLabel}>
-              <span>{group.label}</span>
-              <strong>{group.name}</strong>
-            </div>
-            <div className={styles.groupTabs}>
+        <div className={styles.sceneRow}>
+          {groupedSurfaces.map((group) => {
+            const activeGroup = group.surfaces.some((surface) => isControllerSurfaceActive(surface, pathname));
+            const primarySurface = group.surfaces[0];
+
+            return (
+              <Link
+                aria-current={activeGroup ? "page" : undefined}
+                className={activeGroup ? styles.activeSceneTab : styles.sceneTab}
+                href={primarySurface.path}
+                key={group.id}
+                onClick={() => navigateProjection(primarySurface.projectionPath)}
+                title={group.name}
+              >
+                <span>{group.label}</span>
+                <strong>{group.name}</strong>
+              </Link>
+            );
+          })}
+        </div>
+
+        <div className={styles.controllerRow}>
+          {groupedSurfaces.map((group) => (
+            <section className={styles.group} key={group.id} aria-label={`${group.label} — ${group.name}`}>
               {group.surfaces.map((surface) => {
                 const active = isControllerSurfaceActive(surface, pathname);
 
@@ -76,10 +94,11 @@ export default function ControllerSurface({ children }) {
                   </Link>
                 );
               })}
-            </div>
-          </section>
-        ))}
+            </section>
+          ))}
+        </div>
       </nav>
+      <ControllerBlackoutBar />
       <div className={styles.content}>{children}</div>
     </div>
   );

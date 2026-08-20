@@ -17,41 +17,6 @@
   flex-direction: column;
 }
 
-.blackoutBar {
-  flex: 0 0 auto;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 14px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--green-soft);
-}
-
-.blackoutBar button {
-  min-height: 40px;
-  border: 1px solid var(--green-soft);
-  background: #000000;
-  color: var(--green);
-  font: inherit;
-  cursor: pointer;
-  text-align: center;
-  overflow-wrap: anywhere;
-}
-
-.blackoutBar button:hover,
-.blackoutBar button:focus-visible {
-  border-color: var(--green);
-  outline: 0;
-}
-
-.blackoutBar .blackoutActive,
-.blackoutBar .blackoutAllActive {
-  border-color: var(--danger);
-  background: var(--danger);
-  color: #000000;
-  font-weight: 700;
-}
-
 .projectionBar {
   flex: 0 0 auto;
   display: grid;
@@ -347,7 +312,6 @@
 .panicButton:disabled,
 .approveButton:disabled,
 .controlGrid button:disabled,
-.blackoutBar button:disabled,
 .glitchControls button:disabled,
 .vobControls button:disabled {
   cursor: default;
@@ -399,10 +363,6 @@
 
   .inlineControls {
     grid-template-columns: 1fr;
-  }
-
-  .blackoutBar {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .vobControls {

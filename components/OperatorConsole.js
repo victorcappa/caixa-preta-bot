@@ -252,8 +252,6 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   const instagram = state.instagram || { status: "DISCONNECTED", logs: [] };
   const instagramLogs = (instagram.logs || []).slice(-5).reverse();
   const glitch = state.glitch || { active: false, mode: "idle", video: {} };
-  const displayBlackout = state.displayBlackout || { targets: {} };
-  const blackoutTargets = displayBlackout.targets || {};
   const projection = state.projection || { activeProjectionWindowId: null, windows: {} };
   const projectionWindows = projection.windows || {};
   const activeProjectionWindow = projection.activeProjectionWindowId
@@ -442,41 +440,6 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     <Terminal title="OPERATOR" footer={footer} className={terminalClassName}>
       <div className={`${styles.operator} ${embedded ? styles.embeddedOperator : ""}`}>
         <section className={styles.console}>
-          <div className={styles.blackoutBar} aria-label="Blackout das telas publicas">
-            <button
-              className={blackoutTargets.chatbot ? styles.blackoutActive : ""}
-              disabled={pending}
-              onClick={() => sendOperatorCommand(`/blackout chatbot ${blackoutTargets.chatbot ? "off" : "on"}`, "BLACKOUT ERROR", 6000)}
-              type="button"
-            >
-              BLACKOUT CHATBOT
-            </button>
-            <button
-              className={blackoutTargets.baralho ? styles.blackoutActive : ""}
-              disabled={pending}
-              onClick={() => sendOperatorCommand(`/blackout baralho ${blackoutTargets.baralho ? "off" : "on"}`, "BLACKOUT ERROR", 6000)}
-              type="button"
-            >
-              BLACKOUT BARALHO
-            </button>
-            <button
-              className={blackoutTargets.legenda ? styles.blackoutActive : ""}
-              disabled={pending}
-              onClick={() => sendOperatorCommand(`/blackout legenda ${blackoutTargets.legenda ? "off" : "on"}`, "BLACKOUT ERROR", 6000)}
-              type="button"
-            >
-              BLACKOUT LEGENDA
-            </button>
-            <button
-              className={Object.values(blackoutTargets).some(Boolean) ? styles.blackoutAllActive : ""}
-              disabled={pending}
-              onClick={() => sendOperatorCommand(`/blackout todos ${Object.values(blackoutTargets).every(Boolean) ? "off" : "on"}`, "BLACKOUT ERROR", 6000)}
-              type="button"
-            >
-              BLACKOUT TODOS
-            </button>
-          </div>
-
           <div className={styles.projectionBar} aria-label="Controle das janelas de projecao">
             <ProjectionMenuButton
               disabled={false}
