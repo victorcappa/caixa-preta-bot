@@ -122,6 +122,16 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
       testTimersRef.current.add(timer);
       return;
     }
+    if (effect === "countdown") {
+      [3, 2, 1, 0].forEach((value, index) => {
+        const timer = window.setTimeout(() => {
+          testTimersRef.current.delete(timer);
+          robotSoundEngine.countdown(value, { localOnly: true });
+        }, index * 650);
+        testTimersRef.current.add(timer);
+      });
+      return;
+    }
     if (effect === "glitch") {
       robotSoundEngine.setGlitch({ active: true, sequence: Date.now(), params: { intensity: 0.72 }, audio: { ghostTyping: false } });
       const timer = window.setTimeout(() => {
@@ -205,6 +215,7 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
           ["typing", "DIGITAÇÃO"],
           ["wake", "WAKE"],
           ["thinking", "THINKING"],
+          ["countdown", "CONTAGEM 3–2–1"],
           ["success", "SUCCESS / OBEY"],
           ["error", "ERROR"],
           ["glitch", "GLITCH"],

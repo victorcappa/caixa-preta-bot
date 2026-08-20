@@ -46,6 +46,14 @@ async function main() {
   globalThis.window = { setTimeout, clearTimeout };
   Math.random = () => 0;
   const engine = new engineModule.RobotSoundEngine();
+  const relayedCountdowns = [];
+  engine.relayEffect = (effect, detail) => {
+    if (effect === "countdown") relayedCountdowns.push(detail.value);
+    return true;
+  };
+  engine.countdown(5);
+  engine.countdown(0);
+  assert.deepEqual(relayedCountdowns, [5, 0]);
   let ghostClicks = 0;
   engine.typing = () => { ghostClicks += 1; };
   const activeGlitch = {

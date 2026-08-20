@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import useCountdownSound from "./useCountdownSound";
 import styles from "./SceneZeroProjectionLayer.module.css";
 
 const AIRPORT_VIDEO = "/api/game-assets?file=videos%2Fglitch%2Fpainel-aeroporto.mp4";
@@ -59,6 +60,18 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
     : 0;
   const rouletteName = selectionCandidates[rouletteIndex]?.name || "—";
   const showParticipantSelection = ["countdown", "roulette", "selected"].includes(participantSelection.status);
+  const participantSeconds = participantSelection.status === "countdown"
+    ? countdownSeconds(participantSelection.countdownEndsAt, now)
+    : null;
+
+  useCountdownSound(seconds, {
+    active: Boolean(showTimer && ["running", "complete"].includes(visibleTimer?.status)),
+    countdownKey: `scene-zero:${visibleTimer === collectionTimer ? "collection" : "singing"}:${visibleTimer?.sequence || 0}`
+  });
+  useCountdownSound(participantSeconds, {
+    active: participantSelection.status === "countdown",
+    countdownKey: `scene-zero:participant:${participantSelection.sequence || 0}`
+  });
 
   return (
     <>
@@ -85,7 +98,7 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
           {participantSelection.status === "countdown" ? (
             <div className={styles.volunteerCountdown}>
               <p>{participantSelection.invite}</p>
-              <strong>{countdownSeconds(participantSelection.countdownEndsAt, now)}</strong>
+              <strong>{participantSeconds}</strong>
               <small>10 SEGUNDOS</small>
             </div>
           ) : null}
@@ -98,7 +111,7 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
               <div className={styles.candidateTicker}>
                 {selectionCandidates.map((candidate) => <span key={candidate.key}>{candidate.name}</span>)}
               </div>
-              <p>{participantSelection.lastComment || "..."}</p>
+              <p className={styles.rouletteComment}>{participantSelection.lastComment || "..."}</p>
               <small>* absolutamente nada aqui é uma odd real</small>
             </div>
           ) : null}

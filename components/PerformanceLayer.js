@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import useCountdownSound from "./useCountdownSound";
 import styles from "./PerformanceLayer.module.css";
 
 function randomPosition(index) {
@@ -604,6 +605,9 @@ function VobVoteCountdown({ countdown, onComplete }) {
   const [value, setValue] = useState(() => vobCountdownRemaining(countdown));
   const completedRef = useRef(false);
   const onCompleteRef = useRef(onComplete);
+  useCountdownSound(value, {
+    countdownKey: `vob:${countdown?.startedAt || ""}:${countdown?.endsAt || ""}`
+  });
 
   useEffect(() => {
     onCompleteRef.current = onComplete;
@@ -726,6 +730,7 @@ function Countdown({ event, onComplete }) {
   const [value, setValue] = useState(() => countdownRemaining(event.payload));
   const completedRef = useRef(false);
   const onCompleteRef = useRef(onComplete);
+  useCountdownSound(value, { countdownKey: `performance:${event.id}` });
 
   useEffect(() => {
     onCompleteRef.current = onComplete;
