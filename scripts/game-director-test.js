@@ -280,8 +280,15 @@ async function main() {
   assert.equal(started.gameState.id, "verdade_ou_bolo");
   assert.equal(started.gameState.phase, "QUESTION");
   assert.equal(started.gameState.publicData.state, "QUESTION");
-  assert.equal(started.gameState.publicData.totalRounds, 4);
+  assert.equal(started.gameState.publicData.totalRounds, 3);
   assert.equal(started.gameState.publicData.currentRound.number, 1);
+  assert.equal(started.gameState.publicData.currentRound.video.file, "bolo-lanterna.mp4");
+  assert.equal(started.gameState.publicData.operator.correctAnswer, "bolo");
+  assert.deepEqual(started.gameState.publicData.operator.discoveredVideos, [
+    "bolo-lanterna.mp4",
+    "bolo-papel-higienico.mp4",
+    "verdade-nutella.mp4"
+  ]);
   assert.equal(started.gameState.publicData.voteCountdown, null);
 
   let boloState = started.gameState;
@@ -305,10 +312,10 @@ async function main() {
   assert.equal(controlled.result.reason, "answer_not_revealed");
   boloState = controlled.gameState;
 
-  controlled = director.controlStructuredGame({ ...state, game: boloState }, "select_answer", { answer: "verdade" });
+  controlled = director.controlStructuredGame({ ...state, game: boloState }, "select_answer", { answer: "bolo" });
   assert.equal(controlled.applied, true);
   assert.equal(controlled.gameState.phase, "VOTING");
-  assert.equal(controlled.gameState.publicData.selectedAnswer, "verdade");
+  assert.equal(controlled.gameState.publicData.selectedAnswer, "bolo");
   boloState = controlled.gameState;
 
   controlled = director.controlStructuredGame({ ...state, game: boloState }, "next");
@@ -322,7 +329,7 @@ async function main() {
   assert.equal(controlled.gameState.publicData.roundResults.length, 1);
   assert.equal(controlled.gameState.publicData.result.won, true);
   assert.equal(controlled.gameState.publicData.result.noVote, false);
-  assert.equal(controlled.gameState.publicData.revealedAnswer, "verdade");
+  assert.equal(controlled.gameState.publicData.revealedAnswer, "bolo");
   assert.equal(controlled.gameState.publicData.score, 1);
   assert.equal(controlled.gameState.publicData.voteCountdown, null);
   boloState = controlled.gameState;
@@ -332,6 +339,8 @@ async function main() {
   assert.equal(controlled.result.type, "comment_complete_next_round");
   assert.equal(controlled.gameState.phase, "QUESTION");
   assert.equal(controlled.gameState.publicData.currentRound.number, 2);
+  assert.equal(controlled.gameState.publicData.currentRound.video.file, "bolo-papel-higienico.mp4");
+  assert.equal(controlled.gameState.publicData.operator.correctAnswer, "bolo");
   assert.equal(controlled.gameState.publicData.voteCountdown, null);
   boloState = controlled.gameState;
 
@@ -369,6 +378,8 @@ async function main() {
   controlled = director.controlStructuredGame({ ...state, game: boloState }, "next");
   assert.equal(controlled.applied, true);
   assert.equal(controlled.gameState.publicData.currentRound.number, 3);
+  assert.equal(controlled.gameState.publicData.currentRound.video.file, "verdade-nutella.mp4");
+  assert.equal(controlled.gameState.publicData.operator.correctAnswer, "verdade");
   assert.equal(controlled.gameState.phase, "QUESTION");
   boloState = controlled.gameState;
 

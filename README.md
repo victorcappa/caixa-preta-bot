@@ -775,6 +775,9 @@ votacao. O video pode ser tocado separadamente depois da revelacao. Os botoes
 Quando a fala de `COMENTAR` termina de ser digitada depois da revelacao, o jogo
 avanca automaticamente para a rodada seguinte; na ultima rodada, abre o resultado
 final. `PRÓXIMA RODADA` permanece como controle manual de recuperacao.
+O jogo usa somente `bolo-lanterna.mp4`, `bolo-papel-higienico.mp4` e
+`verdade-nutella.mp4`; o prefixo `bolo-` ou `verdade-` do arquivo determina a
+resposta correta da rodada.
 
 Entrar no modo MALAS e gerar uma transicao contextual na projecao:
 
