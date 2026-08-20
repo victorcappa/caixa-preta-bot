@@ -37,6 +37,16 @@ async function main() {
   assert.equal(combinedBrowserPlan.google.enabled, true);
   assert.equal(combinedBrowserPlan.instagram.enabled, true);
   assert.equal(combinedBrowserPlan.instagram.person, "Nikolas Ferreira");
+  const directInstagramPlan = browserCommand.fallbackSceneZeroBrowserPlan(
+    "entrar no perfil do @rogerio.robinson no instagram"
+  );
+  assert.equal(directInstagramPlan.google.enabled, false);
+  assert.equal(directInstagramPlan.instagram.enabled, true);
+  assert.equal(directInstagramPlan.instagram.person, "@rogerio.robinson");
+  assert.equal(
+    browserCommand.extractExplicitInstagramHandle("abra o perfil de @Rogerio.Robinson, por favor"),
+    "@rogerio.robinson"
+  );
   const newGoogleWindowPlan = browserCommand.fallbackSceneZeroBrowserPlan("Abra uma nova janela do Google e pesquise teatro em São Paulo");
   assert.equal(newGoogleWindowPlan.google.enabled, true);
   assert.equal(newGoogleWindowPlan.google.newWindow, true);
@@ -55,6 +65,14 @@ async function main() {
     google: { enabled: false },
     instagram: { enabled: true, person: "  @cappavictor  " }
   }, "abra o instagram").instagram.person, "@cappavictor");
+  assert.deepEqual(browserCommand.normalizeSceneZeroBrowserPlan({
+    google: { enabled: true, guidance: "pesquisar o que significa arroba" },
+    instagram: { enabled: false, person: "" }
+  }, "entrar no perfil do @rogerio.robinson no instagram"), {
+    command: "entrar no perfil do @rogerio.robinson no instagram",
+    google: { enabled: false, guidance: "", newWindow: false },
+    instagram: { enabled: true, person: "@rogerio.robinson" }
+  });
 
   const people = [
     { key: "marcus garcia", name: "Marcus Garcia", selectedCount: 0 },

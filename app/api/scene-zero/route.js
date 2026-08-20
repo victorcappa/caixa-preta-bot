@@ -1,4 +1,4 @@
-import { getExistingInstagramController, getInstagramController, parseGoogleGuidance } from "@/lib/instagram/InstagramController";
+import { getExistingInstagramController, getInstagramController, normalizeUsername, parseGoogleGuidance } from "@/lib/instagram/InstagramController";
 import { analyzeInstagramScreenshot, generateCaixaPretaTurn, generateGoogleResearchComment, interpretSceneZeroBrowserRequest, refreshSceneZeroLocalContext } from "@/lib/openai";
 import { fallbackSceneZeroBrowserPlan, preserveExplicitNewsIntent } from "@/lib/scene-zero/browserCommand";
 import { collectionRepertoireBlock, parseCollectionIntervention, shouldRejectRepeatedHandAction } from "@/lib/scene-zero/collection";
@@ -38,6 +38,16 @@ const DIRECTION_ACTIONS = {
 
 function sceneZeroGooglePlan(guidance, originalCommand) {
   return preserveExplicitNewsIntent(parseGoogleGuidance(guidance), originalCommand);
+}
+
+async function openSceneZeroInstagramTarget(controller, person = "") {
+  const rawPerson = `${person || ""}`.trim();
+  const username = rawPerson.startsWith("@") ? normalizeUsername(rawPerson) : "";
+  if (!username) return controller.researchPerson(rawPerson);
+
+  const login = await controller.ensureInstagramSession({ automatic: false });
+  if (login.status !== "ready") return login;
+  return controller.openProfile(username);
 }
 
 const STAGE_DIRECTIONS = {
@@ -726,7 +736,7 @@ export async function POST(request) {
           onComplete: googleResearchCompletion(command)
         });
       } else {
-        result = await controller.researchPerson(plan.instagram.person);
+        result = await openSceneZeroInstagramTarget(controller, plan.instagram.person);
       }
       const status = result.status === "invalid" ? 400 : result.status === "busy" ? 409 : result.status === "error" ? 502 : 200;
       return Response.json({
@@ -742,7 +752,7 @@ export async function POST(request) {
       if (!person) return Response.json({ error: "INSTAGRAM: escreva um nome ou perfil" }, { status: 400 });
       showState.controlSceneZero("instagram-start", body, { source: "operator" });
       const controller = getInstagramController({ reporter: (instagram) => showState.updateInstagram(instagram) });
-      const result = await controller.researchPerson(person);
+      const result = await openSceneZeroInstagramTarget(controller, person);
       const status = result.status === "busy" ? 409 : result.status === "error" ? 502 : result.status === "invalid" ? 400 : 200;
       return Response.json({
         ...(status >= 400 ? { error: result.message } : { message: result.message }),
