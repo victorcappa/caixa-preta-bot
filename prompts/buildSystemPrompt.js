@@ -4,7 +4,7 @@ import { getModePrompt } from "./modes";
 import { caixaPretaPersonality } from "./personality";
 import { caixaPretaRules } from "./rules";
 
-export const PROMPT_VERSION = 24;
+export const PROMPT_VERSION = 25;
 
 function variablesBlock(variables = {}) {
   if (!variables || Object.keys(variables).length === 0) {
@@ -17,11 +17,13 @@ ${JSON.stringify(variables, null, 2)}
 `.trim();
 }
 
-export function buildSystemPrompt({ knowledge = "", variables = {} } = {}) {
+export function buildSystemPrompt({ knowledge = "", variables = {}, styleContext = "" } = {}) {
   return [
     `PROMPT VERSION: ${PROMPT_VERSION}`,
     "PERSONALIDADE:",
     caixaPretaPersonality,
+    styleContext ? "INTERNET VOICE - FORMA LINGUISTICA:" : "",
+    styleContext,
     "REGRAS:",
     caixaPretaRules,
     "BIBLIOTECA DE MECANICAS DO HOST:",

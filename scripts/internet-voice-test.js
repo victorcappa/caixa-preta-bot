@@ -63,7 +63,7 @@ async function main() {
   ];
 
   for (const scenario of cases) {
-    const { context, debug } = buildInternetVoiceContext({
+    const { systemContext, context, debug } = buildInternetVoiceContext({
       state: {
         mode: "host",
         conversation: [{ role: "user", content: scenario.message || "mudança do operador" }],
@@ -75,12 +75,36 @@ async function main() {
     });
 
     assert.equal(debug.loaded, true, `${scenario.name}: guia deveria carregar`);
+    assert.ok(systemContext.includes("<internet_voice_system>"), `${scenario.name}: autoridade estilística ausente do system prompt`);
     assert.ok(context.includes("<internet_voice_style_context>"), `${scenario.name}: style context ausente`);
     if (scenario.expect.registers) assert.ok(debug.registers.includes(scenario.expect.registers), `${scenario.name}: registro ${scenario.expect.registers}`);
     if (scenario.expect.humor) assert.ok(debug.humor.includes(scenario.expect.humor), `${scenario.name}: humor ${scenario.expect.humor}`);
     if (scenario.expect.context) assert.ok(debug.contexts.includes(scenario.expect.context), `${scenario.name}: contexto ${scenario.expect.context}`);
     if (scenario.expect.callbacks) assert.ok(debug.callbacksAvailable >= scenario.expect.callbacks, `${scenario.name}: callback disponível`);
   }
+
+  const ordinaryConversation = buildInternetVoiceContext({
+    state: {
+      mode: "host",
+      conversation: [{ role: "user", content: "oi, tudo bem?" }],
+      memories: [],
+      game: {}
+    },
+    userMessage: "oi, tudo bem?"
+  });
+  assert.ok(ordinaryConversation.systemContext.includes("Anti-cringe nao significa portugues neutro"), "conversa comum: regra positiva deve ter autoridade de sistema");
+  assert.ok(ordinaryConversation.debug.repertoireTokens.length > 0, "conversa comum: tokens reais dos registros devem ser enviados");
+  assert.ok(ordinaryConversation.debug.repertoireExamples.length > 0, "conversa comum: exemplos reais dos registros devem ser enviados");
+  assert.ok(ordinaryConversation.debug.repertoireMarkers.length > 0, "conversa comum: markers do JSON devem ser enviados");
+  assert.equal(ordinaryConversation.debug.repertoireTerms.length, 0, "conversa comum: termos altamente marcados não devem entrar sem contexto");
+  assert.ok(ordinaryConversation.context.includes("não mano pera"), "conversa comum: uma construção concreta do JSON deve chegar ao prompt");
+
+  const gameVocabulary = buildInternetVoiceContext({
+    state: { mode: "host", conversation: [], memories: [], game: { active: true, id: "cards" } },
+    userMessage: "Robinson errou a rodada do jogo."
+  });
+  assert.ok(gameVocabulary.debug.registers.includes("discord"), "jogo: repertório Discord deve estar disponível");
+  assert.ok(gameVocabulary.debug.repertoireTerms.length > 0, "jogo: termos contemporâneos contextuais devem estar disponíveis");
 
   const varyingConversation = [
     { role: "assistant", content: "não." },
@@ -114,6 +138,10 @@ async function main() {
   for (const expression of ["jurou", "lore", "aura", "skill issue", "mano"]) {
     assert.ok(cooldown.debug.slangCooldown.includes(expression), `cooldown deveria conter ${expression}`);
   }
+  for (const expression of ["jurou", "lore", "aura", "skill_issue", "mano"]) {
+    assert.ok(!cooldown.debug.repertoireTerms.includes(expression), `cooldown não deve reoferecer ${expression} nos termos ativos`);
+    assert.ok(!cooldown.debug.repertoireMarkers.includes(expression), `cooldown não deve reoferecer ${expression} nos marcadores ativos`);
+  }
   assert.equal(cooldown.debug.recentLaughterCount, 1, "cooldown: deve contar risada recente");
   assert.equal(cooldown.debug.recentProfanityCount, 1, "cooldown: deve contar palavrão recente");
   assert.ok(cooldown.context.includes("Use outra construcao"), "cooldown deve produzir instrução explícita de desvio");
@@ -132,6 +160,7 @@ async function main() {
   resetInternetVoiceGuideCache();
 
   assert.equal(fallback.context, "", "fallback não deve injetar contexto parcial");
+  assert.equal(fallback.systemContext, "", "fallback não deve alterar o system prompt atual");
   assert.equal(fallback.debug.reason, "guide_unavailable", "fallback deve ser diagnosticável");
   assert.equal(fallbackWarnings, 1, "fallback deve avisar uma única vez");
 

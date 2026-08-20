@@ -60,8 +60,9 @@ async function main() {
           role: "system",
           content: [
             basePrompt,
+            voice.systemContext,
             "Esta é uma avaliação sintética da fala pública da Caixa Preta. Responda somente com a fala final, sem JSON, sem rótulo e sem explicação. Não invente fatos além do cenário."
-          ].join("\n\n")
+          ].filter(Boolean).join("\n\n")
         },
         ...(voice.context ? [{ role: "user", content: voice.context }] : []),
         { role: "user", content: `ACONTECIMENTO AGORA:\n${situation}` }
