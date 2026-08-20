@@ -307,7 +307,12 @@ export async function POST(request) {
     if (action === "collection-record-result") {
       const result = showState.controlSceneZero(action, body, { source: "operator" });
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
-      return Response.json({ message: "RESULTADO REGISTRADO", sceneZero: result.state });
+      const intervention = await generateCollectionIntervention("collection_result_continue", detail);
+      return Response.json({
+        message: "RESULTADO REGISTRADO · COLETA CONTINUA",
+        sceneZero: showState.snapshot().sceneZero,
+        text: intervention.text
+      });
     }
 
     if (action === "collection-refresh-local-context") {

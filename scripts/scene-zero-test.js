@@ -62,6 +62,11 @@ async function main() {
   assert.match(direction, /sessão em curso há aproximadamente/);
   assert(!direction.includes("Bata três palmas quem veio de transporte público"));
 
+  const continuationDirection = sceneZero.buildSceneZeroDirection(active, "collection_result_continue");
+  assert.match(continuationDirection, /Reaja brevemente a esse dado específico/);
+  assert.match(continuationDirection, /continue a coleta com uma única nova intervenção clara/);
+  assert.match(continuationDirection, /não invente quantidade ou comportamento ausente/);
+
   const parsedCollection = collection.parseCollectionIntervention(JSON.stringify({
     fala: "Quem usa metrô levante a mão e mantenha por 12 segundos.",
     question: {

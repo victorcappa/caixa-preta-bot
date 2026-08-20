@@ -163,6 +163,11 @@ uma observação livre. A observação serve também para corrigir a leitura do 
 com acontecimentos como riso, demora, resistência, antecipação ou confusão.
 Resultados e segmentos ficam em `showState.sceneZero.collection` e influenciam
 a próxima geração; números e reações não informados não podem ser inventados.
+Ao pressionar qualquer um desses resultados, a Caixa reage ao dado registrado e
+já continua a coleta com uma nova intervenção na mesma fala. Essa nova
+intervenção passa a ser a pergunta ativa, pronta para receber o próximo
+resultado; não é necessário apertar separadamente `COMENTAR RESULTADO` ou
+`NOVA PERGUNTA` para manter o fluxo.
 
 `ATUALIZAR CONTEXTO SP` faz uma única busca web pela Responses API e grava um
 resumo compacto com até seis fatos e fontes sobre clima, transporte,
