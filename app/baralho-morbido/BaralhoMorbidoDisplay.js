@@ -50,13 +50,15 @@ function MissingVideo({ card }) {
   );
 }
 
-function CardVideo({ card, expanded = false }) {
+function CardVideo({ card, expanded = false, shouldPlay = false }) {
   const videoRef = useRef(null);
+  const playStartedRef = useRef(false);
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const src = card?.video?.src || "";
 
   useEffect(() => {
+    playStartedRef.current = false;
     setFailed(false);
     setLoaded(false);
   }, [src]);
@@ -78,23 +80,52 @@ function CardVideo({ card, expanded = false }) {
   useEffect(() => {
     const video = videoRef.current;
 
-    if (!video || !src || failed) {
-      return;
+    if (!video || !src || failed || !shouldPlay) {
+      video?.pause();
+      return undefined;
     }
 
-    video.loop = true;
-    video.muted = false;
-    const playAttempt = video.play();
+    let firstFrameId = 0;
+    let layoutFrameId = 0;
 
-    if (!playAttempt?.catch) {
-      return;
+    function playAfterLayout() {
+      if (playStartedRef.current) {
+        return;
+      }
+
+      video.pause();
+      video.currentTime = 0;
+      firstFrameId = window.requestAnimationFrame(() => {
+        layoutFrameId = window.requestAnimationFrame(() => {
+          playStartedRef.current = true;
+          video.muted = false;
+          const playAttempt = video.play();
+
+          if (!playAttempt?.catch) {
+            return;
+          }
+
+          playAttempt.catch(() => {
+            video.muted = true;
+            video.play().catch(() => {});
+          });
+        });
+      });
     }
 
-    playAttempt.catch(() => {
-      video.muted = true;
-      video.play().catch(() => {});
-    });
-  }, [failed, src]);
+    if (video.readyState >= 2) {
+      playAfterLayout();
+    } else {
+      video.addEventListener("loadeddata", playAfterLayout, { once: true });
+    }
+
+    return () => {
+      video.removeEventListener("loadeddata", playAfterLayout);
+      window.cancelAnimationFrame(firstFrameId);
+      window.cancelAnimationFrame(layoutFrameId);
+      video.pause();
+    };
+  }, [failed, shouldPlay, src]);
 
   if (!src || failed) {
     return <MissingVideo card={card} />;
@@ -103,17 +134,12 @@ function CardVideo({ card, expanded = false }) {
   return (
     <div className={`${styles.videoFace} ${expanded ? styles.videoFaceExpanded : ""}`}>
       <video
-        autoPlay
         className={styles.video}
         controls={false}
+        data-playback={shouldPlay ? "playing" : "preview"}
         key={src}
         loop
         onCanPlay={() => setLoaded(true)}
-        onEnded={(event) => {
-          const video = event.currentTarget;
-          video.currentTime = 0;
-          video.play().catch(() => {});
-        }}
         onError={() => setFailed(true)}
         onLoadedData={() => setLoaded(true)}
         playsInline
@@ -301,7 +327,7 @@ export default function BaralhoMorbidoDisplay() {
         {showSelection ? <SelectedCard card={currentCard} phase={deck.phase} /> : null}
         {showVideo ? (
           <div className={styles.expandedVideoCard}>
-            <CardVideo card={currentCard} expanded />
+            <CardVideo card={currentCard} expanded shouldPlay />
           </div>
         ) : null}
       </section>

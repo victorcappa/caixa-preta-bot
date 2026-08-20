@@ -658,7 +658,10 @@ carta. O reset e cada novo sorteio tambem sincronizam a pasta, portanto nao e
 necessario editar codigo para adicionar ou remover cartas. A tela publica nao
 depende de SSE global: ela consulta
 `/api/baralho-morbido` em intervalo curto, evitando que o Baralho trave as
-outras telas abertas.
+outras telas abertas. Durante a virada, o primeiro frame fica carregado e
+pausado; a reproducao comeca do zero somente depois que o video entra na area
+expandida. O encaixe usa `contain`, preservando videos verticais completos com
+faixas pretas em vez de cortar a imagem.
 
 ## Comandos do operator
 
