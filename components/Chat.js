@@ -12,6 +12,7 @@ import Terminal from "./Terminal";
 import styles from "./Chat.module.css";
 import { PUBLIC_TYPE_INTERVAL_MS } from "@/lib/messageTiming";
 import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
+import { subscribePublicRealtime } from "@/lib/publicRealtime";
 
 const INTRO_READY_TEXT = "TEM ALGUEM AI?";
 const INTRO_DOTS_TEXT = "...";
@@ -118,34 +119,7 @@ export default function Chat() {
       initializedMessagesRef.current = true;
     }
 
-    fetch("/api/state")
-      .then((response) => response.json())
-      .then((data) => {
-        setPerformanceEvents(data.performance?.events || []);
-        setPerformanceActivities(data.performance?.activities || []);
-        setPhoneProjection(data.performance?.phoneProjection || { status: "hidden" });
-        setInstagram(data.instagram || { status: "DISCONNECTED", embedded: true });
-        setGame(data.game || null);
-        setSuitcase(data.suitcase || null);
-        setGlitch(data.glitch || null);
-        setRobotSound(data.robotSound || null);
-        setDisplayBlackout(data.displayBlackout || null);
-        setSceneZero(data.sceneZero || null);
-
-        if (!initializedMessagesRef.current) {
-          hydrateInitialMessages(data.conversation || []);
-          return;
-        }
-
-        setMessages(data.conversation || []);
-      })
-      .catch(() => setStatus("DISCONNECTED"));
-
-    const events = new EventSource("/api/events?client=chat");
-    events.onopen = () => setStatus("CONNECTED");
-    events.onerror = () => setStatus("DISCONNECTED");
-    events.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
+    return subscribePublicRealtime((payload) => {
       if (payload.event?.type === "stop-all") {
         window.dispatchEvent(new CustomEvent("caixa-preta:stopall"));
         return;
@@ -183,9 +157,7 @@ export default function Chat() {
       setRobotSound(payload.state.robotSound || null);
       setDisplayBlackout(payload.state.displayBlackout || null);
       setSceneZero(payload.state.sceneZero || null);
-    };
-
-    return () => events.close();
+    }, (nextStatus) => setStatus(nextStatus === "connected" ? "CONNECTED" : "DISCONNECTED"));
   }, []);
 
   useEffect(() => {

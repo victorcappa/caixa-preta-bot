@@ -9,6 +9,7 @@ import {
 import DisplayBlackout from "./DisplayBlackout";
 import GlitchOverlay from "./GlitchOverlay";
 import styles from "./ForcaGSamplerStage.module.css";
+import { subscribePublicRealtime } from "@/lib/publicRealtime";
 
 const TUNNEL_REFERENCE_SRC = "/api/game-assets?file=imagens%2Fforca-g%2Fvisao-tunel.jpeg";
 
@@ -284,26 +285,19 @@ export default function ForcaGSamplerStage() {
     fetch("/api/forca-g-sampler", { cache: "no-store" })
       .then((response) => response.json())
       .then((data) => {
-        setSampler(data.state || EMPTY_STATE);
-        setShaders(data.shaders || null);
-        setGlitch(data.glitch || null);
-        setBlackout(data.displayBlackout || null);
-        setGlobalVolume(data.globalVolume ?? 1);
         releasePreload = preload(data.config);
       })
       .catch(() => {});
 
-    const events = new EventSource("/api/events?client=forca-g-sampler-display");
-    events.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
+    const unsubscribe = subscribePublicRealtime((payload) => {
       const state = payload.state || {};
       if (state.forcaGSampler || payload.forcaGSampler) setSampler(state.forcaGSampler || payload.forcaGSampler);
       if (state.forcaGShaders || payload.forcaGShaders) setShaders(state.forcaGShaders || payload.forcaGShaders);
       if (state.glitch || payload.glitch) setGlitch(state.glitch || payload.glitch);
       if (state.displayBlackout || payload.displayBlackout) setBlackout(state.displayBlackout || payload.displayBlackout);
       if (state.globalVolume !== undefined || payload.globalVolume !== undefined) setGlobalVolume(state.globalVolume ?? payload.globalVolume);
-    };
-    return () => { events.close(); releasePreload(); };
+    });
+    return () => { unsubscribe(); releasePreload(); };
   }, []);
 
   const { layers = EMPTY_STATE.layers, audioCues = [] } = sampler;

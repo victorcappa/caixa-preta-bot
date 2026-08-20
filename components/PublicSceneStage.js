@@ -8,6 +8,7 @@ import {
   updateSceneAudioEffects
 } from "@/lib/sceneAudioGraph";
 import DisplayBlackout from "./DisplayBlackout";
+import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import styles from "./PublicSceneStage.module.css";
 
 function assetSrc(assetPath = "") {
@@ -152,26 +153,12 @@ export default function PublicSceneStage({ blackoutTarget = "cenas", controllerI
   const [globalVolume, setGlobalVolume] = useState(1);
 
   useEffect(() => {
-    fetch("/api/state")
-      .then((response) => response.json())
-      .then((data) => {
-        setDisplayBlackout(data.displayBlackout || null);
-        setSceneCue(data.sceneCue || null);
-        setForcaGShaders(data.forcaGShaders || null);
-        setGlobalVolume(data.globalVolume ?? 1);
-      })
-      .catch(() => {});
-
-    const events = new EventSource("/api/events?client=public-scene-stage");
-    events.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
+    return subscribePublicRealtime((payload) => {
       setDisplayBlackout(payload.state?.displayBlackout || payload.displayBlackout || null);
       setSceneCue(payload.state?.sceneCue || payload.sceneCue || null);
       setForcaGShaders(payload.state?.forcaGShaders || payload.forcaGShaders || null);
       setGlobalVolume(payload.state?.globalVolume ?? payload.globalVolume ?? 1);
-    };
-
-    return () => events.close();
+    });
   }, []);
 
   const cue = sceneCue?.controllerId === controllerId && sceneCue.cue

@@ -70,6 +70,9 @@ Pontos importantes:
 - Nao rode `next build` ao mesmo tempo que `npm run dev`; isso pode quebrar manifests temporarios do dev server.
 - O operator e uma tela de recuperacao: blackouts escurecem telas publicas, mas nao escurecem o operator.
 - Baralho Morbido usa polling leve proprio, nao SSE global, para nao travar Operator/Chat quando a tela publica esta aberta.
+- As demais telas publicas recebem atualizacoes imediatamente por SSE e conferem
+  uma revisao leve do estado a cada 400 ms. Se o stream engasgar, a tela busca o
+  snapshot mais novo so quando detectar uma revisao pendente, sem exigir refresh.
 
 ## Controle de telas de projecao
 
