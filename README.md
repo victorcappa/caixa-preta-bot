@@ -603,6 +603,8 @@ VERIFICAR LOGIN MANUAL`: o painel abre o Instagram sem preencher credenciais nem
 enviar o formulário. Toque em `Continue`/`Continuar`, conclua senha, checkpoint
 ou 2FA no próprio painel e pressione o botão novamente para confirmar. Os botões
 de perfil da Mala 3 só são liberados depois que a sessão aparece como `READY`.
+Com o campo de senha focado no painel interativo, `Cmd+V`/`Ctrl+V` cola o texto
+diretamente no navegador real; o conteúdo colado não aparece em logs ou status.
 
 Quando o Instagram mostra uma conta lembrada, o controller reconhece e pressiona
 primeiro o botao exato `Continuar`, `Continue`, `Continuar como` ou `Continue as`.

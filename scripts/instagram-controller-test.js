@@ -565,6 +565,7 @@ async function main() {
 
   const dispatchedTouchEvents = [];
   const pressedKeys = [];
+  const insertedTexts = [];
   const fakeSession = {
     send: async (method, payload) => {
       dispatchedTouchEvents.push({ method, payload });
@@ -581,7 +582,8 @@ async function main() {
     keyboard: {
       press: async (key) => {
         pressedKeys.push(key);
-      }
+      },
+      insertText: async (text) => insertedTexts.push(text)
     }
   };
 
@@ -589,6 +591,8 @@ async function main() {
   assert.equal(dispatchedTouchEvents[0].payload.touchPoints[0].y > dispatchedTouchEvents.at(-2).payload.touchPoints[0].y, true);
   assert.equal(dispatchedTouchEvents.at(-1).payload.type, "touchEnd");
   assert.deepEqual(pressedKeys, ["ArrowDown"]);
+  assert.deepEqual(await controller.sendEmbeddedInput({ type: "text", text: "senha colada" }), { ok: true });
+  assert.deepEqual(insertedTexts, ["senha colada"]);
 
   const reelDelayController = new controllerModule.InstagramController({ config });
   reelDelayController.page = {

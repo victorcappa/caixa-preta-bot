@@ -117,7 +117,7 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.ok) throw new Error(data.error || "INSTAGRAM INPUT FAILED");
-      setInputStatus(payload.type === "click" ? "TOQUE ENVIADO" : payload.type === "swipe" ? "GESTO ENVIADO" : "TECLA ENVIADA");
+      setInputStatus(payload.type === "click" ? "TOQUE ENVIADO" : payload.type === "swipe" ? "GESTO ENVIADO" : payload.type === "text" ? "TEXTO COLADO" : "TECLA ENVIADA");
     } catch {
       setInputStatus("CONTROLE NÃO ENVIADO");
     } finally {
@@ -139,6 +139,13 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
       event.preventDefault();
       sendInput({ type: "key", key: event.key });
     }
+  }
+
+  function handlePaste(event) {
+    const pastedText = event.clipboardData?.getData("text/plain") || "";
+    if (!pastedText) return;
+    event.preventDefault();
+    sendInput({ type: "text", text: pastedText });
   }
 
   function handlePointerDown(event) {
@@ -259,6 +266,7 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
         className={styles.viewport}
         onContextMenu={(event) => event.preventDefault()}
         onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
         onWheel={handleWheel}
         ref={viewportRef}
         role="application"
