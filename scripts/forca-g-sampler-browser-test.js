@@ -21,8 +21,19 @@ const browser = await chromium.launch({ headless: true });
 
 try {
   const context = await browser.newContext();
+  const projectionConflicts = [];
+  context.on("response", (response) => {
+    if (response.url().endsWith("/api/projection") && response.status() === 409) projectionConflicts.push(response.url());
+  });
   const reset = await context.request.post(`${BASE_URL}/api/forca-g-sampler`, { data: { action: "reset" } });
   assert.equal(reset.ok(), true, "sampler should reset before browser test");
+  const samplerConfig = await context.request.get(`${BASE_URL}/api/forca-g-sampler`).then((response) => response.json());
+  const [firstAudio, secondAudio] = samplerConfig.config.sections.audio;
+  const [firstExplanationVideo] = samplerConfig.config.sections.video.filter((item) => (
+    item.assetPath.startsWith("videos/explicacoes-sampler/")
+  ));
+  assert.ok(firstAudio && secondAudio, "scene 2 sampler should expose at least two audio pads");
+  assert.ok(firstExplanationVideo, "scene 2 sampler should expose explanation video pads");
 
   const projection = await context.newPage();
   await projection.goto(`${BASE_URL}/forca-g-samples`, { waitUntil: "domcontentloaded" });
@@ -36,6 +47,14 @@ try {
 
   const isabela = controller.getByRole("button", { name: "Tocar ISABELA" });
   assert.equal(await isabela.isEnabled(), true, "existing G-LOC pad should be enabled");
+
+  const shaderControls = controller.getByRole("region", { name: "Shaders sobre vídeo" });
+  await clickAndWait(controller, shaderControls.getByRole("button", { name: "TÚNEL" }));
+  await projection.getByRole("img", { name: "Teste de visão em túnel" }).waitFor();
+  assert.equal(await projection.locator("video").count(), 0, "tunnel reference should work without video");
+  await projection.screenshot({ path: "/private/tmp/forca-g-tunnel.png" });
+  await clickAndWait(controller, shaderControls.getByRole("button", { name: "LIMPAR" }));
+
   await clickAndWait(controller, isabela);
   let state = await samplerState(context.request);
   assert.equal(state.layers.gLoc.id, "g-loc-isabela");
@@ -67,10 +86,49 @@ try {
   assert.equal((await hotkeyResponse).ok(), true);
   assert.equal((await samplerState(context.request)).layers.gLoc.id, "g-loc-robinson", "configured hotkey should trigger pad");
 
-  await controller.getByRole("region", { name: "Shaders sobre vídeo" }).getByRole("button", { name: "TÚNEL" }).click();
+  const videoRegion = controller.getByRole("region", { name: "VÍDEO" });
+  await clickAndWait(controller, videoRegion.getByRole("button", { name: `Tocar ${firstExplanationVideo.label}` }));
+  state = await samplerState(context.request);
+  assert.equal(state.layers.video.id, firstExplanationVideo.id, "explanation video pad should update the video layer");
+  assert.equal(await projection.locator("video").count(), 2, "explanation video should coexist with the G-LOC layer");
+  await clickAndWait(controller, videoRegion.getByRole("button", { name: `Parar ${firstExplanationVideo.label}` }));
+  assert.equal((await samplerState(context.request)).layers.video, null, "individual video stop should preserve other layers");
+
+  await shaderControls.getByRole("button", { name: "TÚNEL" }).click();
   await controller.waitForTimeout(120);
   const shaderState = await context.request.get(`${BASE_URL}/api/state`).then((response) => response.json());
   assert.equal(shaderState.forcaGShaders.tunnel, true, "existing shader controls should affect sampler projection");
+
+  const soundRegion = controller.getByRole("region", { name: "SOM" });
+  await clickAndWait(controller, soundRegion.getByRole("button", { name: `Tocar ${firstAudio.label}` }));
+  await clickAndWait(controller, soundRegion.getByRole("button", { name: `Tocar ${secondAudio.label}` }));
+  state = await samplerState(context.request);
+  assert.equal(state.audioCues.length, 2, "two Scene 2 samples should play simultaneously");
+  await clickAndWait(controller, soundRegion.getByRole("button", { name: `Tocar ${firstAudio.label}` }));
+  state = await samplerState(context.request);
+  assert.equal(state.audioCues.length, 3, "audio pad should retrigger as another voice");
+  assert.equal(await projection.locator("audio").count(), 3, "projection should keep all polyphonic voices");
+  await controller.getByRole("region", { name: "Pedais do sample selecionado" }).getByText(firstAudio.label, { exact: true }).waitFor();
+
+  const effectsResponse = await context.request.post(`${BASE_URL}/api/forca-g-sampler`, {
+    data: {
+      action: "update-audio",
+      itemId: firstAudio.id,
+      audioEffects: { enabled: true, preset: "radio", echoEnabled: true, echo: 0.12 }
+    }
+  });
+  assert.equal(effectsResponse.ok(), true, "pedal settings should update active voices");
+  state = await samplerState(context.request);
+  assert.equal(state.audioCues.filter((cue) => cue.id === firstAudio.id).every((cue) => cue.audioEffects.enabled), true);
+  assert.equal(
+    state.audioCues.find((cue) => cue.id === secondAudio.id).audioEffects.enabled,
+    Boolean(secondAudio.audioEffects.enabled),
+    "effects must remain per pad"
+  );
+
+  await clickAndWait(controller, soundRegion.getByRole("button", { name: `Parar ${firstAudio.label}` }));
+  state = await samplerState(context.request);
+  assert.deepEqual(state.audioCues.map((cue) => cue.id), [secondAudio.id], "individual stop should preserve the other sample");
 
   await controller.screenshot({ path: "/private/tmp/forca-g-sampler-controller.png", fullPage: true });
   await clickAndWait(controller, controller.getByRole("button", { name: "STOP ALL", exact: true }));
@@ -81,6 +139,7 @@ try {
   assert.equal(clearedState.forcaGShaders.tunnel, false, "STOP ALL should clear shaders");
   assert.equal(await projection.locator("video").count(), 0, "STOP ALL should remove video");
   assert.equal(await projection.getByText("4G TESTE", { exact: true }).count(), 0, "STOP ALL should remove text");
+  assert.deepEqual(projectionConflicts, [], "controller navigation should not call a disconnected projection window");
 
   console.log("forca-g sampler browser tests passed");
 } finally {

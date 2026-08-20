@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import ForcaGShaderControls from "./ForcaGShaderControls";
+import SceneAudioEffectsControls from "./SceneAudioEffectsControls";
 import styles from "./ForcaGSamplerController.module.css";
 
 const EMPTY_STATE = { layers: { gLoc: null, video: null, images: [], text: null }, audioCues: [], masterVolume: 1, errors: {} };
@@ -30,8 +31,8 @@ async function requestSampler(action, payload = {}) {
   return data;
 }
 
-function Pad({ item, active, error, pending, onPlay, onStop }) {
-  const classes = [styles.pad, active ? styles.activePad : "", error ? styles.errorPad : "", pending ? styles.loadingPad : ""].filter(Boolean).join(" ");
+function Pad({ item, active, selected, error, pending, onPlay, onStop }) {
+  const classes = [styles.pad, active ? styles.activePad : "", selected ? styles.selectedPad : "", error ? styles.errorPad : "", pending ? styles.loadingPad : ""].filter(Boolean).join(" ");
   return (
     <article className={classes} data-item-id={item.id}>
       <button
@@ -68,6 +69,7 @@ export default function ForcaGSamplerController() {
   const [shaders, setShaders] = useState(null);
   const [status, setStatus] = useState("CONECTANDO");
   const [pendingId, setPendingId] = useState("");
+  const [selectedAudioId, setSelectedAudioId] = useState("");
   const [freeText, setFreeText] = useState("");
   const triggerRef = useRef(null);
   const presetRef = useRef(null);
@@ -79,6 +81,7 @@ export default function ForcaGSamplerController() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "CONFIG ERROR");
       setConfig(data.config);
+      setSelectedAudioId((current) => current || data.config.sections?.audio?.[0]?.id || "");
       let nextState = data.state || EMPTY_STATE;
       const storedVolume = window.localStorage.getItem(MASTER_VOLUME_KEY);
       if (storedVolume !== null && Number.isFinite(Number(storedVolume))) {
@@ -122,6 +125,7 @@ export default function ForcaGSamplerController() {
   }
 
   function play(item) {
+    if (item.type === "audio") setSelectedAudioId(item.id);
     void send("play", { itemId: item.id }, item.id);
   }
 
@@ -141,6 +145,30 @@ export default function ForcaGSamplerController() {
   function updateMasterVolume(value) {
     window.localStorage.setItem(MASTER_VOLUME_KEY, `${value}`);
     void send("update", { category: "master", patch: { masterVolume: value } });
+  }
+
+  function updateAudioEffects(itemId, audioEffects) {
+    setConfig((current) => ({
+      ...current,
+      sections: {
+        ...current.sections,
+        audio: current.sections.audio.map((item) => item.id === itemId ? { ...item, audioEffects } : item)
+      }
+    }));
+    requestSampler("update-audio", { itemId, audioEffects })
+      .then((data) => { if (data.state) setSampler(data.state); })
+      .catch((error) => setStatus(error.message || "AUDIO EFFECT ERROR"));
+  }
+
+  async function persistAudioEffects(itemId, audioEffects) {
+    const response = await fetch("/api/forca-g-sampler", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ itemId, audioEffects })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "AUDIO EFFECT SAVE ERROR");
+    return data.audioEffects;
   }
 
   triggerRef.current = play;
@@ -192,6 +220,7 @@ export default function ForcaGSamplerController() {
             onPlay={play}
             onStop={stop}
             pending={pendingId === item.id}
+            selected={section === "audio" && selectedAudioId === item.id}
           />
         ))}
       </div>
@@ -200,6 +229,7 @@ export default function ForcaGSamplerController() {
 
   const gLoc = sampler.layers?.gLoc;
   const video = sampler.layers?.video;
+  const selectedAudio = config?.sections?.audio?.find((item) => item.id === selectedAudioId) || null;
   const masterVolume = Number(sampler.masterVolume ?? 1);
 
   return (
@@ -221,6 +251,13 @@ export default function ForcaGSamplerController() {
 
       <Section controls={<button className={styles.dangerSmall} onClick={() => send("stop-audio")} type="button">STOP ALL AUDIO</button>} title="SOM">
         {pads("audio")}
+        <SceneAudioEffectsControls
+          cueId={selectedAudio?.id || ""}
+          cueLabel={selectedAudio?.label || ""}
+          onChange={updateAudioEffects}
+          onPersist={persistAudioEffects}
+          settings={selectedAudio?.audioEffects}
+        />
       </Section>
 
       <Section controls={<button onClick={() => send("clear-text")} type="button">LIMPAR TEXTO</button>} title="TEXTO">

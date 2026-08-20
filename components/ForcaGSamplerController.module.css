@@ -46,6 +46,7 @@
 .padStop { min-height: 27px !important; border-width: 1px 0 0 !important; color: #ff9db8 !important; font-size: .65rem !important; }
 .activePad { border-color: #00ff66; box-shadow: inset 0 0 22px rgba(0,255,102,.13); }
 .activePad .padTopline small { color: #00ff66; }
+.selectedPad { outline: 2px solid #70f4ff; outline-offset: 2px; }
 .errorPad { border-color: #ff477d; }
 .loadingPad { animation: pulse .65s ease-in-out infinite alternate; }
 .assetError { position: absolute; inset: auto 4px 30px; color: #ff829f; font-size: .55rem; pointer-events: none; }
@@ -77,6 +78,7 @@
   .controller { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
   .hero,
   .accentSection,
+  .section[aria-label="SOM"],
   .section[aria-label="MASTER"],
   .warning { grid-column: 1 / -1; }
 }

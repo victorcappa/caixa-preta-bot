@@ -1,4 +1,8 @@
-import { findForcaGSamplerItem, readForcaGSamplerConfig } from "@/lib/forca-g-sampler/config";
+import {
+  findForcaGSamplerItem,
+  readForcaGSamplerConfig,
+  saveForcaGSamplerAudioEffects
+} from "@/lib/forca-g-sampler/config";
 import { showState } from "@/lib/showState";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +17,23 @@ export async function GET() {
     glitch: snapshot.glitch,
     displayBlackout: snapshot.displayBlackout
   });
+}
+
+export async function PUT(request) {
+  try {
+    const body = await request.json();
+    const config = readForcaGSamplerConfig();
+    const item = findForcaGSamplerItem(config, `${body.itemId || ""}`);
+    if (!item || item.type !== "audio") {
+      return Response.json({ error: "SAMPLER AUDIO UNKNOWN" }, { status: 404 });
+    }
+    const audioEffects = saveForcaGSamplerAudioEffects(item.id, body.audioEffects);
+    const result = applySampler("update-audio", { itemId: item.id, audioEffects });
+    return Response.json({ message: "SAMPLER AUDIO EFFECTS SAVED", audioEffects, ...result });
+  } catch (error) {
+    console.error("SamplerForcaG: falha ao salvar efeitos", error);
+    return Response.json({ error: "SAMPLER AUDIO EFFECTS INVALID" }, { status: 400 });
+  }
 }
 
 function applySampler(action, payload = {}) {
@@ -53,6 +74,11 @@ export async function POST(request) {
         state: showState.snapshot().forcaGSampler,
         shaders: shaderResult.state
       });
+    } else if (action === "update-audio") {
+      const item = findForcaGSamplerItem(config, `${body.itemId || ""}`);
+      result = item?.type === "audio"
+        ? applySampler("update-audio", { itemId: item.id, audioEffects: body.audioEffects })
+        : { applied: false, error: "SAMPLER AUDIO UNKNOWN" };
     } else if (action === "play") {
       const item = findForcaGSamplerItem(config, `${body.itemId || ""}`);
       result = item ? applySampler("play", { item }) : { applied: false, error: "SAMPLER ITEM UNKNOWN" };

@@ -1,5 +1,4 @@
-import ControllerSurface from "@/components/ControllerSurface";
-import ForcaGShadersController from "@/components/ForcaGShadersController";
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "Força G Shaders Controller",
@@ -7,9 +6,5 @@ export const metadata = {
 };
 
 export default function ForcaGShadersControllerPage() {
-  return (
-    <ControllerSurface>
-      <ForcaGShadersController />
-    </ControllerSurface>
-  );
+  redirect("/forca-g-samples-controller");
 }

@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import path from "node:path";
-import { Readable } from "node:stream";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -70,6 +69,47 @@ function parseRange(range, size) {
   };
 }
 
+function fileStream(absolute, options = undefined) {
+  const source = fs.createReadStream(absolute, options);
+  let closed = false;
+
+  return new ReadableStream({
+    start(controller) {
+      source.on("data", (chunk) => {
+        source.pause();
+        if (closed) return;
+        try {
+          controller.enqueue(chunk);
+        } catch {
+          closed = true;
+          source.destroy();
+        }
+      });
+      source.once("end", () => {
+        if (closed) return;
+        closed = true;
+        try {
+          controller.close();
+        } catch {}
+      });
+      source.once("error", (error) => {
+        if (closed) return;
+        closed = true;
+        try {
+          controller.error(error);
+        } catch {}
+      });
+    },
+    pull() {
+      if (!closed) source.resume();
+    },
+    cancel() {
+      closed = true;
+      source.destroy();
+    }
+  });
+}
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const file = searchParams.get("file");
@@ -101,8 +141,7 @@ export async function GET(request) {
     }
 
     const { start, end } = parsedRange;
-    const stream = fs.createReadStream(absolute, { start, end });
-    return new Response(Readable.toWeb(stream), {
+    return new Response(fileStream(absolute, { start, end }), {
       status: 206,
       headers: {
         "Accept-Ranges": "bytes",
@@ -113,8 +152,7 @@ export async function GET(request) {
     });
   }
 
-  const stream = fs.createReadStream(absolute);
-  return new Response(Readable.toWeb(stream), {
+  return new Response(fileStream(absolute), {
     headers: {
       "Accept-Ranges": "bytes",
       "Content-Length": `${stat.size}`,

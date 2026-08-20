@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readForcaGSamplerConfig } from "../lib/forca-g-sampler/config.js";
 import { createInitialForcaGSamplerState, reduceForcaGSamplerState } from "../lib/forca-g-sampler/state.js";
+import { controllerSurfaces } from "../lib/controllerSurfaces.js";
 
 function item(id, type, category, extra = {}) {
   return {
@@ -24,6 +25,12 @@ const audioB = item("audio-b", "audio", "audio", { loop: true });
 state = reduceForcaGSamplerState(state, "play", { item: audioA }).state;
 state = reduceForcaGSamplerState(state, "play", { item: audioB }).state;
 assert.equal(state.audioCues.length, 2, "dois áudios distintos devem tocar simultaneamente");
+state = reduceForcaGSamplerState(state, "update-audio", {
+  itemId: audioB.id,
+  audioEffects: { enabled: true, preset: "radio", echoEnabled: true, echo: 0.2 }
+}).state;
+assert.equal(state.audioCues.find((cue) => cue.id === audioB.id)?.audioEffects.enabled, true, "pedaleira deve atualizar vozes ativas");
+assert.equal(state.audioCues.find((cue) => cue.id === audioA.id)?.audioEffects, undefined, "efeitos de um pad não devem alterar outro");
 
 state = reduceForcaGSamplerState(state, "play", { item: audioA }).state;
 assert.equal(state.audioCues.length, 3, "retrigger deve criar outra voz");
@@ -83,5 +90,15 @@ const config = readForcaGSamplerConfig();
 assert.equal(config.sections.gLoc.length >= 3, true, "vídeos G-LOC existentes devem permanecer registrados");
 assert.equal(config.sections.gLoc.every((entry) => entry.available), true, "vídeos G-LOC existentes devem estar disponíveis");
 assert.equal(config.sections.gLoc.some((entry) => entry.shortcut === "1"), true, "atalhos do sampler existente devem ser preservados");
+const sceneTwoAudio = config.sections.audio.filter((entry) => entry.assetPath.startsWith("audios/cena-2-efeitos/"));
+assert.equal(sceneTwoAudio.length, 4, "todos os áudios de cena-2-efeitos devem virar pads");
+assert.deepEqual(sceneTwoAudio.map((entry) => entry.shortcut), ["q", "w", "e", "r"], "áudios da Cena 2 devem receber atalhos rápidos");
+assert.equal(sceneTwoAudio.every((entry) => entry.available && entry.audioEffects), true, "pads de áudio devem carregar arquivo e pedaleira");
+const explanationVideos = config.sections.video.filter((entry) => entry.assetPath.startsWith("videos/explicacoes-sampler/"));
+assert.equal(explanationVideos.length, 4, "cada vídeo de explicacoes-sampler deve virar um pad");
+assert.deepEqual(explanationVideos.map((entry) => entry.shortcut), ["4", "5", "6", "7"], "vídeos de explicação devem receber atalhos após G-LOC");
+assert.equal(explanationVideos.every((entry) => entry.available), true, "todos os vídeos de explicação devem estar disponíveis");
+assert.equal(controllerSurfaces.filter((surface) => surface.id === "forca-g-samples").length, 1, "Cena 2A deve ter um único controller de Força G");
+assert.equal(controllerSurfaces.some((surface) => surface.id === "forca-g-shaders"), false, "shaders não devem voltar como aba separada");
 
 console.log("forca-g sampler tests passed");

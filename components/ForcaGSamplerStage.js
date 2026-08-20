@@ -1,9 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import {
+  attachSceneAudioEffects,
+  detachSceneAudioEffects,
+  updateSceneAudioEffects
+} from "@/lib/sceneAudioGraph";
 import DisplayBlackout from "./DisplayBlackout";
 import GlitchOverlay from "./GlitchOverlay";
 import styles from "./ForcaGSamplerStage.module.css";
+
+const TUNNEL_REFERENCE_SRC = "/api/game-assets?file=imagens%2Fforca-g%2Fvisao-tunel.jpeg";
 
 function assetSrc(assetPath = "") {
   return assetPath ? `/api/game-assets?file=${encodeURIComponent(assetPath)}` : "";
@@ -120,10 +127,16 @@ function AudioVoice({ item, masterVolume }) {
   useEffect(() => {
     const audio = ref.current;
     if (!audio) return;
+    let cancelled = false;
     audio.currentTime = 0;
-    audio.play().catch((error) => reportError(itemRef.current, error.message || "áudio bloqueado"));
+    audio.play().catch((error) => {
+      if (cancelled || error?.name === "AbortError") return;
+      reportError(itemRef.current, error.message || "áudio bloqueado");
+    });
     return () => {
+      cancelled = true;
       audio.pause();
+      detachSceneAudioEffects(audio);
       audio.removeAttribute("src");
       audio.load();
     };
@@ -132,6 +145,17 @@ function AudioVoice({ item, masterVolume }) {
   useEffect(() => {
     if (ref.current) ref.current.volume = Math.max(0, Math.min(1, Number(item.volume ?? 1) * masterVolume));
   }, [item.volume, masterVolume]);
+
+  useEffect(() => {
+    const audio = ref.current;
+    if (!audio || !item.audioEffects) return undefined;
+    if (updateSceneAudioEffects(audio, item.audioEffects) || !item.audioEffects.enabled) return undefined;
+    let cancelled = false;
+    void attachSceneAudioEffects(audio, item.audioEffects).then(() => {
+      if (cancelled) detachSceneAudioEffects(audio);
+    });
+    return () => { cancelled = true; };
+  }, [item.audioEffects]);
 
   useEffect(() => {
     if (!item.durationMs) return undefined;
@@ -208,6 +232,8 @@ function ShaderLayer({ shaders }) {
       className={className}
       style={{
         "--shader-tunnel": `${0.72 + intensity * 0.26}`,
+        "--tunnel-clear": `${Math.max(12, 48 - intensity * 30)}%`,
+        "--tunnel-mid": `${Math.max(30, 68 - intensity * 24)}%`,
         "--shader-redout": `${0.12 + intensity * 0.42}`,
         "--shader-a": `${0.04 + intensity * 0.12}`,
         "--shader-b": `${0.03 + intensity * 0.08}`,
@@ -219,6 +245,9 @@ function ShaderLayer({ shaders }) {
 
 function preload(config) {
   const releases = [];
+  const tunnelReference = new Image();
+  tunnelReference.src = TUNNEL_REFERENCE_SRC;
+  releases.push(() => { tunnelReference.src = ""; });
   for (const item of Object.values(config?.sections || {}).flat()) {
     if (!item.available || !item.assetPath) continue;
     const src = assetSrc(item.assetPath);
@@ -277,9 +306,16 @@ export default function ForcaGSamplerStage() {
   }, []);
 
   const { layers = EMPTY_STATE.layers, audioCues = [], masterVolume = 1 } = sampler;
+  const hasVisualMedia = Boolean(layers.video || layers.gLoc || (layers.images || []).length);
   return (
     <GlitchOverlay glitch={glitch}>
     <main className={styles.stage} aria-label="Projeção do sampler Força G">
+      {shaders?.tunnel && !hasVisualMedia ? (
+        <div className={styles.tunnelReferenceLayer}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img alt="Teste de visão em túnel" src={TUNNEL_REFERENCE_SRC} />
+        </div>
+      ) : null}
       <div className={styles.videoLayer}>{layers.video ? <VisualMedia category="video" item={layers.video} key={layers.video.playbackId} /> : null}</div>
       <div className={styles.gLocLayer}>{layers.gLoc ? <VisualMedia category="gLoc" item={layers.gLoc} key={layers.gLoc.playbackId} /> : null}</div>
       <div className={styles.imageLayer}>{(layers.images || []).map((item) => <VisualMedia category="images" item={item} key={item.playbackId} />)}</div>
