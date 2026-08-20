@@ -561,15 +561,25 @@ function VerdadeOuBoloShow({ game }) {
 
     lastVoteTimeoutRef.current = timeoutKey;
 
-    try {
-      await fetch("/api/operator", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command: "/game vote-timeout" })
-      });
-    } catch {
-      // The operator can still reveal/recover manually if this network hop fails.
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const response = await fetch("/api/operator", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ command: "/game vote-timeout" })
+        });
+
+        if (response.ok) {
+          return;
+        }
+      } catch {
+        // Retry below before leaving manual reveal as the recovery path.
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 350 * (attempt + 1)));
     }
+
+    lastVoteTimeoutRef.current = null;
   }
 
   if (state === "INTRO") {
@@ -636,7 +646,7 @@ function VerdadeOuBoloShow({ game }) {
 
       {["REVEAL", "ROUND_RESULT"].includes(state) && result ? (
         <div className={`${styles.vobReveal} ${result.won ? styles.vobRevealWin : styles.vobRevealLose}`}>
-          <strong>{revealedAnswer === "verdade" ? "VERDADE!" : "E BOLO!"}</strong>
+          <strong>{revealedAnswer === "verdade" ? "É VERDADE" : "NÃO É VERDADE"}</strong>
           <span>{result.noVote ? "SEM VOTO" : result.won ? "ACERTARAM" : "ERRARAM"}</span>
         </div>
       ) : null}

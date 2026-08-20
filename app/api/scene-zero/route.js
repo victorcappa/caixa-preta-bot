@@ -123,7 +123,7 @@ async function generateCollectionIntervention(directionAction, detail = "", { re
   return { ...intervention, messageId: message.id };
 }
 
-function applyGeneratedTurn(turn) {
+function applyGeneratedTurn(turn, { messageSource = "scene-zero-operator" } = {}) {
   if (turn.salience?.length) showState.addSalience(turn.salience, "agent");
   if (turn.game?.gameMove && showState.snapshot().game?.active) {
     showState.applyGameMove(turn.game, { source: "agent" });
@@ -137,7 +137,7 @@ function applyGeneratedTurn(turn) {
       ? turn.text.split(/\n\s*\n/).map((fragment) => fragment.trim()).filter(Boolean).slice(0, 4)
       : [turn.text];
     for (const fragment of fragments) {
-      showState.addMessage("assistant", fragment, "scene-zero-operator");
+      showState.addMessage("assistant", fragment, messageSource);
     }
   }
   if (turn.events?.length) showState.queuePerformanceEvents(turn.events, "agent");
@@ -210,13 +210,13 @@ async function startParticipantFlow({ chooseAnother = false, detail = "" } = {})
   return { ...started, text: sequence.invite };
 }
 
-async function speak(directionAction, detail = "") {
+async function speak(directionAction, detail = "", options = {}) {
   const state = showState.privateSnapshot();
   const turn = await generateCaixaPretaTurn({
     state,
     operatorInstruction: buildSceneZeroDirection(state.sceneZero, directionAction, detail)
   });
-  applyGeneratedTurn(turn);
+  applyGeneratedTurn(turn, options);
   return turn;
 }
 
@@ -520,6 +520,24 @@ export async function POST(request) {
     const detail = `${body.detail || ""}`.trim();
 
     if (action === "message-typed") {
+      const snapshot = showState.privateSnapshot();
+      const message = snapshot.conversation.find((candidate) => candidate.id === body.messageId);
+      const game = snapshot.game;
+
+      if (
+        message?.source === "scene-zero-cake-comment" &&
+        game?.active &&
+        game.id === "verdade_ou_bolo" &&
+        Date.parse(message.timestamp) >= Date.parse(game.startedAt || 0)
+      ) {
+        const advanced = showState.controlStructuredGame("comment_complete", {}, { source: "scene-zero-comment" });
+        return Response.json({
+          message: advanced.applied ? "COMENTÁRIO CONCLUÍDO · JOGO AVANÇADO" : "COMENTÁRIO CONCLUÍDO · AVANÇO NÃO APLICÁVEL",
+          result: advanced,
+          sceneZero: showState.snapshot().sceneZero
+        });
+      }
+
       const result = showState.completeSceneZeroMessageTyping(body.messageId);
       return Response.json({ message: result.applied ? "TEMPORIZAÇÃO INICIADA" : "MENSAGEM SEM TEMPORIZAÇÃO PENDENTE", result, sceneZero: showState.snapshot().sceneZero });
     }
@@ -845,7 +863,9 @@ export async function POST(request) {
           applyGeneratedTurn(generated);
           return generated;
         })
-        : await speak(DIRECTION_ACTIONS[action], detail);
+        : await speak(DIRECTION_ACTIONS[action], detail, {
+          messageSource: action === "cake-comment" ? "scene-zero-cake-comment" : "scene-zero-operator"
+        });
       const collectionKind = ["collection-new-question", "collection-rephrase"].includes(action)
         ? "collection-question"
         : action === "collection-comment" ? "collection-comment" : null;

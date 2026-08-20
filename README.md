@@ -713,7 +713,9 @@ o acerto ou erro e o placar; sem voto, revela `SEM VOTO` e conta a rodada como
 erro. `REVELAR RESPOSTA` antecipa essa mesma resolucao a qualquer momento da
 votacao. O video pode ser tocado separadamente depois da revelacao. Os botoes
 `COMENTAR` e `NOVA PROVOCAÇÃO` publicam a fala da Caixa no chat ao lado do jogo.
-`PRÓXIMA RODADA` avanca diretamente para a rodada seguinte.
+Quando a fala de `COMENTAR` termina de ser digitada depois da revelacao, o jogo
+avanca automaticamente para a rodada seguinte; na ultima rodada, abre o resultado
+final. `PRÓXIMA RODADA` permanece como controle manual de recuperacao.
 
 Entrar no modo MALAS e gerar uma transicao contextual na projecao:
 

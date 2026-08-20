@@ -282,7 +282,7 @@ export default function Chat() {
         typingTimersRef.current.delete(message.id);
         robotSoundEngine.complete();
         robotSoundEngine.success();
-        if (["scene-zero-collection", "scene-zero-roulette"].includes(message.source)) {
+        if (["scene-zero-collection", "scene-zero-roulette", "scene-zero-cake-comment"].includes(message.source)) {
           notifySceneZeroMessageTyped(message.id);
         }
         drainTypingQueueRef.current?.();
@@ -353,6 +353,9 @@ export default function Chat() {
         : null,
       sceneZero?.collection?.activeCountdown?.status === "awaiting_message"
         ? sceneZero.collection.activeCountdown.messageId
+        : null,
+      game?.id === "verdade_ou_bolo" && ["REVEAL", "ROUND_RESULT"].includes(game?.data?.state)
+        ? [...messages].reverse().find((message) => message.source === "scene-zero-cake-comment")?.id
         : null
     ].filter(Boolean);
 
@@ -362,7 +365,7 @@ export default function Chat() {
         notifySceneZeroMessageTyped(messageId);
       }
     }
-  }, [messages, notifySceneZeroMessageTyped, sceneZero, typedReplies]);
+  }, [game?.data?.state, game?.id, messages, notifySceneZeroMessageTyped, sceneZero, typedReplies]);
 
   useEffect(() => {
     const typingTimers = typingTimersRef.current;

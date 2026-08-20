@@ -285,6 +285,10 @@ async function main() {
   assert.equal(started.gameState.publicData.voteCountdown, null);
 
   let boloState = started.gameState;
+  const prematureComment = director.controlStructuredGame({ ...state, game: boloState }, "comment_complete");
+  assert.equal(prematureComment.applied, false);
+  assert.equal(prematureComment.result.type, "comment_complete_ignored");
+
   let frameReady = director.controlStructuredGame({ ...state, game: boloState }, "video_ready");
   assert.equal(frameReady.applied, true);
   assert.equal(frameReady.gameState.phase, "VOTING");
@@ -323,13 +327,9 @@ async function main() {
   assert.equal(controlled.gameState.publicData.voteCountdown, null);
   boloState = controlled.gameState;
 
-  controlled = director.controlStructuredGame({ ...state, game: boloState }, "next");
+  controlled = director.controlStructuredGame({ ...state, game: boloState }, "comment_complete");
   assert.equal(controlled.applied, true);
-  assert.equal(controlled.gameState.phase, "ROUND_RESULT");
-  boloState = controlled.gameState;
-
-  controlled = director.controlStructuredGame({ ...state, game: boloState }, "next");
-  assert.equal(controlled.applied, true);
+  assert.equal(controlled.result.type, "comment_complete_next_round");
   assert.equal(controlled.gameState.phase, "QUESTION");
   assert.equal(controlled.gameState.publicData.currentRound.number, 2);
   assert.equal(controlled.gameState.publicData.voteCountdown, null);
