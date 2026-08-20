@@ -137,6 +137,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       "/activity",
       "/intensity",
       "/model",
+      "/style",
       "/instagram",
       "/glitch",
       "/blackout",

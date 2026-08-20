@@ -1,5 +1,6 @@
 import { analyzeInstagramScreenshot, generateCaixaPretaTurn } from "@/lib/openai";
 import { normalizeGameCommand } from "@/lib/host/GameDirector";
+import { buildInternetVoiceContext, formatInternetVoiceDebug } from "@/lib/internetVoice";
 import { interpretInstagramCommand } from "@/lib/instagram/commands";
 import { getExistingInstagramController, getInstagramController } from "@/lib/instagram/InstagramController";
 import { normalizeOpenAIModel } from "@/lib/openaiModels";
@@ -297,6 +298,14 @@ export async function POST(request) {
       return Response.json({
         message: `MODEL ${modelChange.previousModel} -> ${modelChange.model}`
       });
+    }
+
+    if (name === "/style") {
+      const { debug } = buildInternetVoiceContext({
+        state: showState.privateSnapshot(),
+        operatorInstruction: content
+      });
+      return Response.json({ message: formatInternetVoiceDebug(debug) });
     }
 
     if (name === "/phone") {
