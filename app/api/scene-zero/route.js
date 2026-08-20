@@ -7,6 +7,7 @@ import { showState } from "@/lib/showState";
 import { SHOW_MODES } from "@/prompts/modes";
 import { findInstagramParticipantByName } from "@/lib/suitcases/SuitcaseDirector";
 import { buildGincanaPresentation, chooseGincana, chooseGincanaDuration, SCENE_ZERO_INSTAGRAM_TARGETS } from "@/lib/scene-zero/suitcaseGame";
+import { buildDataCollectionSystemPrompt } from "@/prompts/dataCollection";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -73,6 +74,7 @@ async function generateCollectionIntervention(directionAction, detail = "", { re
       state,
       allowPerformance: false,
       allowWebSearch: false,
+      systemPromptAddendum: anytime ? "" : buildDataCollectionSystemPrompt(),
       operatorInstruction: [
         buildSceneZeroDirection(state.sceneZero, effectiveDirection, detail),
         anytime ? "PERGUNTA AVULSA: trabalhe com o momento dramatúrgico atual. Não a apresente como formulário, pesquisa ou coleta, a menos que isso surja organicamente do contexto." : collectionRepertoireBlock(questions),

@@ -186,6 +186,14 @@ além do dataset da sala: tópico, ação, tipo de resposta, intensidade,
 sensibilidade, escala, condições cruzadas, resultado aproximado e observações
 reais. Ele é orientado a começar normal, variar assunto e ação, construir
 subgrupos, cruzar respostas anteriores e aumentar a estranheza gradualmente.
+O prompt de sistema específico dessa etapa fica em `prompts/dataCollection.js`
+e usa `data/coleta-de-dados.json` como configuração e repertório, nunca como uma
+lista fixa de perguntas. A cada geração ele decide silenciosamente se deve
+aprofundar um grupo real, cruzar dados, abrir outra dimensão ou fazer um
+experimento comportamental. Esse prompt só é anexado às chamadas feitas enquanto
+a etapa ativa é `COLETA DE DADOS`; perguntas avulsas e as outras etapas não o
+recebem.
+
 Fora da coleta, os mesmos botões fazem e acompanham perguntas avulsas adequadas
 ao momento atual, sem trocar, encerrar ou avançar o processo ativo e sem impor
 linguagem de formulário à conversa.

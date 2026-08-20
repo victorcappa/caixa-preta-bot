@@ -7,6 +7,7 @@ async function main() {
   const gincanaBank = await import("../data/scene-zero-gincanas.js");
   const suitcaseGame = await import("../lib/scene-zero/suitcaseGame.js");
   const messageTiming = await import("../lib/messageTiming.js");
+  const dataCollectionPrompt = await import("../prompts/dataCollection.js");
   const initial = sceneZero.createInitialSceneZeroState();
 
   assert.equal(initial.stage, "idle");
@@ -21,6 +22,14 @@ async function main() {
   assert(initial.sessionStartedAt);
   assert.equal(sceneZero.normalizeSceneZeroStage("airport"), "airport");
   assert.equal(sceneZero.normalizeSceneZeroStage("automatic-timeline"), null);
+
+  const collectionSystemPrompt = dataCollectionPrompt.buildDataCollectionSystemPrompt();
+  assert.match(collectionSystemPrompt, /configuracao e repertorio, nao roteiro/i);
+  assert.match(collectionSystemPrompt, /DADO A \+ DADO B \+ DADO C/);
+  assert.match(collectionSystemPrompt, /nao possui visao computacional implicita/i);
+  assert.match(collectionSystemPrompt, /caixa_preta_coleta_dados/);
+  assert.match(collectionSystemPrompt, /dynamic_generation_rules/);
+  assert.equal(dataCollectionPrompt.getDataCollectionConfig().version, "2.0");
 
   const combinedBrowserPlan = browserCommand.fallbackSceneZeroBrowserPlan(
     "Entre no Google e busque inteligência artificial e comente. Ao mesmo tempo, abra uma aba do Instagram e busque o perfil do Nikolas Ferreira."
