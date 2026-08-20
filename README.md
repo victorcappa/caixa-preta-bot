@@ -243,8 +243,17 @@ O bloco `GOOGLE` recebe uma orientação completa, não apenas termos de busca.
 Por exemplo: `buscar sobre o candidato do PL para eleições de 2026 e escolher
 alguma notícia para ler por 15 segundos`. Ao executar, o mesmo navegador
 Playwright embedded abre a busca real, deriva dela os termos pesquisados,
-escolhe e abre um resultado público quando isso fizer parte da orientação e
-mantém a leitura/scroll pelo tempo solicitado. O frame permanece interativo
+escolhe e abre resultados públicos quando isso fizer parte da orientação e
+mantém a leitura/scroll pelo tempo solicitado. Pesquisas de notícias percorrem
+duas fontes por padrão: o browser lê a primeira, volta aos resultados e abre a
+segunda. Título, URL e trechos visíveis das páginas lidas viram evidência para
+uma nova fala da Caixa no chat; sarcasmo pedido pelo operador é gerado a partir
+dessa evidência, sem uma segunda busca invisível. Quando o assunto parece ser
+uma pessoa, uma segunda aba procura o Instagram público em paralelo e o painel
+oferece as abas `NOTÍCIAS` e `INSTAGRAM`.
+
+No chat, o painel Google usa metade da largura da tela por padrão e viewport
+desktop; o operador ainda pode redimensioná-lo. O frame permanece interativo
 para o operador. `FECHAR GOOGLE` interrompe a rotina e retira o painel; URLs
 locais, telas de login e agregadores pessoais bloqueados continuam protegidos
 pelos mesmos guardrails da pesquisa pública das malas.
