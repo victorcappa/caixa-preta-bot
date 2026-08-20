@@ -141,6 +141,31 @@ async function main() {
     await projectionPage.goto("http://localhost:3000", { waitUntil: "domcontentloaded" });
     await projectionPage.getByText("CONNECTED", { exact: true }).first().waitFor({ timeout: 10000 });
     await projectionPage.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.lastRelaySinkAt > 0);
+    await page.evaluate(() => {
+      const sound = window.__caixaPretaRobotSoundEngine;
+      window.__relayedRobotEffects = [];
+      for (const method of ["startThinking", "stopThinking", "success", "error", "glitchEffect", "impact", "countdown"]) {
+        const original = sound[method].bind(sound);
+        sound[method] = (...args) => {
+          window.__relayedRobotEffects.push(method);
+          return original(...args);
+        };
+      }
+    });
+    await projectionPage.evaluate(() => {
+      const sound = window.__caixaPretaRobotSoundEngine;
+      sound.startThinking();
+      sound.stopThinking();
+      sound.success();
+      sound.error();
+      sound.glitchEffect({ intensity: 0.7 });
+      sound.impact();
+      sound.countdown(3);
+    });
+    await page.waitForFunction(() => (
+      ["startThinking", "stopThinking", "success", "error", "glitchEffect", "impact", "countdown"]
+        .every((effect) => window.__relayedRobotEffects.includes(effect))
+    ));
     await page.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.activeSources?.size === 0);
     await projectionPage.evaluate(() => {
       window.__caixaPretaRobotSoundEngine.wake();

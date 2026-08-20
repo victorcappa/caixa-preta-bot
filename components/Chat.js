@@ -280,6 +280,7 @@ export default function Chat() {
         clearInterval(timer);
         typingTimersRef.current.delete(message.id);
         robotSoundEngine.complete();
+        robotSoundEngine.success();
         if (["scene-zero-collection", "scene-zero-roulette"].includes(message.source)) {
           notifySceneZeroMessageTyped(message.id);
         }
@@ -509,6 +510,7 @@ export default function Chat() {
     } catch (requestError) {
       if (requestError.name !== "AbortError") {
         setError(requestError.message);
+        robotSoundEngine.error();
       }
     } finally {
       if (chatRequestControllerRef.current === controller) {

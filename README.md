@@ -309,6 +309,11 @@ real do bot. `WAKE`, cada caractere e `COMPLETE` são retransmitidos diretamente
 da animação pública; se não houver operator sonoro disponível, a própria
 projeção continua sendo a saída de fallback.
 
+O mesmo canal transporta `THINKING` enquanto o modelo responde, `ERROR` em
+falhas reais, os pulsos de `GLITCH` e contagens regressivas. `SUCCESS / OBEY`
+marca o fim de cada resposta entregue; `IMPACT` permanece reservado às cenas
+que o acionarem explicitamente.
+
 ## Queda Aviao
 
 Abra `http://localhost:3000/queda-aviao` na tela publica e
