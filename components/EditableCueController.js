@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import {
   attachSceneAudioEffects,
   detachSceneAudioEffects,
   updateSceneAudioEffects
 } from "@/lib/sceneAudioGraph";
+import { normalizeSceneAudioEffects, SCENE_AUDIO_EFFECT_DEFAULTS } from "@/lib/sceneAudioEffects";
 import styles from "./EditableCueController.module.css";
 
 const EMPTY_ASSETS = { audio: [], video: [], image: [] };
@@ -63,6 +64,7 @@ function createCue(allowedTypes, colors) {
     durationMs: 0,
     loop: false,
     volume: 1,
+    audioEffects: normalizeSceneAudioEffects(SCENE_AUDIO_EFFECT_DEFAULTS),
     color: colors[0] || "#00ff66",
     text: ""
   };
@@ -105,14 +107,14 @@ async function postSceneCue(controllerId, action, cue = null, extra = {}) {
   return { response, data };
 }
 
-export default function EditableCueController({
-  audioEffects = null,
+const EditableCueController = forwardRef(function EditableCueController({
   controllerId,
   embedded = false,
   importDirectory = "",
   importType = "audio",
+  onSelectedCueChange = null,
   renderStageOverlay = null
-}) {
+}, ref) {
   const [config, setConfig] = useState(null);
   const [assets, setAssets] = useState(EMPTY_ASSETS);
   const [colors, setColors] = useState(["#00ff66"]);
@@ -126,6 +128,7 @@ export default function EditableCueController({
   const previewMediaRef = useRef(null);
   const clearPreviewRef = useRef(null);
   const publicCueRequestRef = useRef(Promise.resolve());
+  const effectsSaveRequestRef = useRef(Promise.resolve());
   const screenRef = useRef(null);
   const triggerCueRef = useRef(null);
 
@@ -168,15 +171,6 @@ export default function EditableCueController({
   }, [controllerId]);
 
   useEffect(() => {
-    if (!audioEffects) return;
-    for (const instance of audioInstancesRef.current.values()) {
-      if (!updateSceneAudioEffects(instance.audio, audioEffects) && audioEffects.enabled) {
-        void attachSceneAudioEffects(instance.audio, audioEffects);
-      }
-    }
-  }, [audioEffects]);
-
-  useEffect(() => {
     let active = true;
 
     fetchCueConfig(controllerId)
@@ -211,6 +205,47 @@ export default function EditableCueController({
   const allowedTypes = useMemo(() => config?.allowedTypes || ["audio"], [config?.allowedTypes]);
   const playingCueIdSet = useMemo(() => new Set(playingCueIds), [playingCueIds]);
   triggerCueRef.current = triggerCue;
+
+  useEffect(() => {
+    onSelectedCueChange?.(selectedCue);
+  }, [onSelectedCueChange, selectedCue]);
+
+  useImperativeHandle(ref, () => ({
+    updateCueAudioEffects(cueId, settings, { persist = false } = {}) {
+      if (!config || !cueId) return Promise.resolve(null);
+      const normalized = normalizeSceneAudioEffects(settings);
+      const nextConfig = {
+        ...config,
+        cues: config.cues.map((cue) => cue.id === cueId
+          ? { ...cue, audioEffects: normalized }
+          : cue)
+      };
+      setConfig(nextConfig);
+
+      for (const instance of audioInstancesRef.current.values()) {
+        if (instance.cueId !== cueId) continue;
+        if (!updateSceneAudioEffects(instance.audio, normalized) && normalized.enabled) {
+          void attachSceneAudioEffects(instance.audio, normalized);
+        }
+      }
+      void enqueuePublicCue("update-audio", null, {
+        cueId,
+        patch: { audioEffects: normalized }
+      });
+
+      if (!persist) return Promise.resolve(normalized);
+      const request = effectsSaveRequestRef.current
+        .catch(() => {})
+        .then(() => saveCueConfig(controllerId, nextConfig))
+        .then(({ response, data }) => {
+          if (!response.ok) throw new Error(data.error || "EFFECT SAVE ERROR");
+          setStatus("EFEITOS SALVOS");
+          return data.config;
+        });
+      effectsSaveRequestRef.current = request.catch(() => {});
+      return request;
+    }
+  }));
 
   const availableAssets = useMemo(() => {
     const grouped = {};
@@ -332,8 +367,8 @@ export default function EditableCueController({
       audioInstancesRef.current.set(playbackId, instance);
       syncPlayingCueIds();
 
-      if (audioEffects?.enabled) {
-        void attachSceneAudioEffects(audio, audioEffects);
+      if (cue.audioEffects?.enabled) {
+        void attachSceneAudioEffects(audio, cue.audioEffects);
       }
 
       audio.addEventListener("ended", () => releaseAudioInstance(playbackId, { notifyProjection: true }), { once: true });
@@ -873,4 +908,8 @@ export default function EditableCueController({
       </aside>
     </main>
   );
-}
+});
+
+EditableCueController.displayName = "EditableCueController";
+
+export default EditableCueController;

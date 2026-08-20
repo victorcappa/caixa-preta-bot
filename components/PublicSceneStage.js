@@ -13,7 +13,7 @@ function assetSrc(assetPath = "") {
   return assetPath ? `/api/game-assets?file=${encodeURIComponent(assetPath)}` : "";
 }
 
-function PublicCueMedia({ audioEffects = null, cue, onEnded = null }) {
+function PublicCueMedia({ cue, onEnded = null }) {
   const mediaRef = useRef(null);
   const src = assetSrc(cue?.assetPath);
 
@@ -44,11 +44,11 @@ function PublicCueMedia({ audioEffects = null, cue, onEnded = null }) {
 
   useEffect(() => {
     const media = mediaRef.current;
-    if (!media || cue?.type !== "audio" || !audioEffects) return;
-    if (!updateSceneAudioEffects(media, audioEffects) && audioEffects.enabled) {
-      void attachSceneAudioEffects(media, audioEffects);
+    if (!media || cue?.type !== "audio" || !cue.audioEffects) return;
+    if (!updateSceneAudioEffects(media, cue.audioEffects) && cue.audioEffects.enabled) {
+      void attachSceneAudioEffects(media, cue.audioEffects);
     }
-  }, [audioEffects, cue?.type]);
+  }, [cue.audioEffects, cue?.type]);
 
   if (cue.type === "text") {
     return (
@@ -86,7 +86,7 @@ function PublicCueMedia({ audioEffects = null, cue, onEnded = null }) {
   );
 }
 
-export function PublicSceneAudioOutput({ audioEffects = null, controllerId = "", sceneCue = null }) {
+export function PublicSceneAudioOutput({ controllerId = "", sceneCue = null }) {
   const audioCues = (sceneCue?.audioCues || []).filter((cue) => (
     cue.controllerId === controllerId && cue.type === "audio" && cue.assetPath
   ));
@@ -106,7 +106,6 @@ export function PublicSceneAudioOutput({ audioEffects = null, controllerId = "",
 
   return audioCues.map((cue) => (
     <PublicCueMedia
-      audioEffects={audioEffects}
       cue={cue}
       key={cue.playbackId || `${cue.id}-${cue.sequence}`}
       onEnded={() => reportEnded(cue)}

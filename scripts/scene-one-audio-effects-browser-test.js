@@ -1,96 +1,94 @@
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
-import {
-  SCENE_AUDIO_EFFECT_DEFAULTS,
-  SCENE_AUDIO_EFFECTS_CONTROLLER_ID,
-  sceneAudioEffectPreset
-} from "../lib/sceneAudioEffects.js";
 
 const BASE_URL = "http://localhost:3000";
+const CONTROLLER_ID = "queda-aviao-sampler";
 
-async function effectState(request) {
-  const response = await request.get(`${BASE_URL}/api/state`);
+async function cueConfig(request) {
+  const response = await request.get(`${BASE_URL}/api/controller-cues?id=${CONTROLLER_ID}`);
   assert.equal(response.ok(), true);
-  const state = await response.json();
-  return state.sceneAudioEffects?.[SCENE_AUDIO_EFFECTS_CONTROLLER_ID];
+  return response.json();
 }
 
-async function setEffects(request, settings) {
-  const response = await request.post(`${BASE_URL}/api/controller-cues/play`, {
-    data: {
-      controllerId: SCENE_AUDIO_EFFECTS_CONTROLLER_ID,
-      action: "audio-effects",
-      settings
-    }
+async function saveConfig(request, config) {
+  const response = await request.put(`${BASE_URL}/api/controller-cues`, {
+    data: { id: CONTROLLER_ID, config }
   });
   assert.equal(response.ok(), true);
 }
 
 const browser = await chromium.launch({ headless: true });
 let context = null;
-let originalEffects = null;
+let originalConfig = null;
 
 try {
   context = await browser.newContext();
+  const initial = await cueConfig(context.request);
+  originalConfig = initial.config;
+  const availablePaths = new Set((initial.assets?.audio || []).map((asset) => asset.path));
+  const playableCues = initial.config.cues.filter((cue) => availablePaths.has(cue.assetPath));
+  assert.ok(playableCues.length >= 2, "the per-sample effects test needs two playable scene one audios");
+  const [firstCue, secondCue] = playableCues;
+  await saveConfig(context.request, {
+    ...originalConfig,
+    cues: originalConfig.cues.map((cue) => (
+      cue.id === firstCue.id || cue.id === secondCue.id ? { ...cue, loop: true } : cue
+    ))
+  });
 
-  originalEffects = await effectState(context.request);
-  await setEffects(context.request, sceneAudioEffectPreset("clean", SCENE_AUDIO_EFFECT_DEFAULTS));
-
-  const configResponse = await context.request.get(`${BASE_URL}/api/controller-cues?id=${SCENE_AUDIO_EFFECTS_CONTROLLER_ID}`);
-  const configPayload = await configResponse.json();
-  const availablePaths = new Set((configPayload.assets?.audio || []).map((asset) => asset.path));
-  const playableCue = configPayload.config.cues.find((cue) => availablePaths.has(cue.assetPath));
-  assert.ok(playableCue, "the effects test needs one playable scene one audio");
+  await context.request.post(`${BASE_URL}/api/controller-cues/play`, {
+    data: { controllerId: CONTROLLER_ID, action: "stop-all" }
+  });
 
   const projection = await context.newPage();
   await projection.goto(`${BASE_URL}/queda-aviao`, { waitUntil: "domcontentloaded" });
 
   const controller = await context.newPage();
   await controller.goto(`${BASE_URL}/queda-aviao-controller`, { waitUntil: "domcontentloaded" });
-  const effects = controller.getByRole("region", { name: "Distorção do som da Cena 1" });
+  const effects = controller.getByRole("region", { name: "Pedais do sample selecionado" });
+
+  await controller.getByRole("button", { name: `Tocar ${firstCue.label}` }).click();
+  await effects.getByText(firstCue.label, { exact: true }).waitFor();
   await effects.getByRole("button", { name: "RÁDIO" }).click();
-  await controller.waitForFunction(async () => {
-    const response = await fetch("/api/state");
-    const state = await response.json();
-    const settings = state.sceneAudioEffects?.["queda-aviao-sampler"];
-    return settings?.enabled === true && settings?.preset === "radio";
-  });
+  await controller.waitForFunction(async ({ controllerId, cueId }) => {
+    const response = await fetch(`/api/controller-cues?id=${controllerId}`, { cache: "no-store" });
+    const data = await response.json();
+    return data.config?.cues?.find((cue) => cue.id === cueId)?.audioEffects?.preset === "radio";
+  }, { controllerId: CONTROLLER_ID, cueId: firstCue.id });
 
-  await controller.getByRole("button", { name: `Tocar ${playableCue.label}` }).click();
-  await controller.waitForFunction(async () => {
-    const response = await fetch("/api/state");
-    const state = await response.json();
-    return state.sceneCue?.audioCues?.some((cue) => (
-      cue.controllerId === "queda-aviao-sampler" && cue.assetPath
-    ));
-  });
+  await controller.getByRole("button", { name: `Tocar ${secondCue.label}` }).click();
+  await effects.getByText(secondCue.label, { exact: true }).waitFor();
+  await effects.getByRole("button", { name: "DESTRUÍDO" }).click();
+  await controller.waitForFunction(async ({ controllerId, cueId }) => {
+    const response = await fetch(`/api/controller-cues?id=${controllerId}`, { cache: "no-store" });
+    const data = await response.json();
+    return data.config?.cues?.find((cue) => cue.id === cueId)?.audioEffects?.preset === "destruido";
+  }, { controllerId: CONTROLLER_ID, cueId: secondCue.id });
+
+  await controller.getByRole("button", { name: `Tocar ${firstCue.label}` }).click();
+  await effects.getByRole("button", { name: "RÁDIO", pressed: true }).waitFor();
+  await effects.getByRole("slider", { name: "PHASER INTENSIDADE" }).fill("0.81");
+  await controller.waitForFunction(async ({ controllerId, cueId }) => {
+    const response = await fetch(`/api/controller-cues?id=${controllerId}`, { cache: "no-store" });
+    const data = await response.json();
+    const settings = data.config?.cues?.find((cue) => cue.id === cueId)?.audioEffects;
+    return settings?.preset === "custom" && settings?.phaserEnabled === true
+      && Math.abs(settings.phaser - 0.81) < 0.001;
+  }, { controllerId: CONTROLLER_ID, cueId: firstCue.id });
+
   await projection.reload({ waitUntil: "domcontentloaded" });
-  await projection.locator("audio").first().waitFor({ state: "attached" });
+  await projection.locator("audio").nth(1).waitFor({ state: "attached" });
 
-  await effects.getByRole("slider", { name: "DISTORÇÃO" }).fill("0.83");
-  await controller.waitForFunction(async () => {
-    const response = await fetch("/api/state");
-    const state = await response.json();
-    const settings = state.sceneAudioEffects?.["queda-aviao-sampler"];
-    return settings?.preset === "custom"
-      && settings?.enabled === true
-      && Math.abs((settings.drive || 0) - 0.83) < 0.001;
-  });
-
-  await effects.getByRole("button", { name: "LIMPO" }).click();
-  await controller.waitForFunction(async () => {
-    const response = await fetch("/api/state");
-    const state = await response.json();
-    return state.sceneAudioEffects?.["queda-aviao-sampler"]?.enabled === false;
-  });
-
-  await context.request.post(`${BASE_URL}/api/controller-cues/play`, {
-    data: { controllerId: SCENE_AUDIO_EFFECTS_CONTROLLER_ID, action: "stop-all" }
-  });
-  console.log("scene one audio effects browser tests passed");
+  const saved = await cueConfig(context.request);
+  assert.equal(saved.config.cues.find((cue) => cue.id === firstCue.id).audioEffects.phaser, 0.81);
+  assert.equal(saved.config.cues.find((cue) => cue.id === secondCue.id).audioEffects.preset, "destruido");
+  console.log("scene one per-sample pedalboard browser tests passed");
 } finally {
-  if (context && originalEffects) {
-    await setEffects(context.request, originalEffects).catch(() => {});
+  if (context) {
+    await context.request.post(`${BASE_URL}/api/controller-cues/play`, {
+      data: { controllerId: CONTROLLER_ID, action: "stop-all" }
+    }).catch(() => {});
+    if (originalConfig) await saveConfig(context.request, originalConfig).catch(() => {});
   }
   await browser.close();
 }

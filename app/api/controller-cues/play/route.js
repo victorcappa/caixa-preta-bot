@@ -54,20 +54,6 @@ export async function POST(request) {
       return Response.json({ message: "SCENE AUDIO UPDATED", ...result });
     }
 
-    if (action === "audio-effects") {
-      const result = showState.controlSceneAudioEffects({
-        controllerId,
-        settings: body.settings || {},
-        source: "editable-cue-controller"
-      });
-
-      if (!result.applied) {
-        return Response.json({ error: result.error || "SCENE AUDIO EFFECTS ERROR" }, { status: 400 });
-      }
-
-      return Response.json({ message: "SCENE AUDIO EFFECTS UPDATED", ...result });
-    }
-
     if (!controller.allowedTypes.includes(body.cue?.type)) {
       return Response.json({ error: "SCENE CUE TYPE INVALID" }, { status: 400 });
     }

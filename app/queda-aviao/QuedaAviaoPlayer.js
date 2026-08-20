@@ -3,11 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import DisplayBlackout from "@/components/DisplayBlackout";
 import { PublicSceneAudioOutput } from "@/components/PublicSceneStage";
-import {
-  normalizeSceneAudioEffects,
-  SCENE_AUDIO_EFFECT_DEFAULTS,
-  SCENE_AUDIO_EFFECTS_CONTROLLER_ID
-} from "@/lib/sceneAudioEffects";
 import { buildSegments, DEFAULT_FADE_MS, scriptLines } from "./script";
 import styles from "./QuedaAviaoPlayer.module.css";
 
@@ -16,7 +11,6 @@ export default function QuedaAviaoPlayer() {
   const [playback, setPlayback] = useState(null);
   const [displayBlackout, setDisplayBlackout] = useState(null);
   const [sceneCue, setSceneCue] = useState(null);
-  const [audioEffects, setAudioEffects] = useState(SCENE_AUDIO_EFFECT_DEFAULTS);
 
   useEffect(() => {
     fetch("/api/queda-aviao", {
@@ -34,9 +28,6 @@ export default function QuedaAviaoPlayer() {
       .then((response) => response.json())
       .then((data) => {
         setSceneCue(data.sceneCue || null);
-        setAudioEffects(normalizeSceneAudioEffects(
-          data.sceneAudioEffects?.[SCENE_AUDIO_EFFECTS_CONTROLLER_ID]
-        ));
       })
       .catch(() => {});
 
@@ -46,9 +37,6 @@ export default function QuedaAviaoPlayer() {
       setPlayback(payload.state?.quedaAviao || null);
       setDisplayBlackout(payload.state?.displayBlackout || null);
       setSceneCue(payload.state?.sceneCue || payload.sceneCue || null);
-      setAudioEffects(normalizeSceneAudioEffects(
-        payload.state?.sceneAudioEffects?.[SCENE_AUDIO_EFFECTS_CONTROLLER_ID]
-      ));
     };
 
     return () => {
@@ -76,7 +64,6 @@ export default function QuedaAviaoPlayer() {
   return (
     <main className={styles.screen}>
       <PublicSceneAudioOutput
-        audioEffects={audioEffects}
         controllerId="queda-aviao-sampler"
         sceneCue={sceneCue}
       />

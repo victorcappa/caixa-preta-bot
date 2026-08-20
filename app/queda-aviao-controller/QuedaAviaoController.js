@@ -4,11 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import EditableCueController from "@/components/EditableCueController";
 import SceneAudioEffectsControls from "@/components/SceneAudioEffectsControls";
 import {
-  normalizeSceneAudioEffects,
-  SCENE_AUDIO_EFFECT_DEFAULTS,
-  SCENE_AUDIO_EFFECTS_CONTROLLER_ID
-} from "@/lib/sceneAudioEffects";
-import {
   DEFAULT_FADE_MS,
   scriptLines,
   subdivisionOptions
@@ -58,8 +53,9 @@ export default function QuedaAviaoController() {
   const [connection, setConnection] = useState("CONNECTING");
   const [pending, setPending] = useState(false);
   const [log, setLog] = useState("SYSTEM READY");
-  const [audioEffects, setAudioEffects] = useState(SCENE_AUDIO_EFFECT_DEFAULTS);
+  const [selectedSample, setSelectedSample] = useState(null);
   const runActionRef = useRef(null);
+  const samplerRef = useRef(null);
 
   useEffect(() => {
     fetch("/api/queda-aviao")
@@ -67,22 +63,12 @@ export default function QuedaAviaoController() {
       .then((data) => setPlayback(data || INITIAL_STATE))
       .catch(() => setConnection("DISCONNECTED"));
 
-    fetch("/api/state")
-      .then((response) => response.json())
-      .then((data) => setAudioEffects(normalizeSceneAudioEffects(
-        data.sceneAudioEffects?.[SCENE_AUDIO_EFFECTS_CONTROLLER_ID]
-      )))
-      .catch(() => {});
-
     const events = new EventSource("/api/events?client=queda-aviao-controller");
     events.onopen = () => setConnection("CONNECTED");
     events.onerror = () => setConnection("DISCONNECTED");
     events.onmessage = (event) => {
       const payload = JSON.parse(event.data);
       setPlayback(payload.state?.quedaAviao || INITIAL_STATE);
-      setAudioEffects(normalizeSceneAudioEffects(
-        payload.state?.sceneAudioEffects?.[SCENE_AUDIO_EFFECTS_CONTROLLER_ID]
-      ));
     };
 
     return () => events.close();
@@ -168,9 +154,11 @@ export default function QuedaAviaoController() {
           ) : null}
         </div>
         <SceneAudioEffectsControls
-          controllerId={SCENE_AUDIO_EFFECTS_CONTROLLER_ID}
-          onChange={setAudioEffects}
-          settings={audioEffects}
+          cueId={selectedSample?.id || ""}
+          cueLabel={selectedSample?.label || ""}
+          onChange={(cueId, settings) => samplerRef.current?.updateCueAudioEffects(cueId, settings)}
+          onPersist={(cueId, settings) => samplerRef.current?.updateCueAudioEffects(cueId, settings, { persist: true })}
+          settings={selectedSample?.audioEffects}
         />
       </section>
 
@@ -223,11 +211,12 @@ export default function QuedaAviaoController() {
         </div>
 
         <EditableCueController
-          audioEffects={audioEffects}
           controllerId="queda-aviao-sampler"
           embedded
           importDirectory="audios/queda-aviao"
           importType="audio"
+          onSelectedCueChange={setSelectedSample}
+          ref={samplerRef}
         />
 
         <label className={styles.field}>

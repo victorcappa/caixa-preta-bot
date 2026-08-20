@@ -161,12 +161,16 @@ editáveis e não disparam com foco em input, textarea, select ou conteúdo
 editável. `SILÊNCIO / STOP ALL` para somente os áudios deste sampler, inclusive
 loops, sem mudar o bloco textual nem a projeção.
 
-Abaixo do texto, `DISTORÇÃO DO SOM` processa ao vivo os samples que tocam no
-controller e na projeção. Os presets `LIMPO`, `RÁDIO`, `SATURADO`, `DESTRUÍDO`
-e `SUBMERSO` podem ser combinados com os controles de distorção, cortes de
-graves e agudos, eco, mix e saída. Mover qualquer controle cria um ajuste
-personalizado; `EFEITO EM BYPASS` liga ou desliga o processamento sem alterar os
-valores preparados. Para validar o fluxo completo no navegador, use
+Abaixo do texto, a pedaleira processa ao vivo os samples que tocam no controller
+e na projeção. Cada pad guarda e salva automaticamente sua própria cadeia: ao
+selecionar outro sample, o painel carrega os pedais daquele pad sem alterar o
+anterior. Assim, samples simultâneos podem usar efeitos completamente diferentes.
+Os presets `LIMPO`, `RÁDIO`, `SATURADO`, `DESTRUÍDO` e `SUBMERSO` podem ser
+combinados com pedais independentes de drive, phaser, wah-wah, echo e pitch, além
+dos controles de filtros, mix e saída. O pitch cobre uma oitava para baixo ou
+para cima e também altera a velocidade do sample. Mover qualquer handle cria um
+ajuste personalizado; `EFEITOS EM BYPASS` desliga a cadeia do sample selecionado
+sem apagar os valores preparados. Para validar o fluxo completo no navegador, use
 `npm run test:scene-one-audio-effects` com o servidor local ativo.
 
 ## Cena 0 — Bot / Malas
