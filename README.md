@@ -141,10 +141,10 @@ Queda Avião e inclui, na mesma tela, `SAMPLER — QUEDA / EMERGÊNCIA`. O sampl
 avança, retrocede, pausa nem reseta o texto.
 
 Os pads iniciais ficam em `lib/controllerCueConfig.js`, na configuração
-`queda-aviao-sampler`, e são montados a partir dos arquivos reais de
-`assets/audios/queda-aviao/`. Enquanto ainda não houver um padrão salvo, novos
-MP3, WAV, OGG ou M4A colocados nessa pasta também aparecem como pads-base; o
-nome de cada botão é o nome do arquivo sem a extensão.
+`queda-aviao-sampler`, e são montados a partir de todos os MP3, WAV, OGG ou M4A
+existentes em `assets/audios/queda-aviao/`; o nome de cada botão é o nome do
+arquivo sem a extensão. Arquivos salvos nessa pasta são preservados e entram
+automaticamente no sampler, sem qualquer rotina de exclusão.
 Na própria tela, abra `CONFIGURAR SAMPLES / ATALHOS`, selecione o botão a editar,
 escolha ou envie outro arquivo, ajuste nome/atalho e use `SALVAR PADRÃO`. Também
 é possível criar novos botões. A persistência segue o fluxo compartilhado em

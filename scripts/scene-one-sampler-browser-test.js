@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
@@ -18,6 +17,11 @@ const browser = await chromium.launch({ headless: true });
 
 try {
   const context = await browser.newContext();
+  const resetResponse = await context.request.post(`${BASE_URL}/api/controller-cues/play`, {
+    data: { controllerId: "queda-aviao-sampler", action: "stop-all" }
+  });
+  assert.equal(resetResponse.ok(), true, "scene one sampler state should reset before the test");
+
   await context.addInitScript(() => {
     class FakeAudio {
       constructor(src) {
@@ -57,11 +61,7 @@ try {
     .map((entry) => entry.name)
     .sort((left, right) => left.localeCompare(right, "pt-BR", { sensitivity: "base" }));
   const expectedBasePaths = expectedFilenames.map((filename) => `audios/queda-aviao/${filename}`);
-  const audioHashes = expectedFilenames.map((filename) => (
-    crypto.createHash("sha256").update(fs.readFileSync(path.join(SCENE_ONE_AUDIO_DIRECTORY, filename))).digest("hex")
-  ));
   assert.ok(expectedBasePaths.length >= 1, "scene one base audio directory should not be empty");
-  assert.equal(new Set(audioHashes).size, audioHashes.length, "scene one buttons must not use byte-identical audio files");
   assert.deepEqual(configPayload.config.cues.map((cue) => cue.assetPath), expectedBasePaths);
   assert.deepEqual(
     configPayload.config.cues.map((cue) => cue.label),
@@ -90,13 +90,13 @@ try {
   await materialSelector.selectOption(expectedBasePaths[2]);
   assert.equal(await emptyCue.isEnabled(), true, "the editor must let a new button receive an existing audio file");
 
-  await cueSelector.selectOption(firstCue.id);
+  await cueSelector.selectOption({ label: firstCue.label });
   await shortcutInput.fill("s");
   await sampler.getByLabel(`Volume ${firstCue.label}`).fill("0");
   const sample1Card = sampler.locator("article").filter({ hasText: firstCue.label });
   await sample1Card.getByRole("button", { name: "LOOP OFF" }).click();
 
-  await cueSelector.selectOption(secondCue.id);
+  await cueSelector.selectOption({ label: secondCue.label });
   await shortcutInput.fill("a");
   await sampler.getByLabel(`Volume ${secondCue.label}`).fill("0");
   const sample2Card = sampler.locator("article").filter({ hasText: secondCue.label });
@@ -134,8 +134,8 @@ try {
   await sample1Card.getByRole("button", { name: "LOOP ON" }).click();
   await controller.waitForTimeout(150);
   audioCues = await sceneAudioCues(context.request);
-  assert.equal(audioCues.find((cue) => cue.id === configPayload.config.cues[0].id)?.loop, false);
-  assert.equal(audioCues.find((cue) => cue.id === configPayload.config.cues[1].id)?.loop, true);
+  assert.equal(audioCues.find((cue) => cue.label === firstCue.label)?.loop, false);
+  assert.equal(audioCues.find((cue) => cue.label === secondCue.label)?.loop, true);
 
   await playSample1.click();
   await controller.locator("h1").click();
@@ -160,7 +160,7 @@ try {
   await controller.waitForTimeout(150);
   audioCues = await sceneAudioCues(context.request);
   assert.equal(audioCues.length, 1, "per-sample STOP should leave other samples playing");
-  assert.equal(audioCues[0].id, configPayload.config.cues[1].id);
+  assert.equal(audioCues[0].label, secondCue.label);
 
   const currentIndexBeforeStopAll = (await context.request.get(`${BASE_URL}/api/queda-aviao`).then((response) => response.json())).currentIndex;
   await sampler.getByRole("button", { name: "SILÊNCIO / STOP ALL" }).click();
