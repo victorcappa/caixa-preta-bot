@@ -269,6 +269,15 @@ export default function QuedaAviaoController() {
           />
         </label>
 
+        <button
+          className={styles.saveDefaultButton}
+          disabled={pending}
+          onClick={() => runAction("save-default", {}, "SALVAR PADRAO")}
+          type="button"
+        >
+          SALVAR TEXTO / DIAGRAMAÇÃO COMO PADRÃO
+        </button>
+
         <section className={styles.debug}>
           <h2>Debug</h2>
           <pre>

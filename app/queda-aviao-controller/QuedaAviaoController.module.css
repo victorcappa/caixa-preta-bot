@@ -140,7 +140,8 @@
 .transport button,
 .inlineActions button,
 .segmentButton,
-.resetButton {
+.resetButton,
+.saveDefaultButton {
   background: #202020;
   border: 1px solid #4a4a4a;
   color: #fff;
@@ -155,6 +156,7 @@
 
 .transport button:disabled,
 .inlineActions button:disabled,
+.saveDefaultButton:disabled,
 .resetButton:disabled {
   cursor: not-allowed;
   opacity: 0.48;
@@ -256,6 +258,14 @@
   color: #ff9eb6;
   min-height: 44px;
   padding: 10px 12px;
+}
+
+.saveDefaultButton {
+  border-color: #9cffbd;
+  color: #9cffbd;
+  min-height: 42px;
+  padding: 10px 12px;
+  text-transform: uppercase;
 }
 
 @media (max-width: 940px) {
