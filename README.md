@@ -161,6 +161,14 @@ editáveis e não disparam com foco em input, textarea, select ou conteúdo
 editável. `SILÊNCIO / STOP ALL` para somente os áudios deste sampler, inclusive
 loops, sem mudar o bloco textual nem a projeção.
 
+Abaixo do texto, `DISTORÇÃO DO SOM` processa ao vivo os samples que tocam no
+controller e na projeção. Os presets `LIMPO`, `RÁDIO`, `SATURADO`, `DESTRUÍDO`
+e `SUBMERSO` podem ser combinados com os controles de distorção, cortes de
+graves e agudos, eco, mix e saída. Mover qualquer controle cria um ajuste
+personalizado; `EFEITO EM BYPASS` liga ou desliga o processamento sem alterar os
+valores preparados. Para validar o fluxo completo no navegador, use
+`npm run test:scene-one-audio-effects` com o servidor local ativo.
+
 ## Cena 0 — Bot / Malas
 
 `/cena-0-controller` é a superfície privada dedicada à Cena 0. `/operator`

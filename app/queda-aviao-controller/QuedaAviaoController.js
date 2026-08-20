@@ -2,6 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import EditableCueController from "@/components/EditableCueController";
+import SceneAudioEffectsControls from "@/components/SceneAudioEffectsControls";
+import {
+  normalizeSceneAudioEffects,
+  SCENE_AUDIO_EFFECT_DEFAULTS,
+  SCENE_AUDIO_EFFECTS_CONTROLLER_ID
+} from "@/lib/sceneAudioEffects";
 import {
   DEFAULT_FADE_MS,
   scriptLines,
@@ -52,6 +58,7 @@ export default function QuedaAviaoController() {
   const [connection, setConnection] = useState("CONNECTING");
   const [pending, setPending] = useState(false);
   const [log, setLog] = useState("SYSTEM READY");
+  const [audioEffects, setAudioEffects] = useState(SCENE_AUDIO_EFFECT_DEFAULTS);
   const runActionRef = useRef(null);
 
   useEffect(() => {
@@ -60,12 +67,22 @@ export default function QuedaAviaoController() {
       .then((data) => setPlayback(data || INITIAL_STATE))
       .catch(() => setConnection("DISCONNECTED"));
 
+    fetch("/api/state")
+      .then((response) => response.json())
+      .then((data) => setAudioEffects(normalizeSceneAudioEffects(
+        data.sceneAudioEffects?.[SCENE_AUDIO_EFFECTS_CONTROLLER_ID]
+      )))
+      .catch(() => {});
+
     const events = new EventSource("/api/events?client=queda-aviao-controller");
     events.onopen = () => setConnection("CONNECTED");
     events.onerror = () => setConnection("DISCONNECTED");
     events.onmessage = (event) => {
       const payload = JSON.parse(event.data);
       setPlayback(payload.state?.quedaAviao || INITIAL_STATE);
+      setAudioEffects(normalizeSceneAudioEffects(
+        payload.state?.sceneAudioEffects?.[SCENE_AUDIO_EFFECTS_CONTROLLER_ID]
+      ));
     };
 
     return () => events.close();
@@ -135,19 +152,26 @@ export default function QuedaAviaoController() {
   return (
     <main className={styles.controllerScreen}>
       <section className={styles.preview} aria-live="polite">
-        {current ? (
-          <p
-            key={`${current.id}-${playback.playbackSequence || 0}`}
-            className={[
-              styles.line,
-              current.stage ? styles.stage : styles.dialogue,
-              styles[playback.phase]
-            ].join(" ")}
-            style={{ "--fade-ms": `${playback.fadeMs}ms` }}
-          >
-            {current.text}
-          </p>
-        ) : null}
+        <div className={styles.textStage}>
+          {current ? (
+            <p
+              key={`${current.id}-${playback.playbackSequence || 0}`}
+              className={[
+                styles.line,
+                current.stage ? styles.stage : styles.dialogue,
+                styles[playback.phase]
+              ].join(" ")}
+              style={{ "--fade-ms": `${playback.fadeMs}ms` }}
+            >
+              {current.text}
+            </p>
+          ) : null}
+        </div>
+        <SceneAudioEffectsControls
+          controllerId={SCENE_AUDIO_EFFECTS_CONTROLLER_ID}
+          onChange={setAudioEffects}
+          settings={audioEffects}
+        />
       </section>
 
       <aside className={styles.panel}>
@@ -199,6 +223,7 @@ export default function QuedaAviaoController() {
         </div>
 
         <EditableCueController
+          audioEffects={audioEffects}
           controllerId="queda-aviao-sampler"
           embedded
           importDirectory="audios/queda-aviao"

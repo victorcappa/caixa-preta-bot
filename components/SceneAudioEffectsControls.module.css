@@ -1,0 +1,110 @@
+.panel {
+  width: min(1100px, 100%);
+  display: grid;
+  gap: 10px;
+  border: 1px solid #303030;
+  background: rgba(9, 9, 9, 0.96);
+  padding: 12px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.header div {
+  display: grid;
+  gap: 4px;
+}
+
+.header span,
+.handle span {
+  color: #9cffbd;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.header strong {
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.header output {
+  border: 1px solid currentColor;
+  padding: 5px 7px;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.live { color: #9cffbd; }
+.bypass { color: #999; }
+
+.presets,
+.handles {
+  display: grid;
+  gap: 7px;
+}
+
+.presets {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.presets button,
+.effectOn,
+.effectOff {
+  min-height: 34px;
+  border: 1px solid #444;
+  background: #171717;
+  color: #ddd;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.presets .activePreset,
+.effectOn {
+  border-color: #9cffbd;
+  color: #9cffbd;
+  box-shadow: inset 0 0 0 1px rgba(156, 255, 189, 0.18);
+}
+
+.effectOff {
+  color: #aaa;
+}
+
+.handles {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.handle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px 8px;
+  border: 1px solid #292929;
+  background: #101010;
+  padding: 8px;
+}
+
+.handle output {
+  color: #fff;
+  font-size: 0.68rem;
+}
+
+.handle input {
+  grid-column: 1 / -1;
+  width: 100%;
+  accent-color: #9cffbd;
+}
+
+@media (max-width: 900px) {
+  .presets { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .handles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 580px) {
+  .presets,
+  .handles { grid-template-columns: 1fr; }
+}

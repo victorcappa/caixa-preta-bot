@@ -1,6 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  attachSceneAudioEffects,
+  detachSceneAudioEffects,
+  updateSceneAudioEffects
+} from "@/lib/sceneAudioGraph";
 import styles from "./EditableCueController.module.css";
 
 const EMPTY_ASSETS = { audio: [], video: [], image: [] };
@@ -101,6 +106,7 @@ async function postSceneCue(controllerId, action, cue = null, extra = {}) {
 }
 
 export default function EditableCueController({
+  audioEffects = null,
   controllerId,
   embedded = false,
   importDirectory = "",
@@ -139,6 +145,7 @@ export default function EditableCueController({
 
     window.clearTimeout(instance.timeoutId);
     instance.audio.pause();
+    detachSceneAudioEffects(instance.audio);
     instance.audio.removeAttribute("src");
     audioInstancesRef.current.delete(playbackId);
     syncPlayingCueIds();
@@ -159,6 +166,15 @@ export default function EditableCueController({
   useEffect(() => {
     setEditorWidth(storedEditorWidth(controllerId));
   }, [controllerId]);
+
+  useEffect(() => {
+    if (!audioEffects) return;
+    for (const instance of audioInstancesRef.current.values()) {
+      if (!updateSceneAudioEffects(instance.audio, audioEffects) && audioEffects.enabled) {
+        void attachSceneAudioEffects(instance.audio, audioEffects);
+      }
+    }
+  }, [audioEffects]);
 
   useEffect(() => {
     let active = true;
@@ -315,6 +331,10 @@ export default function EditableCueController({
       const instance = { audio, cueId: cue.id, playbackId, timeoutId: null };
       audioInstancesRef.current.set(playbackId, instance);
       syncPlayingCueIds();
+
+      if (audioEffects?.enabled) {
+        void attachSceneAudioEffects(audio, audioEffects);
+      }
 
       audio.addEventListener("ended", () => releaseAudioInstance(playbackId, { notifyProjection: true }), { once: true });
       audio.addEventListener("error", () => {

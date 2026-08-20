@@ -1,6 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import {
+  attachSceneAudioEffects,
+  detachSceneAudioEffects,
+  updateSceneAudioEffects
+} from "@/lib/sceneAudioGraph";
 import DisplayBlackout from "./DisplayBlackout";
 import styles from "./PublicSceneStage.module.css";
 
@@ -8,7 +13,7 @@ function assetSrc(assetPath = "") {
   return assetPath ? `/api/game-assets?file=${encodeURIComponent(assetPath)}` : "";
 }
 
-function PublicCueMedia({ cue, onEnded = null }) {
+function PublicCueMedia({ audioEffects = null, cue, onEnded = null }) {
   const mediaRef = useRef(null);
   const src = assetSrc(cue?.assetPath);
 
@@ -31,10 +36,19 @@ function PublicCueMedia({ cue, onEnded = null }) {
 
     return () => {
       media.pause();
+      detachSceneAudioEffects(media);
       media.removeAttribute("src");
       media.load();
     };
   }, [cue?.sequence, cue?.type, src]);
+
+  useEffect(() => {
+    const media = mediaRef.current;
+    if (!media || cue?.type !== "audio" || !audioEffects) return;
+    if (!updateSceneAudioEffects(media, audioEffects) && audioEffects.enabled) {
+      void attachSceneAudioEffects(media, audioEffects);
+    }
+  }, [audioEffects, cue?.type]);
 
   if (cue.type === "text") {
     return (
@@ -72,7 +86,7 @@ function PublicCueMedia({ cue, onEnded = null }) {
   );
 }
 
-export function PublicSceneAudioOutput({ controllerId = "", sceneCue = null }) {
+export function PublicSceneAudioOutput({ audioEffects = null, controllerId = "", sceneCue = null }) {
   const audioCues = (sceneCue?.audioCues || []).filter((cue) => (
     cue.controllerId === controllerId && cue.type === "audio" && cue.assetPath
   ));
@@ -92,6 +106,7 @@ export function PublicSceneAudioOutput({ controllerId = "", sceneCue = null }) {
 
   return audioCues.map((cue) => (
     <PublicCueMedia
+      audioEffects={audioEffects}
       cue={cue}
       key={cue.playbackId || `${cue.id}-${cue.sequence}`}
       onEnded={() => reportEnded(cue)}

@@ -18,6 +18,7 @@
     "test:performance": "node --no-warnings scripts/performance-system-test.js",
     "test:scene-zero": "node --no-warnings scripts/scene-zero-test.js",
     "test:scene-one-sampler": "node --no-warnings scripts/scene-one-sampler-browser-test.js",
+    "test:scene-one-audio-effects": "node --no-warnings scripts/scene-one-audio-effects-browser-test.js",
     "test:robot-sound": "node --no-warnings scripts/robot-sound-test.js",
     "test:robot-sound:browser": "node --no-warnings scripts/robot-sound-browser-test.js"
   },
