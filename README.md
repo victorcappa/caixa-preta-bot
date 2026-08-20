@@ -143,7 +143,8 @@ avança, retrocede, pausa nem reseta o texto.
 Os pads iniciais ficam em `lib/controllerCueConfig.js`, na configuração
 `queda-aviao-sampler`, e são montados a partir dos arquivos reais de
 `assets/audios/queda-aviao/`. Enquanto ainda não houver um padrão salvo, novos
-MP3, WAV, OGG ou M4A colocados nessa pasta também aparecem como pads-base.
+MP3, WAV, OGG ou M4A colocados nessa pasta também aparecem como pads-base; o
+nome de cada botão é o nome do arquivo sem a extensão.
 Na própria tela, abra `CONFIGURAR SAMPLES / ATALHOS`, selecione o botão a editar,
 escolha ou envie outro arquivo, ajuste nome/atalho e use `SALVAR PADRÃO`. Também
 é possível criar novos botões. A persistência segue o fluxo compartilhado em

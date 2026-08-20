@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
@@ -51,13 +52,21 @@ try {
   const configResponse = await context.request.get(`${BASE_URL}/api/controller-cues?id=queda-aviao-sampler`);
   assert.equal(configResponse.ok(), true, "scene one sampler config should load");
   const configPayload = await configResponse.json();
-  const expectedBasePaths = fs.readdirSync(SCENE_ONE_AUDIO_DIRECTORY, { withFileTypes: true })
+  const expectedFilenames = fs.readdirSync(SCENE_ONE_AUDIO_DIRECTORY, { withFileTypes: true })
     .filter((entry) => entry.isFile() && [".mp3", ".wav", ".ogg", ".m4a"].includes(path.extname(entry.name).toLowerCase()))
     .map((entry) => entry.name)
-    .sort((left, right) => left.localeCompare(right, "pt-BR", { sensitivity: "base" }))
-    .map((filename) => `audios/queda-aviao/${filename}`);
+    .sort((left, right) => left.localeCompare(right, "pt-BR", { sensitivity: "base" }));
+  const expectedBasePaths = expectedFilenames.map((filename) => `audios/queda-aviao/${filename}`);
+  const audioHashes = expectedFilenames.map((filename) => (
+    crypto.createHash("sha256").update(fs.readFileSync(path.join(SCENE_ONE_AUDIO_DIRECTORY, filename))).digest("hex")
+  ));
   assert.ok(expectedBasePaths.length >= 1, "scene one base audio directory should not be empty");
+  assert.equal(new Set(audioHashes).size, audioHashes.length, "scene one buttons must not use byte-identical audio files");
   assert.deepEqual(configPayload.config.cues.map((cue) => cue.assetPath), expectedBasePaths);
+  assert.deepEqual(
+    configPayload.config.cues.map((cue) => cue.label),
+    expectedFilenames.map((filename) => path.basename(filename, path.extname(filename)))
+  );
   assert.equal(configPayload.config.cues.every((cue) => cue.loop === false && cue.volume === 1), true);
   assert.equal(expectedBasePaths.every((assetPath) => configPayload.assets.audio.some((asset) => asset.path === assetPath)), true);
   const [firstCue, secondCue] = configPayload.config.cues;
