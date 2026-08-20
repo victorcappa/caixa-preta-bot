@@ -23,6 +23,52 @@
   "audio": [],
   "images": [],
   "video": [],
-  "texts": [],
+  "texts": [
+    {
+      "id": "forca-g-positiva",
+      "label": "FORÇA G POSITIVA",
+      "text": "FORÇA G POSITIVA"
+    },
+    {
+      "id": "forca-g-negativa",
+      "label": "FORÇA G NEGATIVA",
+      "text": "FORÇA G NEGATIVA"
+    },
+    {
+      "id": "efeito-redout",
+      "label": "EFEITO REDOUT",
+      "text": "EFEITO REDOUT"
+    },
+    {
+      "id": "momento-1",
+      "label": "MOMENTO 1",
+      "text": "MOMENTO 1"
+    },
+    {
+      "id": "momento-2",
+      "label": "MOMENTO 2",
+      "text": "MOMENTO 2"
+    },
+    {
+      "id": "momento-3",
+      "label": "MOMENTO 3",
+      "text": "MOMENTO 3"
+    },
+    {
+      "id": "momento-4",
+      "label": "MOMENTO 4",
+      "text": "MOMENTO 4"
+    },
+    {
+      "id": "momento-5",
+      "label": "MOMENTO 5",
+      "text": "MOMENTO 5"
+    },
+    {
+      "id": "momento-6",
+      "label": "MOMENTO 6",
+      "text": "MOMENTO 6"
+    }
+  ],
   "presets": []
 }
