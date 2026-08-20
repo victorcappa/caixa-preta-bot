@@ -507,7 +507,7 @@ export default function SceneZeroController() {
               <Readout label="JOGO EXISTENTE" value={game.id === "verdade_ou_bolo" ? `${game.phase || "ATIVO"}` : "INATIVO"} />
               <Button onClick={() => sceneAction("cake-comment")} pending={pending}>COMENTAR</Button>
               <Button onClick={() => sceneAction("cake-provoke")} pending={pending}>NOVA PROVOCAÇÃO</Button>
-              <Button onClick={() => operatorCommand("/game round")} pending={pending}>PRÓXIMA RODADA</Button>
+              <Button onClick={() => operatorCommand("/game nextround")} pending={pending}>PRÓXIMA RODADA</Button>
               <Button onClick={() => operatorCommand("/game verdade")} pending={pending}>VERDADE</Button>
               <Button onClick={() => operatorCommand("/game bolo")} pending={pending}>BOLO</Button>
               <Button onClick={() => operatorCommand("/game reveal")} pending={pending}>REVELAR</Button>

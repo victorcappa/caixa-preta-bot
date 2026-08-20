@@ -707,6 +707,16 @@ export default function Chat() {
       event.source !== "agent" || new Date(event.createdAt).getTime() < activeTypingStartedAt
     ))
     : performanceEvents;
+  const latestVerdadeOuBoloComment = game?.id === "verdade_ou_bolo" && game.active
+    ? [...messages].reverse().find((message) => (
+      message.role === "assistant" &&
+      message.source === "scene-zero-operator" &&
+      new Date(message.timestamp).getTime() >= new Date(game.startedAt || 0).getTime()
+    ))
+    : null;
+  const visibleVerdadeOuBoloComment = latestVerdadeOuBoloComment
+    ? typedReplies[latestVerdadeOuBoloComment.id] ?? ""
+    : "";
   const visibleInstagramPanel = instagram?.embedded && instagram.status && instagram.status !== "DISCONNECTED" && !instagramPanelClosed;
   const instagramPanelKey = [
     instagram?.browserMode || "instagram",
@@ -834,6 +844,7 @@ export default function Chat() {
           activities={performanceActivities}
           events={visiblePerformanceEvents}
           game={game}
+          gameComment={visibleVerdadeOuBoloComment}
           suitcase={suitcase}
           onMachineBusyChange={setPerformancePending}
           phoneProjection={phoneProjection}

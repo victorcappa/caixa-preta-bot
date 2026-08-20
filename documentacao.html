@@ -539,9 +539,12 @@ npm run dev</code></pre>
                   <h3>MALA 1 / VERDADE OU BOLO</h3>
                   <p>
                     Reutiliza o jogo estruturado <code>verdade_ou_bolo</code> do
-                    <code>GameDirector</code>. O software controla rodada, resposta, video,
-                    revelacao e placar; o operador controla o timing; a Caixa improvisa entrada,
-                    comentarios e provocacoes com o contexto atual.
+                    <code>GameDirector</code>. O jogo entra direto na primeira rodada e mostra
+                    primeiro os 10 segundos de decisao. O video fica oculto e so toca depois de
+                    <code>REVELAR</code>; ao terminar, aparecem resultado e placar. O operador
+                    controla o timing e avanca diretamente com <code>PROXIMA RODADA</code>. A
+                    Caixa improvisa entrada, comentarios e provocacoes com o contexto atual, e
+                    essas falas aparecem sobre a tela do jogo.
                   </p>
                 </article>
 

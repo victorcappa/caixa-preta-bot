@@ -48,6 +48,7 @@ export default function PerformanceLayer({
   activities = [],
   events = [],
   game = null,
+  gameComment = "",
   suitcase = null,
   onMachineBusyChange = () => {},
   phoneProjection = { status: "hidden" }
@@ -234,7 +235,7 @@ export default function PerformanceLayer({
       {visibleHangman ? <HangmanOverlay activity={visibleHangman} /> : null}
       {suitcaseHangman ? <HangmanOverlay activity={suitcaseHangman} label="MALA / FORCA" /> : null}
       {visibleSuitcasePuzzle ? <SuitcasePuzzle game={visibleSuitcasePuzzle} /> : null}
-      {visibleVerdadeOuBolo ? <VerdadeOuBoloShow game={visibleVerdadeOuBolo} /> : null}
+      {visibleVerdadeOuBolo ? <VerdadeOuBoloShow comment={gameComment} game={visibleVerdadeOuBolo} /> : null}
 
       {drawingShapes.length ? (
         <svg className={styles.drawing} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
@@ -342,7 +343,7 @@ function resultClassName(type) {
   return styles.fullscreenText;
 }
 
-function VerdadeOuBoloShow({ game }) {
+function VerdadeOuBoloShow({ comment, game }) {
   const data = game.data || {};
   const videoRef = useRef(null);
   const audioRef = useRef(null);
@@ -351,6 +352,7 @@ function VerdadeOuBoloShow({ game }) {
   const lastAutoAdvanceSequenceRef = useRef(null);
   const lastVoteTimeoutRef = useRef(null);
   const [, setVideoReadyKey] = useState(0);
+  const [visibleComment, setVisibleComment] = useState("");
   const currentRound = data.currentRound || {};
   const video = currentRound.video || {};
   const state = data.state || game.phase;
@@ -363,6 +365,18 @@ function VerdadeOuBoloShow({ game }) {
   const autoAdvanceAction = autoAdvanceCommand?.action || null;
   const autoAdvanceSequence = autoAdvanceCommand?.sequence || null;
   const autoAdvanceDelayMs = Number(autoAdvanceCommand?.delayMs || 0);
+  const showVideo = state === "REVEAL" || state === "ROUND_RESULT";
+
+  useEffect(() => {
+    if (!comment) {
+      setVisibleComment("");
+      return undefined;
+    }
+
+    setVisibleComment(comment);
+    const timer = setTimeout(() => setVisibleComment(""), 8000);
+    return () => clearTimeout(timer);
+  }, [comment]);
 
   useEffect(() => {
     const videoElement = videoRef.current;
@@ -551,7 +565,7 @@ function VerdadeOuBoloShow({ game }) {
       </header>
 
       <div className={styles.vobVideoFrame}>
-        {video.src ? (
+        {showVideo && video.src ? (
           <video
             className={styles.vobVideo}
             controls={false}
@@ -561,10 +575,15 @@ function VerdadeOuBoloShow({ game }) {
             ref={videoRef}
             src={video.src}
           />
-        ) : (
+        ) : showVideo ? (
           <div className={styles.vobMissingVideo}>
             <strong>VIDEO AUSENTE</strong>
             <span>assets/videos/verdade-ou-bolo/</span>
+          </div>
+        ) : (
+          <div className={styles.vobDecisionPrompt}>
+            <strong>DECIDAM</strong>
+            <span>VERDADE OU BOLO?</span>
           </div>
         )}
       </div>
@@ -577,6 +596,8 @@ function VerdadeOuBoloShow({ game }) {
       {state === "VOTING" && voteCountdown ? (
         <VobVoteCountdown countdown={voteCountdown} onComplete={handleVoteTimeout} />
       ) : null}
+
+      {visibleComment ? <p className={styles.vobComment}>&gt; {visibleComment}</p> : null}
 
       {["REVEAL", "ROUND_RESULT"].includes(state) && result ? (
         <div className={`${styles.vobReveal} ${result.won ? styles.vobRevealWin : styles.vobRevealLose}`}>

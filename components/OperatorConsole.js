@@ -892,9 +892,9 @@ function VerdadeOuBoloControls({ game, pending, sendOperatorCommand }) {
       <div className={styles.vobControls}>
         <button disabled={pending} onClick={() => sendOperatorCommand("/game intro", "GAME CONTROL ERROR")} type="button">INICIAR INTRO</button>
         <button disabled={pending} onClick={() => sendOperatorCommand("/game round", "GAME CONTROL ERROR")} type="button">INICIAR RODADA</button>
-        <button disabled={pending} onClick={() => sendOperatorCommand("/game play", "GAME CONTROL ERROR")} type="button">PLAY VIDEO</button>
-        <button disabled={pending} onClick={() => sendOperatorCommand("/game pause", "GAME CONTROL ERROR")} type="button">PAUSE VIDEO</button>
-        <button disabled={pending} onClick={() => sendOperatorCommand("/game restart", "GAME CONTROL ERROR")} type="button">RESTART VIDEO</button>
+        <button disabled={pending || !["REVEAL", "ROUND_RESULT"].includes(data.state)} onClick={() => sendOperatorCommand("/game play", "GAME CONTROL ERROR")} type="button">PLAY VIDEO</button>
+        <button disabled={pending || !["REVEAL", "ROUND_RESULT"].includes(data.state)} onClick={() => sendOperatorCommand("/game pause", "GAME CONTROL ERROR")} type="button">PAUSE VIDEO</button>
+        <button disabled={pending || !["REVEAL", "ROUND_RESULT"].includes(data.state)} onClick={() => sendOperatorCommand("/game restart", "GAME CONTROL ERROR")} type="button">RESTART VIDEO</button>
         <button
           className={data.selectedAnswer === "verdade" ? styles.vobSelected : ""}
           disabled={pending || !["QUESTION", "ANSWER_LOCKED", "VOTING"].includes(data.state)}
