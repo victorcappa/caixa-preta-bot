@@ -619,7 +619,8 @@ controles descritos na seção `Cena 2A — Sampler Força G`.
 Na `CENA 2D`, o cue `Texto Subindo` tem tipo `TEXTO`: edite seu conteudo no
 campo `Texto projetado`, defina cor e duracao, salve o padrao e dispare o cue.
 A tela publica da Transicao Psicodelica sobe o texto pela projecao; os demais
-tipos continuam disponiveis para sons, videos e imagens.
+tipos continuam disponiveis para sons, videos e imagens. O bloco nasce recortado
+abaixo da borda inferior e sobe ate desaparecer por completo acima da tela.
 
 Os dois áudios iniciais da Cena 2D aparecem em ordem de duração: `Áudio Longo`
 (aproximadamente 229 segundos) e depois `Áudio Curto` (aproximadamente 31

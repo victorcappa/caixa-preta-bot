@@ -16,8 +16,8 @@
 
 .risingText {
   position: absolute;
+  top: 100%;
   right: 8vw;
-  bottom: -30vh;
   left: 8vw;
   color: var(--cue-color, #ffffff);
   font-family: "Courier New", Courier, monospace;
@@ -56,8 +56,12 @@
 }
 
 @keyframes rise {
+  from {
+    transform: translateY(0);
+  }
+
   to {
-    transform: translateY(-150vh);
+    transform: translateY(calc(-100vh - 100%));
   }
 }
 
