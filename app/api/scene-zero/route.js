@@ -1,6 +1,7 @@
-import { getExistingInstagramController, getInstagramController } from "@/lib/instagram/InstagramController";
-import { generateCaixaPretaTurn, generateGoogleResearchComment, refreshSceneZeroLocalContext } from "@/lib/openai";
-import { collectionRepertoireBlock, parseCollectionIntervention } from "@/lib/scene-zero/collection";
+import { getExistingInstagramController, getInstagramController, parseGoogleGuidance } from "@/lib/instagram/InstagramController";
+import { generateCaixaPretaTurn, generateGoogleResearchComment, interpretSceneZeroBrowserRequest, refreshSceneZeroLocalContext } from "@/lib/openai";
+import { fallbackSceneZeroBrowserPlan, preserveExplicitNewsIntent } from "@/lib/scene-zero/browserCommand";
+import { collectionRepertoireBlock, parseCollectionIntervention, shouldRejectRepeatedHandAction } from "@/lib/scene-zero/collection";
 import { buildSceneZeroDirection, sceneZeroGlitchCommand } from "@/lib/scene-zero/state";
 import { showState } from "@/lib/showState";
 import { SHOW_MODES } from "@/prompts/modes";
@@ -33,6 +34,10 @@ const DIRECTION_ACTIONS = {
   "instagram-stop": "instagram_stop"
 };
 
+function sceneZeroGooglePlan(guidance, originalCommand) {
+  return preserveExplicitNewsIntent(parseGoogleGuidance(guidance), originalCommand);
+}
+
 const STAGE_DIRECTIONS = {
   collection: "enter_collection",
   participant: "enter_participant",
@@ -53,25 +58,45 @@ function requestedActionFromText(text = "") {
 
 async function generateCollectionIntervention(directionAction, detail = "", { replaceLast = false } = {}) {
   const state = showState.privateSnapshot();
-  const turn = await generateCaixaPretaTurn({
-    state,
-    allowPerformance: false,
-    allowWebSearch: false,
-    operatorInstruction: [
-      buildSceneZeroDirection(state.sceneZero, directionAction, detail),
-      collectionRepertoireBlock(),
-      "A coleta constrói dados sobre a sala; não é entrevista. Comece normal e aumente especificidade, condicionamento, cruzamento e falsa precisão gradualmente.",
-      "Só declare waitSeconds quando a ação realmente precisar de uma janela temporal. Se declarar, diga claramente na fala a mesma duração em segundos. Se a fala disser mais de uma duração, vale a última; evite se corrigir de um número para outro.",
-      "Nunca invente resultado, quantidade ou reação ainda não registrada pelo operador."
-    ].join("\n\n"),
-    operatorOutputInstruction: [
-      "Responda somente JSON válido, sem Markdown.",
-      "Formato exato: {\"fala\":\"texto público\",\"question\":{\"topic\":\"dimensão investigada\",\"action\":\"UMA_ACTION_PERMITIDA\",\"expectedAnswerType\":\"binary|range|count|choice|verbal|gesture|silence|qualitative\",\"intensity\":0,\"sensitivity\":\"low|medium|high\",\"locationContext\":\"referência local ou vazio\",\"scope\":\"room|subgroup|individual\",\"conditions\":[\"condições ou segmentos cruzados\"],\"waitSeconds\":null}}.",
-      "intensity vai de 0 a 5. waitSeconds é null ou de 3 a 60. Não coloque pergunta pronta fora de fala."
-    ].join(" ")
-  });
-  const intervention = parseCollectionIntervention(turn.text);
+  const anytime = state.sceneZero.stage !== "collection";
+  const effectiveDirection = anytime
+    ? {
+      collection_new_question: "question_anytime",
+      collection_result_continue: "question_result_continue_anytime",
+      collection_rephrase: "question_rephrase_anytime"
+    }[directionAction] || directionAction
+    : directionAction;
+  const questions = state.sceneZero.collection?.questions || [];
+  async function generateIntervention(retryInstruction = "") {
+    const turn = await generateCaixaPretaTurn({
+      state,
+      allowPerformance: false,
+      allowWebSearch: false,
+      operatorInstruction: [
+        buildSceneZeroDirection(state.sceneZero, effectiveDirection, detail),
+        anytime ? "PERGUNTA AVULSA: trabalhe com o momento dramatúrgico atual. Não a apresente como formulário, pesquisa ou coleta, a menos que isso surja organicamente do contexto." : collectionRepertoireBlock(questions),
+        anytime ? "A pergunta deve conviver com o processo ativo sem comandar seu encerramento, avanço ou substituição." : "A coleta constrói dados sobre a sala; não é entrevista. Comece normal e aumente especificidade, condicionamento, cruzamento e falsa precisão gradualmente.",
+        "Só declare waitSeconds quando a ação realmente precisar de uma janela temporal. Se declarar, diga claramente na fala a mesma duração em segundos. Se a fala disser mais de uma duração, vale a última; evite se corrigir de um número para outro.",
+        "Nunca invente resultado, quantidade ou reação ainda não registrada pelo operador.",
+        retryInstruction
+      ].filter(Boolean).join("\n\n"),
+      operatorOutputInstruction: [
+        "Responda somente JSON válido, sem Markdown.",
+        "Formato exato: {\"fala\":\"texto público\",\"question\":{\"topic\":\"dimensão investigada\",\"action\":\"UMA_ACTION_PERMITIDA\",\"expectedAnswerType\":\"binary|range|count|choice|verbal|gesture|silence|qualitative\",\"intensity\":0,\"sensitivity\":\"low|medium|high\",\"locationContext\":\"referência local ou vazio\",\"scope\":\"room|subgroup|individual\",\"conditions\":[\"condições ou segmentos cruzados\"],\"waitSeconds\":null}}.",
+        "intensity vai de 0 a 5. waitSeconds é null ou de 3 a 60. Não coloque pergunta pronta fora de fala."
+      ].join(" ")
+    });
+    return parseCollectionIntervention(turn.text);
+  }
+
+  let intervention = await generateIntervention();
+  if (!anytime && shouldRejectRepeatedHandAction(intervention, questions)) {
+    intervention = await generateIntervention("A tentativa anterior repetiu o gesto de levantar ou manter a mão e foi recusada pelo sistema. Gere outra intervenção usando obrigatoriamente palmas, voz, som, espaço, olhar, posição corporal ou silêncio.");
+  }
   if (!intervention) throw new Error("SCENE ZERO COLLECTION JSON INVALID");
+  if (!anytime && shouldRejectRepeatedHandAction(intervention, questions)) {
+    throw new Error("SCENE ZERO COLLECTION ACTION REPETITION");
+  }
 
   const message = showState.addMessage("assistant", intervention.text, "scene-zero-collection");
   showState.controlSceneZero("record-output", {
@@ -261,6 +286,28 @@ async function enterStage(stage, detail) {
   return { ...changed, turn };
 }
 
+function googleResearchCompletion(guidance) {
+  return async (research) => {
+    if (!research.plan?.wantsComment && !research.articles?.length) return;
+    let comment;
+    try {
+      comment = await generateGoogleResearchComment({
+        guidance,
+        articles: research.articles,
+        instagramUrl: research.instagramUrl,
+        state: showState.privateSnapshot()
+      });
+    } catch (error) {
+      const titles = research.articles.map((article) => article.title || article.resultText).filter(Boolean).slice(0, 2);
+      comment = titles.length
+        ? `NOTÍCIAS LIDAS, E A INTERNET CONSEGUIU O MILAGRE DE REPETIR ${titles.join(" / ")} E CHAMAR ISSO DE NOVIDADE.`
+        : "EU PROCUREI. A PÁGINA ENTREGOU MAIS INTERFACE DO QUE INFORMAÇÃO. ATÉ O SARCASMO PEDIU UMA FONTE MELHOR.";
+      console.error("SCENE ZERO GOOGLE COMMENT ERROR", error);
+    }
+    if (comment) showState.addMessage("assistant", comment, "scene-zero-google");
+  };
+}
+
 export async function GET() {
   return Response.json({ sceneZero: showState.snapshot().sceneZero });
 }
@@ -280,6 +327,16 @@ export async function POST(request) {
       const result = await enterStage(body.stage, detail);
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
       return Response.json({ message: `CENA 0 — ${result.state.stage.toUpperCase()}`, sceneZero: showState.snapshot().sceneZero });
+    }
+
+    if (action === "set-personality-guidance") {
+      const result = showState.controlSceneZero(action, body, { source: "operator" });
+      return Response.json({
+        message: result.state.personalityGuidance?.text || result.state.personalityGuidance?.quickDirections?.length
+          ? "ORIENTAÇÕES DE PERSONALIDADE ATIVAS"
+          : "ORIENTAÇÕES DE PERSONALIDADE LIMPAS",
+        sceneZero: result.state
+      });
     }
 
     if (action === "set-glitch" || action === "step-glitch") {
@@ -343,29 +400,77 @@ export async function POST(request) {
       return Response.json({ message: result.message || "PESQUISA ENCERRADA", sceneZero: showState.snapshot().sceneZero });
     }
 
+    if (action === "browser-command-start") {
+      const command = `${body.command || ""}`.trim();
+      if (!command) return Response.json({ error: "NAVEGADOR: escreva um comando" }, { status: 400 });
+      let plan;
+      try {
+        plan = await interpretSceneZeroBrowserRequest(command);
+      } catch (error) {
+        console.error("SCENE ZERO BROWSER INTENT FALLBACK", error);
+        plan = fallbackSceneZeroBrowserPlan(command);
+      }
+      if (!plan.google.enabled && !plan.instagram.enabled) {
+        return Response.json({ error: "NAVEGADOR: não identifiquei uma ação para Google ou Instagram", plan }, { status: 400 });
+      }
+
+      showState.controlSceneZero("instagram-start", body, { source: "operator" });
+      const controller = getInstagramController({ reporter: (instagram) => showState.updateInstagram(instagram) });
+      const googlePlan = plan.google.enabled ? sceneZeroGooglePlan(plan.google.guidance, command) : null;
+      let result;
+      if (plan.google.enabled && plan.instagram.enabled) {
+        const combinedGooglePlan = {
+          ...googlePlan,
+          wantsInstagram: true,
+          subject: plan.instagram.person
+        };
+        result = controller.startGoogleGuidance(combinedGooglePlan, {
+          onComplete: googleResearchCompletion(command)
+        });
+      } else if (plan.google.enabled && plan.google.newWindow) {
+        result = await controller.openGoogleAlongside(googlePlan);
+      } else if (plan.google.enabled) {
+        result = controller.startGoogleGuidance(googlePlan, {
+          onComplete: googleResearchCompletion(command)
+        });
+      } else {
+        result = await controller.researchPerson(plan.instagram.person);
+      }
+      const status = result.status === "invalid" ? 400 : result.status === "busy" ? 409 : result.status === "error" ? 502 : 200;
+      return Response.json({
+        ...(status >= 400 ? { error: result.message } : { message: result.message }),
+        plan,
+        result,
+        sceneZero: showState.snapshot().sceneZero
+      }, { status });
+    }
+
+    if (action === "browser-instagram-start") {
+      const person = `${body.person || ""}`.trim();
+      if (!person) return Response.json({ error: "INSTAGRAM: escreva um nome ou perfil" }, { status: 400 });
+      showState.controlSceneZero("instagram-start", body, { source: "operator" });
+      const controller = getInstagramController({ reporter: (instagram) => showState.updateInstagram(instagram) });
+      const result = await controller.researchPerson(person);
+      const status = result.status === "busy" ? 409 : result.status === "error" ? 502 : result.status === "invalid" ? 400 : 200;
+      return Response.json({
+        ...(status >= 400 ? { error: result.message } : { message: result.message }),
+        result,
+        sceneZero: showState.snapshot().sceneZero
+      }, { status });
+    }
+
+    if (action === "browser-stop") {
+      showState.controlSceneZero("instagram-stop", body, { source: "operator" });
+      const controller = getExistingInstagramController();
+      if (controller) await controller.close();
+      return Response.json({ message: "NAVEGADOR ENCERRADO", sceneZero: showState.snapshot().sceneZero });
+    }
+
     if (action === "google-guidance-start") {
       const guidance = `${body.guidance || ""}`.trim();
       const controller = getInstagramController({ reporter: (instagram) => showState.updateInstagram(instagram) });
       const result = controller.startGoogleGuidance(guidance, {
-        onComplete: async (research) => {
-          if (!research.plan?.wantsComment && !research.articles?.length) return;
-          let comment;
-          try {
-            comment = await generateGoogleResearchComment({
-              guidance,
-              articles: research.articles,
-              instagramUrl: research.instagramUrl,
-              state: showState.privateSnapshot()
-            });
-          } catch (error) {
-            const titles = research.articles.map((article) => article.title || article.resultText).filter(Boolean).slice(0, 2);
-            comment = titles.length
-              ? `NOTÍCIAS LIDAS, E A INTERNET CONSEGUIU O MILAGRE DE REPETIR ${titles.join(" / ")} E CHAMAR ISSO DE NOVIDADE.`
-              : "EU PROCUREI. A PÁGINA ENTREGOU MAIS INTERFACE DO QUE INFORMAÇÃO. ATÉ O SARCASMO PEDIU UMA FONTE MELHOR.";
-            console.error("SCENE ZERO GOOGLE COMMENT ERROR", error);
-          }
-          if (comment) showState.addMessage("assistant", comment, "scene-zero-google");
-        }
+        onComplete: googleResearchCompletion(guidance)
       });
       const status = result.status === "invalid" ? 400 : result.status === "busy" ? 409 : 200;
       return Response.json({
@@ -415,10 +520,13 @@ export async function POST(request) {
         });
         return Response.json({ message: action.toUpperCase(), sceneZero: showState.snapshot().sceneZero, text: intervention.text });
       }
+      const commentDirection = action === "collection-comment" && showState.privateSnapshot().sceneZero.stage !== "collection"
+        ? "question_comment_anytime"
+        : DIRECTION_ACTIONS[action];
       const turn = action === "collection-comment"
         ? await generateCaixaPretaTurn({
           state: showState.privateSnapshot(),
-          operatorInstruction: buildSceneZeroDirection(showState.privateSnapshot().sceneZero, DIRECTION_ACTIONS[action], detail),
+          operatorInstruction: buildSceneZeroDirection(showState.privateSnapshot().sceneZero, commentDirection, detail),
           allowPerformance: false,
           allowWebSearch: false
         }).then((generated) => {

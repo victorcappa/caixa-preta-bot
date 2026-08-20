@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import InstagramBrowserPanel from "./InstagramBrowserPanel";
-import { SCENE_ZERO_GLITCH_LEVELS, SCENE_ZERO_STAGES, sceneZeroStageLabel } from "@/lib/scene-zero/state";
+import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
+import { SCENE_ZERO_GLITCH_LEVELS, SCENE_ZERO_PERSONALITY_DIRECTIONS, SCENE_ZERO_STAGES, sceneZeroStageLabel } from "@/lib/scene-zero/state";
 import styles from "./SceneZeroController.module.css";
 
 const PRIMARY_STAGES = [
@@ -27,6 +28,21 @@ const COLLECTION_RESULTS = [
   ["all", "TODOS"]
 ];
 
+const SCENE_ZERO_INDEX = [
+  ["scene-zero-top", "TOPO"],
+  ["scene-zero-memory", "MEMÓRIA"],
+  ["scene-zero-personality", "PERSONALIDADE"],
+  ["scene-zero-direction", "DIREÇÃO"],
+  ["scene-zero-collection", "PERGUNTAS / COLETA"],
+  ["scene-zero-participant", "PARTICIPANTE"],
+  ["scene-zero-suitcases", "MALAS"],
+  ["scene-zero-cake", "É BOLO?"],
+  ["scene-zero-singing", "CANTAR 15s"],
+  ["scene-zero-glitch", "GLITCH"],
+  ["scene-zero-browser", "GOOGLE + INSTAGRAM"],
+  ["scene-zero-airport", "AEROPORTO / TEA"]
+];
+
 function remainingTimer(timer, now) {
   if (timer?.status === "running" && timer.endsAt) {
     return Math.max(0, Math.ceil((Date.parse(timer.endsAt) - now) / 1000));
@@ -35,17 +51,37 @@ function remainingTimer(timer, now) {
 }
 
 export default function SceneZeroController() {
-  const [snapshot, setSnapshot] = useState({ sceneZero: null, instagram: null, game: null, suitcase: null });
+  const [snapshot, setSnapshot] = useState({ sceneZero: null, instagram: null, game: null, suitcase: null, glitch: null, memories: [] });
   const [pending, setPending] = useState("");
   const [detail, setDetail] = useState("");
+  const [memoryText, setMemoryText] = useState("");
   const [collectionObservation, setCollectionObservation] = useState("");
+  const [personalityGuidance, setPersonalityGuidance] = useState("");
+  const [personalityGuidanceDirty, setPersonalityGuidanceDirty] = useState(false);
+  const [browserCommand, setBrowserCommand] = useState("");
   const [googleGuidance, setGoogleGuidance] = useState("");
+  const [instagramGuidance, setInstagramGuidance] = useState("");
+  const [glitchVideos, setGlitchVideos] = useState([]);
+  const [glitchVideoFile, setGlitchVideoFile] = useState("");
+  const [glitchVideoLoop, setGlitchVideoLoop] = useState(false);
+  const [glitchVideoTransitionSeconds, setGlitchVideoTransitionSeconds] = useState(5.2);
+  const [activeIndexSection, setActiveIndexSection] = useState("scene-zero-top");
   const [notice, setNotice] = useState("SISTEMA PRONTO");
   const [now, setNow] = useState(Date.now());
   const teaAudioRef = useRef(null);
 
   useEffect(() => {
     fetch("/api/state").then((response) => response.json()).then(setSnapshot).catch(() => setNotice("SEM CONEXÃO"));
+    fetch("/api/glitch")
+      .then((response) => response.json())
+      .then((data) => {
+        const videos = data.videos || [];
+        setGlitchVideos(videos);
+        setGlitchVideoFile(data.glitch?.video?.file || videos[0]?.file || "");
+        setGlitchVideoLoop(Boolean(data.glitch?.video?.loop));
+        setGlitchVideoTransitionSeconds(Number(((data.glitch?.video?.transitionMs || 5200) / 1000).toFixed(1)));
+      })
+      .catch(() => setNotice("VÍDEOS DE GLITCH INDISPONÍVEIS"));
     const events = new EventSource("/api/events?client=scene-zero-controller");
     events.onmessage = (event) => {
       const payload = JSON.parse(event.data);
@@ -58,6 +94,42 @@ export default function SceneZeroController() {
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 100);
     return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => robotSoundEngine.armAutoUnlock(), []);
+
+  useEffect(() => robotSoundEngine.armAudioRelay(), []);
+
+  const browserProcessing = ["STARTING", "NAVIGATING", "ACTING"].includes(snapshot.instagram?.status);
+  const informationProcessing = Boolean(pending) || browserProcessing;
+
+  useEffect(() => {
+    if (informationProcessing) robotSoundEngine.startThinking();
+    else robotSoundEngine.stopThinking();
+    return () => robotSoundEngine.stopThinking();
+  }, [informationProcessing]);
+
+  useEffect(() => {
+    if (!personalityGuidanceDirty) {
+      setPersonalityGuidance(snapshot.sceneZero?.personalityGuidance?.text || "");
+    }
+  }, [snapshot.sceneZero?.personalityGuidance?.text, personalityGuidanceDirty]);
+
+  useEffect(() => {
+    const sections = SCENE_ZERO_INDEX
+      .map(([id]) => document.getElementById(id))
+      .filter(Boolean);
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries
+        .filter((entry) => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio || a.boundingClientRect.top - b.boundingClientRect.top);
+      if (visible[0]?.target?.id) setActiveIndexSection(visible[0].target.id);
+    }, {
+      rootMargin: "-8% 0px -68% 0px",
+      threshold: [0, 0.05, 0.2, 0.5]
+    });
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
   }, []);
 
   async function sceneAction(action, payload = {}) {
@@ -85,7 +157,7 @@ export default function SceneZeroController() {
   }
 
   async function operatorCommand(command) {
-    if (pending) return;
+    if (pending) return null;
     setPending(command);
     try {
       const response = await fetch("/api/operator", {
@@ -96,6 +168,47 @@ export default function SceneZeroController() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "ERRO OPERATOR");
       setNotice(data.message || command);
+      return data;
+    } catch (error) {
+      setNotice(error.message);
+      return null;
+    } finally {
+      setPending("");
+    }
+  }
+
+  async function addMemory() {
+    const content = memoryText.trim();
+    if (!content) return;
+    const stored = await operatorCommand(`/memory ${content}`);
+    if (stored) setMemoryText("");
+  }
+
+  async function glitchVideoAction(action) {
+    if (pending) return;
+    const transitionSeconds = Math.min(30, Math.max(0.6, Number(glitchVideoTransitionSeconds) || 5.2));
+    setGlitchVideoTransitionSeconds(transitionSeconds);
+    setPending(action);
+    setNotice(`PROCESSANDO ${action.toUpperCase()}...`);
+    try {
+      const response = await fetch("/api/glitch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action,
+          payload: {
+            file: glitchVideoFile,
+            loop: glitchVideoLoop,
+            preset: "video",
+            transitionMs: Math.round(transitionSeconds * 1000)
+          }
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "ERRO GLITCH + VÍDEO");
+      if (data.state) setSnapshot((current) => ({ ...current, glitch: data.state }));
+      if (data.videos) setGlitchVideos(data.videos);
+      setNotice(action === "video" ? "GLITCH + VÍDEO ATIVO" : "VÍDEO ENCERRADO / BOT RESTAURADO");
     } catch (error) {
       setNotice(error.message);
     } finally {
@@ -126,6 +239,30 @@ export default function SceneZeroController() {
     if (recorded) setCollectionObservation("");
   }
 
+  async function savePersonalityGuidance(guidance) {
+    const saved = await sceneAction("set-personality-guidance", { guidance });
+    if (saved) setPersonalityGuidanceDirty(false);
+  }
+
+  async function togglePersonalityDirection(direction) {
+    const current = sceneZero.personalityGuidance?.quickDirections || [];
+    const active = current.includes(direction.id);
+    const sameCategoryIds = new Set(
+      SCENE_ZERO_PERSONALITY_DIRECTIONS
+        .filter((candidate) => candidate.category === direction.category)
+        .map((candidate) => candidate.id)
+    );
+    const withoutCategory = current.filter((id) => !sameCategoryIds.has(id));
+    const quickDirections = active ? withoutCategory : [...withoutCategory, direction.id];
+    await sceneAction("set-personality-guidance", { quickDirections });
+  }
+
+  async function clearPersonalityGuidance() {
+    setPersonalityGuidance("");
+    const cleared = await sceneAction("set-personality-guidance", { guidance: "", quickDirections: [] });
+    if (cleared) setPersonalityGuidanceDirty(false);
+  }
+
   const sceneZero = snapshot.sceneZero || {};
   const collection = sceneZero.collection || {};
   const timer = sceneZero.timer || {};
@@ -133,12 +270,20 @@ export default function SceneZeroController() {
   const instagram = snapshot.instagram || {};
   const game = snapshot.game || {};
   const suitcase = snapshot.suitcase || {};
+  const globalGlitch = snapshot.glitch || {};
   const participantSelection = sceneZero.participantSelection || {};
   const participantSelectionBusy = ["preparing", "awaiting_invite", "countdown", "roulette"].includes(participantSelection.status);
   const participantCountdown = participantSelection.status === "countdown"
     ? countdownSeconds(participantSelection.countdownEndsAt, now)
     : null;
   const questions = useMemo(() => [...(collection.questions || [])].reverse(), [collection.questions]);
+  const latestMemories = useMemo(() => [...(snapshot.memories || [])].slice(-5).reverse(), [snapshot.memories]);
+
+  function navigateToSection(event, id) {
+    event.preventDefault();
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActiveIndexSection(id);
+  }
 
   return (
     <main className={styles.controller}>
@@ -147,7 +292,26 @@ export default function SceneZeroController() {
         ref={teaAudioRef}
         src="/api/game-assets?file=audios%2FDoris%20Day%20-%20Tea%20For%20Two%20(1950).mp3"
       />
-      <header className={styles.header}>
+      <aside className={styles.indexNav} aria-label="Índice da Cena 0">
+        <strong>ÍNDICE / CENA 0</strong>
+        <span>{sceneZeroStageLabel(sceneZero.stage)}</span>
+        <nav>
+          {SCENE_ZERO_INDEX.map(([id, label], index) => (
+            <a
+              aria-current={activeIndexSection === id ? "location" : undefined}
+              className={activeIndexSection === id ? styles.activeIndexLink : ""}
+              href={`#${id}`}
+              key={id}
+              onClick={(event) => navigateToSection(event, id)}
+            >
+              <b>{`${index + 1}`.padStart(2, "0")}</b>
+              {label}
+            </a>
+          ))}
+        </nav>
+      </aside>
+
+      <header className={styles.header} id="scene-zero-top">
         <div>
           <p>CENA 0</p>
           <h1>BOT / MALAS</h1>
@@ -159,7 +323,96 @@ export default function SceneZeroController() {
         </dl>
       </header>
 
-      <section className={styles.stagePanel}>
+      <section className={styles.memoryPanel} id="scene-zero-memory">
+        <div className={styles.memoryHeading}>
+          <div>
+            <h2>MEMÓRIA DA SESSÃO</h2>
+            <p>Registra uma observação silenciosa para o bot usar como contexto quando for relevante.</p>
+          </div>
+          <strong>{snapshot.memories?.length || 0} REGISTROS</strong>
+        </div>
+        <div className={styles.memoryComposer}>
+          <input
+            aria-label="Nova memória da sessão"
+            onChange={(event) => setMemoryText(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.nativeEvent.isComposing) {
+                event.preventDefault();
+                addMemory();
+              }
+            }}
+            placeholder="Ex.: uma pessoa na primeira fila está filmando tudo"
+            value={memoryText}
+          />
+          <Button primary onClick={addMemory} pending={pending || !memoryText.trim()}>ADICIONAR /MEMORY</Button>
+        </div>
+        {latestMemories.length ? (
+          <ol className={styles.memoryList} aria-label="Memórias mais recentes">
+            {latestMemories.map((memory) => (
+              <li key={memory.id}>
+                <time>{new Date(memory.timestamp).toLocaleTimeString("pt-BR")}</time>
+                <span>{memory.content}</span>
+              </li>
+            ))}
+          </ol>
+        ) : <p className={styles.emptyMemory}>NENHUMA MEMÓRIA REGISTRADA NESTA SESSÃO.</p>}
+      </section>
+
+      <section className={styles.personalityPanel} id="scene-zero-personality">
+        <div>
+          <h2>ORIENTAÇÕES DE PERSONALIDADE</h2>
+          <p>Orienta as próximas falas silenciosamente, sem trocar etapa nem interromper processos ativos.</p>
+        </div>
+        <label className={styles.orientationField}>
+          DIREÇÃO PERSISTENTE PARA O BOT
+          <textarea
+            value={personalityGuidance}
+            onChange={(event) => {
+              setPersonalityGuidance(event.target.value);
+              setPersonalityGuidanceDirty(true);
+            }}
+            placeholder="Ex.: mais impaciente e sarcástica; respostas mais curtas; implicar com excesso de confiança"
+            rows={3}
+          />
+        </label>
+        <div className={styles.personalityActions}>
+          <Button
+            primary
+            onClick={() => savePersonalityGuidance(personalityGuidance)}
+            pending={pending || !personalityGuidanceDirty}
+          >SALVAR ORIENTAÇÕES</Button>
+          <Button
+            danger
+            onClick={clearPersonalityGuidance}
+            pending={pending || (!personalityGuidance && !sceneZero.personalityGuidance?.text && !sceneZero.personalityGuidance?.quickDirections?.length)}
+          >LIMPAR</Button>
+        </div>
+        <div className={styles.personalityQuickGrid}>
+          {SCENE_ZERO_PERSONALITY_DIRECTIONS.map((direction) => {
+            const active = sceneZero.personalityGuidance?.quickDirections?.includes(direction.id);
+            return (
+              <Button
+                key={direction.id}
+                onClick={() => togglePersonalityDirection(direction)}
+                pending={pending}
+                pressed={Boolean(active)}
+                primary={Boolean(active)}
+              >{direction.label}</Button>
+            );
+          })}
+        </div>
+        <Readout
+          label="ORIENTAÇÃO ATIVA"
+          value={[
+            sceneZero.personalityGuidance?.text,
+            ...(sceneZero.personalityGuidance?.quickDirections || []).map((id) => (
+              SCENE_ZERO_PERSONALITY_DIRECTIONS.find((direction) => direction.id === id)?.label
+            ))
+          ].filter(Boolean).join(" · ") || "NENHUMA"}
+        />
+      </section>
+
+      <section className={styles.stagePanel} id="scene-zero-direction">
         <h2>DIREÇÃO DRAMATÚRGICA</h2>
         <p>O botão muda o contexto. A fala é improvisada pelo bot.</p>
         <div className={styles.stageGrid}>
@@ -182,7 +435,8 @@ export default function SceneZeroController() {
       </section>
 
       <div className={styles.blocks}>
-        <ControlBlock title="COLETA">
+        <ControlBlock id="scene-zero-collection" title="PERGUNTAS / COLETA">
+          <small>Na etapa COLETA, alimenta o dataset. Nas demais etapas, faz perguntas avulsas sem mudar ou encerrar o processo atual.</small>
           <Button onClick={() => sceneAction("collection-new-question")} pending={pending}>NOVA PERGUNTA</Button>
           <Button onClick={() => sceneAction("collection-rephrase")} pending={pending}>REFORMULAR</Button>
           <Button onClick={() => sceneAction("collection-comment")} pending={pending}>COMENTAR RESULTADO</Button>
@@ -228,7 +482,7 @@ export default function SceneZeroController() {
           {questions.length ? <ol className={styles.history}>{questions.slice(0, 8).map((item) => <li key={item.id}>{item.text}</li>)}</ol> : null}
         </ControlBlock>
 
-        <ControlBlock title="PARTICIPANTE">
+        <ControlBlock id="scene-zero-participant" title="PARTICIPANTE">
           <Button primary onClick={() => sceneAction("participant-volunteers")} pending={pending || participantSelectionBusy}>INICIAR SELEÇÃO / 10s</Button>
           <Button onClick={() => sceneAction("choose-another-participant")} pending={pending || participantSelectionBusy}>NOVA ROLETA / OUTRA PESSOA</Button>
           <Readout label="MINI GAME" value={participantSelection.status === "countdown" ? `MÃOS LEVANTADAS — ${participantCountdown}s` : participantSelection.status === "awaiting_invite" ? "AGUARDANDO FIM DA FALA" : (participantSelection.status || "idle").toUpperCase()} />
@@ -238,7 +492,7 @@ export default function SceneZeroController() {
           <small>Marcus Garcia e Victor Cappa nunca entram no sorteio.</small>
         </ControlBlock>
 
-        <ControlBlock title="MALAS" wide>
+        <ControlBlock id="scene-zero-suitcases" title="MALAS" wide>
           <Readout label="ESTADO" value={`${suitcase.phase || "IDLE"} / ${suitcase.activeExperience || "—"}`} />
           <Readout label="PESSOA PESQUISADA" value={instagram.browserMode === "person_research"
             ? `${instagram.research?.person || sceneZero.currentParticipant?.name || "—"} / ${(instagram.research?.step || instagram.status || "idle").toUpperCase()}`
@@ -251,11 +505,13 @@ export default function SceneZeroController() {
           <Button onClick={() => sceneAction("suitcase-research-stop")} pending={pending || instagram.browserMode !== "person_research"}>FECHAR PESQUISA</Button>
           <Button danger onClick={() => operatorCommand("/mala abort")} pending={pending}>INTERROMPER JOGO</Button>
           {instagram.browserMode === "person_research" && instagram.embedded && instagram.status !== "DISCONNECTED" ? (
-            <div className={styles.instagramPanel}><InstagramBrowserPanel instagram={instagram} /></div>
+            <div className={styles.instagramPanel}>
+              <InstagramBrowserPanel instagram={instagram} onClose={() => sceneAction("suitcase-research-stop")} />
+            </div>
           ) : null}
         </ControlBlock>
 
-        <ControlBlock title="É BOLO?">
+        <ControlBlock id="scene-zero-cake" title="É BOLO?">
           <Readout label="ESTADO EXISTENTE" value={game.id === "verdade_ou_bolo" ? `${game.phase || "ATIVO"}` : "INATIVO"} />
           <Button onClick={() => sceneAction("cake-comment")} pending={pending}>COMENTAR</Button>
           <Button onClick={() => sceneAction("cake-provoke")} pending={pending}>NOVA PROVOCAÇÃO</Button>
@@ -266,7 +522,7 @@ export default function SceneZeroController() {
           <Button danger onClick={() => sceneAction("cake-end")} pending={pending}>ENCERRAR É BOLO</Button>
         </ControlBlock>
 
-        <ControlBlock title="CANTAR 15s" wide>
+        <ControlBlock id="scene-zero-singing" title="CANTAR 15s" wide>
           <div className={`${styles.timer} ${timer.status === "complete" ? styles.timerComplete : ""}`}>{seconds}</div>
           <strong className={styles.timerStatus}>{timer.status === "complete" ? "FIM" : (timer.status || "idle").toUpperCase()}</strong>
           <Button primary onClick={() => sceneAction("timer-start")} pending={pending}>INICIAR TIMER</Button>
@@ -276,7 +532,7 @@ export default function SceneZeroController() {
           <Button danger onClick={() => sceneAction("timer-cancel")} pending={pending}>CANCELAR</Button>
         </ControlBlock>
 
-        <ControlBlock title="GLITCH" wide>
+        <ControlBlock id="scene-zero-glitch" title="GLITCH" wide>
           <div className={styles.levels}>
             {SCENE_ZERO_GLITCH_LEVELS.map((level) => (
               <Button primary={sceneZero.glitchLevel === level} key={level} onClick={() => sceneAction("set-glitch", { level })} pending={pending}>
@@ -287,46 +543,115 @@ export default function SceneZeroController() {
           <Button onClick={() => sceneAction("step-glitch", { delta: 1 })} pending={pending}>GLITCH +</Button>
           <Button onClick={() => sceneAction("step-glitch", { delta: -1 })} pending={pending}>GLITCH -</Button>
           <Button danger onClick={() => sceneAction("set-glitch", { level: "normal" })} pending={pending}>RESET</Button>
+          <div className={styles.glitchVideoConfig}>
+            <label className={styles.glitchVideoField}>
+              VÍDEO FINAL
+              <select value={glitchVideoFile} onChange={(event) => setGlitchVideoFile(event.target.value)}>
+                {glitchVideos.length ? glitchVideos.map((video) => (
+                  <option key={video.file} value={video.file}>{video.file}</option>
+                )) : <option value="">NENHUM VÍDEO EM assets/videos/glitch</option>}
+              </select>
+            </label>
+            <label className={styles.glitchVideoField}>
+              TEMPO DE GLITCH ATÉ O VÍDEO DOMINAR
+              <div className={styles.glitchDurationInput}>
+                <input
+                  max="30"
+                  min="0.6"
+                  onChange={(event) => setGlitchVideoTransitionSeconds(Number(event.target.value))}
+                  step="0.1"
+                  type="number"
+                  value={glitchVideoTransitionSeconds}
+                />
+                <span>SEGUNDOS</span>
+              </div>
+            </label>
+            <label className={styles.glitchLoopField}>
+              <input checked={glitchVideoLoop} onChange={(event) => setGlitchVideoLoop(event.target.checked)} type="checkbox" />
+              REPETIR VÍDEO EM LOOP
+            </label>
+            <div className={styles.glitchDurationPresets} aria-label="Atalhos de duração do glitch">
+              {[1, 3, 5, 10].map((duration) => (
+                <Button
+                  key={duration}
+                  onClick={() => setGlitchVideoTransitionSeconds(duration)}
+                  pressed={glitchVideoTransitionSeconds === duration}
+                  primary={glitchVideoTransitionSeconds === duration}
+                >{duration}s</Button>
+              ))}
+            </div>
+          </div>
+          <Button primary onClick={() => glitchVideoAction("video")} pending={pending || !glitchVideoFile}>GLITCH + VÍDEO</Button>
+          <Button danger onClick={() => glitchVideoAction("video-stop")} pending={pending || globalGlitch.mode !== "video"}>VOLTAR AO BOT</Button>
+          <Readout
+            label="GLITCH + VÍDEO GLOBAL"
+            value={globalGlitch.mode === "video"
+              ? `${globalGlitch.video?.file || "—"} · ${(globalGlitch.video?.transitionMs || 0) / 1000}s até dominar · ${globalGlitch.video?.loop ? "LOOP" : "SEM LOOP"}`
+              : "INATIVO"}
+          />
         </ControlBlock>
 
-        <ControlBlock title="INSTAGRAM" wide>
-          <Readout label="INTEGRAÇÃO EXISTENTE" value={`${instagram.status || "DISCONNECTED"} / ${instagram.message || "—"}`} />
-          <Button primary onClick={() => sceneAction("instagram-start")} pending={pending}>INICIAR INSTAGRAM</Button>
-          <Button danger onClick={() => sceneAction("instagram-stop")} pending={pending}>INTERROMPER INSTAGRAM</Button>
-          {sceneZero.instagramActive && instagram.embedded && instagram.status !== "DISCONNECTED" ? (
-            <div className={styles.instagramPanel}><InstagramBrowserPanel instagram={instagram} /></div>
-          ) : null}
-        </ControlBlock>
-
-        <ControlBlock title="GOOGLE" wide>
-          <label className={styles.orientationField}>
-            ORIENTAÇÕES PARA O BOT
+        <ControlBlock id="scene-zero-browser" title="GOOGLE + INSTAGRAM / COMANDO LIVRE" wide>
+          <label className={styles.browserCommandField}>
+            COMANDO EM LINGUAGEM NATURAL
             <textarea
-              value={googleGuidance}
-              onChange={(event) => setGoogleGuidance(event.target.value)}
-              placeholder="Ex.: buscar sobre o candidato do PL para eleições de 2026 e escolher alguma notícia para ler por 15 segundos"
-              rows={3}
+              value={browserCommand}
+              onChange={(event) => setBrowserCommand(event.target.value)}
+              placeholder="Ex.: entre no Google, busque algo e comente. Ao mesmo tempo, abra uma aba do Instagram e procure o perfil do Nikolas Ferreira."
+              rows={4}
             />
           </label>
           <Button
             primary
-            onClick={() => sceneAction("google-guidance-start", { guidance: googleGuidance })}
-            pending={pending || !googleGuidance.trim()}
-          >BUSCAR / EXECUTAR</Button>
+            onClick={() => sceneAction("browser-command-start", { command: browserCommand })}
+            pending={pending || !browserCommand.trim()}
+          >ENTENDER E EXECUTAR</Button>
+          <div className={styles.browserQuickCommands}>
+            <div className={styles.browserQuickField}>
+              <strong>GOOGLE</strong>
+              <input
+                aria-label="Comando rápido para o Google"
+                value={googleGuidance}
+                onChange={(event) => setGoogleGuidance(event.target.value)}
+                placeholder="Ex.: buscar notícias sobre IA e comentar a primeira"
+              />
+              <Button
+                onClick={() => sceneAction("google-guidance-start", { guidance: googleGuidance })}
+                pending={pending || !googleGuidance.trim()}
+              >EXECUTAR GOOGLE</Button>
+            </div>
+            <div className={styles.browserQuickField}>
+              <strong>INSTAGRAM</strong>
+              <input
+                aria-label="Nome ou perfil para buscar no Instagram"
+                value={instagramGuidance}
+                onChange={(event) => setInstagramGuidance(event.target.value)}
+                placeholder="Ex.: Nikolas Ferreira ou @usuario"
+              />
+              <Button
+                onClick={() => sceneAction("browser-instagram-start", { person: instagramGuidance })}
+                pending={pending || !instagramGuidance.trim()}
+              >BUSCAR PERFIL</Button>
+            </div>
+          </div>
           <Button
             danger
-            onClick={() => sceneAction("google-guidance-stop")}
-            pending={pending || instagram.browserMode !== "google_guidance"}
-          >FECHAR GOOGLE</Button>
-          <Readout label="ORIENTAÇÃO EM EXECUÇÃO" value={instagram.browserMode === "google_guidance"
-            ? `${instagram.research?.guidance || "—"}\n${(instagram.research?.step || instagram.status || "idle").toUpperCase()}`
-            : "INATIVA"} />
-          {instagram.browserMode === "google_guidance" && instagram.embedded && instagram.status !== "DISCONNECTED" ? (
-            <div className={styles.instagramPanel}><InstagramBrowserPanel instagram={instagram} /></div>
+            onClick={() => sceneAction("browser-stop")}
+            pending={pending || instagram.status === "DISCONNECTED"}
+          >FECHAR NAVEGADOR</Button>
+          <Readout label="NAVEGADOR REAL" value={`${instagram.status || "DISCONNECTED"} / ${instagram.message || "—"}`} />
+          <Readout label="COMANDO EM EXECUÇÃO" value={instagram.research?.guidance || instagram.research?.person || "INATIVO"} />
+          {instagram.secondaryBrowser?.active ? (
+            <Readout label="ABAS ABERTAS" value={`PRINCIPAL · ${instagram.secondaryBrowser.label || "SECUNDÁRIA"}`} />
+          ) : null}
+          {instagram.embedded && instagram.status !== "DISCONNECTED" ? (
+            <div className={styles.instagramPanel}>
+              <InstagramBrowserPanel instagram={instagram} onClose={() => sceneAction("browser-stop")} />
+            </div>
           ) : null}
         </ControlBlock>
 
-        <ControlBlock title="AEROPORTO / TEA FOR TWO" wide>
+        <ControlBlock id="scene-zero-airport" title="AEROPORTO / TEA FOR TWO" wide>
           <Readout label="AEROPORTO" value={sceneZero.airportActive ? "TELA ESTÁVEL ATIVA" : "INATIVO"} />
           <Readout label="TEA FOR TWO" value={(sceneZero.teaForTwo?.status || "stopped").toUpperCase()} />
           <Button primary onClick={() => teaAction("tea-play")} pending={pending}>PLAY</Button>
@@ -339,12 +664,12 @@ export default function SceneZeroController() {
   );
 }
 
-function ControlBlock({ children, title, wide = false }) {
-  return <section className={`${styles.block} ${wide ? styles.wide : ""}`}><h2>{title}</h2><div className={styles.controls}>{children}</div></section>;
+function ControlBlock({ children, id, title, wide = false }) {
+  return <section className={`${styles.block} ${wide ? styles.wide : ""}`} id={id}><h2>{title}</h2><div className={styles.controls}>{children}</div></section>;
 }
 
-function Button({ children, danger = false, onClick, pending, primary = false }) {
-  return <button className={danger ? styles.danger : primary ? styles.primary : styles.button} disabled={Boolean(pending)} onClick={onClick} type="button">{children}</button>;
+function Button({ children, danger = false, onClick, pending, pressed, primary = false }) {
+  return <button aria-pressed={pressed} className={danger ? styles.danger : primary ? styles.primary : styles.button} disabled={Boolean(pending)} onClick={onClick} type="button">{children}</button>;
 }
 
 function Readout({ label, value }) {

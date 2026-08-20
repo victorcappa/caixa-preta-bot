@@ -139,7 +139,17 @@ continua sendo aplicado sobre a tela publica que ja estiver ativa.
 continua disponível como console técnico e hub neutro; entrar nele não troca a
 projeção. O controller da Cena 0 organiza, sem timeline automática, os blocos
 `COLETA`, `PARTICIPANTE`, `MALAS`, `É BOLO`, `CANTAR 15s`, `GLITCH`,
-`INSTAGRAM`, `GOOGLE` e `AEROPORTO / TEA FOR TWO`.
+`GOOGLE + INSTAGRAM` e `AEROPORTO / TEA FOR TWO`.
+Um índice fixo exclusivo dessa rota ocupa a lateral direita e navega com scroll
+suave entre topo, memória, personalidade, direção e cada bloco operacional. A seção
+visível fica destacada; em telas estreitas, o mesmo índice vira uma faixa fixa
+compacta na parte inferior para não cobrir os controles.
+
+No bloco `GLITCH`, além dos níveis dramatúrgicos, o operator pode escolher um
+vídeo real de `assets/videos/glitch/`, ativar loop e configurar entre `0,6` e
+`30` segundos de glitch progressivo antes de o vídeo dominar completamente a
+projeção. `GLITCH + VÍDEO` inicia a invasão usando o sistema global já existente;
+`VOLTAR AO BOT` interrompe vídeo e glitch e restaura a projeção anterior.
 
 Os dez botões grandes apenas definem em que etapa a apresentação está. Cada
 mudança registra etapa anterior, etapa atual, ação do operador, participante e
@@ -149,13 +159,44 @@ de falas. O modelo decide como formular a condução e se vale a pena reconhecer
 metalinguisticamente a operação humana. A etapa só muda em outro clique do
 operador.
 
-Na coleta, `NOVA PERGUNTA`, `REFORMULAR` e `COMENTAR RESULTADO` geram uma
+No topo, `MEMÓRIA DA SESSÃO` oferece um campo e o botão `ADICIONAR /MEMORY` para
+registrar observações sem abrir o terminal. Enter também envia. A área usa o
+mesmo comando `/memory` e o mesmo `showState.memories` do operator, mostra os
+cinco registros mais recentes e não dispara fala pública automaticamente: a
+observação entra como contexto silencioso para uso quando for relevante.
+
+Logo abaixo, `ORIENTAÇÕES DE PERSONALIDADE` mantém uma direção persistente para as
+próximas falas da Caixa, como tom, ritmo, humor ou atitude. Salvar e limpar essa
+orientação não gera fala pública, não troca a etapa e não interrompe jogo,
+timer, Instagram, pesquisa ou outro processo em andamento. A orientação entra
+silenciosamente no contexto do modelo até ser alterada, limpa ou a sessão ser
+reiniciada.
+
+Os botões de direção rápida dessa área entram em vigor no clique e podem ser
+combinados entre categorias: extensão, tom, ritmo, atitude e gameplay. Dentro
+da mesma categoria, uma opção substitui a anterior — por exemplo, `MAIS CURTA`
+troca `DESENVOLVIDA`, e `ACELERADA` troca `MAIS PAUSADA`. Clicar novamente na
+opção ativa a desliga. O texto livre permanece independente dos botões.
+
+O bloco `PERGUNTAS / COLETA` pode ser usado em qualquer etapa. Durante a coleta,
+`NOVA PERGUNTA`, `REFORMULAR` e `COMENTAR RESULTADO` geram uma
 intervenção dentro da performance, não um questionário fixo. O modelo recebe
 repertórios de assuntos e ações, a personalidade e a memória já existentes,
 além do dataset da sala: tópico, ação, tipo de resposta, intensidade,
 sensibilidade, escala, condições cruzadas, resultado aproximado e observações
 reais. Ele é orientado a começar normal, variar assunto e ação, construir
 subgrupos, cruzar respostas anteriores e aumentar a estranheza gradualmente.
+Fora da coleta, os mesmos botões fazem e acompanham perguntas avulsas adequadas
+ao momento atual, sem trocar, encerrar ou avançar o processo ativo e sem impor
+linguagem de formulário à conversa.
+
+Na rotação de ações da coleta, levantar ou manter a mão é um recurso raro: após
+uma ocorrência, as quatro intervenções seguintes precisam usar outra família.
+O repertório prioriza quantidades e padrões de palmas, respostas em voz alta ou
+em coro, sussurro, repetição, sons, cantarolar, contagem, apontar, olhar,
+escolher lados, mudar posição, congelar, fechar os olhos e silêncio temporizado.
+Se o modelo insistir em mãos levantadas nesse intervalo, a fala é regenerada
+antes de chegar à projeção.
 
 Depois de uma intervenção, o operador pode registrar `NINGUÉM`, `POUCOS`,
 `METADE`, `MUITOS`, `QUASE TODOS`, `TODOS`, uma contagem de `0` a `5+` ou só
@@ -233,28 +274,43 @@ tempo. Uma resposta do modelo também pode ser dividida em até quatro fragmento
 separados, permitindo que versões da Caixa interrompam, contradigam, corrijam
 ou respondam às próprias falas anteriores.
 
-`INICIAR INSTAGRAM` abre o mesmo `InstagramController`, perfil persistente,
-painel embutido e guardrails já usados por `/instagram`; não existe uma segunda
-automação. Login, 2FA/checkpoints, whitelist e conectividade continuam sendo
-dependências da integração real. `INTERROMPER INSTAGRAM` corta as rotinas do
-controller sem obrigar mudança de etapa.
+O bloco único `GOOGLE + INSTAGRAM / COMANDO LIVRE` recebe uma orientação natural
+com uma ou várias ações. Por exemplo: `entre no Google, busque inteligência
+artificial e comente; ao mesmo tempo, abra uma aba do Instagram e procure o
+perfil do Nikolas Ferreira`. O modelo separa as intenções e o mesmo
+`InstagramController` executa as navegações reais em paralelo: Google na aba
+principal e Instagram na aba secundária. Pedir explicitamente `abra uma nova
+janela do Google e pesquise...` preserva a página principal e abre a busca na
+aba secundária. O painel permite alternar e interagir com as duas.
 
-O bloco `GOOGLE` recebe uma orientação completa, não apenas termos de busca.
-Por exemplo: `buscar sobre o candidato do PL para eleições de 2026 e escolher
-alguma notícia para ler por 15 segundos`. Ao executar, o mesmo navegador
-Playwright embedded abre a busca real, deriva dela os termos pesquisados,
-escolhe e abre resultados públicos quando isso fizer parte da orientação e
-mantém a leitura/scroll pelo tempo solicitado. Pesquisas de notícias percorrem
-duas fontes por padrão: o browser lê a primeira, volta aos resultados e abre a
-segunda. Título, URL e trechos visíveis das páginas lidas viram evidência para
-uma nova fala da Caixa no chat; sarcasmo pedido pelo operador é gerado a partir
-dessa evidência, sem uma segunda busca invisível. Quando o assunto parece ser
-uma pessoa, uma segunda aba procura o Instagram público em paralelo e o painel
-oferece as abas `NOTÍCIAS` e `INSTAGRAM`.
+O bloco mantém ainda dois atalhos diretos, cada um com seu campo: `EXECUTAR
+GOOGLE` recebe uma orientação completa, enquanto `BUSCAR PERFIL` recebe um nome
+ou `@username` do Instagram. Login persistente, 2FA/checkpoints, whitelist,
+guardrails de URLs e conectividade continuam pertencendo à integração real já
+existente; não há navegador ou automação paralela. `FECHAR NAVEGADOR` encerra
+as duas abas e todas as rotinas sem trocar a etapa dramatúrgica.
 
-No chat, o painel Google usa metade da largura da tela por padrão e viewport
-desktop; o operador ainda pode redimensioná-lo. O frame permanece interativo
-para o operador. `FECHAR GOOGLE` interrompe a rotina e retira o painel; URLs
+Quando o comando pede abertura e leitura de resultados, o Playwright embedded
+mantém leitura/scroll pelo tempo solicitado. Pesquisas de notícias percorrem
+duas fontes por padrão. Título, URL e trechos visíveis viram evidência para a
+fala pedida à Caixa; o comentário usa essa evidência, sem uma segunda busca
+invisível. Ao comentar notícias, a Caixa não refaz o boletim: seleciona o detalhe
+com mais atrito, ancora nele uma leitura própria e termina na observação mais
+forte, sem tentar cobrir toda manchete nem fechar com síntese administrativa.
+Enquanto o chat, a Cena 0 ou o navegador estiverem processando informação, o
+Robot Sound Engine mantém o pulso `THINKING`; em pesquisas, ele acompanha busca,
+leitura e geração do comentário e para quando a operação conclui ou falha.
+Pedidos que mencionam explicitamente notícias preservam esse filtro mesmo se a
+interpretação de linguagem natural resumir a orientação. A busca usa a aba de
+notícias do Google e nunca escolhe Wikipédia ou outra enciclopédia como fonte.
+Se o Google apresentar CAPTCHA, tráfego incomum ou “não sou um robô”, o
+controller reconhece a barreira e troca automaticamente para o Bing News, sem
+pedir que o operador resolva a verificação.
+
+No chat, o painel Google usa metade da largura da tela por padrão, mas o
+navegador e o frame permanecem na proporção mobile `430 × 760`, centralizados
+dentro dessa metade; o operador ainda pode redimensionar o painel. O frame
+permanece interativo para o operador. `FECHAR NAVEGADOR` interrompe a rotina; URLs
 locais, telas de login e agregadores pessoais bloqueados continuam protegidos
 pelos mesmos guardrails da pesquisa pública das malas.
 
@@ -482,12 +538,31 @@ arquivo versionado `config/instagram-credentials.example.json` serve apenas como
 modelo e nao contem uma senha real. Tambem e possivel apontar outro caminho
 server-only com `INSTAGRAM_CREDENTIALS_FILE`.
 
+Depois de enviar usuario e senha, o controller reconhece e pressiona
+automaticamente o botao exato `Continuar` ou `Continue`, quando ele for apenas
+uma etapa intermediaria normal do login. Em paginas com captcha, checkpoint,
+2FA ou sinais de verificacao de seguranca, esse clique nao acontece e o fluxo
+continua exigindo intervencao manual.
+
 O chat mostra um painel lateral com o espelho embutido do Instagram real,
 mantendo a fala da Caixa Preta visivel ao lado. Se o Instagram pedir captcha,
 checkpoint ou 2FA, o painel solicita intervencao manual; esses desafios nao sao
 contornados automaticamente. O botao `X` fecha apenas o painel embutido; a sessao
 Playwright continua viva. A sessao fica salva em
 `.runtime/instagram-profile/` para as proximas execucoes.
+
+O mesmo frame interativo aparece nos controles da Cena 0 e no `/operator`
+tradicional enquanto o navegador estiver ativo. O operador pode tocar/clicar,
+arrastar para rolar e digitar diretamente sobre a imagem; essas entradas são
+encaminhadas para a página Playwright real. A mira e o pulso de confirmação são
+elementos locais do painel de controle e não entram na captura enviada à
+projeção pública. Durante cada entrada, a captura contínua pausa brevemente para
+que o gesto não concorra com a atualização do frame.
+Fechar o painel pelo `X` continua preservando a sessão real. Uma nova solicitação
+para abrir Instagram, Google ou uma pesquisa incrementa o sinal de apresentação
+e reabre automaticamente o painel embedded, mesmo quando o controller reutiliza
+um navegador que já estava vivo.
+
 Depois de `/instagram`, o operador pode escrever em linguagem natural; o modelo
 interpreta a intencao e escolhe uma acao pre-definida (`follow`, `open_profile`,
 `open_latest_media`, `open_nth_media`, `comment_latest`, `comment_nth_media`,
@@ -874,3 +949,8 @@ esperar um novo comando do operator.
 Contagens geradas pela IA so sao aceitas quando a fala publica contem uma
 duracao explicita em segundos, como `10 segundos`. Elas nao devem aparecer
 apenas para ritmo, suspense ou explicacao.
+Toda contagem pública emite um pulso sonoro por segundo pelo Robot Sound Engine,
+com maior urgência nos três segundos finais e um fechamento diferente no zero.
+Isso vale para `COUNTDOWN`, votação de É Bolo?, seleção de participante e timers
+visíveis da Cena 0. O som respeita o liga/desliga, volume e saída de áudio já
+configurados no operator; nenhum arquivo de áudio adicional é necessário.

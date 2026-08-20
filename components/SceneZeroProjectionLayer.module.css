@@ -13,14 +13,28 @@
 .roulette > span, .selectedParticipant span { color: #00ff66; font-size: clamp(18px, 2.6vw, 38px); font-weight: 900; letter-spacing: .1em; }
 .volunteerCountdown strong { font-size: min(48vw, 48vh); line-height: .78; }
 .volunteerCountdown small { font-size: clamp(22px, 4vw, 58px); font-weight: 900; }
-.rouletteWindow { width: 100%; padding: 30px 20px; overflow: hidden; color: #000; background: #00ff66; border: 6px solid #fff; box-shadow: 0 0 0 8px #00ff66; font-size: clamp(40px, 8vw, 120px); font-weight: 950; line-height: 1; text-transform: uppercase; animation: rouletteHit 160ms steps(2); }
+.rouletteWindow { box-sizing: border-box; width: 100%; height: clamp(180px, 24vh, 250px); padding: 18px 20px; display: grid; place-items: center; overflow: hidden; color: #000; background: #00ff66; border: 6px solid #fff; box-shadow: 0 0 0 8px #00ff66; font-size: clamp(36px, 7vw, 108px); font-weight: 950; line-height: .9; text-wrap: balance; text-transform: uppercase; contain: layout paint; animation: rouletteHit 160ms steps(2); }
 .candidateTicker { width: 100%; display: flex; gap: 22px; overflow: hidden; color: #777; white-space: nowrap; mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
 .candidateTicker span { flex: 0 0 auto; font-size: clamp(13px, 1.6vw, 24px); }
 .roulette p { min-height: 3.2em; margin: 0; color: #fff; font-size: clamp(20px, 3vw, 42px); font-weight: 800; }
+.rouletteComment { transform-origin: 50% 50%; will-change: transform; animation: rouletteCommentTremor 5.2s ease-in-out infinite; }
 .roulette small { color: #777; }
 .selectedParticipant strong { color: #fff; font-size: clamp(54px, 10vw, 150px); line-height: .95; text-transform: uppercase; text-shadow: 5px 5px 0 #00ff66, -4px -4px 0 #ff2458; animation: selectedHit .55s steps(3); }
 .selectedParticipant p { max-width: 1000px; margin: 0; font-size: clamp(20px, 3vw, 42px); font-weight: 800; }
 @keyframes contaminate { 0% { transform: translate(0); filter: hue-rotate(0); } 50% { transform: translate(2.5%, -1%); filter: hue-rotate(55deg) contrast(1.8); } 100% { transform: translate(-1.5%, 1%); filter: hue-rotate(-35deg); } }
 @keyframes endFlash { 50% { background: #250009; } }
 @keyframes rouletteHit { 50% { transform: translateX(2.5%); filter: invert(1); } }
+@keyframes rouletteCommentTremor {
+  0%, 68%, 82%, 100% { transform: translate3d(0, 0, 0) rotate(0); }
+  70% { transform: translate3d(-1px, .5px, 0) rotate(-.12deg); }
+  72% { transform: translate3d(1px, -.5px, 0) rotate(.12deg); }
+  74% { transform: translate3d(-.75px, 0, 0) rotate(-.08deg); }
+  76% { transform: translate3d(1px, .5px, 0) rotate(.1deg); }
+  78% { transform: translate3d(-.5px, -.5px, 0) rotate(-.06deg); }
+  80% { transform: translate3d(.5px, 0, 0) rotate(.04deg); }
+}
 @keyframes selectedHit { 0% { transform: scale(2.4) rotate(-3deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .rouletteComment { animation: none; }
+}

@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 async function main() {
   const sceneZero = await import("../lib/scene-zero/state.js");
   const collection = await import("../lib/scene-zero/collection.js");
+  const browserCommand = await import("../lib/scene-zero/browserCommand.js");
   const messageTiming = await import("../lib/messageTiming.js");
   const initial = sceneZero.createInitialSceneZeroState();
 
@@ -10,9 +11,36 @@ async function main() {
   assert.equal(initial.timer.remainingSeconds, 15);
   assert.equal(initial.glitchLevel, "normal");
   assert.equal(initial.collection.obedience.anticipated, 0);
+  assert.equal(initial.personalityGuidance.text, "");
+  assert.deepEqual(initial.personalityGuidance.quickDirections, []);
   assert(initial.sessionStartedAt);
   assert.equal(sceneZero.normalizeSceneZeroStage("airport"), "airport");
   assert.equal(sceneZero.normalizeSceneZeroStage("automatic-timeline"), null);
+
+  const combinedBrowserPlan = browserCommand.fallbackSceneZeroBrowserPlan(
+    "Entre no Google e busque inteligência artificial e comente. Ao mesmo tempo, abra uma aba do Instagram e busque o perfil do Nikolas Ferreira."
+  );
+  assert.equal(combinedBrowserPlan.google.enabled, true);
+  assert.equal(combinedBrowserPlan.instagram.enabled, true);
+  assert.equal(combinedBrowserPlan.instagram.person, "Nikolas Ferreira");
+  const newGoogleWindowPlan = browserCommand.fallbackSceneZeroBrowserPlan("Abra uma nova janela do Google e pesquise teatro em São Paulo");
+  assert.equal(newGoogleWindowPlan.google.enabled, true);
+  assert.equal(newGoogleWindowPlan.google.newWindow, true);
+  assert.deepEqual(browserCommand.preserveExplicitNewsIntent({
+    query: "eleições de 2026",
+    preferNews: false,
+    openResult: true,
+    resultCount: 1
+  }, "busque notícias sobre eleições de 2026"), {
+    query: "eleições de 2026",
+    preferNews: true,
+    openResult: true,
+    resultCount: 2
+  });
+  assert.equal(browserCommand.normalizeSceneZeroBrowserPlan({
+    google: { enabled: false },
+    instagram: { enabled: true, person: "  @cappavictor  " }
+  }, "abra o instagram").instagram.person, "@cappavictor");
 
   const people = [
     { key: "marcus garcia", name: "Marcus Garcia", selectedCount: 0 },
@@ -86,6 +114,28 @@ async function main() {
   assert.equal(parsedCollection.data.result, null);
   assert.match(collection.collectionRepertoireBlock(), /CHANGE_SEAT só pode ser escolhido/);
   assert.match(collection.collectionRepertoireBlock(), /Cruze respostas anteriores/);
+  assert(collection.COLLECTION_ACTIONS.includes("CLAP_PATTERN"));
+  assert(collection.COLLECTION_ACTIONS.includes("SAY_ALOUD"));
+  const recentHandQuestion = [{ action: "RAISE_HAND", text: "Levante a mão." }];
+  const variedRepertoire = collection.collectionRepertoireBlock(recentHandQuestion);
+  assert.match(variedRepertoire, /PROIBIDO NESTA INTERVENÇÃO/);
+  assert.match(variedRepertoire, /número exato de palmas, como três/);
+  assert.equal(collection.shouldRejectRepeatedHandAction({
+    text: "Quem concorda levante a mão.",
+    data: { action: "RAISE_HAND" }
+  }, recentHandQuestion), true);
+  assert.equal(collection.shouldRejectRepeatedHandAction({
+    text: "Quem concorda bata três palmas.",
+    data: { action: "CLAP_COUNT" }
+  }, recentHandQuestion), false);
+  assert.equal(collection.shouldRejectRepeatedHandAction({
+    text: "Mantenham as mãos no alto.",
+    data: { action: "VERBAL" }
+  }, recentHandQuestion), true);
+  assert.equal(collection.shouldRejectRepeatedHandAction({
+    text: "Podem abaixar as mãos.",
+    data: { action: "LOWER_HAND" }
+  }, recentHandQuestion), false);
 
   const participantDirection = sceneZero.buildSceneZeroDirection(
     { ...initial, stage: "participant" },
@@ -96,6 +146,30 @@ async function main() {
 
   const normalMessageContext = sceneZero.buildSceneZeroContext({ ...initial, stage: "participant" });
   assert.match(normalMessageContext, /uma fala da Caixa Preta deve terminar completamente/);
+  const guidedContext = sceneZero.buildSceneZeroContext({
+    ...initial,
+    stage: "participant",
+    personalityGuidance: { text: "mais impaciente e seca", updatedAt: new Date().toISOString() }
+  });
+  assert.match(guidedContext, /mais impaciente e seca/);
+  assert.match(guidedContext, /não mandam interromper/);
+  const idleGuidanceContext = sceneZero.buildSceneZeroContext({
+    ...initial,
+    personalityGuidance: { text: "mais curiosa", updatedAt: new Date().toISOString() }
+  });
+  assert.match(idleGuidanceContext, /mais curiosa/);
+  assert.doesNotMatch(idleGuidanceContext, /ESTADO DRAMATÚRGICO ATIVO/);
+  const quickGuidanceContext = sceneZero.buildSceneZeroContext({
+    ...initial,
+    personalityGuidance: { text: "", quickDirections: ["short", "acid", "fewer_questions"], updatedAt: new Date().toISOString() }
+  });
+  assert.match(quickGuidanceContext, /MAIS CURTA/);
+  assert.match(quickGuidanceContext, /MAIS ÁCIDA/);
+  assert.match(quickGuidanceContext, /MENOS PERGUNTAS/);
+  assert.deepEqual(sceneZero.normalizeSceneZeroPersonalityDirections(["short", "invalid", "short", "curious"]), ["short", "curious"]);
+  assert.deepEqual(sceneZero.normalizeSceneZeroPersonalityDirections(["short", "acid", "developed"]), ["acid", "developed"]);
+  const anytimeQuestion = sceneZero.buildSceneZeroDirection({ ...initial, stage: "cake" }, "question_anytime");
+  assert.match(anytimeQuestion, /sem mudar, encerrar ou avançar/);
   const glitchMessageContext = sceneZero.buildSceneZeroContext({ ...initial, stage: "glitch", glitchLevel: "glitch-2" });
   assert.match(glitchMessageContext, /podem coexistir várias falas/);
   assert.match(glitchMessageContext, /conversando entre si/);
