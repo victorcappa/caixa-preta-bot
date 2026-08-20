@@ -468,7 +468,9 @@ controller altera a projecao via estado do servidor e SSE: tocar/pausar,
 avancar/voltar, ir para segmento, subdivisao do texto, fade, ritmo geral, tempo
 das rubricas, loop e texto base. A rota antiga `/queda-aviao/debug` continua
 apontando para o mesmo controller. A projecao abre em modo manual; use
-`TOCAR` para autoplay ou `PRÓXIMA` para avancar segmento por segmento. O botao
+`TOCAR` para autoplay, `PRÓXIMA` ou a tecla `→` para avancar segmento por
+segmento. O atalho de teclado não dispara enquanto um campo editável está com
+foco. O botao
 `SALVAR TEXTO / DIAGRAMAÇÃO COMO PADRÃO` grava texto, subdivisao, fade, ritmo,
 tempo das rubricas e loop em `data/queda-aviao-default.json`; a proxima abertura
 do controller e da projecao usa esse padrao salvo. O fade padrao inicial e

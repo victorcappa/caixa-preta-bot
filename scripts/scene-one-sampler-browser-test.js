@@ -123,6 +123,14 @@ try {
   assert.notEqual(afterTextNavigation.currentIndex, beforeIndex, "text should navigate normally");
   assert.equal((await sceneAudioCues(context.request)).length, 2, "text navigation must not stop samples");
 
+  const beforeArrowIndex = afterTextNavigation.currentIndex;
+  await controller.locator("h1").click();
+  await controller.keyboard.press("ArrowRight");
+  await controller.waitForTimeout(150);
+  const afterArrowNavigation = await context.request.get(`${BASE_URL}/api/queda-aviao`).then((response) => response.json());
+  assert.notEqual(afterArrowNavigation.currentIndex, beforeArrowIndex, "ArrowRight should advance to the next segment");
+  assert.equal((await sceneAudioCues(context.request)).length, 2, "ArrowRight navigation must not stop samples");
+
   await sample1Card.getByRole("button", { name: "LOOP ON" }).click();
   await controller.waitForTimeout(150);
   audioCues = await sceneAudioCues(context.request);
@@ -137,9 +145,16 @@ try {
 
   await shortcutInput.focus();
   const beforeTyping = (await sceneAudioCues(context.request)).length;
+  const beforeTypingIndex = (await context.request.get(`${BASE_URL}/api/queda-aviao`).then((response) => response.json())).currentIndex;
   await controller.keyboard.press("s");
+  await controller.keyboard.press("ArrowRight");
   await controller.waitForTimeout(100);
   assert.equal((await sceneAudioCues(context.request)).length, beforeTyping, "shortcuts must not fire while typing");
+  assert.equal(
+    (await context.request.get(`${BASE_URL}/api/queda-aviao`).then((response) => response.json())).currentIndex,
+    beforeTypingIndex,
+    "ArrowRight must not advance while editing a field"
+  );
 
   await sample1Card.getByRole("button", { name: `Parar ${firstCue.label}` }).click();
   await controller.waitForTimeout(150);

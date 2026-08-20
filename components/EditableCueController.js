@@ -203,7 +203,7 @@ export default function EditableCueController({ controllerId, embedded = false, 
 
   useEffect(() => {
     function handleKeydown(event) {
-      if (isTypingTarget(event.target)) {
+      if (event.defaultPrevented || isTypingTarget(event.target)) {
         return;
       }
 

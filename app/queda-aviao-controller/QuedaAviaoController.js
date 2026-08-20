@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import EditableCueController from "@/components/EditableCueController";
 import {
   DEFAULT_FADE_MS,
@@ -32,6 +32,11 @@ function clampIndex(index, length) {
   return Math.min(Math.max(Number(index) || 0, 0), length - 1);
 }
 
+function isTypingTarget(target) {
+  const tagName = target?.tagName?.toLowerCase();
+  return ["input", "textarea", "select"].includes(tagName) || target?.isContentEditable;
+}
+
 async function postQuedaAviaoAction(action, payload = {}) {
   const response = await fetch("/api/queda-aviao", {
     method: "POST",
@@ -47,6 +52,7 @@ export default function QuedaAviaoController() {
   const [connection, setConnection] = useState("CONNECTING");
   const [pending, setPending] = useState(false);
   const [log, setLog] = useState("SYSTEM READY");
+  const runActionRef = useRef(null);
 
   useEffect(() => {
     fetch("/api/queda-aviao")
@@ -99,6 +105,22 @@ export default function QuedaAviaoController() {
       }
     }
   }
+
+  runActionRef.current = runAction;
+
+  useEffect(() => {
+    function handleKeydown(event) {
+      if (event.key !== "ArrowRight" || isTypingTarget(event.target)) {
+        return;
+      }
+
+      event.preventDefault();
+      void runActionRef.current?.("next", {}, "PROXIMA");
+    }
+
+    window.addEventListener("keydown", handleKeydown, { capture: true });
+    return () => window.removeEventListener("keydown", handleKeydown, { capture: true });
+  }, []);
 
   function updatePlayback(payload) {
     setPlayback((state) => ({ ...state, ...payload }));
