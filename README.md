@@ -51,10 +51,15 @@ Depois abra:
 - `http://localhost:3000/baralho-morbido-controller`, para sortear e reiniciar o Baralho Morbido
 - `http://localhost:3000/queda-aviao`, para a projecao textual isolada de Queda Aviao
 - `http://localhost:3000/queda-aviao-controller`, para controlar essa projecao em tempo real
-- `http://localhost:3000/forca-g-samples-controller`, controller preparado para samples audiovisuais
+- `http://localhost:3000/forca-g-samples`, tela publica de samples audiovisuais da Forca G
+- `http://localhost:3000/forca-g-samples-controller`, controller de samples audiovisuais
+- `http://localhost:3000/forca-g-shaders`, tela publica preta para videos e shaders da Forca G
 - `http://localhost:3000/forca-g-shaders-controller`, controller preparado para videos e shaders
+- `http://localhost:3000/transicao-psicodelica`, tela publica preta da transicao psicodelica
 - `http://localhost:3000/transicao-psicodelica-controller`, controller preparado para a transicao psicodelica
+- `http://localhost:3000/tea-for-two`, tela publica preta de Tea For Two
 - `http://localhost:3000/tea-for-two-controller`, controller preparado para musica e transicao
+- `http://localhost:3000/piloto-videogame`, tela publica do piloto
 - `http://localhost:3000/piloto-videogame-controller`, controller preparado para soundboard do piloto
 - `http://localhost:3000/tecnologia-floresta-controller`, controller preparado para camada sonora transversal
 - `http://localhost:3000/glitch-controller`, para testar e ajustar o glitch visual em tempo real
@@ -86,6 +91,11 @@ Telas publicas controlaveis:
 - `Chatbot`: `/`
 - `Baralho Morbido`: `/baralho-morbido`
 - `Queda Aviao`: `/queda-aviao`
+- `Forca G Samples`: `/forca-g-samples`
+- `Forca G Shaders`: `/forca-g-shaders`
+- `Transicao Psicodelica`: `/transicao-psicodelica`
+- `Tea For Two`: `/tea-for-two`
+- `Piloto Videogame`: `/piloto-videogame`
 - `Tecnologia x Floresta`: `/tecnologia-floresta`
 
 Telas de controller, debug e treinamento nao entram no menu de projecao. Se o
@@ -113,16 +123,16 @@ Grupos atuais:
 - `CAMADAS`: `Tecnologia x Floresta`
 - `OUTROS`: `Glitch Geral` e `Treino`
 
-Clique em `Bot / Malas` para voltar a projecao para `/`; abrir ou recarregar
-`/operator` diretamente nao troca a projecao ativa. `Baralho Morbido` abre
-`/baralho-morbido` na projecao, `Queda / Emergencia` abre `/queda-aviao`, e
-`Tecnologia x Floresta` abre `/tecnologia-floresta`, que por enquanto e uma
-tela publica escura propria. `Glitch Geral` nao troca a cena projetada: ele
-abre o controller e o glitch continua sendo aplicado sobre a tela publica que
-ja estiver ativa.
+Cada aba cenica troca a projecao para sua rota publica correspondente. `Bot /
+Malas` abre `/`, `Baralho Morbido` abre `/baralho-morbido`, `Queda /
+Emergencia` abre `/queda-aviao` e as demais cenas abrem uma tela preta propria
+enquanto sua logica publica ainda nao existe. `Forca G — Samples` e excecao:
+videos e imagens disparados no controller aparecem na tela publica em tempo
+real. `Glitch Geral` nao troca a cena projetada: ele abre o controller e o
+glitch continua sendo aplicado sobre a tela publica que ja estiver ativa.
 
 Abaixo das abas existe uma barra de blackout compartilhada em todas as telas de
-controller. Ela controla `CHATBOT`, `BARALHO`, `LEGENDA`, `TECNOLOGIA` e
+controller. Ela controla `CHATBOT`, `BARALHO`, `LEGENDA`, `CENAS`, `TECNOLOGIA` e
 `TODOS`, mantendo o operator visivel como tela de recuperacao.
 
 Quando o Instagram embutido e/ou o operator estiverem visiveis, arraste as
@@ -155,6 +165,10 @@ Atalhos de teclado disparam os botoes, mas sao ignorados enquanto o foco estiver
 em `input`, `textarea`, `select` ou campo editavel. Os arquivos existentes em
 `assets/` aparecem na lista de material. O campo `Adicionar arquivo` salva novos
 arquivos em `assets/controller-cues/<controller>/` e atualiza a lista.
+Cada cue tem seu proprio botao `STOP`: ele corta a previa/arquivo local e o cue
+ativo na tela publica. No caso de `Forca G — Samples`, video e imagem sao
+reproduzidos na projecao publica correspondente; cues de audio mantem a tela
+preta e tentam tocar o arquivo no navegador da projecao.
 
 O divisor entre o palco de cues e o editor tem uma alca redimensionavel, como o
 painel do bot. Arraste a alca ou use as setas `←` e `→` quando ela estiver em

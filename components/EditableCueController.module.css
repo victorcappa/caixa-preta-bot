@@ -100,6 +100,13 @@
   gap: 10px;
 }
 
+.cueItem {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  gap: 5px;
+}
+
 .cue,
 .selectedCue {
   min-height: 74px;
@@ -131,6 +138,24 @@
   font-size: 1rem;
   overflow-wrap: anywhere;
   text-transform: uppercase;
+}
+
+.cueStop {
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--cue-color) 42%, #000000);
+  background: #050505;
+  color: var(--cue-color);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.66rem;
+  writing-mode: vertical-rl;
+}
+
+.cueStop:hover,
+.cueStop:focus-visible {
+  border-color: var(--cue-color);
+  background: color-mix(in srgb, var(--cue-color) 18%, #000000);
+  outline: 0;
 }
 
 .editor {

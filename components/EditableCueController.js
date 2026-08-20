@@ -76,6 +76,21 @@ async function saveCueConfig(controllerId, config) {
   return { response, data };
 }
 
+async function postSceneCue(controllerId, action, cue = null) {
+  const response = await fetch("/api/controller-cues/play", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      controllerId,
+      action,
+      cue,
+      cueId: cue?.id || ""
+    })
+  });
+  const data = await response.json();
+  return { response, data };
+}
+
 export default function EditableCueController({ controllerId }) {
   const [config, setConfig] = useState(null);
   const [assets, setAssets] = useState(EMPTY_ASSETS);
@@ -88,6 +103,7 @@ export default function EditableCueController({ controllerId }) {
   const audioRef = useRef(null);
   const clearPreviewRef = useRef(null);
   const screenRef = useRef(null);
+  const triggerCueRef = useRef(null);
 
   useEffect(() => {
     setEditorWidth(storedEditorWidth(controllerId));
@@ -123,6 +139,7 @@ export default function EditableCueController({ controllerId }) {
   const cues = useMemo(() => config?.cues || [], [config?.cues]);
   const selectedCue = cues.find((cue) => cue.id === selectedCueId) || cues[0] || null;
   const allowedTypes = useMemo(() => config?.allowedTypes || ["audio"], [config?.allowedTypes]);
+  triggerCueRef.current = triggerCue;
 
   const availableAssets = useMemo(() => {
     const grouped = {};
@@ -145,7 +162,7 @@ export default function EditableCueController({ controllerId }) {
       }
 
       event.preventDefault();
-      triggerCue(cue);
+      triggerCueRef.current?.(cue);
     }
 
     window.addEventListener("keydown", handleKeydown);
@@ -212,6 +229,7 @@ export default function EditableCueController({ controllerId }) {
 
     const src = assetSrc(cue.assetPath);
     setPreview({ ...cue, src, sequence: crypto.randomUUID() });
+    void triggerPublicCue(cue);
 
     if (cue.type === "audio" && src) {
       const audio = new Audio(src);
@@ -227,6 +245,43 @@ export default function EditableCueController({ controllerId }) {
           audioRef.current = null;
         }
       }, cue.durationMs);
+    }
+  }
+
+  function stopCue(cue) {
+    window.clearTimeout(clearPreviewRef.current);
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+
+    setPreview(null);
+    setStatus(`STOP ${cue.label}`);
+    void stopPublicCue(cue);
+  }
+
+  async function triggerPublicCue(cue) {
+    try {
+      const { response, data } = await postSceneCue(controllerId, "play", cue);
+
+      if (!response.ok) {
+        setStatus(data.error || "PUBLIC CUE ERROR");
+      }
+    } catch {
+      setStatus("PUBLIC CUE ERROR");
+    }
+  }
+
+  async function stopPublicCue(cue) {
+    try {
+      const { response, data } = await postSceneCue(controllerId, "stop", cue);
+
+      if (!response.ok) {
+        setStatus(data.error || "PUBLIC STOP ERROR");
+      }
+    } catch {
+      setStatus("PUBLIC STOP ERROR");
     }
   }
 
@@ -395,16 +450,24 @@ export default function EditableCueController({ controllerId }) {
 
         <section className={styles.cueGrid} aria-label="Botões de sample">
           {cues.map((cue) => (
-            <button
-              className={cue.id === selectedCue?.id ? styles.selectedCue : styles.cue}
-              key={cue.id}
-              onClick={() => triggerCue(cue)}
-              style={{ "--cue-color": cue.color }}
-              type="button"
-            >
-              <span>{cue.shortcut || "-"}</span>
-              <strong>{cue.label}</strong>
-            </button>
+            <div className={styles.cueItem} key={cue.id} style={{ "--cue-color": cue.color }}>
+              <button
+                className={cue.id === selectedCue?.id ? styles.selectedCue : styles.cue}
+                onClick={() => triggerCue(cue)}
+                type="button"
+              >
+                <span>{cue.shortcut || "-"}</span>
+                <strong>{cue.label}</strong>
+              </button>
+              <button
+                aria-label={`Parar ${cue.label}`}
+                className={styles.cueStop}
+                onClick={() => stopCue(cue)}
+                type="button"
+              >
+                STOP
+              </button>
+            </div>
           ))}
         </section>
       </section>
