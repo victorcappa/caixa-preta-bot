@@ -13,11 +13,16 @@ function timerSeconds(timer, now) {
   return timer?.remainingSeconds ?? 15;
 }
 
+function countdownSeconds(endsAt, now) {
+  return endsAt ? Math.max(0, Math.ceil((Date.parse(endsAt) - now) / 1000)) : 10;
+}
+
 export default function SceneZeroProjectionLayer({ sceneZero }) {
   const [now, setNow] = useState(Date.now());
   const audioRef = useRef(null);
   const tea = sceneZero?.teaForTwo;
   const timer = sceneZero?.timer;
+  const participantSelection = sceneZero?.participantSelection || {};
 
   useEffect(() => {
     const interval = window.setInterval(() => setNow(Date.now()), 100);
@@ -42,6 +47,13 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
   const seconds = timerSeconds(timer, now);
   const airport = sceneZero?.stage === "airport" || sceneZero?.airportActive;
   const collapse = sceneZero?.stage === "collapse";
+  const selectionCandidates = participantSelection.candidates || [];
+  const rouletteElapsed = Math.max(0, now - Date.parse(participantSelection.rouletteStartedAt || now));
+  const rouletteIndex = selectionCandidates.length
+    ? Math.floor(rouletteElapsed / Math.max(70, 260 - Math.min(190, rouletteElapsed / 28))) % selectionCandidates.length
+    : 0;
+  const rouletteName = selectionCandidates[rouletteIndex]?.name || "—";
+  const showParticipantSelection = ["countdown", "roulette", "selected"].includes(participantSelection.status);
 
   return (
     <>
@@ -60,6 +72,37 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
         <div className={`${styles.timerOverlay} ${timer.status === "complete" ? styles.complete : ""}`} aria-live="assertive">
           <strong>{seconds}</strong>
           {timer.status === "complete" ? <span>FIM</span> : null}
+        </div>
+      ) : null}
+      {showParticipantSelection ? (
+        <div className={styles.selectionOverlay} aria-live="assertive">
+          {participantSelection.status === "countdown" ? (
+            <div className={styles.volunteerCountdown}>
+              <p>{participantSelection.invite}</p>
+              <strong>{countdownSeconds(participantSelection.countdownEndsAt, now)}</strong>
+              <small>10 SEGUNDOS</small>
+            </div>
+          ) : null}
+          {participantSelection.status === "roulette" ? (
+            <div className={styles.roulette}>
+              <span>ODDS EM TEMPO REAL*</span>
+              <div className={styles.rouletteWindow} key={`${participantSelection.sequence}-${rouletteIndex}`}>
+                {rouletteName}
+              </div>
+              <div className={styles.candidateTicker}>
+                {selectionCandidates.map((candidate) => <span key={candidate.key}>{candidate.name}</span>)}
+              </div>
+              <p>{participantSelection.lastComment || "..."}</p>
+              <small>* absolutamente nada aqui é uma odd real</small>
+            </div>
+          ) : null}
+          {participantSelection.status === "selected" ? (
+            <div className={styles.selectedParticipant}>
+              <span>PARTICIPANTE ESCOLHIDO</span>
+              <strong>{sceneZero.currentParticipant?.name || "—"}</strong>
+              <p>{participantSelection.announcement}</p>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </>

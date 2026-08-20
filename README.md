@@ -157,10 +157,18 @@ campo de contexto opcional para informar resultados reais, por exemplo
 "metade levantou a mão"; sem isso, o bot é instruído a não inventar contagens
 ou reações.
 
-`FAZER ESCOLHA` usa o pool existente de equipe, público e participantes da
-sessão, equilibrando nomes menos usados. Marcus Garcia e Victor Cappa são
-sempre removidos do pool. Repetir `FAZER ESCOLHA` preserva o nome já escolhido;
-somente `ESCOLHER OUTRA PESSOA` tenta uma nova seleção.
+Ao entrar em `ESCOLHER PARTICIPANTE`, o bot improvisa um convite mais
+sarcástico, informal e Gen Z para as pessoas levantarem a mão. A projeção abre
+uma janela real de 10 segundos e, ao chegar a zero, inicia automaticamente um
+mini game de roleta com os nomes do pool existente de equipe, público e
+participantes da sessão. Durante os sete segundos de giro, três comentários
+curtos sobre odds e chances são gerados pelo modelo e publicados em momentos
+distintos; nenhum texto de aposta é uma frase fixa. O vencedor é previamente
+sorteado e protegido no estado interno, só aparece ao fim da roleta e não pode
+ser alterado pelo modelo. A seleção favorece nomes menos usados, e Marcus
+Garcia e Victor Cappa são sempre removidos do pool. `NOVA ROLETA / OUTRA
+PESSOA` exclui o nome atual quando há alternativa. Mudar para outra etapa
+interrompe imediatamente countdown, roleta e comentários pendentes.
 
 O bloco `MALAS` chama o `SuitcaseDirector` existente. `É BOLO?` inicia e
 controla o jogo `verdade_ou_bolo` já registrado no `GameDirector`; comentários

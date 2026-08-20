@@ -22,6 +22,26 @@ async function main() {
   assert.equal(another.name, "Janaína Leite");
   assert.notEqual(another.name, "Marcus Garcia");
   assert.notEqual(another.name, "Victor Cappa");
+  assert.deepEqual(
+    sceneZero.eligibleSceneZeroParticipants(people).map((participant) => participant.name),
+    ["Janaína Leite", "Lara Duarte"]
+  );
+
+  const privateSelectionState = {
+    ...initial,
+    participantSelection: {
+      ...initial.participantSelection,
+      status: "roulette",
+      candidates: people,
+      pendingWinner: people[3],
+      preparedComments: ["interno"],
+      preparedAnnouncement: "interno"
+    }
+  };
+  const publicSelectionState = sceneZero.publicSceneZeroSnapshot(privateSelectionState);
+  assert.equal(publicSelectionState.participantSelection.pendingWinner, undefined);
+  assert.equal(publicSelectionState.participantSelection.preparedComments, undefined);
+  assert.equal(publicSelectionState.participantSelection.candidates.length, 4);
 
   const active = {
     ...initial,
@@ -36,6 +56,13 @@ async function main() {
   assert.match(direction, /Perguntas anteriores/);
   assert.match(direction, /não devem ser repetidas/);
   assert(!direction.includes("Bata três palmas quem veio de transporte público"));
+
+  const participantDirection = sceneZero.buildSceneZeroDirection(
+    { ...initial, stage: "participant" },
+    "participant_roulette_sequence"
+  );
+  assert.match(participantDirection, /10 segundos/);
+  assert.match(participantDirection, /sarcástico, informal e Gen Z/);
 
   console.log("scene-zero-test: ok");
 }

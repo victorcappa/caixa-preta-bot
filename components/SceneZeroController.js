@@ -111,6 +111,11 @@ export default function SceneZeroController() {
   const instagram = snapshot.instagram || {};
   const game = snapshot.game || {};
   const suitcase = snapshot.suitcase || {};
+  const participantSelection = sceneZero.participantSelection || {};
+  const participantSelectionBusy = ["preparing", "countdown", "roulette"].includes(participantSelection.status);
+  const participantCountdown = participantSelection.status === "countdown"
+    ? countdownSeconds(participantSelection.countdownEndsAt, now)
+    : null;
   const questions = useMemo(() => [...(collection.questions || [])].reverse(), [collection.questions]);
 
   return (
@@ -167,9 +172,11 @@ export default function SceneZeroController() {
         </ControlBlock>
 
         <ControlBlock title="PARTICIPANTE">
-          <Button onClick={() => sceneAction("participant-volunteers")} pending={pending}>PEDIR VOLUNTÁRIOS</Button>
-          <Button primary onClick={() => sceneAction("choose-participant")} pending={pending}>FAZER ESCOLHA</Button>
-          <Button onClick={() => sceneAction("choose-another-participant")} pending={pending}>ESCOLHER OUTRA PESSOA</Button>
+          <Button primary onClick={() => sceneAction("participant-volunteers")} pending={pending || participantSelectionBusy}>INICIAR SELEÇÃO / 10s</Button>
+          <Button onClick={() => sceneAction("choose-another-participant")} pending={pending || participantSelectionBusy}>NOVA ROLETA / OUTRA PESSOA</Button>
+          <Readout label="MINI GAME" value={participantSelection.status === "countdown" ? `MÃOS LEVANTADAS — ${participantCountdown}s` : (participantSelection.status || "idle").toUpperCase()} />
+          <Readout label="NOMES NA ROLETA" value={(participantSelection.candidates || []).map((participant) => participant.name).join(" · ")} />
+          <Readout label="COMENTÁRIO DA ROLETA" value={participantSelection.lastComment} />
           <Readout label="PARTICIPANTE ESCOLHIDO" value={sceneZero.currentParticipant?.name} />
           <small>Marcus Garcia e Victor Cappa nunca entram no sorteio.</small>
         </ControlBlock>
@@ -249,4 +256,8 @@ function Button({ children, danger = false, onClick, pending, primary = false })
 
 function Readout({ label, value }) {
   return <p className={styles.readout}><span>{label}</span><strong>{value || "—"}</strong></p>;
+}
+
+function countdownSeconds(endsAt, now) {
+  return endsAt ? Math.max(0, Math.ceil((Date.parse(endsAt) - now) / 1000)) : 10;
 }

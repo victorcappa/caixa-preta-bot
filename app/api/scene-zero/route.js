@@ -12,9 +12,6 @@ const SPEECH_ACTIONS = new Set([
   "collection-rephrase",
   "collection-comment",
   "collection-end",
-  "participant-volunteers",
-  "choose-participant",
-  "choose-another-participant",
   "cake-comment",
   "cake-provoke",
   "cake-end",
@@ -27,9 +24,6 @@ const DIRECTION_ACTIONS = {
   "collection-rephrase": "collection_rephrase",
   "collection-comment": "collection_comment",
   "collection-end": "collection_end",
-  "participant-volunteers": "enter_participant",
-  "choose-participant": "choose_participant",
-  "choose-another-participant": "choose_participant",
   "cake-comment": "cake_comment",
   "cake-provoke": "cake_provoke",
   "cake-end": "cake_end",
@@ -67,6 +61,72 @@ function applyGeneratedTurn(turn) {
   if (turn.events?.length) showState.queuePerformanceEvents(turn.events, "agent");
 }
 
+function parseParticipantSequence(text = "") {
+  try {
+    const parsed = JSON.parse(text);
+    const invite = `${parsed.convite || ""}`.trim();
+    const comments = Array.isArray(parsed.comentarios)
+      ? parsed.comentarios.map((comment) => `${comment || ""}`.trim()).filter(Boolean).slice(0, 3)
+      : [];
+    const announcement = `${parsed.anuncio || ""}`.trim();
+    if (invite && comments.length === 3 && announcement) {
+      return { invite, comments, announcement };
+    }
+  } catch {
+    // Invalid structured copy is retried by the operator instead of leaking internal formatting.
+  }
+  return null;
+}
+
+async function generateParticipantSequence({ candidates, winner, detail = "" }) {
+  const state = showState.privateSnapshot();
+  const candidateNames = candidates.map((participant) => participant.name);
+  const turn = await generateCaixaPretaTurn({
+    state,
+    allowPerformance: false,
+    operatorInstruction: buildSceneZeroDirection(
+      state.sceneZero,
+      "participant_roulette_sequence",
+      [
+        detail,
+        `Nomes visíveis na roleta: ${candidateNames.join(", ")}.`,
+        `Resultado já sorteado pelo sistema e que só pode ser revelado no anúncio final: ${winner.name}.`
+      ].filter(Boolean).join(" ")
+    ),
+    operatorOutputInstruction: [
+      "Responda somente JSON válido, sem Markdown.",
+      "Formato exato: {\"convite\":\"...\",\"comentarios\":[\"...\",\"...\",\"...\"],\"anuncio\":\"...\"}.",
+      "O convite abre os 10 segundos. Os três comentários acontecem durante a roleta e não podem revelar o vencedor. O anúncio final deve convocar exatamente o vencedor informado."
+    ].join(" ")
+  });
+  return parseParticipantSequence(turn.text);
+}
+
+async function startParticipantFlow({ chooseAnother = false, detail = "" } = {}) {
+  if (showState.snapshot().sceneZero.stage !== "participant") {
+    showState.controlSceneZero("set-stage", { stage: "participant", detail }, { source: "operator" });
+  }
+  const prepared = showState.prepareSceneZeroParticipantSelection({ chooseAnother });
+  if (!prepared.applied) return prepared;
+
+  const sequence = await generateParticipantSequence({
+    candidates: prepared.candidates,
+    winner: prepared.winner,
+    detail
+  });
+  if (!sequence) {
+    return { applied: false, error: "SCENE ZERO PARTICIPANT COPY INVALID", state: showState.snapshot().sceneZero };
+  }
+
+  showState.addMessage("assistant", sequence.invite, "scene-zero-roulette");
+  const started = showState.startSceneZeroParticipantSelection({
+    invite: sequence.invite,
+    comments: sequence.comments,
+    announcement: sequence.announcement
+  });
+  return { ...started, text: sequence.invite };
+}
+
 async function speak(directionAction, detail = "") {
   const state = showState.privateSnapshot();
   const turn = await generateCaixaPretaTurn({
@@ -96,6 +156,11 @@ function applyGlitchLevel(level) {
 async function enterStage(stage, detail) {
   const changed = showState.controlSceneZero("set-stage", { stage, detail }, { source: "operator" });
   if (!changed.applied) return changed;
+
+  if (stage === "participant") {
+    const participantFlow = await startParticipantFlow({ detail });
+    return { ...participantFlow, state: showState.snapshot().sceneZero };
+  }
 
   if (stage === "suitcases") {
     showState.setMode(SHOW_MODES.malas);
@@ -161,6 +226,15 @@ export async function POST(request) {
     if (["timer-start", "timer-pause", "timer-resume", "timer-restart", "timer-cancel"].includes(action)) {
       const result = showState.controlSceneZero(action, body, { source: "operator" });
       return Response.json({ message: `TIMER ${result.state.timer.status.toUpperCase()}`, sceneZero: result.state });
+    }
+
+    if (["participant-volunteers", "choose-participant", "choose-another-participant"].includes(action)) {
+      const result = await startParticipantFlow({
+        chooseAnother: action === "choose-another-participant",
+        detail
+      });
+      if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
+      return Response.json({ message: "SELEÇÃO AUTOMÁTICA INICIADA — 10s", sceneZero: showState.snapshot().sceneZero, text: result.text });
     }
 
     if (["tea-play", "tea-restart", "tea-stop"].includes(action)) {
