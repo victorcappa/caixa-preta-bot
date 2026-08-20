@@ -279,7 +279,9 @@ click no operator desbloqueia os testes daquela janela, mas não garante o
 desbloqueio de outra janela de projeção. Antes do ensaio, interaja uma vez com a
 tela pública. Se conectar ou remover fones fizer o áudio desaparecer, use
 `RECONECTAR ÁUDIO`: o operator solicita pelo SSE que cada janela reconstrua seu
-grafo Web Audio. Mudanças de dispositivo também tentam essa recuperação
+grafo Web Audio. A janela do operator inicia a reconstrução no próprio clique,
+preservando o desbloqueio exigido pelo Safari; as outras janelas concluem o
+desbloqueio na próxima interação local, se necessário. Mudanças de dispositivo também tentam essa recuperação
 automaticamente. Validação lógica rápida: `npm run test:robot-sound`.
 
 ## Queda Aviao

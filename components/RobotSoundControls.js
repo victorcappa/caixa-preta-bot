@@ -78,6 +78,8 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
   async function reconnectAudio() {
     setAudioStatus("RECONNECTING");
     window.clearTimeout(saveTimerRef.current);
+    outputResetSequenceRef.current = Number(draft.outputResetSequence || 0) + 1;
+    const localReconnect = robotSoundEngine.reconnectOutput();
     saveQueueRef.current = saveQueueRef.current
       .catch(() => {})
       .then(() => postSettings({ ...draft, reconnectOutput: true }))
@@ -85,7 +87,7 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
         onLog(error.message, "error");
         return null;
       });
-    await saveQueueRef.current;
+    await Promise.all([localReconnect, saveQueueRef.current]);
   }
 
   async function testEffect(effect) {
