@@ -70,7 +70,10 @@
 .content {
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--green-dim) #000000;
 }
 
 @media (max-width: 640px) {

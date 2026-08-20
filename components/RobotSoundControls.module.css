@@ -16,6 +16,7 @@
 
 .enabledButton,
 .disabledButton,
+.reconnectButton,
 .tests button {
   min-height: 36px;
   border: 1px solid var(--green-soft);
@@ -23,6 +24,11 @@
   color: var(--green);
   font: inherit;
   cursor: pointer;
+}
+
+.reconnectButton {
+  border-color: var(--green);
+  color: var(--green);
 }
 
 .enabledButton {

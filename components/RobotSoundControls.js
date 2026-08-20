@@ -28,12 +28,22 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
   const saveTimerRef = useRef(null);
   const saveQueueRef = useRef(Promise.resolve());
   const testTimersRef = useRef(new Set());
+  const outputResetSequenceRef = useRef(null);
 
   useEffect(() => {
     const normalized = normalizeRobotSoundSettings(settings);
     setDraft(normalized);
     robotSoundEngine.setSettings(normalized);
+
+    if (outputResetSequenceRef.current !== null && normalized.outputResetSequence !== outputResetSequenceRef.current) {
+      void robotSoundEngine.reconnectOutput();
+    }
+    outputResetSequenceRef.current = normalized.outputResetSequence;
   }, [settings]);
+
+  useEffect(() => robotSoundEngine.armAutoUnlock(), []);
+
+  useEffect(() => robotSoundEngine.subscribeStatus(setAudioStatus), []);
 
   useEffect(() => () => {
     window.clearTimeout(saveTimerRef.current);
@@ -63,6 +73,19 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
   async function toggleSound() {
     if (!draft.enabled && !(await unlock())) return;
     commit({ enabled: !draft.enabled });
+  }
+
+  async function reconnectAudio() {
+    setAudioStatus("RECONNECTING");
+    window.clearTimeout(saveTimerRef.current);
+    saveQueueRef.current = saveQueueRef.current
+      .catch(() => {})
+      .then(() => postSettings({ ...draft, reconnectOutput: true }))
+      .catch((error) => {
+        onLog(error.message, "error");
+        return null;
+      });
+    await saveQueueRef.current;
   }
 
   async function testEffect(effect) {
@@ -122,6 +145,9 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
         type="button"
       >
         {draft.enabled ? "SOUND ON" : "SOUND OFF"}
+      </button>
+      <button className={styles.reconnectButton} onClick={reconnectAudio} type="button">
+        RECONECTAR ÁUDIO
       </button>
 
       <label className={styles.field}>
@@ -183,7 +209,7 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
           <button key={effect} onClick={() => testEffect(effect)} type="button">TEST {label}</button>
         ))}
       </div>
-      <small className={styles.note}>Testes soam nesta janela. A projeção usa os mesmos ajustes via SSE.</small>
+      <small className={styles.note}>Se trocar fone/saída, use RECONECTAR ÁUDIO. O comando também reinicia a saída da projeção via SSE.</small>
     </section>
   );
 }

@@ -1,4 +1,4 @@
-.controller { min-height: 100%; padding: 24px; color: #f4f4f4; background: #080808; font-family: var(--font-mono, monospace); }
+.controller { min-height: 100%; padding: 24px 24px calc(24px + env(safe-area-inset-bottom)); color: #f4f4f4; background: #080808; font-family: var(--font-mono, monospace); }
 .header { display: grid; grid-template-columns: minmax(220px, .6fr) 1.4fr; gap: 24px; align-items: end; padding-bottom: 22px; border-bottom: 1px solid #303030; }
 .header p, .header h1, .stagePanel h2, .block h2 { margin: 0; }
 .header p { color: #00ff66; letter-spacing: .18em; }
@@ -35,6 +35,6 @@
 .timerStatus { align-self: center; min-width: 100px; color: #bcbcbc; }
 .levels { flex: 1 1 100%; display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
 .instagramPanel { flex: 1 1 100%; min-height: 520px; height: 62vh; border: 1px solid #303030; overflow: hidden; }
-.notice { position: sticky; bottom: 0; margin: 18px -24px -24px; padding: 12px 24px; color: #00ff66; background: rgba(0,0,0,.94); border-top: 1px solid #303030; }
+.notice { position: sticky; z-index: 2; bottom: 0; margin: 18px -24px calc(-24px - env(safe-area-inset-bottom)); padding: 12px 24px calc(12px + env(safe-area-inset-bottom)); color: #00ff66; background: rgba(0,0,0,.94); border-top: 1px solid #303030; }
 @keyframes pulse { 50% { opacity: .35; } }
 @media (max-width: 1000px) { .header { grid-template-columns: 1fr; } .stageGrid { grid-template-columns: repeat(2, 1fr); } .blocks { grid-template-columns: 1fr; } .wide { grid-column: auto; } .levels { grid-template-columns: repeat(2, 1fr); } .quickGrid { grid-template-columns: repeat(3, 1fr); } }

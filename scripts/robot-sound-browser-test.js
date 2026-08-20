@@ -24,6 +24,28 @@ async function main() {
     await page.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.context?.state === "running");
     await page.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.activeSources?.size > 0);
 
+    await page.evaluate(() => {
+      window.__previousRobotAudioContext = window.__caixaPretaRobotSoundEngine.context;
+    });
+    await page.getByRole("button", { name: "RECONECTAR ÁUDIO" }).click();
+    await page.waitForFunction(() => {
+      const sound = window.__caixaPretaRobotSoundEngine;
+      return sound.context !== window.__previousRobotAudioContext && sound.context?.state === "running";
+    });
+    await page.waitForFunction(async () => {
+      const response = await fetch("/api/robot-sound");
+      return (await response.json()).robotSound.outputResetSequence > 0;
+    });
+
+    await page.evaluate(() => {
+      window.__previousRobotAudioContext = window.__caixaPretaRobotSoundEngine.context;
+      navigator.mediaDevices.dispatchEvent(new Event("devicechange"));
+    });
+    await page.waitForFunction(() => (
+      window.__caixaPretaRobotSoundEngine.context !== window.__previousRobotAudioContext &&
+      window.__caixaPretaRobotSoundEngine.context?.state === "running"
+    ));
+
     const burst = await page.evaluate(() => {
       const sound = window.__caixaPretaRobotSoundEngine;
       const text = "ABC 123, ISSO? SIM!\n".repeat(35);
@@ -111,6 +133,28 @@ async function main() {
     await page.goto("http://localhost:3000/operator", { waitUntil: "domcontentloaded" });
     await page.getByText("CONNECTED", { exact: true }).first().waitFor({ timeout: 10000 });
     await page.getByLabel("Robot Sound Engine").waitFor();
+
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto("http://localhost:3000/cena-0-controller", { waitUntil: "domcontentloaded" });
+    await page.getByRole("heading", { name: "BOT / MALAS" }).waitFor();
+    const scrollResult = await page.evaluate(() => {
+      const controller = document.querySelector("main");
+      const scroller = controller?.parentElement;
+      if (!scroller) return null;
+      const before = scroller.scrollTop;
+      scroller.scrollTop = scroller.scrollHeight;
+      return {
+        before,
+        after: scroller.scrollTop,
+        clientHeight: scroller.clientHeight,
+        overflowY: getComputedStyle(scroller).overflowY,
+        scrollHeight: scroller.scrollHeight
+      };
+    });
+    assert(scrollResult);
+    assert.equal(scrollResult.overflowY, "auto");
+    assert(scrollResult.scrollHeight > scrollResult.clientHeight);
+    assert(scrollResult.after > scrollResult.before);
     console.log("robot sound browser tests passed");
   } finally {
     await browser.close();

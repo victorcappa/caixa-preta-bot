@@ -74,6 +74,7 @@ export default function Chat() {
   const chatRequestControllerRef = useRef(null);
   const stoppedTypingIdsRef = useRef(new Set());
   const notifiedTypedIdsRef = useRef(new Set());
+  const soundOutputResetSequenceRef = useRef(null);
 
   const notifySceneZeroMessageTyped = useCallback((messageId) => {
     if (!messageId || notifiedTypedIdsRef.current.has(messageId)) return;
@@ -195,7 +196,14 @@ export default function Chat() {
   useEffect(() => robotSoundEngine.armAutoUnlock(), []);
 
   useEffect(() => {
-    if (robotSound) robotSoundEngine.setSettings(robotSound);
+    if (!robotSound) return;
+
+    robotSoundEngine.setSettings(robotSound);
+    const resetSequence = Number(robotSound.outputResetSequence || 0);
+    if (soundOutputResetSequenceRef.current !== null && resetSequence !== soundOutputResetSequenceRef.current) {
+      void robotSoundEngine.reconnectOutput();
+    }
+    soundOutputResetSequenceRef.current = resetSequence;
   }, [robotSound]);
 
   useEffect(() => {

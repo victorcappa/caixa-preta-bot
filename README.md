@@ -272,7 +272,10 @@ Por política de autoplay, Safari/Chrome podem manter o `AudioContext` suspenso
 até uma interação de teclado, toque ou mouse na própria janela pública. Fazer um
 click no operator desbloqueia os testes daquela janela, mas não garante o
 desbloqueio de outra janela de projeção. Antes do ensaio, interaja uma vez com a
-tela pública. Validação lógica rápida: `npm run test:robot-sound`.
+tela pública. Se conectar ou remover fones fizer o áudio desaparecer, use
+`RECONECTAR ÁUDIO`: o operator solicita pelo SSE que cada janela reconstrua seu
+grafo Web Audio. Mudanças de dispositivo também tentam essa recuperação
+automaticamente. Validação lógica rápida: `npm run test:robot-sound`.
 
 ## Queda Aviao
 
