@@ -8,6 +8,7 @@ async function main() {
   const initial = sound.createInitialRobotSoundState();
   assert.equal(initial.enabled, true);
   assert.equal(initial.preset, "normal");
+  assert.equal(initial.typingFrequency, 1);
   assert.equal(initial.outputResetSequence, 0);
   assert(initial.masterVolume > 0 && initial.masterVolume < 0.5);
 
@@ -15,14 +16,18 @@ async function main() {
     enabled: false,
     masterVolume: 4,
     typingVolume: -2,
+    typingFrequency: 4,
     outputResetSequence: -4,
     preset: "unknown"
   });
   assert.equal(normalized.enabled, false);
   assert.equal(normalized.masterVolume, 1);
   assert.equal(normalized.typingVolume, 0);
+  assert.equal(normalized.typingFrequency, 1);
   assert.equal(normalized.preset, "normal");
   assert.equal(normalized.outputResetSequence, 0);
+
+  assert.equal(sound.normalizeRobotSoundSettings({ typingFrequency: -1 }).typingFrequency, 0);
 
   assert.equal(sound.classifyRobotSoundCharacter("A"), "key");
   assert.equal(sound.classifyRobotSoundCharacter(" "), "space");
@@ -46,6 +51,17 @@ async function main() {
   globalThis.window = { setTimeout, clearTimeout };
   Math.random = () => 0;
   const engine = new engineModule.RobotSoundEngine();
+  let typingClicks = 0;
+  engine.relayEffect = () => false;
+  engine.canPlay = () => true;
+  engine.click = () => { typingClicks += 1; };
+  engine.setSettings({ ...engine.settings, typingFrequency: 0 });
+  engine.typing("A", { force: true, localOnly: true });
+  assert.equal(typingClicks, 0);
+  engine.setSettings({ ...engine.settings, typingFrequency: 1 });
+  engine.typing("A", { force: true, localOnly: true });
+  assert.equal(typingClicks, 1);
+
   const relayedCountdowns = [];
   engine.relayEffect = (effect, detail) => {
     if (effect === "countdown") relayedCountdowns.push(detail.value);

@@ -192,6 +192,20 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
         />
       </label>
 
+      <label className={styles.field}>
+        <span>FREQUÊNCIA DOS CLIQUES</span>
+        <output>{Math.round(draft.typingFrequency * 100)}%</output>
+        <input
+          aria-label="Frequência do som de digitação do robô"
+          max="1"
+          min="0"
+          onChange={(event) => commit({ typingFrequency: Number(event.target.value) }, 120)}
+          step="0.05"
+          type="range"
+          value={draft.typingFrequency}
+        />
+      </label>
+
       <label className={styles.selectField}>
         <span>PRESET DIGITAÇÃO</span>
         <select onChange={(event) => commit({ preset: event.target.value })} value={draft.preset}>

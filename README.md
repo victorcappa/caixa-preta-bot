@@ -546,8 +546,11 @@ fica salvo no navegador para o proximo reload.
 ## Sons procedurais do robô
 
 O `ROBOT SOUND ENGINE` fica no `/operator` e também no operator embutido da tela
-principal. Ele controla `SOUND ON/OFF`, volume geral, volume da digitação, som de
-encerramento e os presets `NORMAL`, `SECO`, `MECÂNICO` e `INSTÁVEL`. Os botões de
+principal. Ele controla `SOUND ON/OFF`, volume geral, volume e frequência dos
+cliques da digitação, som de encerramento e os presets `NORMAL`, `SECO`,
+`MECÂNICO` e `INSTÁVEL`. Em 100% o som acompanha todos os caracteres elegíveis;
+reduzir o slider faz o motor tocar em menos caracteres sem alterar a velocidade
+visual do texto. Os botões de
 teste cobrem digitação, `WAKE`, `THINKING`, `SUCCESS / OBEY`, `ERROR`, `GLITCH` e
 `IMPACT`. O teste soa na janela onde houve o clique; a projeção recebe os mesmos
 ajustes pelo estado compartilhado e pelo SSE existente.

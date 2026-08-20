@@ -64,11 +64,13 @@ async function main() {
     const soundPanel = page.getByLabel("Robot Sound Engine");
     await soundPanel.getByLabel("Volume geral dos efeitos do robô").fill("0.22");
     await soundPanel.getByLabel("Volume da digitação do robô").fill("0.35");
+    await soundPanel.getByLabel("Frequência do som de digitação do robô").fill("0.25");
     await soundPanel.getByRole("combobox").selectOption("instavel");
     await page.waitForFunction(async () => {
       const response = await fetch("/api/robot-sound");
       const settings = (await response.json()).robotSound;
-      return settings.preset === "instavel" && settings.masterVolume === 0.22 && settings.typingVolume === 0.35;
+      return settings.preset === "instavel" && settings.masterVolume === 0.22 &&
+        settings.typingVolume === 0.35 && settings.typingFrequency === 0.25;
     });
 
     await soundPanel.getByRole("button", { name: "TEST THINKING" }).click();
