@@ -18,6 +18,15 @@ const PRIMARY_STAGES = [
   ["tea", "TEA FOR TWO"]
 ];
 
+const COLLECTION_RESULTS = [
+  ["none", "NINGUÉM"],
+  ["few", "POUCOS"],
+  ["half", "METADE"],
+  ["many", "MUITOS"],
+  ["almost_all", "QUASE TODOS"],
+  ["all", "TODOS"]
+];
+
 function remainingTimer(timer, now) {
   if (timer?.status === "running" && timer.endsAt) {
     return Math.max(0, Math.ceil((Date.parse(timer.endsAt) - now) / 1000));
@@ -29,6 +38,7 @@ export default function SceneZeroController() {
   const [snapshot, setSnapshot] = useState({ sceneZero: null, instagram: null, game: null, suitcase: null });
   const [pending, setPending] = useState("");
   const [detail, setDetail] = useState("");
+  const [collectionObservation, setCollectionObservation] = useState("");
   const [notice, setNotice] = useState("SISTEMA PRONTO");
   const [now, setNow] = useState(Date.now());
   const teaAudioRef = useRef(null);
@@ -50,7 +60,7 @@ export default function SceneZeroController() {
   }, []);
 
   async function sceneAction(action, payload = {}) {
-    if (pending) return;
+    if (pending) return null;
     setPending(action);
     setNotice(`PROCESSANDO ${action.toUpperCase()}...`);
     try {
@@ -64,8 +74,10 @@ export default function SceneZeroController() {
       if (data.sceneZero) setSnapshot((current) => ({ ...current, sceneZero: data.sceneZero }));
       setNotice(data.message || action.toUpperCase());
       setDetail("");
+      return data;
     } catch (error) {
       setNotice(error.message);
+      return null;
     } finally {
       setPending("");
     }
@@ -104,6 +116,15 @@ export default function SceneZeroController() {
     sceneAction(action);
   }
 
+  async function recordCollectionResult(result, estimatedCount = null) {
+    const recorded = await sceneAction("collection-record-result", {
+      result,
+      estimatedCount,
+      observation: collectionObservation
+    });
+    if (recorded) setCollectionObservation("");
+  }
+
   const sceneZero = snapshot.sceneZero || {};
   const collection = sceneZero.collection || {};
   const timer = sceneZero.timer || {};
@@ -112,7 +133,7 @@ export default function SceneZeroController() {
   const game = snapshot.game || {};
   const suitcase = snapshot.suitcase || {};
   const participantSelection = sceneZero.participantSelection || {};
-  const participantSelectionBusy = ["preparing", "countdown", "roulette"].includes(participantSelection.status);
+  const participantSelectionBusy = ["preparing", "awaiting_invite", "countdown", "roulette"].includes(participantSelection.status);
   const participantCountdown = participantSelection.status === "countdown"
     ? countdownSeconds(participantSelection.countdownEndsAt, now)
     : null;
@@ -164,30 +185,73 @@ export default function SceneZeroController() {
           <Button onClick={() => sceneAction("collection-new-question")} pending={pending}>NOVA PERGUNTA</Button>
           <Button onClick={() => sceneAction("collection-rephrase")} pending={pending}>REFORMULAR</Button>
           <Button onClick={() => sceneAction("collection-comment")} pending={pending}>COMENTAR RESULTADO</Button>
+          <Button onClick={() => sceneAction("collection-refresh-local-context")} pending={pending}>ATUALIZAR CONTEXTO SP</Button>
           <Button danger onClick={() => sceneAction("collection-end")} pending={pending}>ENCERRAR COLETA</Button>
+          <div className={styles.quickGrid}>
+            {COLLECTION_RESULTS.map(([result, label]) => (
+              <Button key={result} onClick={() => recordCollectionResult(result)} pending={pending}>{label}</Button>
+            ))}
+          </div>
+          <div className={styles.quickGrid}>
+            {["0", "1", "2", "3", "4", "5+"].map((count) => (
+              <Button key={count} onClick={() => recordCollectionResult("count", count)} pending={pending}>{count}</Button>
+            ))}
+          </div>
+          <label className={styles.observationField}>
+            OBSERVAÇÃO / CORREÇÃO RÁPIDA
+            <input
+              value={collectionObservation}
+              onChange={(event) => setCollectionObservation(event.target.value)}
+              placeholder="Ex.: demoraram; riram; uma pessoa respondeu; plateia confusa"
+            />
+          </label>
+          <Button
+            onClick={() => recordCollectionResult("qualitative")}
+            pending={pending || !collectionObservation.trim()}
+          >REGISTRAR SÓ OBSERVAÇÃO</Button>
           <Readout label="ÚLTIMA PERGUNTA" value={collection.lastQuestion} />
           <Readout label="AÇÃO SOLICITADA" value={collection.lastRequestedAction} />
           <Readout label="ÚLTIMO COMENTÁRIO" value={collection.lastComment} />
+          <Readout label="TEMPORIZAÇÃO" value={collection.activeCountdown?.status === "running"
+            ? `${countdownSeconds(collection.activeCountdown.endsAt, now)}s / ${collection.activeCountdown.durationSeconds}s`
+            : (collection.activeCountdown?.status || "idle").toUpperCase()} />
+          <Readout label="DATASET" value={`${collection.questions?.length || 0} intervenções · ${collection.segments?.length || 0} segmentos · ${collection.instructionCount || 0} instruções`} />
+          <Readout label="OBEDIÊNCIA" value={collection.obedience
+            ? `respostas ${collection.obedience.answered || 0} · resistência ${collection.obedience.resisted || 0} · demora ${collection.obedience.delayed || 0} · confusão ${collection.obedience.confused || 0} · antecipação ${collection.obedience.anticipated || 0}`
+            : "—"} />
+          <Readout label="CONTEXTO SP" value={collection.localContext?.status === "ready"
+            ? `${new Date(collection.localContext.updatedAt).toLocaleString("pt-BR")} — ${collection.localContext.summary}`
+            : collection.localContext?.status === "error"
+              ? `ERRO — ${collection.localContext.error || "não atualizado"}`
+              : (collection.localContext?.status || "idle").toUpperCase()} />
           {questions.length ? <ol className={styles.history}>{questions.slice(0, 8).map((item) => <li key={item.id}>{item.text}</li>)}</ol> : null}
         </ControlBlock>
 
         <ControlBlock title="PARTICIPANTE">
           <Button primary onClick={() => sceneAction("participant-volunteers")} pending={pending || participantSelectionBusy}>INICIAR SELEÇÃO / 10s</Button>
           <Button onClick={() => sceneAction("choose-another-participant")} pending={pending || participantSelectionBusy}>NOVA ROLETA / OUTRA PESSOA</Button>
-          <Readout label="MINI GAME" value={participantSelection.status === "countdown" ? `MÃOS LEVANTADAS — ${participantCountdown}s` : (participantSelection.status || "idle").toUpperCase()} />
+          <Readout label="MINI GAME" value={participantSelection.status === "countdown" ? `MÃOS LEVANTADAS — ${participantCountdown}s` : participantSelection.status === "awaiting_invite" ? "AGUARDANDO FIM DA FALA" : (participantSelection.status || "idle").toUpperCase()} />
           <Readout label="NOMES NA ROLETA" value={(participantSelection.candidates || []).map((participant) => participant.name).join(" · ")} />
           <Readout label="COMENTÁRIO DA ROLETA" value={participantSelection.lastComment} />
           <Readout label="PARTICIPANTE ESCOLHIDO" value={sceneZero.currentParticipant?.name} />
           <small>Marcus Garcia e Victor Cappa nunca entram no sorteio.</small>
         </ControlBlock>
 
-        <ControlBlock title="MALAS">
+        <ControlBlock title="MALAS" wide>
           <Readout label="ESTADO" value={`${suitcase.phase || "IDLE"} / ${suitcase.activeExperience || "—"}`} />
+          <Readout label="PESSOA PESQUISADA" value={instagram.browserMode === "person_research"
+            ? `${instagram.research?.person || sceneZero.currentParticipant?.name || "—"} / ${(instagram.research?.step || instagram.status || "idle").toUpperCase()}`
+            : sceneZero.currentParticipant?.name} />
           <Button onClick={() => operatorCommand("/mala start")} pending={pending}>INICIAR / RETOMAR</Button>
           <Button onClick={() => operatorCommand("/mala 1")} pending={pending}>MALA 1</Button>
           <Button onClick={() => operatorCommand("/mala 2")} pending={pending}>MALA 2</Button>
           <Button onClick={() => operatorCommand("/mala 3")} pending={pending}>MALA 3</Button>
+          <Button primary onClick={() => sceneAction("suitcase-research-person")} pending={pending || !sceneZero.currentParticipant?.name}>PESQUISAR PARTICIPANTE</Button>
+          <Button onClick={() => sceneAction("suitcase-research-stop")} pending={pending || instagram.browserMode !== "person_research"}>FECHAR PESQUISA</Button>
           <Button danger onClick={() => operatorCommand("/mala abort")} pending={pending}>INTERROMPER JOGO</Button>
+          {instagram.browserMode === "person_research" && instagram.embedded && instagram.status !== "DISCONNECTED" ? (
+            <div className={styles.instagramPanel}><InstagramBrowserPanel instagram={instagram} /></div>
+          ) : null}
         </ControlBlock>
 
         <ControlBlock title="É BOLO?">

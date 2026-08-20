@@ -10,7 +10,8 @@ function timerSeconds(timer, now) {
   if (timer?.status === "running" && timer.endsAt) {
     return Math.max(0, Math.ceil((Date.parse(timer.endsAt) - now) / 1000));
   }
-  return timer?.remainingSeconds ?? 15;
+  if (timer?.status === "complete") return 0;
+  return timer?.remainingSeconds ?? timer?.durationSeconds ?? 15;
 }
 
 function countdownSeconds(endsAt, now) {
@@ -22,6 +23,7 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
   const audioRef = useRef(null);
   const tea = sceneZero?.teaForTwo;
   const timer = sceneZero?.timer;
+  const collectionTimer = sceneZero?.collection?.activeCountdown;
   const participantSelection = sceneZero?.participantSelection || {};
 
   useEffect(() => {
@@ -43,8 +45,11 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
     audio.play().catch(() => {});
   }, [tea?.sequence, tea?.status]);
 
-  const showTimer = ["running", "paused", "complete"].includes(timer?.status);
-  const seconds = timerSeconds(timer, now);
+  const visibleTimer = sceneZero?.stage === "collection" && ["running", "complete"].includes(collectionTimer?.status)
+    ? collectionTimer
+    : sceneZero?.stage === "singing" ? timer : null;
+  const showTimer = ["running", "paused", "complete"].includes(visibleTimer?.status);
+  const seconds = timerSeconds(visibleTimer, now);
   const airport = sceneZero?.stage === "airport" || sceneZero?.airportActive;
   const collapse = sceneZero?.stage === "collapse";
   const selectionCandidates = participantSelection.candidates || [];
@@ -69,9 +74,10 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
         </div>
       ) : null}
       {showTimer ? (
-        <div className={`${styles.timerOverlay} ${timer.status === "complete" ? styles.complete : ""}`} aria-live="assertive">
+        <div className={`${styles.timerOverlay} ${visibleTimer.status === "complete" ? styles.complete : ""}`} aria-live="assertive">
+          {visibleTimer === collectionTimer ? <small>COLETA EM CURSO</small> : null}
           <strong>{seconds}</strong>
-          {timer.status === "complete" ? <span>FIM</span> : null}
+          {visibleTimer.status === "complete" ? <span>FIM</span> : null}
         </div>
       ) : null}
       {showParticipantSelection ? (

@@ -71,6 +71,32 @@ export default function Chat() {
   const introDotsTimerRef = useRef(null);
   const chatRequestControllerRef = useRef(null);
   const stoppedTypingIdsRef = useRef(new Set());
+  const notifiedTypedIdsRef = useRef(new Set());
+
+  const notifySceneZeroMessageTyped = useCallback((messageId) => {
+    if (!messageId || notifiedTypedIdsRef.current.has(messageId)) return;
+    notifiedTypedIdsRef.current.add(messageId);
+
+    const send = async (attempt = 0) => {
+      try {
+        const response = await fetch("/api/scene-zero", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "message-typed", messageId }),
+          keepalive: true
+        });
+        if (!response.ok) throw new Error("scene-zero timing ack failed");
+      } catch {
+        if (attempt < 2) {
+          window.setTimeout(() => send(attempt + 1), 500 * (attempt + 1));
+          return;
+        }
+        notifiedTypedIdsRef.current.delete(messageId);
+      }
+    };
+
+    send();
+  }, []);
 
   useEffect(() => {
     function hydrateInitialMessages(nextMessages) {
@@ -205,12 +231,15 @@ export default function Chat() {
       if (index >= message.content.length) {
         clearInterval(timer);
         typingTimersRef.current.delete(message.id);
+        if (["scene-zero-collection", "scene-zero-roulette"].includes(message.source)) {
+          notifySceneZeroMessageTyped(message.id);
+        }
         drainTypingQueueRef.current?.();
       }
     }, TYPE_INTERVAL_MS);
 
     typingTimersRef.current.set(message.id, timer);
-  }, []);
+  }, [notifySceneZeroMessageTyped]);
 
   const drainTypingQueue = useCallback(() => {
     if (concurrentTypingRef.current) {
@@ -241,6 +270,7 @@ export default function Chat() {
       typingQueueRef.current = [];
       seenMessageIdsRef.current.clear();
       stoppedTypingIdsRef.current.clear();
+      notifiedTypedIdsRef.current.clear();
       setTypedReplies({});
     }
 
@@ -264,6 +294,24 @@ export default function Chat() {
     drainTypingQueue();
     return undefined;
   }, [drainTypingQueue, messages, sceneZero?.stage]);
+
+  useEffect(() => {
+    const waitingMessageIds = [
+      sceneZero?.participantSelection?.status === "awaiting_invite"
+        ? sceneZero.participantSelection.inviteMessageId
+        : null,
+      sceneZero?.collection?.activeCountdown?.status === "awaiting_message"
+        ? sceneZero.collection.activeCountdown.messageId
+        : null
+    ].filter(Boolean);
+
+    for (const messageId of waitingMessageIds) {
+      const message = messages.find((candidate) => candidate.id === messageId);
+      if (message && typedReplies[messageId] === message.content) {
+        notifySceneZeroMessageTyped(messageId);
+      }
+    }
+  }, [messages, notifySceneZeroMessageTyped, sceneZero, typedReplies]);
 
   useEffect(() => {
     const typingTimers = typingTimersRef.current;
@@ -594,6 +642,9 @@ export default function Chat() {
     : performanceEvents;
   const visibleInstagramPanel = instagram?.embedded && instagram.status && instagram.status !== "DISCONNECTED" && !instagramPanelClosed;
   const instagramPanelKey = [
+    instagram?.browserMode || "instagram",
+    instagram?.research?.person || "",
+    instagram?.research?.step || "",
     instagram?.targetProfile || instagram?.account || "instagram",
     instagram?.status || "DISCONNECTED",
     instagram?.currentUrl || "",

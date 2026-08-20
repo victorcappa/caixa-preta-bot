@@ -18,6 +18,8 @@ const MIN_FRAME_DELAY_MS = 34;
 const MAX_FRAME_DELAY_MS = 250;
 
 export default function InstagramBrowserPanel({ instagram, onClose }) {
+  const personResearch = instagram.browserMode === "person_research";
+  const researchPerson = instagram.research?.person || "pessoa escolhida";
   const [frameViewport, setFrameViewport] = useState(instagram.viewport || { width: 430, height: 760 });
   const [frameImage, setFrameImage] = useState("");
   const [frameError, setFrameError] = useState("");
@@ -218,11 +220,13 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
   }
 
   return (
-    <aside className={styles.panel} aria-label="Instagram real embutido">
+    <aside className={styles.panel} aria-label={personResearch ? "Pesquisa pública real embutida" : "Instagram real embutido"}>
       <header className={styles.header}>
         <div>
-          <span>INSTAGRAM REAL</span>
-          <strong>{instagram.targetProfile ? `@${instagram.targetProfile}` : `@${instagram.account || "caixapretabot"}`}</strong>
+          <span>{personResearch ? "PESQUISA PÚBLICA REAL" : "INSTAGRAM REAL"}</span>
+          <strong>{personResearch
+            ? researchPerson
+            : instagram.targetProfile ? `@${instagram.targetProfile}` : `@${instagram.account || "caixapretabot"}`}</strong>
         </div>
         <p>{instagram.message || instagram.status}</p>
         <button aria-label="Fechar Instagram embutido" onClick={onClose} type="button">
@@ -231,7 +235,7 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
       </header>
 
       <div
-        aria-label="Frame interativo do Instagram"
+        aria-label={personResearch ? "Frame interativo da pesquisa pública" : "Frame interativo do Instagram"}
         className={styles.viewport}
         onKeyDown={handleKeyDown}
         onWheel={handleWheel}
@@ -246,7 +250,7 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
         {frameImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            alt="Instagram real controlado pelo Playwright"
+            alt={personResearch ? `Pesquisa pública real por ${researchPerson}` : "Instagram real controlado pelo Playwright"}
             draggable="false"
             onError={() => setFrameError("FRAME RECONECTANDO")}
             onLoad={(event) => {

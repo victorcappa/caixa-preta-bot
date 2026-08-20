@@ -149,13 +149,33 @@ de falas. O modelo decide como formular a condução e se vale a pena reconhecer
 metalinguisticamente a operação humana. A etapa só muda em outro clique do
 operador.
 
-Na coleta, `NOVA PERGUNTA`, `REFORMULAR` e `COMENTAR RESULTADO` geram nova fala
-com contexto e objetivos, não um questionário fixo. O estado guarda as últimas
-perguntas, a ação coletiva extraída da fala e o último comentário. O histórico
-é reenviado ao modelo para reduzir repetição dentro da apresentação. Use o
-campo de contexto opcional para informar resultados reais, por exemplo
-"metade levantou a mão"; sem isso, o bot é instruído a não inventar contagens
-ou reações.
+Na coleta, `NOVA PERGUNTA`, `REFORMULAR` e `COMENTAR RESULTADO` geram uma
+intervenção dentro da performance, não um questionário fixo. O modelo recebe
+repertórios de assuntos e ações, a personalidade e a memória já existentes,
+além do dataset da sala: tópico, ação, tipo de resposta, intensidade,
+sensibilidade, escala, condições cruzadas, resultado aproximado e observações
+reais. Ele é orientado a começar normal, variar assunto e ação, construir
+subgrupos, cruzar respostas anteriores e aumentar a estranheza gradualmente.
+
+Depois de uma intervenção, o operador pode registrar `NINGUÉM`, `POUCOS`,
+`METADE`, `MUITOS`, `QUASE TODOS`, `TODOS`, uma contagem de `0` a `5+` ou só
+uma observação livre. A observação serve também para corrigir a leitura do robô
+com acontecimentos como riso, demora, resistência, antecipação ou confusão.
+Resultados e segmentos ficam em `showState.sceneZero.collection` e influenciam
+a próxima geração; números e reações não informados não podem ser inventados.
+
+`ATUALIZAR CONTEXTO SP` faz uma única busca web pela Responses API e grava um
+resumo compacto com até seis fatos e fontes sobre clima, transporte,
+mobilidade, custo cotidiano e acontecimentos urbanos leves. Esse contexto é
+reutilizado nas próximas perguntas, sem busca a cada geração. Tragédias,
+crimes, acidentes e fatos sensíveis são excluídos da instrução de pesquisa. O
+controller mostra status, horário, resumo ou erro da última atualização.
+
+Quando uma fala de coleta pede explicitamente uma duração, a contagem só começa
+depois que o efeito de digitação pública termina (com fallback de segurança se
+o navegador não confirmar). A projeção mostra a contagem e `FIM`; trocar de
+etapa cancela a temporização. A progressão dramatúrgica continua inteiramente
+manual.
 
 Ao entrar em `ESCOLHER PARTICIPANTE`, o bot improvisa um convite mais
 sarcástico, informal e Gen Z para as pessoas levantarem a mão. A projeção abre
@@ -175,6 +195,17 @@ O bloco `MALAS` chama o `SuitcaseDirector` existente. `É BOLO?` inicia e
 controla o jogo `verdade_ou_bolo` já registrado no `GameDirector`; comentários
 e provocações continuam sendo falas geradas, enquanto rodada, resposta e
 revelação permanecem estados determinísticos do jogo.
+
+Ao entrar em `JOGO DAS MALAS`, o navegador Playwright embedded já usado pelo
+Instagram pesquisa automaticamente o nome do participante escolhido. A
+sequência abre o Google, percorre os resultados, visita uma página pública que
+pareça relevante, faz scroll e tenta localizar e abrir um perfil público do
+Instagram. A pesquisa é somente leitura: não segue, curte, comenta, envia
+mensagem nem executa login novo. URLs locais, telas de login e agregadores de
+dados pessoais conhecidos são bloqueados. O mesmo frame continua interativo
+para exploração manual; `PESQUISAR PARTICIPANTE` reinicia a sequência e
+`FECHAR PESQUISA` encerra a exibição. Sair da etapa das malas também fecha a
+pesquisa, preservando o perfil persistente para o uso normal do Instagram.
 
 O timer cênico usa duração fixa de 15 segundos e um `endsAt` mantido no estado
 do servidor. A projeção calcula a contagem pelo relógio final e mostra

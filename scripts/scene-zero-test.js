@@ -2,12 +2,15 @@ const assert = require("node:assert/strict");
 
 async function main() {
   const sceneZero = await import("../lib/scene-zero/state.js");
+  const collection = await import("../lib/scene-zero/collection.js");
   const messageTiming = await import("../lib/messageTiming.js");
   const initial = sceneZero.createInitialSceneZeroState();
 
   assert.equal(initial.stage, "idle");
   assert.equal(initial.timer.remainingSeconds, 15);
   assert.equal(initial.glitchLevel, "normal");
+  assert.equal(initial.collection.obedience.anticipated, 0);
+  assert(initial.sessionStartedAt);
   assert.equal(sceneZero.normalizeSceneZeroStage("airport"), "airport");
   assert.equal(sceneZero.normalizeSceneZeroStage("automatic-timeline"), null);
 
@@ -54,9 +57,30 @@ async function main() {
     }
   };
   const direction = sceneZero.buildSceneZeroDirection(active, "collection_new_question");
-  assert.match(direction, /Perguntas anteriores/);
-  assert.match(direction, /não devem ser repetidas/);
+  assert.match(direction, /DATASET DA SALA/);
+  assert.match(direction, /intervenção inédita/);
+  assert.match(direction, /sessão em curso há aproximadamente/);
   assert(!direction.includes("Bata três palmas quem veio de transporte público"));
+
+  const parsedCollection = collection.parseCollectionIntervention(JSON.stringify({
+    fala: "Quem usa metrô levante a mão e mantenha por 12 segundos.",
+    question: {
+      topic: "sao_paulo",
+      action: "KEEP_HAND_RAISED",
+      expectedAnswerType: "binary",
+      intensity: 2,
+      sensitivity: "low",
+      locationContext: "Metrô de São Paulo",
+      scope: "room",
+      conditions: ["usa metrô"],
+      waitSeconds: 30
+    }
+  }));
+  assert.equal(parsedCollection.data.action, "KEEP_HAND_RAISED");
+  assert.equal(parsedCollection.data.waitSeconds, 12);
+  assert.equal(parsedCollection.data.result, null);
+  assert.match(collection.collectionRepertoireBlock(), /CHANGE_SEAT só pode ser escolhido/);
+  assert.match(collection.collectionRepertoireBlock(), /Cruze respostas anteriores/);
 
   const participantDirection = sceneZero.buildSceneZeroDirection(
     { ...initial, stage: "participant" },

@@ -31,5 +31,61 @@
         "caption": "conteudo preparado para ensaio"
       }
     ]
+  },
+  {
+    "id": "rogerio",
+    "name": "Robinson Rogério",
+    "instagramHandle": "@rogerio.robinson",
+    "instagramUrl": "",
+    "enabled": true,
+    "preparedFeed": []
+  },
+  {
+    "id": "livinha",
+    "name": "Livinha Machado",
+    "instagramHandle": "@machadolivinha",
+    "instagramUrl": "",
+    "enabled": true,
+    "preparedFeed": []
+  },
+  {
+    "id": "marcus",
+    "name": "Marcus Garcia",
+    "instagramHandle": "@mmelogarcia",
+    "instagramUrl": "",
+    "enabled": true,
+    "preparedFeed": []
+  },
+  {
+    "id": "tati",
+    "name": "Tati Mayumi",
+    "instagramHandle": "@tati.mayumi",
+    "instagramUrl": "",
+    "enabled": true,
+    "preparedFeed": []
+  },
+  {
+    "id": "lara",
+    "name": "Lara Duarte",
+    "instagramHandle": "@gambiarrassentimentais",
+    "instagramUrl": "",
+    "enabled": true,
+    "preparedFeed": []
+  },
+  {
+    "id": "ney",
+    "name": "Ney Piacentini",
+    "instagramHandle": "@neypiacentini",
+    "instagramUrl": "",
+    "enabled": true,
+    "preparedFeed": []
+  },
+  {
+    "id": "isabella",
+    "name": "Isabella Miranda",
+    "instagramHandle": "@isabellamir__",
+    "instagramUrl": "",
+    "enabled": true,
+    "preparedFeed": []
   }
 ]

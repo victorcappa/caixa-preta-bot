@@ -1,8 +1,10 @@
 import { getExistingInstagramController, getInstagramController } from "@/lib/instagram/InstagramController";
-import { generateCaixaPretaTurn } from "@/lib/openai";
+import { generateCaixaPretaTurn, refreshSceneZeroLocalContext } from "@/lib/openai";
+import { collectionRepertoireBlock, parseCollectionIntervention } from "@/lib/scene-zero/collection";
 import { buildSceneZeroDirection, sceneZeroGlitchCommand } from "@/lib/scene-zero/state";
 import { showState } from "@/lib/showState";
 import { SHOW_MODES } from "@/prompts/modes";
+import { findInstagramParticipantByName } from "@/lib/suitcases/SuitcaseDirector";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -47,6 +49,40 @@ const STAGE_DIRECTIONS = {
 function requestedActionFromText(text = "") {
   const match = text.match(/\b(?:levante(?:m)?|bata(?:m)?|aponte(?:m)?|fique(?:m)?|faça(?:m)?|responda(?:m)?|diga(?:m)?|estenda(?:m)?|acene(?:m)?)[^.!?]*/iu);
   return match?.[0]?.trim() || "ação coletiva descrita na fala projetada";
+}
+
+async function generateCollectionIntervention(directionAction, detail = "", { replaceLast = false } = {}) {
+  const state = showState.privateSnapshot();
+  const turn = await generateCaixaPretaTurn({
+    state,
+    allowPerformance: false,
+    allowWebSearch: false,
+    operatorInstruction: [
+      buildSceneZeroDirection(state.sceneZero, directionAction, detail),
+      collectionRepertoireBlock(),
+      "A coleta constrói dados sobre a sala; não é entrevista. Comece normal e aumente especificidade, condicionamento, cruzamento e falsa precisão gradualmente.",
+      "Só declare waitSeconds quando a ação realmente precisar de uma janela temporal. Se declarar, diga claramente na fala a mesma duração em segundos. Se a fala disser mais de uma duração, vale a última; evite se corrigir de um número para outro.",
+      "Nunca invente resultado, quantidade ou reação ainda não registrada pelo operador."
+    ].join("\n\n"),
+    operatorOutputInstruction: [
+      "Responda somente JSON válido, sem Markdown.",
+      "Formato exato: {\"fala\":\"texto público\",\"question\":{\"topic\":\"dimensão investigada\",\"action\":\"UMA_ACTION_PERMITIDA\",\"expectedAnswerType\":\"binary|range|count|choice|verbal|gesture|silence|qualitative\",\"intensity\":0,\"sensitivity\":\"low|medium|high\",\"locationContext\":\"referência local ou vazio\",\"scope\":\"room|subgroup|individual\",\"conditions\":[\"condições ou segmentos cruzados\"],\"waitSeconds\":null}}.",
+      "intensity vai de 0 a 5. waitSeconds é null ou de 3 a 60. Não coloque pergunta pronta fora de fala."
+    ].join(" ")
+  });
+  const intervention = parseCollectionIntervention(turn.text);
+  if (!intervention) throw new Error("SCENE ZERO COLLECTION JSON INVALID");
+
+  const message = showState.addMessage("assistant", intervention.text, "scene-zero-collection");
+  showState.controlSceneZero("record-output", {
+    kind: "collection-question",
+    text: intervention.text,
+    detail: intervention.data.action,
+    collectionData: intervention.data,
+    messageId: message.id,
+    replaceLast
+  }, { source: "agent" });
+  return { ...intervention, messageId: message.id };
 }
 
 function applyGeneratedTurn(turn) {
@@ -126,11 +162,12 @@ async function startParticipantFlow({ chooseAnother = false, detail = "" } = {})
     return { applied: false, error: "SCENE ZERO PARTICIPANT COPY INVALID", state: showState.snapshot().sceneZero };
   }
 
-  showState.addMessage("assistant", sequence.invite, "scene-zero-roulette");
+  const inviteMessage = showState.addMessage("assistant", sequence.invite, "scene-zero-roulette");
   const started = showState.startSceneZeroParticipantSelection({
     invite: sequence.invite,
     comments: sequence.comments,
-    announcement: sequence.announcement
+    announcement: sequence.announcement,
+    inviteMessageId: inviteMessage.id
   });
   return { ...started, text: sequence.invite };
 }
@@ -150,9 +187,28 @@ function applyGlitchLevel(level) {
   showState.controlGlitch(command.action, command.payload, { source: "scene-zero" });
 }
 
+async function researchCurrentSceneZeroParticipant() {
+  const participant = showState.snapshot().sceneZero?.currentParticipant;
+  if (!participant?.name) {
+    return { status: "missing", message: "PESQUISA: participante ainda não escolhido" };
+  }
+  const knownParticipant = findInstagramParticipantByName(participant.name);
+  const controller = getInstagramController({ reporter: (instagram) => showState.updateInstagram(instagram) });
+  return controller.researchPerson(participant.name, {
+    knownInstagramHandle: knownParticipant?.instagramHandle || ""
+  });
+}
+
 async function enterStage(stage, detail) {
   const changed = showState.controlSceneZero("set-stage", { stage, detail }, { source: "operator" });
   if (!changed.applied) return changed;
+
+  if (stage !== "suitcases") {
+    const controller = getExistingInstagramController();
+    if (controller?.browserMode === "person_research") {
+      await controller.stopPersonResearch();
+    }
+  }
 
   if (stage === "participant") {
     const participantFlow = await startParticipantFlow({ detail });
@@ -162,6 +218,12 @@ async function enterStage(stage, detail) {
   if (stage === "suitcases") {
     showState.setMode(SHOW_MODES.malas);
     if (!showState.snapshot().suitcase?.active) showState.startSuitcases({ source: "scene-zero-operator" });
+    const researchPromise = researchCurrentSceneZeroParticipant();
+    const [turn, research] = await Promise.all([
+      speak(STAGE_DIRECTIONS[stage], detail),
+      researchPromise
+    ]);
+    return { ...changed, turn, research, state: showState.snapshot().sceneZero };
   }
 
   if (stage === "cake") {
@@ -191,14 +253,11 @@ async function enterStage(stage, detail) {
     showState.controlGlitch("stop", {}, { source: "scene-zero" });
   }
 
-  const turn = await speak(STAGE_DIRECTIONS[stage], detail);
   if (stage === "collection") {
-    showState.controlSceneZero("record-output", {
-      kind: "collection-question",
-      text: turn.text,
-      detail: requestedActionFromText(turn.text)
-    }, { source: "agent" });
+    const intervention = await generateCollectionIntervention(STAGE_DIRECTIONS[stage], detail);
+    return { ...changed, turn: { text: intervention.text } };
   }
+  const turn = await speak(STAGE_DIRECTIONS[stage], detail);
   return { ...changed, turn };
 }
 
@@ -211,6 +270,11 @@ export async function POST(request) {
     const body = await request.json().catch(() => ({}));
     const action = `${body.action || ""}`;
     const detail = `${body.detail || ""}`.trim();
+
+    if (action === "message-typed") {
+      const result = showState.completeSceneZeroMessageTyping(body.messageId);
+      return Response.json({ message: result.applied ? "TEMPORIZAÇÃO INICIADA" : "MENSAGEM SEM TEMPORIZAÇÃO PENDENTE", result, sceneZero: showState.snapshot().sceneZero });
+    }
 
     if (action === "set-stage") {
       const result = await enterStage(body.stage, detail);
@@ -238,6 +302,40 @@ export async function POST(request) {
       });
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
       return Response.json({ message: "SELEÇÃO AUTOMÁTICA INICIADA — 10s", sceneZero: showState.snapshot().sceneZero, text: result.text });
+    }
+
+    if (action === "collection-record-result") {
+      const result = showState.controlSceneZero(action, body, { source: "operator" });
+      if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
+      return Response.json({ message: "RESULTADO REGISTRADO", sceneZero: result.state });
+    }
+
+    if (action === "collection-refresh-local-context") {
+      showState.controlSceneZero("collection-local-context-loading", {}, { source: "operator" });
+      try {
+        const localContext = await refreshSceneZeroLocalContext();
+        const result = showState.controlSceneZero("collection-local-context-ready", localContext, { source: "system" });
+        return Response.json({ message: "CONTEXTO SP ATUALIZADO", sceneZero: result.state });
+      } catch (error) {
+        const result = showState.controlSceneZero("collection-local-context-error", { error: error.message }, { source: "system" });
+        return Response.json({ error: "CONTEXTO SP NÃO ATUALIZADO", sceneZero: result.state }, { status: 502 });
+      }
+    }
+
+    if (action === "suitcase-research-person") {
+      const result = await researchCurrentSceneZeroParticipant();
+      const status = result.status === "missing" ? 400 : result.status === "error" ? 502 : 200;
+      return Response.json({
+        ...(status >= 400 ? { error: result.message } : { message: result.message }),
+        research: result,
+        sceneZero: showState.snapshot().sceneZero
+      }, { status });
+    }
+
+    if (action === "suitcase-research-stop") {
+      const controller = getExistingInstagramController();
+      const result = controller ? await controller.stopPersonResearch() : { status: "idle", message: "PESQUISA: navegador inativo" };
+      return Response.json({ message: result.message || "PESQUISA ENCERRADA", sceneZero: showState.snapshot().sceneZero });
     }
 
     if (["tea-play", "tea-restart", "tea-stop"].includes(action)) {
@@ -268,7 +366,23 @@ export async function POST(request) {
       const stateAction = action === "collection-end" ? "collection-end" : action;
       const changed = showState.controlSceneZero(stateAction, body, { source: "operator" });
       if (!changed.applied) return Response.json({ error: changed.error, sceneZero: changed.state }, { status: 400 });
-      const turn = await speak(DIRECTION_ACTIONS[action], detail);
+      if (["collection-new-question", "collection-rephrase"].includes(action)) {
+        const intervention = await generateCollectionIntervention(DIRECTION_ACTIONS[action], detail, {
+          replaceLast: action === "collection-rephrase"
+        });
+        return Response.json({ message: action.toUpperCase(), sceneZero: showState.snapshot().sceneZero, text: intervention.text });
+      }
+      const turn = action === "collection-comment"
+        ? await generateCaixaPretaTurn({
+          state: showState.privateSnapshot(),
+          operatorInstruction: buildSceneZeroDirection(showState.privateSnapshot().sceneZero, DIRECTION_ACTIONS[action], detail),
+          allowPerformance: false,
+          allowWebSearch: false
+        }).then((generated) => {
+          applyGeneratedTurn(generated);
+          return generated;
+        })
+        : await speak(DIRECTION_ACTIONS[action], detail);
       const collectionKind = ["collection-new-question", "collection-rephrase"].includes(action)
         ? "collection-question"
         : action === "collection-comment" ? "collection-comment" : null;

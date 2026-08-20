@@ -27,6 +27,9 @@
 .readout strong { overflow-wrap: anywhere; }
 .history { flex: 1 1 100%; max-height: 230px; margin: 6px 0 0; padding: 10px 10px 10px 34px; overflow: auto; color: #bdbdbd; background: #070707; }
 .history li { margin: 0 0 8px; }
+.quickGrid { flex: 1 1 100%; display: grid; grid-template-columns: repeat(6, minmax(80px, 1fr)); gap: 6px; }
+.observationField { flex: 1 1 100%; display: grid; gap: 6px; color: #969696; font-size: 11px; letter-spacing: .1em; }
+.observationField input { min-height: 42px; padding: 0 10px; color: #fff; background: #050505; border: 1px solid #343434; font: inherit; }
 .timer { flex: 0 0 180px; display: grid; place-items: center; min-height: 150px; color: #fff; background: #000; border: 2px solid #fff; font-size: 96px; line-height: 1; }
 .timerComplete { color: #ff3458; border-color: #ff3458; animation: pulse .55s steps(2) infinite; }
 .timerStatus { align-self: center; min-width: 100px; color: #bcbcbc; }
@@ -34,4 +37,4 @@
 .instagramPanel { flex: 1 1 100%; min-height: 520px; height: 62vh; border: 1px solid #303030; overflow: hidden; }
 .notice { position: sticky; bottom: 0; margin: 18px -24px -24px; padding: 12px 24px; color: #00ff66; background: rgba(0,0,0,.94); border-top: 1px solid #303030; }
 @keyframes pulse { 50% { opacity: .35; } }
-@media (max-width: 1000px) { .header { grid-template-columns: 1fr; } .stageGrid { grid-template-columns: repeat(2, 1fr); } .blocks { grid-template-columns: 1fr; } .wide { grid-column: auto; } .levels { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 1000px) { .header { grid-template-columns: 1fr; } .stageGrid { grid-template-columns: repeat(2, 1fr); } .blocks { grid-template-columns: 1fr; } .wide { grid-column: auto; } .levels { grid-template-columns: repeat(2, 1fr); } .quickGrid { grid-template-columns: repeat(3, 1fr); } }

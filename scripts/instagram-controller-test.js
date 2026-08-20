@@ -7,6 +7,22 @@ async function main() {
   assert.equal(controllerModule.normalizeUsername("@cappavictor"), "cappavictor");
   assert.equal(controllerModule.normalizeUsername(" cappavictor "), "cappavictor");
   assert.equal(controllerModule.normalizeUsername("https://instagram.com/cappavictor"), "");
+  assert.equal(controllerModule.normalizeResearchPersonName("  Janaína\n  Leite  "), "Janaína Leite");
+  assert.equal(controllerModule.normalizePublicResearchUrl("http://127.0.0.1/admin"), null);
+  assert.equal(controllerModule.normalizePublicResearchUrl("https://www.jusbrasil.com.br/pessoa/teste"), null);
+  assert.equal(
+    controllerModule.normalizePublicResearchUrl("https://www.google.com/url?q=https%3A%2F%2Fwww.instagram.com%2Fjanainaleite%2F&sa=U"),
+    "https://www.instagram.com/janainaleite/"
+  );
+  assert.deepEqual(controllerModule.selectPersonResearchLinks([
+    "https://www.google.com/search?q=janaina",
+    "https://festival.example.org/artistas/janaina-leite",
+    "https://www.instagram.com/janainaleite/",
+    "https://www.instagram.com/p/post-id/"
+  ]), {
+    interesting: "https://festival.example.org/artistas/janaina-leite",
+    instagram: "https://www.instagram.com/janainaleite/"
+  });
 
   assert.deepEqual(commands.parseInstagramCommand("follow cappavictor"), {
     valid: true,
