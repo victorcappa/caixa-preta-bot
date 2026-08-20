@@ -198,7 +198,12 @@ export default function QuedaAviaoController() {
           </button>
         </div>
 
-        <EditableCueController controllerId="queda-aviao-sampler" embedded />
+        <EditableCueController
+          controllerId="queda-aviao-sampler"
+          embedded
+          importDirectory="audios/queda-aviao"
+          importType="audio"
+        />
 
         <label className={styles.field}>
           <span>FALA / SEGMENTO</span>

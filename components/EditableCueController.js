@@ -63,6 +63,11 @@ function createCue(allowedTypes, colors) {
   };
 }
 
+function cueLabelFromAssetPath(assetPath = "") {
+  const filename = assetPath.split("/").pop() || "Novo Botão";
+  return filename.replace(/\.[^.]+$/, "") || "Novo Botão";
+}
+
 async function fetchCueConfig(controllerId) {
   const response = await fetch(`/api/controller-cues?id=${encodeURIComponent(controllerId)}`, { cache: "no-store" });
   const data = await response.json();
@@ -95,7 +100,13 @@ async function postSceneCue(controllerId, action, cue = null, extra = {}) {
   return { response, data };
 }
 
-export default function EditableCueController({ controllerId, embedded = false, renderStageOverlay = null }) {
+export default function EditableCueController({
+  controllerId,
+  embedded = false,
+  importDirectory = "",
+  importType = "audio",
+  renderStageOverlay = null
+}) {
   const [config, setConfig] = useState(null);
   const [assets, setAssets] = useState(EMPTY_ASSETS);
   const [colors, setColors] = useState(["#00ff66"]);
@@ -492,6 +503,68 @@ export default function EditableCueController({ controllerId, embedded = false, 
     }
   }
 
+  async function importFolderAssets() {
+    if (!config || !importDirectory || saving) {
+      return;
+    }
+
+    setSaving(true);
+    setStatus("LENDO PASTA...");
+
+    try {
+      const { response: refreshResponse, data: refreshData } = await fetchCueConfig(controllerId);
+
+      if (!refreshResponse.ok) {
+        setStatus(refreshData.error || "FOLDER READ ERROR");
+        return;
+      }
+
+      const normalizedDirectory = importDirectory.replace(/^\/+|\/+$/g, "");
+      const prefix = `${normalizedDirectory}/`;
+      const folderAssets = (refreshData.assets?.[importType] || []).filter((asset) => {
+        const relativePath = asset.path.startsWith(prefix) ? asset.path.slice(prefix.length) : "";
+        return relativePath && !relativePath.includes("/");
+      });
+      const existingPaths = new Set(config.cues.map((cue) => cue.assetPath).filter(Boolean));
+      const importedCues = folderAssets
+        .filter((asset) => !existingPaths.has(asset.path))
+        .map((asset, index) => ({
+          ...createCue([importType], colors),
+          label: cueLabelFromAssetPath(asset.path),
+          type: importType,
+          assetPath: asset.path,
+          color: colors[(config.cues.length + index) % colors.length] || "#00ff66"
+        }));
+
+      setAssets(refreshData.assets || assets);
+
+      if (importedCues.length === 0) {
+        setStatus(`PASTA SINCRONIZADA — ${folderAssets.length} ARQUIVOS`);
+        return;
+      }
+
+      const nextConfig = { ...config, cues: [...config.cues, ...importedCues] };
+      const { response: saveResponse, data: saveData } = await saveCueConfig(controllerId, nextConfig);
+
+      if (!saveResponse.ok) {
+        setStatus(saveData.error || "FOLDER IMPORT ERROR");
+        return;
+      }
+
+      setConfig(saveData.config);
+      setAssets(saveData.assets || refreshData.assets || assets);
+      setColors(saveData.colors || colors);
+      setSelectedCueId(importedCues[0].id);
+      setStatus(importedCues.length === 1
+        ? "1 BOTÃO CRIADO DA PASTA"
+        : `${importedCues.length} BOTÕES CRIADOS DA PASTA`);
+    } catch {
+      setStatus("FOLDER IMPORT ERROR");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function uploadAsset(event) {
     const file = event.target.files?.[0];
 
@@ -610,6 +683,9 @@ export default function EditableCueController({ controllerId, embedded = false, 
           <button onClick={addCue} type="button">NOVO BOTÃO</button>
           <button disabled={!selectedCue} onClick={duplicateCue} type="button">DUPLICAR</button>
           <button disabled={!selectedCue || cues.length <= 1} onClick={removeCue} type="button">REMOVER</button>
+          {importDirectory ? (
+            <button disabled={saving} onClick={importFolderAssets} type="button">CRIAR BOTÕES DOS ARQUIVOS DA PASTA</button>
+          ) : null}
           <button className={styles.saveButton} disabled={saving} onClick={saveDefault} type="button">SALVAR PADRÃO</button>
         </div>
 

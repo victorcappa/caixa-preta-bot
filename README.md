@@ -147,7 +147,9 @@ arquivo sem a extensão. Arquivos salvos nessa pasta são preservados e entram
 automaticamente no sampler, sem qualquer rotina de exclusão.
 Na própria tela, abra `CONFIGURAR SAMPLES / ATALHOS`, selecione o botão a editar,
 escolha ou envie outro arquivo, ajuste nome/atalho e use `SALVAR PADRÃO`. Também
-é possível criar novos botões. A persistência segue o fluxo compartilhado em
+é possível criar novos botões. `CRIAR BOTÕES DOS ARQUIVOS DA PASTA` relê o
+diretório naquele instante, acrescenta e salva um pad para cada áudio ainda não
+cadastrado, sem remover pads ou arquivos existentes. A persistência segue o fluxo compartilhado em
 `data/controller-cues.json`; uploads ficam em
 `assets/controller-cues/queda-aviao-sampler/`.
 
