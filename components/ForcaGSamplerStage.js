@@ -220,26 +220,24 @@ function TextLayer({ item }) {
 function ShaderLayer({ shaders }) {
   const intensity = Math.max(0, Math.min(100, Number(shaders?.intensity) || 0)) / 100;
   if (!shaders?.tunnel && !shaders?.redout && !shaders?.distortion) return null;
-  const className = [
-    styles.shaderLayer,
-    shaders.tunnel ? styles.shaderTunnel : "",
-    shaders.redout ? styles.shaderRedout : "",
-    shaders.distortion ? styles.shaderDistortion : ""
-  ].filter(Boolean).join(" ");
   return (
     <div
       aria-hidden="true"
-      className={className}
+      className={styles.shaderLayer}
       style={{
-        "--shader-tunnel": `${0.72 + intensity * 0.26}`,
-        "--tunnel-clear": `${Math.max(12, 48 - intensity * 30)}%`,
-        "--tunnel-mid": `${Math.max(30, 68 - intensity * 24)}%`,
-        "--shader-redout": `${0.12 + intensity * 0.42}`,
+        "--shader-tunnel": `${0.88 + intensity * 0.115}`,
+        "--tunnel-clear": `${Math.max(10, 32 - intensity * 20)}%`,
+        "--tunnel-mid": `${Math.max(24, 48 - intensity * 18)}%`,
+        "--shader-redout": `${0.18 + intensity * 0.48}`,
         "--shader-a": `${0.04 + intensity * 0.12}`,
         "--shader-b": `${0.03 + intensity * 0.08}`,
         "--shader-shift": `${intensity * 18}px`
       }}
-    />
+    >
+      {shaders.tunnel ? <div className={styles.shaderTunnel} /> : null}
+      {shaders.distortion ? <div className={styles.shaderDistortion} /> : null}
+      {shaders.redout ? <div className={styles.shaderRedout} /> : null}
+    </div>
   );
 }
 

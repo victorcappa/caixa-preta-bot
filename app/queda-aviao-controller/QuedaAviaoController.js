@@ -158,6 +158,7 @@ export default function QuedaAviaoController() {
           cueLabel={selectedSample?.label || ""}
           onChange={(cueId, settings) => samplerRef.current?.updateCueAudioEffects(cueId, settings)}
           onPersist={(cueId, settings) => samplerRef.current?.updateCueAudioEffects(cueId, settings, { persist: true })}
+          prominentPitch
           settings={selectedSample?.audioEffects}
         />
       </section>

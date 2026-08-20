@@ -48,6 +48,34 @@
   gap: 7px;
 }
 
+.prominentPitch {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  border: 1px solid #9cffbd;
+  background: rgba(156, 255, 189, 0.07);
+  padding: 8px;
+}
+
+.prominentPitch .handle {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.prominentPitch button {
+  min-width: 92px;
+  border: 1px solid currentColor;
+  background: #171717;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.pitchOn { color: #9cffbd; }
+.pitchOff { color: #888; }
+
 .presets {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
@@ -130,4 +158,6 @@
   .presets,
   .pedals,
   .handles { grid-template-columns: 1fr; }
+  .prominentPitch { grid-template-columns: 1fr; }
+  .prominentPitch button { min-height: 34px; }
 }

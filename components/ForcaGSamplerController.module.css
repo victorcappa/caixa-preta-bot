@@ -62,8 +62,20 @@
 .master > button { padding: 6px 11px; }
 .emergency { min-height: 50px !important; border: 2px solid #ff477d !important; background: #3a0714 !important; color: #fff !important; font-weight: 800 !important; }
 .dangerSmall { color: #ff9db8 !important; }
-.volume { min-width: min(320px, 100%); display: grid; gap: 4px; color: #bceff7; font-size: .68rem; }
-.volume input { width: 100%; }
+.masterVolumeDock {
+  position: fixed;
+  z-index: 100;
+  top: 104px;
+  right: 14px;
+  width: clamp(190px, 24vw, 300px);
+  border: 1px solid #70f4ff;
+  background: rgba(3, 10, 12, .96);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .62);
+  padding: 9px 11px;
+}
+.masterVolumeDock label { display: grid; grid-template-columns: 1fr auto; gap: 5px 10px; color: #bceff7; font-size: .68rem; }
+.masterVolumeDock strong { color: #fff; }
+.masterVolumeDock input { grid-column: 1 / -1; width: 100%; accent-color: #70f4ff; }
 .warning { margin: 0; padding: 7px 9px; border-left: 3px solid #ff477d; color: #ffb2c4; background: #24070f; font-size: .68rem; overflow-wrap: anywhere; }
 
 @keyframes pulse { from { opacity: .55; } to { opacity: 1; } }
@@ -72,6 +84,7 @@
   .controller { padding: 8px; }
   .padGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .freeText { grid-template-columns: 1fr; }
+  .masterVolumeDock { top: 98px; right: 8px; width: min(220px, calc(100vw - 16px)); }
 }
 
 @media (min-width: 1000px) {

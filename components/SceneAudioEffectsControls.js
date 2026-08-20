@@ -24,7 +24,7 @@ const PEDALS = [
   ["pitchEnabled", "PITCH"]
 ];
 
-export default function SceneAudioEffectsControls({ cueId = "", cueLabel = "", settings, onChange, onPersist }) {
+export default function SceneAudioEffectsControls({ cueId = "", cueLabel = "", settings, onChange, onPersist, prominentPitch = false }) {
   const [draft, setDraft] = useState(() => normalizeSceneAudioEffects(settings));
   const [status, setStatus] = useState("READY");
   const timersRef = useRef(new Map());
@@ -84,6 +84,30 @@ export default function SceneAudioEffectsControls({ cueId = "", cueLabel = "", s
         </output>
       </header>
 
+      {prominentPitch ? (
+        <div className={styles.prominentPitch}>
+          <EffectRange
+            disabled={disabled}
+            label="PITCH DO SAMPLE"
+            max="12"
+            min="-12"
+            onChange={(pitch) => commit({ enabled: true, pitchEnabled: true, pitch })}
+            step="1"
+            value={draft.pitch}
+            valueLabel={`${draft.pitch > 0 ? "+" : ""}${Math.round(draft.pitch)} ST`}
+          />
+          <button
+            aria-pressed={Boolean(draft.pitchEnabled)}
+            className={draft.pitchEnabled ? styles.pitchOn : styles.pitchOff}
+            disabled={disabled}
+            onClick={() => commit({ enabled: true, pitchEnabled: !draft.pitchEnabled }, 0)}
+            type="button"
+          >
+            PITCH {draft.pitchEnabled ? "ON" : "OFF"}
+          </button>
+        </div>
+      ) : null}
+
       <div className={styles.presets} aria-label="Presets de efeitos">
         {Object.keys(SCENE_AUDIO_EFFECT_PRESETS).map((name) => (
           <button
@@ -100,7 +124,7 @@ export default function SceneAudioEffectsControls({ cueId = "", cueLabel = "", s
       </div>
 
       <div className={styles.pedals} aria-label="Pedais individuais">
-        {PEDALS.map(([key, label]) => (
+        {PEDALS.filter(([key]) => !(prominentPitch && key === "pitchEnabled")).map(([key, label]) => (
           <button
             aria-pressed={Boolean(draft[key])}
             className={draft[key] ? styles.pedalOn : styles.pedalOff}
@@ -134,7 +158,7 @@ export default function SceneAudioEffectsControls({ cueId = "", cueLabel = "", s
         <EffectRange disabled={disabled} label="WAH INTENSIDADE" max="1" min="0" onChange={(wah) => commit({ enabled: true, wahEnabled: true, wah })} step="0.01" value={draft.wah} valueLabel={`${Math.round(draft.wah * 100)}%`} />
         <EffectRange disabled={disabled} label="WAH VELOCIDADE" max="8" min="0.05" onChange={(wahRate) => commit({ enabled: true, wahEnabled: true, wahRate })} step="0.05" value={draft.wahRate} valueLabel={`${draft.wahRate.toFixed(2)} HZ`} />
         <EffectRange disabled={disabled} label="ECO" max="0.75" min="0" onChange={(echo) => commit({ enabled: true, echoEnabled: true, echo })} step="0.01" value={draft.echo} valueLabel={`${Math.round(draft.echo * 100)}%`} />
-        <EffectRange disabled={disabled} label="PITCH" max="12" min="-12" onChange={(pitch) => commit({ enabled: true, pitchEnabled: true, pitch })} step="1" value={draft.pitch} valueLabel={`${draft.pitch > 0 ? "+" : ""}${Math.round(draft.pitch)} ST`} />
+        {!prominentPitch ? <EffectRange disabled={disabled} label="PITCH" max="12" min="-12" onChange={(pitch) => commit({ enabled: true, pitchEnabled: true, pitch })} step="1" value={draft.pitch} valueLabel={`${draft.pitch > 0 ? "+" : ""}${Math.round(draft.pitch)} ST`} /> : null}
         <EffectRange disabled={disabled} label="MIX" max="1" min="0" onChange={(mix) => commit({ mix })} step="0.01" value={draft.mix} valueLabel={`${Math.round(draft.mix * 100)}%`} />
         <EffectRange disabled={disabled} label="SAÍDA" max="1.25" min="0" onChange={(output) => commit({ output })} step="0.01" value={draft.output} valueLabel={`${Math.round(draft.output * 100)}%`} />
       </div>

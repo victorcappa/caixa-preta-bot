@@ -212,6 +212,8 @@ visual atual; imagens `overlay` são acrescentadas e podem coexistir. Atalhos s�
 locais ao controller, configuráveis, aparecem nos pads e ficam suspensos com
 foco em input, textarea, select ou conteúdo editável. Duplicatas são avisadas na
 tela e o primeiro item vence. O volume master atua em todas as vozes da projeção.
+Seu slider fica ancorado à direita do controller para permanecer acessível
+durante a rolagem da página.
 Áudios e imagens são pré-carregados; vídeos carregam metadados antes do primeiro
 disparo para evitar manter vários arquivos grandes integralmente em memória.
 
@@ -274,7 +276,8 @@ anterior. Assim, samples simultâneos podem usar efeitos completamente diferente
 Os presets `LIMPO`, `RÁDIO`, `SATURADO`, `DESTRUÍDO` e `SUBMERSO` podem ser
 combinados com pedais independentes de drive, phaser, wah-wah, echo e pitch, além
 dos controles de filtros, mix e saída. O pitch cobre uma oitava para baixo ou
-para cima e também altera a velocidade do sample. Mover qualquer handle cria um
+para cima e também altera a velocidade do sample; em Queda, seu slider e o botão
+ON/OFF ficam destacados no alto da pedaleira. Mover qualquer handle cria um
 ajuste personalizado; `EFEITOS EM BYPASS` desliga a cadeia do sample selecionado
 sem apagar os valores preparados. Para validar o fluxo completo no navegador, use
 `npm run test:scene-one-audio-effects` com o servidor local ativo.

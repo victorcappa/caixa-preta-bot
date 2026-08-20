@@ -19,7 +19,7 @@
 }
 
 .tunnelReferenceLayer { z-index: 5; display: grid; place-items: center; background: #000; }
-.tunnelReferenceLayer img { width: 100%; height: 100%; object-fit: contain; }
+.tunnelReferenceLayer img { width: 100%; height: 100%; object-fit: contain; object-position: 50% 50%; filter: brightness(.72) contrast(1.14); }
 .videoLayer { z-index: 10; }
 .gLocLayer { z-index: 20; }
 .imageLayer { z-index: 30; }
@@ -54,19 +54,22 @@
   text-shadow: 0 0 20px rgba(0, 0, 0, 0.9);
 }
 
-.shaderLayer { overflow: hidden; }
+.shaderLayer { z-index: 60; overflow: hidden; isolation: isolate; }
+.shaderLayer > div { position: absolute; inset: 0; }
 .shaderTunnel {
+  z-index: 1;
   background: radial-gradient(
-    ellipse at center,
+    ellipse at 50% 50%,
     transparent 0,
     transparent var(--tunnel-clear),
-    rgba(0, 0, 0, 0.7) var(--tunnel-mid),
+    rgba(0, 0, 0, 0.86) var(--tunnel-mid),
     rgba(0, 0, 0, var(--shader-tunnel)) 100%
   );
-  box-shadow: inset 0 0 min(24vw, 360px) rgba(0, 0, 0, 0.92);
+  box-shadow: inset 0 0 min(30vw, 460px) rgba(0, 0, 0, 0.98);
 }
-.shaderRedout { background: rgba(255, 24, 38, var(--shader-redout)); mix-blend-mode: screen; }
+.shaderRedout { z-index: 3; background: rgba(255, 24, 38, var(--shader-redout)); }
 .shaderDistortion {
+  z-index: 2;
   background: repeating-linear-gradient(0deg, rgba(112, 244, 255, var(--shader-a)) 0, rgba(112, 244, 255, 0) 3px, rgba(255, 71, 125, var(--shader-b)) 7px);
   animation: shaderDistort 180ms steps(2, end) infinite;
 }

@@ -31,6 +31,7 @@
 .shaderOverlay {
   position: absolute;
   inset: 0;
+  z-index: 10;
   pointer-events: none;
   overflow: hidden;
 }
@@ -41,7 +42,7 @@
 
 .shaderRedout {
   background: rgba(255, 24, 38, var(--shader-redout));
-  mix-blend-mode: screen;
+  mix-blend-mode: normal;
 }
 
 .shaderDistortion {

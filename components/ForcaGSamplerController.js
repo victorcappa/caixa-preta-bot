@@ -234,6 +234,12 @@ export default function ForcaGSamplerController() {
 
   return (
     <main className={styles.controller}>
+      <aside className={styles.masterVolumeDock} aria-label="Volume geral do sampler">
+        <label>VOLUME GERAL <strong>{Math.round(masterVolume * 100)}%</strong>
+          <input aria-label="Volume master" max="1" min="0" onChange={(event) => updateMasterVolume(event.target.value)} step="0.01" type="range" value={masterVolume} />
+        </label>
+      </aside>
+
       <header className={styles.hero}>
         <div><p>CENA 2A</p><h1>SAMPLER — FORÇA G</h1></div>
         <div className={styles.status}><span className={status === "READY" ? styles.readyDot : styles.statusDot} />{status}</div>
@@ -302,9 +308,6 @@ export default function ForcaGSamplerController() {
           <button onClick={() => send("clear-visual")} type="button">CLEAR VISUAL</button>
           <button onClick={() => send("clear-text")} type="button">CLEAR TEXT</button>
           <button onClick={() => send("reset")} type="button">RESET SAMPLER</button>
-          <label className={styles.volume}>VOLUME MASTER {Math.round(masterVolume * 100)}%
-            <input aria-label="Volume master" max="1" min="0" onChange={(event) => updateMasterVolume(event.target.value)} step="0.01" type="range" value={masterVolume} />
-          </label>
           <button onClick={loadConfig} type="button">RECARREGAR ASSETS</button>
         </div>
       </Section>
