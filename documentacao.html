@@ -457,15 +457,18 @@ npm run dev</code></pre>
                 </article>
 
                 <article class="command">
-                  <strong>/instagram follow cappavictor</strong>
+                  <strong>/instagram abrir</strong>
                   <p>
                     Abre o Instagram real em Chromium controlado pelo Playwright e mostra um painel
-                    lateral embutido, mantendo o chat visivel ao lado. Na primeira execucao, se
-                    necessario, clique no espelho e faca login manualmente como
-                    <code>@caixapretabot</code>. O botao <code>X</code> fecha apenas o painel; a
-                    sessao fica em <code>.runtime/instagram-profile/</code>.
+                    lateral embutido, mantendo o chat visivel ao lado, sem analisar a tela nem
+                    executar acao social. Quando existe uma conta lembrada, pressiona
+                    <code>Continue</code>, aguarda o campo seguinte e preenche a senha do arquivo
+                    local. O formulario classico permanece como fallback; captcha, checkpoint e
+                    2FA continuam manuais. O botao <code>X</code> fecha apenas o painel; a sessao
+                    fica em <code>.runtime/instagram-profile/</code>.
                   </p>
-                  <pre><code>/instagram follow cappavictor</code></pre>
+                  <pre><code>/instagram abrir
+/instagram follow cappavictor</code></pre>
                 </article>
 
                 <article class="command">

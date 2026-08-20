@@ -91,6 +91,12 @@ async function main() {
   assert.equal(commands.parseInstagramCommand("like cappavictor").valid, false);
   assert.equal(commands.parseInstagramCommand("follow cappavictor extra").valid, false);
   assert.equal(commands.parseInstagramCommand("follow https://instagram.com/cappavictor").valid, false);
+  assert.deepEqual(commands.parseInstagramCommand("abrir"), {
+    valid: true,
+    action: "open",
+    username: "",
+    error: null
+  });
   assert.deepEqual(commands.parseInstagramCommand("entrar no perfil @cappavictor e comentar na ultima foto 'biscoiteiro'"), {
     valid: true,
     action: "comment_latest",
@@ -290,6 +296,34 @@ async function main() {
   });
   assert.equal(continueValues.submitted, true);
   assert.equal(continueValues.continued, true);
+
+  const rememberedAccountValues = {
+    username: "",
+    password: "",
+    submitted: false,
+    initialContinueVisible: true,
+    usernameVisible: false,
+    passwordVisible: false,
+    rememberedAccountContinued: false
+  };
+  const rememberedAccountController = new controllerModule.InstagramController({
+    config,
+    credentialsLoader: async () => ({ username: "caixapretabot", password: "senha-segura" })
+  });
+  rememberedAccountController.page = createLoginPage(rememberedAccountValues);
+  rememberedAccountController.getSessionState = async () => (
+    rememberedAccountValues.submitted ? "authenticated" : "login_required"
+  );
+  rememberedAccountController.hasManualInterventionSignal = async () => false;
+  rememberedAccountController.dismissKnownModals = async () => {};
+  assert.deepEqual(await rememberedAccountController.attemptAutomaticLogin(), {
+    status: "ready",
+    message: "INSTAGRAM: login automatico concluido"
+  });
+  assert.equal(rememberedAccountValues.rememberedAccountContinued, true);
+  assert.equal(rememberedAccountValues.username, "");
+  assert.equal(rememberedAccountValues.password, "senha-segura");
+  assert.equal(rememberedAccountValues.submitted, true);
 
   let unsafeContinueClicked = false;
   const securityContinueController = new controllerModule.InstagramController({ config });
@@ -822,13 +856,13 @@ function createLoginPage(values) {
     innerText: async () => "Log in"
   });
   const usernameInput = createFakeLocator({
-    visible: true,
+    visible: () => values.usernameVisible !== false && !values.initialContinueVisible,
     fill: async (value) => {
       values.username = value;
     }
   });
   const passwordInput = createFakeLocator({
-    visible: true,
+    visible: () => values.passwordVisible !== false,
     fill: async (value) => {
       values.password = value;
     }
@@ -841,15 +875,23 @@ function createLoginPage(values) {
     }
   });
   const continueButton = createFakeLocator({
-    isVisible: async () => Boolean(values.continueVisible),
+    visible: () => Boolean(values.initialContinueVisible || values.continueVisible),
     click: async () => {
+      if (values.initialContinueVisible) {
+        values.initialContinueVisible = false;
+        values.passwordVisible = true;
+        values.rememberedAccountContinued = true;
+        return;
+      }
       values.continued = true;
       values.continueVisible = false;
     }
   });
 
   return {
-    url: () => "https://www.instagram.com/accounts/login/",
+    url: () => values.initialContinueVisible
+      ? "https://www.instagram.com/"
+      : "https://www.instagram.com/accounts/login/",
     locator: (selector) => {
       if (selector === "body") return body;
       if (selector === "input[name='username']") return usernameInput;
@@ -867,15 +909,18 @@ function createLoginPage(values) {
 }
 
 function createFakeLocator(overrides = {}) {
+  const visible = () => Boolean(
+    typeof overrides.visible === "function" ? overrides.visible() : overrides.visible
+  );
   const locator = {
     first: () => locator,
     filter: () => locator,
     locator: () => locator,
     getByRole: () => locator,
     getByText: () => locator,
-    isVisible: async () => Boolean(overrides.visible),
+    isVisible: async () => visible(),
     waitFor: async () => {
-      if (!overrides.visible) {
+      if (!visible()) {
         throw new Error("not visible");
       }
     },

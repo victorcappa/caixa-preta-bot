@@ -37,6 +37,10 @@ async function executeInstagramCommand(controller, instagramCommand) {
     return executeInstagramAnalysis(controller, instagramCommand);
   }
 
+  if (instagramCommand.action === "open") {
+    return controller.open();
+  }
+
   if (instagramCommand.action === "watch_reels") {
     return controller.openReels();
   }

@@ -576,6 +576,7 @@ Alvos aceitos incluem `chatbot`, `baralho`, `legenda`, `tecnologia`, `todos`,
 Abrir o Instagram real em Chromium visivel e seguir o perfil autorizado:
 
 ```text
+/instagram abrir
 /instagram follow cappavictor
 ```
 
@@ -596,11 +597,13 @@ arquivo versionado `config/instagram-credentials.example.json` serve apenas como
 modelo e nao contem uma senha real. Tambem e possivel apontar outro caminho
 server-only com `INSTAGRAM_CREDENTIALS_FILE`.
 
-Depois de enviar usuario e senha, o controller reconhece e pressiona
-automaticamente o botao exato `Continuar` ou `Continue`, quando ele for apenas
-uma etapa intermediaria normal do login. Em paginas com captcha, checkpoint,
-2FA ou sinais de verificacao de seguranca, esse clique nao acontece e o fluxo
-continua exigindo intervencao manual.
+Quando o Instagram mostra uma conta lembrada, o controller reconhece e pressiona
+primeiro o botao exato `Continuar`, `Continue`, `Continuar como` ou `Continue as`.
+Ele aguarda o campo seguinte, preenche a senha local e envia o login; o formulario
+classico com usuario e senha continua como fallback. Em paginas com captcha,
+checkpoint, 2FA ou sinais de verificacao de seguranca, o clique nao acontece e o
+fluxo continua exigindo intervencao manual. `/instagram abrir` executa somente
+essa abertura/autenticacao, sem analisar a tela nem realizar uma acao social.
 
 O chat mostra um painel lateral com o espelho embutido do Instagram real,
 mantendo a fala da Caixa Preta visivel ao lado. Se o Instagram pedir captcha,
