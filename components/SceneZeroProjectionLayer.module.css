@@ -1,0 +1,10 @@
+.airport, .airportContamination, .timerOverlay { position: absolute; inset: 0; pointer-events: none; }
+.airport { z-index: 72; display: grid; place-items: center; overflow: hidden; background: #000; }
+.airport video, .airportContamination video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+.airportContamination { z-index: 65; opacity: .23; mix-blend-mode: screen; animation: contaminate .8s steps(3) infinite; overflow: hidden; }
+.timerOverlay { z-index: 110; display: grid; place-content: center; justify-items: center; gap: 12px; color: #fff; background: rgba(0,0,0,.92); }
+.timerOverlay strong { font-family: var(--font-mono, monospace); font-size: min(46vw, 46vh); line-height: .8; }
+.timerOverlay span { color: #ff3155; font-family: var(--font-mono, monospace); font-size: clamp(36px, 8vw, 110px); font-weight: 900; letter-spacing: .16em; }
+.complete { animation: endFlash .5s steps(2) infinite; }
+@keyframes contaminate { 0% { transform: translate(0); filter: hue-rotate(0); } 50% { transform: translate(2.5%, -1%); filter: hue-rotate(55deg) contrast(1.8); } 100% { transform: translate(-1.5%, 1%); filter: hue-rotate(-35deg); } }
+@keyframes endFlash { 50% { background: #250009; } }

@@ -6,6 +6,7 @@ import InstagramBrowserPanel from "./InstagramBrowserPanel";
 import GlitchOverlay from "./GlitchOverlay";
 import OperatorConsole from "./OperatorConsole";
 import PerformanceLayer from "./PerformanceLayer";
+import SceneZeroProjectionLayer from "./SceneZeroProjectionLayer";
 import Terminal from "./Terminal";
 import styles from "./Chat.module.css";
 
@@ -47,6 +48,7 @@ export default function Chat() {
   const [suitcase, setSuitcase] = useState(null);
   const [glitch, setGlitch] = useState(null);
   const [displayBlackout, setDisplayBlackout] = useState(null);
+  const [sceneZero, setSceneZero] = useState(null);
   const [introStep, setIntroStep] = useState("cursor");
   const [manualOpen, setManualOpen] = useState(false);
   const [operatorMounted, setOperatorMounted] = useState(false);
@@ -93,6 +95,7 @@ export default function Chat() {
         setSuitcase(data.suitcase || null);
         setGlitch(data.glitch || null);
         setDisplayBlackout(data.displayBlackout || null);
+        setSceneZero(data.sceneZero || null);
 
         if (!initializedMessagesRef.current) {
           hydrateInitialMessages(data.conversation || []);
@@ -121,6 +124,7 @@ export default function Chat() {
         setSuitcase(payload.state.suitcase || null);
         setGlitch(payload.state.glitch || null);
         setDisplayBlackout(payload.state.displayBlackout || null);
+        setSceneZero(payload.state.sceneZero || null);
         hydrateInitialMessages(payload.state.conversation || []);
         return;
       }
@@ -134,6 +138,7 @@ export default function Chat() {
       setSuitcase(payload.state.suitcase || null);
       setGlitch(payload.state.glitch || null);
       setDisplayBlackout(payload.state.displayBlackout || null);
+      setSceneZero(payload.state.sceneZero || null);
     };
 
     return () => events.close();
@@ -673,6 +678,7 @@ export default function Chat() {
         ref={chatPaneRef}
       >
         <DisplayBlackout blackout={displayBlackout} target="chatbot" />
+        <SceneZeroProjectionLayer sceneZero={sceneZero} />
         <PerformanceLayer
           activities={performanceActivities}
           events={visiblePerformanceEvents}
