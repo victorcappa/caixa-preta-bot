@@ -8,6 +8,7 @@ import {
   updateSceneAudioEffects
 } from "@/lib/sceneAudioGraph";
 import { normalizeSceneAudioEffects, SCENE_AUDIO_EFFECT_DEFAULTS } from "@/lib/sceneAudioEffects";
+import { nextSceneOneSampleShortcut } from "@/lib/sceneOneSampleShortcuts";
 import styles from "./EditableCueController.module.css";
 
 const EMPTY_ASSETS = { audio: [], video: [], image: [] };
@@ -55,11 +56,11 @@ function shortcutMatches(event, shortcut = "") {
   return event.key.toLowerCase() === normalized;
 }
 
-function createCue(allowedTypes, colors) {
+function createCue(allowedTypes, colors, shortcut = "") {
   return {
     id: crypto.randomUUID(),
     label: "Novo Botão",
-    shortcut: "",
+    shortcut,
     type: allowedTypes[0] || "audio",
     assetPath: "",
     durationMs: 0,
@@ -132,6 +133,7 @@ const EditableCueController = forwardRef(function EditableCueController({
   const effectsSaveRequestRef = useRef(Promise.resolve());
   const screenRef = useRef(null);
   const triggerCueRef = useRef(null);
+  const toggleSelectedLoopRef = useRef(null);
 
   function syncPlayingCueIds() {
     const cueIds = new Set();
@@ -207,6 +209,12 @@ const EditableCueController = forwardRef(function EditableCueController({
   const allowedTypes = useMemo(() => config?.allowedTypes || ["audio"], [config?.allowedTypes]);
   const playingCueIdSet = useMemo(() => new Set(playingCueIds), [playingCueIds]);
   triggerCueRef.current = triggerCue;
+  toggleSelectedLoopRef.current = () => {
+    if (selectedCue?.type === "audio") {
+      updateAudioRuntime(selectedCue, { loop: !selectedCue.loop });
+      setStatus(`LOOP ${selectedCue.loop ? "OFF" : "ON"} — ${selectedCue.label}`);
+    }
+  };
 
   useEffect(() => {
     onSelectedCueChange?.(selectedCue);
@@ -271,6 +279,12 @@ const EditableCueController = forwardRef(function EditableCueController({
         return;
       }
 
+      if (event.key.toLowerCase() === "l" && !event.metaKey && !event.ctrlKey && !event.altKey) {
+        event.preventDefault();
+        toggleSelectedLoopRef.current?.();
+        return;
+      }
+
       const cue = cues.find((item) => shortcutMatches(event, item.shortcut));
 
       if (!cue) {
@@ -293,7 +307,8 @@ const EditableCueController = forwardRef(function EditableCueController({
   }
 
   function addCue() {
-    const cue = createCue(allowedTypes, colors);
+    const shortcut = controllerId === "queda-aviao-sampler" ? nextSceneOneSampleShortcut(cues) : "";
+    const cue = createCue(allowedTypes, colors, shortcut);
     setConfig((current) => ({
       ...current,
       cues: [...current.cues, cue]
@@ -310,7 +325,7 @@ const EditableCueController = forwardRef(function EditableCueController({
       ...selectedCue,
       id: crypto.randomUUID(),
       label: `${selectedCue.label} copia`,
-      shortcut: ""
+      shortcut: controllerId === "queda-aviao-sampler" ? nextSceneOneSampleShortcut(cues) : ""
     };
 
     setConfig((current) => ({
@@ -603,13 +618,19 @@ const EditableCueController = forwardRef(function EditableCueController({
       const existingPaths = new Set(config.cues.map((cue) => cue.assetPath).filter(Boolean));
       const importedCues = folderAssets
         .filter((asset) => !existingPaths.has(asset.path))
-        .map((asset, index) => ({
-          ...createCue([importType], colors),
-          label: cueLabelFromAssetPath(asset.path),
-          type: importType,
-          assetPath: asset.path,
-          color: colors[(config.cues.length + index) % colors.length] || "#00ff66"
-        }));
+        .reduce((result, asset, index) => {
+          const shortcut = controllerId === "queda-aviao-sampler"
+            ? nextSceneOneSampleShortcut([...config.cues, ...result])
+            : "";
+          result.push({
+            ...createCue([importType], colors, shortcut),
+            label: cueLabelFromAssetPath(asset.path),
+            type: importType,
+            assetPath: asset.path,
+            color: colors[(config.cues.length + index) % colors.length] || "#00ff66"
+          });
+          return result;
+        }, []);
 
       setAssets(refreshData.assets || assets);
 
@@ -699,7 +720,7 @@ const EditableCueController = forwardRef(function EditableCueController({
                 onClick={() => triggerCue(cue)}
                 type="button"
               >
-                <span>{cue.shortcut || "SEM ATALHO"}</span>
+                <span>{cue.shortcut ? `TECLA ${cue.shortcut.toUpperCase()}` : "SEM ATALHO"}</span>
                 <strong>{cue.label}</strong>
                 <small>{hasFile ? (playing ? "TOCANDO" : "PLAY") : "SEM ARQUIVO"}</small>
               </button>
@@ -785,8 +806,18 @@ const EditableCueController = forwardRef(function EditableCueController({
               <input value={selectedCue.label} onChange={(event) => updateCue(selectedCue.id, { label: event.target.value })} />
             </label>
             <label>
-              <span>Atalho</span>
-              <input value={selectedCue.shortcut} onChange={(event) => updateCue(selectedCue.id, { shortcut: event.target.value })} />
+              <span>Atalho — L reservado para loop</span>
+              <input
+                value={selectedCue.shortcut}
+                onChange={(event) => {
+                  const shortcut = event.target.value;
+                  if (shortcut.trim().toLowerCase() === "l") {
+                    setStatus("L RESERVADO PARA LOOP");
+                    return;
+                  }
+                  updateCue(selectedCue.id, { shortcut });
+                }}
+              />
             </label>
             <label>
               <span>Tipo</span>

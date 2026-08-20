@@ -155,6 +155,9 @@
 
 .cue span,
 .selectedCue span {
+  justify-self: start;
+  border: 1px solid currentColor;
+  padding: 2px 5px;
   font-size: 0.72rem;
   text-transform: uppercase;
 }

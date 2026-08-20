@@ -1,8 +1,15 @@
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
+import { assignSceneOneSampleShortcuts } from "../lib/sceneOneSampleShortcuts.js";
 
 const BASE_URL = "http://localhost:3000";
 const CONTROLLER_ID = "queda-aviao-sampler";
+
+assert.deepEqual(
+  assignSceneOneSampleShortcuts(Array.from({ length: 9 }, (_, index) => ({ id: `${index}`, shortcut: "" })))
+    .map((cue) => cue.shortcut),
+  ["q", "w", "e", "a", "s", "d", "z", "x", "c"]
+);
 
 async function cueConfig(request) {
   const response = await request.get(`${BASE_URL}/api/controller-cues?id=${CONTROLLER_ID}`);
@@ -47,8 +54,28 @@ try {
   await controller.goto(`${BASE_URL}/queda-aviao-controller`, { waitUntil: "domcontentloaded" });
   const effects = controller.getByRole("region", { name: "Pedais do sample selecionado" });
 
-  await controller.getByRole("button", { name: `Tocar ${firstCue.label}` }).click();
+  const firstPlayButton = controller.getByRole("button", { name: `Tocar ${firstCue.label}` });
+  await firstPlayButton.waitFor();
+  await firstPlayButton.getByText(`TECLA ${firstCue.shortcut.toUpperCase()}`, { exact: true }).waitFor();
+  await controller.locator("h1").click();
+  await controller.keyboard.press(firstCue.shortcut);
   await effects.getByText(firstCue.label, { exact: true }).waitFor();
+  await controller.keyboard.press("l");
+  await controller.waitForFunction(async ({ controllerId, cueId }) => {
+    const response = await fetch("/api/state", { cache: "no-store" });
+    const state = await response.json();
+    return state.sceneCue?.audioCues?.some((cue) => (
+      cue.controllerId === controllerId && cue.id === cueId && cue.loop === false
+    ));
+  }, { controllerId: CONTROLLER_ID, cueId: firstCue.id });
+  await controller.keyboard.press("l");
+  await controller.waitForFunction(async ({ controllerId, cueId }) => {
+    const response = await fetch("/api/state", { cache: "no-store" });
+    const state = await response.json();
+    return state.sceneCue?.audioCues?.some((cue) => (
+      cue.controllerId === controllerId && cue.id === cueId && cue.loop === true
+    ));
+  }, { controllerId: CONTROLLER_ID, cueId: firstCue.id });
   await effects.getByRole("button", { name: "RÁDIO" }).click();
   await controller.waitForFunction(async ({ controllerId, cueId }) => {
     const response = await fetch(`/api/controller-cues?id=${controllerId}`, { cache: "no-store" });

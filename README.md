@@ -158,7 +158,11 @@ podem ser disparados repetidamente e samples distintos continuam tocando ao
 mesmo tempo no controller e na projeção `/queda-aviao`. Alterar loop ou volume
 durante a reprodução atualiza as instâncias ativas sem reiniciá-las. Atalhos são
 editáveis e não disparam com foco em input, textarea, select ou conteúdo
-editável. `SILÊNCIO / STOP ALL` para somente os áudios deste sampler, inclusive
+editável. Pads sem atalho recebem automaticamente a grade `Q W E / A S D / Z X C`;
+se houver mais samples, a distribuição continua pelas demais letras disponíveis.
+A tecla de cada pad aparece no próprio botão. `L` é reservada para ligar ou
+desligar o loop do sample selecionado. `SILÊNCIO / STOP ALL` para somente os
+áudios deste sampler, inclusive
 loops, sem mudar o bloco textual nem a projeção. `FADE OUT` reduz durante dois
 segundos e encerra somente as instâncias ativas daquele pad no controller e na
 projeção; os demais samples continuam tocando.
