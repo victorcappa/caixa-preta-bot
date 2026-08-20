@@ -157,6 +157,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       "/game",
       "/activity",
       "/intensity",
+      "/autonomy",
       "/model",
       "/style",
       "/instagram",
@@ -274,6 +275,14 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   const suitcase = state.suitcase || { active: false, phase: "IDLE" };
   const instagram = state.instagram || { status: "DISCONNECTED", logs: [] };
   const instagramLogs = (instagram.logs || []).slice(-5).reverse();
+  const research = state.research || {
+    researchEnabled: true,
+    autonomousInstagramEnabled: false,
+    performativeResearchEnabled: false,
+    budgetMode: "normal",
+    activity: []
+  };
+  const researchActivity = (research.activity || []).slice(-6).reverse();
   const glitch = state.glitch || { active: false, mode: "idle", video: {} };
   const projection = state.projection || { activeProjectionWindowId: null, windows: {} };
   const projectionWindows = projection.windows || {};
@@ -501,6 +510,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             <span>GAME: {game.active ? `${game.id} / ${game.startSource}`.toUpperCase() : `COOLDOWN ${game.cooldownTurnsRemaining || 0}`}</span>
             <span>SUITCASE: {suitcase.active ? `${suitcase.phase} / ${suitcase.activeExperience || "none"}` : suitcase.phase}</span>
             <span>INSTAGRAM: {instagram.status || "DISCONNECTED"}</span>
+            <span>RESEARCH: {research.researchEnabled ? research.budgetMode.toUpperCase() : "OFF"}</span>
             <span>GLITCH: {glitch.active ? `${glitch.mode || "active"} #${glitch.sequence || 0}`.toUpperCase() : "OFF"}</span>
             <span>ROBOT SOUND: {state.robotSound?.enabled === false ? "OFF" : (state.robotSound?.preset || "normal").toUpperCase()}</span>
             <span>PARTICIPANTS: T{participantCounts.team} A{participantCounts.audience} S{participantCounts.session}</span>
@@ -554,6 +564,63 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
 
           <h2>PERFORMANCE</h2>
           <RobotSoundControls settings={state.robotSound} onLog={addLog} relaySink={!embedded} />
+          <article className={styles.memory}>
+            <strong>AUTONOMIA</strong>
+            <p>
+              RESEARCH: {research.researchEnabled ? "ON" : "OFF"}
+              {"\n"}INSTAGRAM AUTÔNOMO: {research.autonomousInstagramEnabled ? "ON" : "OFF"}
+              {"\n"}PESQUISA PERFORMÁTICA: {research.performativeResearchEnabled ? "ON" : "OFF"}
+            </p>
+            <div className={styles.inlineControls}>
+              <button
+                className={styles.approveButton}
+                disabled={pending}
+                onClick={() => sendOperatorCommand(`/autonomy research ${research.researchEnabled ? "off" : "on"}`, "AUTONOMY ERROR")}
+                type="button"
+              >
+                RESEARCH {research.researchEnabled ? "OFF" : "ON"}
+              </button>
+              <button
+                className={styles.approveButton}
+                disabled={pending}
+                onClick={() => sendOperatorCommand(`/autonomy instagram ${research.autonomousInstagramEnabled ? "off" : "on"}`, "AUTONOMY ERROR")}
+                type="button"
+              >
+                INSTAGRAM {research.autonomousInstagramEnabled ? "OFF" : "ON"}
+              </button>
+              <button
+                className={styles.approveButton}
+                disabled={pending}
+                onClick={() => sendOperatorCommand(`/autonomy performative ${research.performativeResearchEnabled ? "off" : "on"}`, "AUTONOMY ERROR")}
+                type="button"
+              >
+                PERFORMÁTICA {research.performativeResearchEnabled ? "OFF" : "ON"}
+              </button>
+            </div>
+            <label className={styles.glitchSelectField}>
+              RESEARCH BUDGET
+              <select
+                disabled={pending}
+                onChange={(event) => sendOperatorCommand(`/autonomy budget ${event.target.value}`, "AUTONOMY ERROR")}
+                value={research.budgetMode || "normal"}
+              >
+                <option value="low">LOW</option>
+                <option value="normal">NORMAL</option>
+                <option value="high">HIGH</option>
+              </select>
+            </label>
+          </article>
+          {researchActivity.length ? (
+            <article className={styles.memory}>
+              <strong>RESEARCH / ATIVIDADE RECENTE</strong>
+              <p>{researchActivity.map((entry) => [
+                new Date(entry.timestamp).toLocaleTimeString("pt-BR"),
+                (entry.channel || "-").toUpperCase(),
+                entry.query || entry.target || entry.action || "-",
+                (entry.status || "-").toUpperCase()
+              ].join("  ")).join("\n")}</p>
+            </article>
+          ) : null}
           <article className={styles.memory}>
             <strong>INSTAGRAM / {instagram.status || "DISCONNECTED"}</strong>
             <p>

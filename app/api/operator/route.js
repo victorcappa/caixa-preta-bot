@@ -287,6 +287,39 @@ export async function POST(request) {
       return Response.json({ message: `INTENSITY ${intensity.toUpperCase()}` });
     }
 
+    if (name === "/autonomy") {
+      const [setting = "", rawValue = ""] = content.split(/\s+/);
+      const value = rawValue.toLowerCase();
+      let patch = null;
+
+      if (setting === "research" && ["on", "off"].includes(value)) {
+        patch = { researchEnabled: value === "on" };
+      } else if (setting === "instagram" && ["on", "off"].includes(value)) {
+        patch = { autonomousInstagramEnabled: value === "on" };
+      } else if (setting === "performative" && ["on", "off"].includes(value)) {
+        patch = { performativeResearchEnabled: value === "on" };
+      } else if (setting === "budget" && ["low", "normal", "high"].includes(value)) {
+        patch = { budgetMode: value };
+      }
+
+      if (!patch) {
+        return Response.json({
+          error: "AUTONOMY COMMAND: /autonomy research on|off; instagram on|off; performative on|off; budget low|normal|high"
+        }, { status: 400 });
+      }
+
+      const result = showState.controlResearch(patch, { source: "operator" });
+      const research = result.research;
+      return Response.json({
+        message: [
+          `AUTONOMY RESEARCH ${research.researchEnabled ? "ON" : "OFF"}`,
+          `INSTAGRAM ${research.autonomousInstagramEnabled ? "ON" : "OFF"}`,
+          `PERFORMATIVE ${research.performativeResearchEnabled ? "ON" : "OFF"}`,
+          `BUDGET ${research.budgetMode.toUpperCase()}`
+        ].join(" / ")
+      });
+    }
+
     if (name === "/model") {
       const model = normalizeOpenAIModel(content);
 
