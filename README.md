@@ -292,6 +292,12 @@ de 2FA/checkpoint. Para cada perfil, abre por índice até dez posts. Cada post 
 capturado e analisado visualmente, o texto legível da página é extraído e o
 modelo produz um comentário de no máximo 220 caracteres.
 
+O `X` do navegador apenas recolhe o painel interativo no controller e não
+encerra o Chromium nem invalida o login. As duas cópias do painel na Cena 0
+seguem a mesma visibilidade; `MOSTRAR NAVEGADOR` torna ambas visíveis novamente.
+Para encerrar de fato a sessão do navegador, use o botão explícito
+`FECHAR NAVEGADOR`.
+
 O comentário aparece primeiro como `PREVIEW — AINDA NÃO ENVIADO`. Somente
 `ENVIAR COMENTÁRIO` chama a publicação real. `PRÓXIMO POST` pode pular o preview
 sem enviar; chaves de posts processados e comentados ficam no estado da sessão,
@@ -602,7 +608,8 @@ de abrir qualquer perfil. Na tela `/cena-0-controller`, use primeiro `ABRIR /
 VERIFICAR LOGIN MANUAL`: o painel abre o Instagram sem preencher credenciais nem
 enviar o formulário. Toque em `Continue`/`Continuar`, conclua senha, checkpoint
 ou 2FA no próprio painel e pressione o botão novamente para confirmar. Os botões
-de perfil da Mala 3 só são liberados depois que a sessão aparece como `READY`.
+de perfil da Mala 3 só são liberados depois que a autenticação é confirmada e
+continuam liberados quando a última ação deixa de ser o login manual.
 Com o campo de senha focado no painel interativo, `Cmd+V`/`Ctrl+V` cola o texto
 diretamente no navegador real; o conteúdo colado não aparece em logs ou status.
 

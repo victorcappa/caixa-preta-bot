@@ -228,9 +228,28 @@ async function main() {
   assert.equal(config.embedded, true);
   const embeddedPanelController = new controllerModule.InstagramController({ config });
   assert.equal(embeddedPanelController.getStatus().embeddedPanelSequence, 0);
+  assert.equal(embeddedPanelController.getStatus().sessionAuthenticated, false);
   assert.equal(embeddedPanelController.requestEmbeddedPanel(), 1);
   assert.equal(embeddedPanelController.requestEmbeddedPanel(), 2);
   assert.equal(embeddedPanelController.getStatus().embeddedPanelSequence, 2);
+
+  const authenticatedController = new controllerModule.InstagramController({ config });
+  authenticatedController.dismissKnownModals = async () => {};
+  authenticatedController.hasManualInterventionSignal = async () => false;
+  authenticatedController.safeBodyText = async () => "";
+  authenticatedController.page = {
+    url: () => "https://www.instagram.com/",
+    locator: () => ({ count: async () => 0 }),
+    getByRole: (role, options = {}) => createFakeLocator({
+      visible: role === "link" && options.name?.test?.("Home")
+    })
+  };
+  assert.equal(await authenticatedController.getSessionState(), "authenticated");
+  authenticatedController.lastAction = "openProfile";
+  assert.equal(authenticatedController.getStatus().sessionAuthenticated, true);
+  authenticatedController.page.url = () => "https://www.instagram.com/accounts/login/";
+  assert.equal(await authenticatedController.getSessionState(), "login_required");
+  assert.equal(authenticatedController.getStatus().sessionAuthenticated, false);
   assert.equal(config.debug, true);
   assert.equal(config.theatricalDelayMs, 1500);
   assert.deepEqual(config.viewport, { width: 430, height: 760 });

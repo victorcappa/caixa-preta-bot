@@ -61,7 +61,7 @@ export default function SceneZeroController() {
   const [browserCommand, setBrowserCommand] = useState("");
   const [googleGuidance, setGoogleGuidance] = useState("");
   const [instagramGuidance, setInstagramGuidance] = useState("");
-  const [suitcaseInstagramPanelClosed, setSuitcaseInstagramPanelClosed] = useState(false);
+  const [instagramPanelClosed, setInstagramPanelClosed] = useState(false);
   const [glitchVideos, setGlitchVideos] = useState([]);
   const [glitchVideoFile, setGlitchVideoFile] = useState("");
   const [glitchVideoLoop, setGlitchVideoLoop] = useState(false);
@@ -103,7 +103,7 @@ export default function SceneZeroController() {
 
   useEffect(() => {
     if (snapshot.instagram?.embeddedPanelSequence > 0) {
-      setSuitcaseInstagramPanelClosed(false);
+      setInstagramPanelClosed(false);
     }
   }, [snapshot.instagram?.embeddedPanelSequence]);
 
@@ -275,7 +275,7 @@ export default function SceneZeroController() {
   const timer = sceneZero.timer || {};
   const seconds = remainingTimer(timer, now);
   const instagram = snapshot.instagram || {};
-  const instagramLoginVerified = instagram.status === "READY" && instagram.lastAction === "manualLogin";
+  const instagramLoginVerified = instagram.sessionAuthenticated === true;
   const game = snapshot.game || {};
   const suitcase = snapshot.suitcase || {};
   const suitcaseGame = sceneZero.suitcaseGame || {};
@@ -580,9 +580,9 @@ export default function SceneZeroController() {
               <Button danger onClick={() => sceneAction("suitcase-instagram-stop")} pending={pending || !suitcaseInstagram.currentProfile}>PARAR</Button>
               <Readout label="POSTS PROCESSADOS / COMENTADOS" value={`${suitcaseInstagram.processedPostKeys?.length || 0} / ${suitcaseInstagram.commentedPostKeys?.length || 0}`} />
               <Readout label="COMENTÁRIOS RECENTES" value={(suitcaseInstagram.recentComments || []).slice(-5).map((entry) => `${entry.profile} · POST ${entry.postIndex}: ${entry.comment} [${entry.status}]`).join("\n")} />
-              {instagram.embedded && instagram.status !== "DISCONNECTED" && !suitcaseInstagramPanelClosed ? (
+              {instagram.embedded && instagram.status !== "DISCONNECTED" && !instagramPanelClosed ? (
                 <div className={styles.instagramPanel}>
-                  <InstagramBrowserPanel instagram={instagram} onClose={() => setSuitcaseInstagramPanelClosed(true)} />
+                  <InstagramBrowserPanel instagram={instagram} onClose={() => setInstagramPanelClosed(true)} />
                 </div>
               ) : null}
             </section>
@@ -717,14 +717,17 @@ export default function SceneZeroController() {
             onClick={() => sceneAction("browser-stop")}
             pending={pending || instagram.status === "DISCONNECTED"}
           >FECHAR NAVEGADOR</Button>
+          {instagram.embedded && instagram.status !== "DISCONNECTED" && instagramPanelClosed ? (
+            <Button onClick={() => setInstagramPanelClosed(false)} pending={pending}>MOSTRAR NAVEGADOR</Button>
+          ) : null}
           <Readout label="NAVEGADOR REAL" value={`${instagram.status || "DISCONNECTED"} / ${instagram.message || "—"}`} />
           <Readout label="COMANDO EM EXECUÇÃO" value={instagram.research?.guidance || instagram.research?.person || "INATIVO"} />
           {instagram.secondaryBrowser?.active ? (
             <Readout label="ABAS ABERTAS" value={`PRINCIPAL · ${instagram.secondaryBrowser.label || "SECUNDÁRIA"}`} />
           ) : null}
-          {instagram.embedded && instagram.status !== "DISCONNECTED" ? (
+          {instagram.embedded && instagram.status !== "DISCONNECTED" && !instagramPanelClosed ? (
             <div className={styles.instagramPanel}>
-              <InstagramBrowserPanel instagram={instagram} onClose={() => sceneAction("browser-stop")} />
+              <InstagramBrowserPanel instagram={instagram} onClose={() => setInstagramPanelClosed(true)} />
             </div>
           ) : null}
         </ControlBlock>
