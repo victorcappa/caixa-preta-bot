@@ -597,6 +597,11 @@ arquivo versionado `config/instagram-credentials.example.json` serve apenas como
 modelo e nao contem uma senha real. Tambem e possivel apontar outro caminho
 server-only com `INSTAGRAM_CREDENTIALS_FILE`.
 
+As pesquisas públicas acionadas pelo jogo das malas também validam essa sessão
+antes de abrir o perfil encontrado. Se a sessão persistida tiver expirado, o
+controller faz o login local automaticamente; captcha, checkpoint e 2FA ainda
+param para intervenção manual.
+
 Quando o Instagram mostra uma conta lembrada, o controller reconhece e pressiona
 primeiro o botao exato `Continuar`, `Continue`, `Continuar como` ou `Continue as`.
 Ele aguarda o campo seguinte, preenche a senha local e envia o login; o formulario

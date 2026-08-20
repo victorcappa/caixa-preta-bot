@@ -325,6 +325,34 @@ async function main() {
   assert.equal(rememberedAccountValues.password, "senha-segura");
   assert.equal(rememberedAccountValues.submitted, true);
 
+  const researchNavigation = [];
+  let researchLoginChecks = 0;
+  const researchController = new controllerModule.InstagramController({ config });
+  researchController.init = async () => researchController.getStatus();
+  researchController.configurePage = async () => {};
+  researchController.ensurePage = () => {};
+  researchController.searchPublicWeb = async () => "google";
+  researchController.collectCurrentPageLinks = async () => ({
+    interesting: null,
+    instagram: "https://www.instagram.com/robinson.rogerio/"
+  });
+  researchController.ensureInstagramSession = async () => {
+    researchLoginChecks += 1;
+    return { status: "ready", message: "INSTAGRAM: sessao encontrada" };
+  };
+  researchController.dismissKnownModals = async () => {};
+  researchController.page = {
+    url: () => researchNavigation.at(-1) || "https://www.google.com/",
+    goto: async (url) => {
+      researchNavigation.push(url);
+    },
+    evaluate: async () => {},
+    waitForTimeout: async () => {}
+  };
+  assert.equal((await researchController.researchPerson("Robinson Rogério")).status, "ready");
+  assert.equal(researchLoginChecks, 1);
+  assert.equal(researchNavigation.at(-1), "https://www.instagram.com/robinson.rogerio/");
+
   let unsafeContinueClicked = false;
   const securityContinueController = new controllerModule.InstagramController({ config });
   securityContinueController.page = {
