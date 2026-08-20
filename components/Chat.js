@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import DisplayBlackout from "./DisplayBlackout";
 import InstagramBrowserPanel from "./InstagramBrowserPanel";
 import GlitchOverlay from "./GlitchOverlay";
@@ -9,10 +9,11 @@ import PerformanceLayer from "./PerformanceLayer";
 import SceneZeroProjectionLayer from "./SceneZeroProjectionLayer";
 import Terminal from "./Terminal";
 import styles from "./Chat.module.css";
+import { PUBLIC_TYPE_INTERVAL_MS } from "@/lib/messageTiming";
 
 const INTRO_READY_TEXT = "TEM ALGUEM AI?";
 const INTRO_DOTS_TEXT = "...";
-const TYPE_INTERVAL_MS = 42;
+const TYPE_INTERVAL_MS = PUBLIC_TYPE_INTERVAL_MS;
 const DEFAULT_OPERATOR_WIDTH = 520;
 const DEFAULT_INSTAGRAM_WIDTH = 520;
 const DEFAULT_INSTAGRAM_HEIGHT = 480;
@@ -63,6 +64,9 @@ export default function Chat() {
   const initializedMessagesRef = useRef(false);
   const seenMessageIdsRef = useRef(new Set());
   const typingTimersRef = useRef(new Map());
+  const typingQueueRef = useRef([]);
+  const concurrentTypingRef = useRef(false);
+  const drainTypingQueueRef = useRef(null);
   const introTimerRef = useRef(null);
   const introDotsTimerRef = useRef(null);
   const chatRequestControllerRef = useRef(null);
@@ -184,13 +188,57 @@ export default function Chat() {
     scrollRef.current?.scrollIntoView({ block: "end" });
   }, [messages, pending, introStep, introDotsText, introText, typedReplies]);
 
+  const startTypingMessage = useCallback((message) => {
+    if (!message?.id || typingTimersRef.current.has(message.id)) {
+      return;
+    }
+
+    setTypedReplies((current) => ({ ...current, [message.id]: "" }));
+    let index = 0;
+    const timer = setInterval(() => {
+      index += 1;
+      setTypedReplies((current) => ({
+        ...current,
+        [message.id]: message.content.slice(0, index)
+      }));
+
+      if (index >= message.content.length) {
+        clearInterval(timer);
+        typingTimersRef.current.delete(message.id);
+        drainTypingQueueRef.current?.();
+      }
+    }, TYPE_INTERVAL_MS);
+
+    typingTimersRef.current.set(message.id, timer);
+  }, []);
+
+  const drainTypingQueue = useCallback(() => {
+    if (concurrentTypingRef.current) {
+      while (typingQueueRef.current.length) {
+        startTypingMessage(typingQueueRef.current.shift());
+      }
+      return;
+    }
+
+    if (typingTimersRef.current.size === 0 && typingQueueRef.current.length > 0) {
+      startTypingMessage(typingQueueRef.current.shift());
+    }
+  }, [startTypingMessage]);
+
   useEffect(() => {
+    drainTypingQueueRef.current = drainTypingQueue;
+  }, [drainTypingQueue]);
+
+  useEffect(() => {
+    concurrentTypingRef.current = ["glitch", "collapse"].includes(sceneZero?.stage);
+
     if (initializedMessagesRef.current && messages.length === 0) {
       for (const timer of typingTimersRef.current.values()) {
         clearInterval(timer);
       }
 
       typingTimersRef.current.clear();
+      typingQueueRef.current = [];
       seenMessageIdsRef.current.clear();
       stoppedTypingIdsRef.current.clear();
       setTypedReplies({});
@@ -208,31 +256,14 @@ export default function Chat() {
       seenMessageIdsRef.current.add(message.id);
       stoppedTypingIdsRef.current.delete(message.id);
 
-      if (message.role !== "assistant") {
-        continue;
+      if (message.role === "assistant") {
+        typingQueueRef.current.push(message);
       }
-
-      setTypedReplies((current) => ({ ...current, [message.id]: "" }));
-
-      let index = 0;
-      const timer = setInterval(() => {
-        index += 1;
-        setTypedReplies((current) => ({
-          ...current,
-          [message.id]: message.content.slice(0, index)
-        }));
-
-        if (index >= message.content.length) {
-          clearInterval(timer);
-          typingTimersRef.current.delete(message.id);
-        }
-      }, TYPE_INTERVAL_MS);
-
-      typingTimersRef.current.set(message.id, timer);
     }
 
+    drainTypingQueue();
     return undefined;
-  }, [messages]);
+  }, [drainTypingQueue, messages, sceneZero?.stage]);
 
   useEffect(() => {
     const typingTimers = typingTimersRef.current;
@@ -241,6 +272,7 @@ export default function Chat() {
       for (const timer of typingTimers.values()) {
         clearInterval(timer);
       }
+      typingQueueRef.current = [];
 
       clearInterval(introTimerRef.current);
       clearInterval(introDotsTimerRef.current);
@@ -259,6 +291,7 @@ export default function Chat() {
       }
 
       typingTimersRef.current.clear();
+      typingQueueRef.current = [];
       clearInterval(introTimerRef.current);
       clearInterval(introDotsTimerRef.current);
       setPending(false);
@@ -712,18 +745,25 @@ export default function Chat() {
               </p>
             ) : null}
 
-            {messages.map((message) => (
-              <p
-                className={message.role === "assistant" ? styles.machine : styles.public}
-                key={message.id}
-              >
-                <span>{message.role === "assistant" ? ">" : "PUBLICO >"}</span>{" "}
-                {message.role === "assistant" ? typedReplies[message.id] ?? "" : message.content}
-                {message.role === "assistant" && typedReplies[message.id] !== message.content ? (
-                  <span className={styles.replyCursor} aria-hidden="true">_</span>
-                ) : null}
-              </p>
-            ))}
+            {messages.map((message) => {
+              const typingStarted = Object.hasOwn(typedReplies, message.id);
+              if (message.role === "assistant" && !typingStarted) {
+                return null;
+              }
+
+              return (
+                <p
+                  className={message.role === "assistant" ? styles.machine : styles.public}
+                  key={message.id}
+                >
+                  <span>{message.role === "assistant" ? ">" : "PUBLICO >"}</span>{" "}
+                  {message.role === "assistant" ? typedReplies[message.id] ?? "" : message.content}
+                  {message.role === "assistant" && typedReplies[message.id] !== message.content ? (
+                    <span className={styles.replyCursor} aria-hidden="true">_</span>
+                  ) : null}
+                </p>
+              );
+            })}
 
             {pending ? <p className={styles.machine}>&gt; _</p> : null}
             {error ? <p className={styles.error}>&gt; {error}</p> : null}

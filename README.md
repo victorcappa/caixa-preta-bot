@@ -161,8 +161,9 @@ Ao entrar em `ESCOLHER PARTICIPANTE`, o bot improvisa um convite mais
 sarcástico, informal e Gen Z para as pessoas levantarem a mão. A projeção abre
 uma janela real de 10 segundos e, ao chegar a zero, inicia automaticamente um
 mini game de roleta com os nomes do pool existente de equipe, público e
-participantes da sessão. Durante os sete segundos de giro, três comentários
-curtos sobre odds e chances são gerados pelo modelo e publicados em momentos
+participantes da sessão. Durante o giro — com mínimo de sete segundos e duração
+estendida quando necessário para terminar cada fala — três comentários curtos
+sobre odds e chances são gerados pelo modelo e publicados em momentos
 distintos; nenhum texto de aposta é uma frase fixa. O vencedor é previamente
 sorteado e protegido no estado interno, só aparece ao fim da roleta e não pode
 ser alterado pelo modelo. A seleção favorece nomes menos usados, e Marcus
@@ -182,10 +183,19 @@ recalcula o fim; reiniciar cria uma nova sequência; cancelar remove a camada.
 Nenhuma dessas ações avança de etapa automaticamente.
 
 Os níveis `NORMAL`, `GLITCH 1` a `GLITCH 4` e `COLAPSO` dosam os parâmetros da
-camada visual já existente e também entram no contexto textual do bot. Não há
-progressão automática. Em colapso, o vídeo do aeroporto começa a contaminar o
-chat; ao selecionar `AEROPORTO`, a camada de glitch para e
+camada visual já existente e também entram no contexto textual do bot. `GLITCH
+1–4` são rajadas temporárias de intensidade crescente e voltam sozinhas para a
+tela estável; somente `COLAPSO` sustenta o efeito contínuo. Não há progressão
+automática. Em colapso, o vídeo do aeroporto começa a contaminar o chat; ao
+selecionar `AEROPORTO`, a camada de glitch para e
 `painel-aeroporto.mp4` vira uma tela estável em loop até outra direção.
+
+Fora das etapas `GLITCH` e `GLITCH / COLAPSO`, as mensagens da Caixa Preta usam
+uma fila estrita: uma termina de ser digitada antes que a próxima sequer
+apareça. Nessas duas etapas de falha, mensagens podem ser digitadas ao mesmo
+tempo. Uma resposta do modelo também pode ser dividida em até quatro fragmentos
+separados, permitindo que versões da Caixa interrompam, contradigam, corrijam
+ou respondam às próprias falas anteriores.
 
 `INICIAR INSTAGRAM` abre o mesmo `InstagramController`, perfil persistente,
 painel embutido e guardrails já usados por `/instagram`; não existe uma segunda

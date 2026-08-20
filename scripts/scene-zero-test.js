@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 
 async function main() {
   const sceneZero = await import("../lib/scene-zero/state.js");
+  const messageTiming = await import("../lib/messageTiming.js");
   const initial = sceneZero.createInitialSceneZeroState();
 
   assert.equal(initial.stage, "idle");
@@ -63,6 +64,21 @@ async function main() {
   );
   assert.match(participantDirection, /10 segundos/);
   assert.match(participantDirection, /sarcástico, informal e Gen Z/);
+
+  const normalMessageContext = sceneZero.buildSceneZeroContext({ ...initial, stage: "participant" });
+  assert.match(normalMessageContext, /uma fala da Caixa Preta deve terminar completamente/);
+  const glitchMessageContext = sceneZero.buildSceneZeroContext({ ...initial, stage: "glitch", glitchLevel: "glitch-2" });
+  assert.match(glitchMessageContext, /podem coexistir várias falas/);
+  assert.match(glitchMessageContext, /conversando entre si/);
+  assert.equal(sceneZero.sceneZeroGlitchCommand("glitch-1").action, "trigger");
+  assert.equal(sceneZero.sceneZeroGlitchCommand("glitch-4").action, "trigger");
+  assert.equal(sceneZero.sceneZeroGlitchCommand("glitch-4").payload.durationMs, 1800);
+  assert.equal(sceneZero.sceneZeroGlitchCommand("collapse").action, "continuous");
+
+  const messageSchedule = messageTiming.sequentialMessageSchedule(["12345", "1234567890"]);
+  assert.equal(messageSchedule.offsets[0], 650);
+  assert(messageSchedule.offsets[1] >= 650 + (5 * messageTiming.PUBLIC_TYPE_INTERVAL_MS));
+  assert(messageSchedule.totalDurationMs > messageSchedule.offsets[1]);
 
   console.log("scene-zero-test: ok");
 }

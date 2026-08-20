@@ -1,6 +1,6 @@
 import { getExistingInstagramController, getInstagramController } from "@/lib/instagram/InstagramController";
 import { generateCaixaPretaTurn } from "@/lib/openai";
-import { buildSceneZeroDirection } from "@/lib/scene-zero/state";
+import { buildSceneZeroDirection, sceneZeroGlitchCommand } from "@/lib/scene-zero/state";
 import { showState } from "@/lib/showState";
 import { SHOW_MODES } from "@/prompts/modes";
 
@@ -57,7 +57,15 @@ function applyGeneratedTurn(turn) {
   if (turn.suitcase && showState.snapshot().suitcase?.active) {
     showState.applySuitcaseMove(turn.suitcase, { source: "agent" });
   }
-  if (turn.text) showState.addMessage("assistant", turn.text, "scene-zero-operator");
+  if (turn.text) {
+    const stage = showState.snapshot().sceneZero?.stage;
+    const fragments = ["glitch", "collapse"].includes(stage)
+      ? turn.text.split(/\n\s*\n/).map((fragment) => fragment.trim()).filter(Boolean).slice(0, 4)
+      : [turn.text];
+    for (const fragment of fragments) {
+      showState.addMessage("assistant", fragment, "scene-zero-operator");
+    }
+  }
   if (turn.events?.length) showState.queuePerformanceEvents(turn.events, "agent");
 }
 
@@ -138,19 +146,8 @@ async function speak(directionAction, detail = "") {
 }
 
 function applyGlitchLevel(level) {
-  if (level === "normal") {
-    showState.controlGlitch("stop", {}, { source: "scene-zero" });
-    return;
-  }
-
-  const settings = {
-    "glitch-1": { preset: "normal", params: { intensity: 0.22, frequency: 0.28, jitter: 0.2, flicker: 0.16 } },
-    "glitch-2": { preset: "normal", params: { intensity: 0.42, frequency: 0.48, jitter: 0.38, flicker: 0.3 } },
-    "glitch-3": { preset: "continuous", params: { intensity: 0.62, frequency: 0.7, jitter: 0.62, distortion: 0.48 } },
-    "glitch-4": { preset: "strong", params: { intensity: 0.84, frequency: 0.88, jitter: 0.86, distortion: 0.72 } },
-    collapse: { preset: "strong", params: { intensity: 1, frequency: 1, jitter: 1, distortion: 0.94, flicker: 0.92, blockCount: 28 } }
-  };
-  showState.controlGlitch("continuous", settings[level], { source: "scene-zero" });
+  const command = sceneZeroGlitchCommand(level);
+  showState.controlGlitch(command.action, command.payload, { source: "scene-zero" });
 }
 
 async function enterStage(stage, detail) {
@@ -174,9 +171,15 @@ async function enterStage(stage, detail) {
     }
   }
 
-  if (stage === "glitch" && showState.snapshot().sceneZero.glitchLevel === "normal") {
-    showState.controlSceneZero("set-glitch", { level: "glitch-1" }, { source: "operator" });
-    applyGlitchLevel("glitch-1");
+  if (stage === "glitch") {
+    const currentLevel = showState.snapshot().sceneZero.glitchLevel;
+    const level = ["glitch-1", "glitch-2", "glitch-3", "glitch-4"].includes(currentLevel)
+      ? currentLevel
+      : "glitch-1";
+    if (currentLevel !== level) {
+      showState.controlSceneZero("set-glitch", { level }, { source: "operator" });
+    }
+    applyGlitchLevel(level);
   }
 
   if (stage === "collapse") {
