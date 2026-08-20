@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PROJECTION_WINDOW_PARAM, projectionScreens } from "@/lib/projectionScreens";
+import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
+import InstagramBrowserPanel from "./InstagramBrowserPanel";
 import RobotSoundControls from "./RobotSoundControls";
 import Terminal from "./Terminal";
 import styles from "./OperatorConsole.module.css";
@@ -29,6 +31,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   const [selectedGlitchVideo, setSelectedGlitchVideo] = useState("painel-aeroporto.mp4");
   const [glitchVideoLoop, setGlitchVideoLoop] = useState(false);
   const [projectionMenu, setProjectionMenu] = useState(null);
+  const [instagramPanelClosed, setInstagramPanelClosed] = useState(false);
   const scrollRef = useRef(null);
   const projectionWindowRefs = useRef(new Map());
 
@@ -69,6 +72,24 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ block: "end" });
   }, [logs, state]);
+
+  useEffect(() => {
+    if (pending) robotSoundEngine.startThinking();
+    else robotSoundEngine.stopThinking();
+    return () => robotSoundEngine.stopThinking();
+  }, [pending]);
+
+  useEffect(() => {
+    if (["STARTING", "DISCONNECTED"].includes(state.instagram?.status)) {
+      setInstagramPanelClosed(false);
+    }
+  }, [state.instagram?.status]);
+
+  useEffect(() => {
+    if (state.instagram?.embeddedPanelSequence > 0) {
+      setInstagramPanelClosed(false);
+    }
+  }, [state.instagram?.embeddedPanelSequence]);
 
   const addLog = useCallback((line, kind = "line") => {
     setLogs((current) => [
@@ -504,6 +525,12 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             <span>PROMPT VERSION: {state.context?.promptVersion || 1}</span>
           </div>
 
+          {!embedded && instagram.embedded && instagram.status !== "DISCONNECTED" && !instagramPanelClosed ? (
+            <div className={styles.instagramBrowserPanel}>
+              <InstagramBrowserPanel instagram={instagram} onClose={() => setInstagramPanelClosed(true)} />
+            </div>
+          ) : null}
+
           <div className={styles.history}>
             {logs.length === 0 ? <p>SYSTEM READY</p> : null}
             {logs.map((log) => (
@@ -562,6 +589,15 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
                 STOP ALL
               </button>
             </div>
+            {!embedded && instagram.embedded && instagram.status !== "DISCONNECTED" && instagramPanelClosed ? (
+              <button
+                className={styles.approveButton}
+                onClick={() => setInstagramPanelClosed(false)}
+                type="button"
+              >
+                MOSTRAR NAVEGADOR INTERATIVO
+              </button>
+            ) : null}
           </article>
           {instagramLogs.length ? (
             <article className={styles.memory}>

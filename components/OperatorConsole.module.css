@@ -137,6 +137,14 @@
   padding-top: 16px;
 }
 
+.instagramBrowserPanel {
+  flex: 0 0 min(68vh, 680px);
+  min-height: 480px;
+  margin-top: 14px;
+  border: 1px solid var(--green-soft);
+  overflow: hidden;
+}
+
 .history p,
 .memoryPanel p {
   margin: 0 0 10px;
@@ -359,6 +367,11 @@
     border-top: 1px solid var(--green-soft);
     padding-left: 0;
     padding-top: 14px;
+  }
+
+  .instagramBrowserPanel {
+    flex-basis: 56vh;
+    min-height: 400px;
   }
 
   .inlineControls {

@@ -26,7 +26,12 @@ const scenarios = [
   ["contradição anterior", "Marcus disse agora que adora metrô, mas antes tinha dito que odeia."],
   ["callback disponível", "Marcus voltou a responder depois de ter chegado atrasado e culpado a linha vermelha."],
   ["variação sem pergunta", "A plateia riu muito de uma observação banal. Reaja sem precisar perguntar nada."],
-  ["cooldown de gíria", "A pessoa errou de novo. Reaja sem usar aura, lore, jurou, skill issue ou mano."]
+  ["cooldown de gíria", "A pessoa errou de novo. Reaja sem usar aura, lore, jurou, skill issue ou mano."],
+  ["comentário de notícias", [
+    "A navegação terminou. Comente, sem apenas resumir, estas duas notícias fictícias:",
+    "1. Prefeito anuncia tarifa menor no domingo, mas o decreto informa que a redução vale somente por duas horas.",
+    "2. A campanha publica vídeo chamando a medida de acesso permanente ao transporte."
+  ].join("\n")]
 ];
 
 function qualityMetrics(text = "") {
@@ -50,6 +55,11 @@ async function main() {
   const { buildInternetVoiceContext } = await import(path.join(root, "lib/internetVoice.js"));
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const model = process.env.OPENAI_MODEL || "gpt-5-mini";
+  const scenarioFilter = `${process.env.INTERNET_VOICE_SCENARIO || ""}`.trim().toLocaleLowerCase("pt-BR");
+  const activeScenarios = scenarioFilter
+    ? scenarios.filter(([label]) => label.toLocaleLowerCase("pt-BR").includes(scenarioFilter))
+    : scenarios;
+  if (!activeScenarios.length) throw new Error(`Cenário não encontrado: ${scenarioFilter}`);
 
   async function generate({ label, situation, state, styled }) {
     const voice = styled ? buildInternetVoiceContext({ state, userMessage: situation }) : { context: "", debug: null };
@@ -75,7 +85,7 @@ async function main() {
   }
 
   const styledResults = [];
-  for (const [label, situation] of scenarios) {
+  for (const [label, situation] of activeScenarios) {
     styledResults.push(await generate({
       label,
       situation,
@@ -85,7 +95,7 @@ async function main() {
   }
 
   const baselineResults = [];
-  for (const [label, situation] of scenarios.slice(0, 4)) {
+  for (const [label, situation] of activeScenarios.slice(0, 4)) {
     baselineResults.push(await generate({
       label,
       situation,
@@ -96,7 +106,7 @@ async function main() {
 
   const variationConversation = [];
   const variationResults = [];
-  for (const situation of [
+  for (const situation of scenarioFilter ? [] : [
     "Uma pessoa diz: eu vim porque estava curioso.",
     "A mesma pessoa completa: e também porque me pagaram.",
     "Ela corrige: na verdade ainda não pagaram."
@@ -117,7 +127,7 @@ async function main() {
     { role: "user", content: "continua" }
   ];
   const cooldownResults = [];
-  for (const situation of [
+  for (const situation of scenarioFilter ? [] : [
     "A pessoa insiste na mesma resposta errada.",
     "Ela erra novamente, agora com muita confiança."
   ]) {
@@ -135,7 +145,7 @@ async function main() {
   console.log(JSON.stringify({
     model,
     generatedAt: new Date().toISOString(),
-    comparison: scenarios.slice(0, 4).map(([label]) => ({
+    comparison: activeScenarios.slice(0, 4).map(([label]) => ({
       label,
       before: baselineResults.find((result) => result.label === label),
       after: styledResults.find((result) => result.label === label)

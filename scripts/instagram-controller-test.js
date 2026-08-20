@@ -40,6 +40,15 @@ async function main() {
       wantsInstagram: true
     }
   );
+  const commentOnlyGuidance = controllerModule.parseGoogleGuidance("buscar inteligência artificial e comente o primeiro resultado");
+  assert.equal(commentOnlyGuidance.query, "inteligência artificial");
+  assert.equal(commentOnlyGuidance.openResult, true);
+  assert.equal(commentOnlyGuidance.wantsComment, true);
+  assert.equal(commentOnlyGuidance.resultCount, 1);
+  assert.equal(
+    controllerModule.parseGoogleGuidance("entre no Google e busque inteligência artificial e comente").query,
+    "inteligência artificial"
+  );
   assert.equal(controllerModule.normalizePublicResearchUrl("http://127.0.0.1/admin"), null);
   assert.equal(controllerModule.normalizePublicResearchUrl("https://www.jusbrasil.com.br/pessoa/teste"), null);
   assert.equal(
@@ -59,6 +68,13 @@ async function main() {
     { url: "https://www.google.com/search?q=eleicoes", text: "Google" },
     { url: "https://jornal.example.com/tudo-sobre/candidato", text: "Arquivo do candidato" },
     { url: "https://example.org/arquivo", text: "Arquivo" },
+    { url: "https://jornal.example.com/politica/candidato", text: "Notícia sobre candidato" }
+  ], { preferNews: true }), {
+    url: "https://jornal.example.com/politica/candidato",
+    text: "Notícia sobre candidato"
+  });
+  assert.deepEqual(controllerModule.selectGuidedGoogleResult([
+    { url: "https://pt.wikipedia.org/wiki/Candidato", text: "Candidato — Wikipédia" },
     { url: "https://jornal.example.com/politica/candidato", text: "Notícia sobre candidato" }
   ], { preferNews: true }), {
     url: "https://jornal.example.com/politica/candidato",
@@ -204,6 +220,11 @@ async function main() {
 
   assert.equal(config.enabled, true);
   assert.equal(config.embedded, true);
+  const embeddedPanelController = new controllerModule.InstagramController({ config });
+  assert.equal(embeddedPanelController.getStatus().embeddedPanelSequence, 0);
+  assert.equal(embeddedPanelController.requestEmbeddedPanel(), 1);
+  assert.equal(embeddedPanelController.requestEmbeddedPanel(), 2);
+  assert.equal(embeddedPanelController.getStatus().embeddedPanelSequence, 2);
   assert.equal(config.debug, true);
   assert.equal(config.theatricalDelayMs, 1500);
   assert.deepEqual(config.viewport, { width: 430, height: 760 });
@@ -246,6 +267,43 @@ async function main() {
     submitted: true
   });
   assert.equal(JSON.stringify(loginEvents).includes("segredo-que-nao-pode-vazar"), false);
+
+  const continueValues = {
+    username: "",
+    password: "",
+    submitted: false,
+    requiresContinue: true,
+    continueVisible: false,
+    continued: false
+  };
+  const continueController = new controllerModule.InstagramController({
+    config,
+    credentialsLoader: async () => ({ username: "caixapretabot", password: "senha-segura" })
+  });
+  continueController.page = createLoginPage(continueValues);
+  continueController.getSessionState = async () => continueValues.continued ? "authenticated" : "login_required";
+  continueController.hasManualInterventionSignal = async () => false;
+  continueController.dismissKnownModals = async () => {};
+  assert.deepEqual(await continueController.attemptAutomaticLogin(), {
+    status: "ready",
+    message: "INSTAGRAM: login automatico concluido"
+  });
+  assert.equal(continueValues.submitted, true);
+  assert.equal(continueValues.continued, true);
+
+  let unsafeContinueClicked = false;
+  const securityContinueController = new controllerModule.InstagramController({ config });
+  securityContinueController.page = {
+    getByRole: () => createFakeLocator({
+      visible: true,
+      click: async () => {
+        unsafeContinueClicked = true;
+      }
+    })
+  };
+  securityContinueController.hasManualInterventionSignal = async () => true;
+  assert.equal(await securityContinueController.pressSafeLoginContinue(), false);
+  assert.equal(unsafeContinueClicked, false);
 
   const missingCredentialsController = new controllerModule.InstagramController({
     config,
@@ -305,6 +363,100 @@ async function main() {
   assert.deepEqual(guidedNavigations, ["https://jornal.example.com/politica/eleicoes"]);
   assert.equal(guidedResult.articles.length, 1);
   assert.equal(guidedStatuses.at(-1).message, "GOOGLE: 1 NOTÍCIA(S) LIDA(S)");
+
+  const processingController = new controllerModule.InstagramController({ config });
+  const processingStatuses = [];
+  let completionCalled = false;
+  processingController.followGoogleGuidance = async () => ({
+    status: "ready",
+    articles: [{ title: "Notícia lida" }]
+  });
+  processingController.updateStatus = (status, message) => {
+    processingStatuses.push({ status, message });
+  };
+  const processingStarted = processingController.startGoogleGuidance({ guidance: "buscar notícias", query: "notícias" }, {
+    onComplete: async () => { completionCalled = true; }
+  });
+  assert.equal(processingStarted.status, "started");
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(completionCalled, true);
+  assert.deepEqual(processingStatuses.slice(-2), [
+    { status: "ACTING", message: "GOOGLE: PROCESSANDO INFORMAÇÕES LIDAS" },
+    { status: "READY", message: "GOOGLE: COMENTÁRIO CONCLUÍDO" }
+  ]);
+
+  const googleViewportController = new controllerModule.InstagramController({ config });
+  const googleViewportChanges = [];
+  const googleHeaders = [];
+  googleViewportController.browserMode = "google_guidance";
+  googleViewportController.page = {
+    viewportSize: () => ({ width: 1100, height: 760 }),
+    setViewportSize: async (viewport) => googleViewportChanges.push(viewport),
+    setExtraHTTPHeaders: async (headers) => googleHeaders.push(headers)
+  };
+  googleViewportController.applyAudioMuted = async () => {};
+  googleViewportController.updateStatus = () => {};
+  await googleViewportController.configurePage();
+  assert.deepEqual(googleViewportChanges, [{ width: 430, height: 760 }]);
+  assert.equal(googleHeaders[0]["Sec-CH-UA-Mobile"], "?1");
+  assert.match(googleHeaders[0]["User-Agent"], /iPhone/);
+
+  const challengeController = new controllerModule.InstagramController({ config });
+  const challengePage = {
+    url: () => "https://www.google.com/search?q=noticias",
+    title: async () => "Confirme que você não é um robô",
+    frames: () => [{ url: () => "https://www.google.com/recaptcha/api2/anchor" }],
+    locator: (selector) => selector === "body"
+      ? { innerText: async () => "Para continuar, confirme que você não é um robô" }
+      : { count: async () => 1 }
+  };
+  assert.equal(await challengeController.isGoogleChallengePage(challengePage), true);
+
+  const fallbackSearchController = new controllerModule.InstagramController({ config });
+  const fallbackSearchNavigations = [];
+  const fallbackSearchStatuses = [];
+  let fallbackSearchUrl = "about:blank";
+  fallbackSearchController.page = {
+    goto: async (url) => {
+      fallbackSearchUrl = url;
+      fallbackSearchNavigations.push(url);
+    },
+    url: () => fallbackSearchUrl,
+    waitForTimeout: async () => {}
+  };
+  fallbackSearchController.isGoogleChallengePage = async () => fallbackSearchUrl.includes("google.com");
+  fallbackSearchController.updateStatus = (status, message) => fallbackSearchStatuses.push({ status, message });
+  assert.equal(await fallbackSearchController.searchPublicWeb("eleições 2026", { preferGoogle: true, news: true }), "bing");
+  assert.match(fallbackSearchNavigations[0], /google\.com\/search\?.*tbm=nws/);
+  assert.match(fallbackSearchNavigations[1], /bing\.com\/news\/search/);
+  assert.equal(fallbackSearchController.googleChallengeDetected, true);
+  assert.match(fallbackSearchStatuses.at(-1).message, /USANDO BING NEWS/);
+
+  fallbackSearchNavigations.length = 0;
+  assert.equal(await fallbackSearchController.searchPublicWeb("tecnologia", { preferGoogle: true, news: true }), "bing");
+  assert.equal(fallbackSearchNavigations.some((url) => url.includes("google.com")), false);
+
+  const newGoogleWindowController = new controllerModule.InstagramController({ config });
+  const newGoogleWindowNavigations = [];
+  const secondaryGooglePage = {
+    setViewportSize: async () => {},
+    setExtraHTTPHeaders: async () => {},
+    goto: async (url) => newGoogleWindowNavigations.push(url),
+    waitForTimeout: async () => {},
+    url: () => newGoogleWindowNavigations.at(-1) || "about:blank",
+    locator: () => ({ innerText: async () => "Google" })
+  };
+  newGoogleWindowController.context = { newPage: async () => secondaryGooglePage };
+  newGoogleWindowController.init = async () => {};
+  newGoogleWindowController.updateStatus = (status, message) => {
+    newGoogleWindowController.status = status;
+    newGoogleWindowController.message = message;
+  };
+  const newGoogleWindowResult = await newGoogleWindowController.openGoogleAlongside("abra uma nova janela do Google");
+  assert.equal(newGoogleWindowResult.status, "ready");
+  assert.equal(newGoogleWindowController.browserMode, "browser_command");
+  assert.equal(newGoogleWindowController.secondaryBrowserLabel, "GOOGLE 2");
+  assert.equal(newGoogleWindowNavigations[0], "https://www.google.com/?hl=pt-BR");
 
   const dispatchedTouchEvents = [];
   const pressedKeys = [];
@@ -393,6 +545,30 @@ async function main() {
   assert.deepEqual(await clickController.sendEmbeddedInput({ type: "click", x: 0.5, y: 0.25 }), { ok: true });
   assert.deepEqual(tappedPoints, [{ x: 215, y: 190 }]);
   assert.deepEqual(mouseClicks, []);
+  assert.equal(clickController.embeddedInputInProgress, 0);
+
+  let releasePrioritizedTap;
+  const prioritizedTapGate = new Promise((resolve) => {
+    releasePrioritizedTap = resolve;
+  });
+  const prioritizedInputController = new controllerModule.InstagramController({ config });
+  prioritizedInputController.page = {
+    viewportSize: () => ({ width: 430, height: 760 }),
+    setExtraHTTPHeaders: async () => {},
+    bringToFront: async () => {},
+    touchscreen: { tap: async () => prioritizedTapGate },
+    mouse: { click: async () => {} }
+  };
+  const prioritizedInput = prioritizedInputController.sendEmbeddedInput({ type: "click", x: 0.2, y: 0.3 });
+  await Promise.resolve();
+  assert.equal(prioritizedInputController.embeddedInputInProgress, 1);
+  await assert.rejects(
+    () => prioritizedInputController.captureJpegFrame(),
+    /INSTAGRAM_ACTION_IN_PROGRESS/
+  );
+  releasePrioritizedTap();
+  assert.deepEqual(await prioritizedInput, { ok: true });
+  assert.equal(prioritizedInputController.embeddedInputInProgress, 0);
 
   const fallbackFollowController = new controllerModule.InstagramController({ config });
   let openedMediaFor = null;
@@ -661,6 +837,14 @@ function createLoginPage(values) {
     visible: true,
     click: async () => {
       values.submitted = true;
+      if (values.requiresContinue) values.continueVisible = true;
+    }
+  });
+  const continueButton = createFakeLocator({
+    isVisible: async () => Boolean(values.continueVisible),
+    click: async () => {
+      values.continued = true;
+      values.continueVisible = false;
     }
   });
 
@@ -672,7 +856,12 @@ function createLoginPage(values) {
       if (selector === "input[name='password']") return passwordInput;
       return submit;
     },
-    getByRole: () => submit,
+    getByRole: (role, options = {}) => {
+      if (role === "button" && (
+        options.name?.test?.("Continuar") || options.name?.test?.("Continue")
+      )) return continueButton;
+      return submit;
+    },
     waitForTimeout: async () => {}
   };
 }

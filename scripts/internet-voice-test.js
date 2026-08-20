@@ -59,6 +59,11 @@ async function main() {
       message: "Victor voltou a falar.",
       memories: [{ content: "Victor chegou atrasado e culpou a linha vermelha." }],
       expect: { humor: "callback", callbacks: 1 }
+    },
+    {
+      name: "comentário de notícia",
+      message: "Leia estas notícias de política atual e comente as manchetes.",
+      expect: { registers: "twitter_x", promptText: "MODO NOTICIA - COMENTARIO, NAO LEITURA" }
     }
   ];
 
@@ -81,6 +86,7 @@ async function main() {
     if (scenario.expect.humor) assert.ok(debug.humor.includes(scenario.expect.humor), `${scenario.name}: humor ${scenario.expect.humor}`);
     if (scenario.expect.context) assert.ok(debug.contexts.includes(scenario.expect.context), `${scenario.name}: contexto ${scenario.expect.context}`);
     if (scenario.expect.callbacks) assert.ok(debug.callbacksAvailable >= scenario.expect.callbacks, `${scenario.name}: callback disponível`);
+    if (scenario.expect.promptText) assert.ok(context.includes(scenario.expect.promptText), `${scenario.name}: instrução específica ausente`);
   }
 
   const ordinaryConversation = buildInternetVoiceContext({
@@ -166,7 +172,7 @@ async function main() {
 
   console.log("INTERNET VOICE TESTS PASSED");
   console.log(formatInternetVoiceDebug(cooldown.debug));
-  console.log(`SCENARIOS ${cases.length + 2}/12`);
+  console.log(`SCENARIOS ${cases.length + 2}/${cases.length + 2}`);
 }
 
 main().catch((error) => {

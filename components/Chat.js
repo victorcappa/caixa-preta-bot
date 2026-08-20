@@ -212,13 +212,17 @@ export default function Chat() {
     robotSoundEngine.setGlitch(glitch || {});
   }, [glitch]);
 
+  const browserProcessing = ["STARTING", "NAVIGATING", "ACTING"].includes(instagram.status);
+  const informationProcessing = pending || performancePending || browserProcessing;
+
   useEffect(() => {
-    if (pending) {
+    if (informationProcessing) {
       robotSoundEngine.startThinking();
     } else {
       robotSoundEngine.stopThinking();
     }
-  }, [pending]);
+    return () => robotSoundEngine.stopThinking();
+  }, [informationProcessing]);
 
   useEffect(() => {
     if (!manualOpen) {
@@ -240,6 +244,12 @@ export default function Chat() {
       setInstagramPanelClosed(false);
     }
   }, [instagram.status]);
+
+  useEffect(() => {
+    if (instagram.embeddedPanelSequence > 0) {
+      setInstagramPanelClosed(false);
+    }
+  }, [instagram.embeddedPanelSequence]);
 
   useEffect(() => {
     if (instagram.browserMode !== "google_guidance") return;
