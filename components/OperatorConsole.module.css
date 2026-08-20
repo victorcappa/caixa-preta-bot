@@ -138,8 +138,9 @@
 }
 
 .instagramBrowserPanel {
-  flex: 0 0 min(68vh, 680px);
-  min-height: 480px;
+  flex: 0 0 850px;
+  height: 850px;
+  min-height: 850px;
   margin-top: 14px;
   border: 1px solid var(--green-soft);
   overflow: hidden;
@@ -370,8 +371,9 @@
   }
 
   .instagramBrowserPanel {
-    flex-basis: 56vh;
-    min-height: 400px;
+    flex-basis: 850px;
+    height: 850px;
+    min-height: 850px;
   }
 
   .inlineControls {
