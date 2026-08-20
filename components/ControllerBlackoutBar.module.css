@@ -1,0 +1,72 @@
+.bar {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(0, 255, 102, 0.14);
+  background: #020202;
+  font-family: "Courier New", Courier, monospace;
+}
+
+.label {
+  color: var(--green-dim);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.buttons {
+  min-width: 0;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  overflow-x: auto;
+}
+
+.button,
+.activeButton,
+.allActiveButton {
+  flex: 0 0 auto;
+  min-height: 28px;
+  border: 1px solid var(--green-soft);
+  background: #000000;
+  color: var(--green-dim);
+  cursor: pointer;
+  padding: 4px 8px;
+  font: inherit;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+}
+
+.button:hover,
+.button:focus-visible,
+.activeButton,
+.allActiveButton {
+  border-color: var(--green);
+  color: var(--green);
+  outline: 0;
+}
+
+.activeButton,
+.allActiveButton {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: #000000;
+  font-weight: 700;
+}
+
+.button:disabled,
+.activeButton:disabled,
+.allActiveButton:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+@media (max-width: 680px) {
+  .bar {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+}

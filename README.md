@@ -51,6 +51,17 @@ Depois abra:
 - `http://localhost:3000/baralho-morbido-controller`, para sortear e reiniciar o Baralho Morbido
 - `http://localhost:3000/queda-aviao`, para a projecao textual isolada de Queda Aviao
 - `http://localhost:3000/queda-aviao-controller`, para controlar essa projecao em tempo real
+- `http://localhost:3000/forca-g-samples`, tela publica de samples audiovisuais da Forca G
+- `http://localhost:3000/forca-g-samples-controller`, controller de samples audiovisuais
+- `http://localhost:3000/forca-g-shaders`, tela publica de videos e shaders da Forca G
+- `http://localhost:3000/forca-g-shaders-controller`, controller editavel de videos e shaders
+- `http://localhost:3000/transicao-psicodelica`, tela publica preta da transicao psicodelica
+- `http://localhost:3000/transicao-psicodelica-controller`, controller preparado para a transicao psicodelica
+- `http://localhost:3000/tea-for-two`, tela publica preta de Tea For Two
+- `http://localhost:3000/tea-for-two-controller`, controller preparado para musica e transicao
+- `http://localhost:3000/piloto-videogame`, tela publica do piloto
+- `http://localhost:3000/piloto-videogame-controller`, controller preparado para soundboard do piloto
+- `http://localhost:3000/tecnologia-floresta-controller`, controller preparado para camada sonora transversal
 - `http://localhost:3000/glitch-controller`, para testar e ajustar o glitch visual em tempo real
 
 Pontos importantes:
@@ -61,9 +72,69 @@ Pontos importantes:
 - O operator e uma tela de recuperacao: blackouts escurecem telas publicas, mas nao escurecem o operator.
 - Baralho Morbido usa polling leve proprio, nao SSE global, para nao travar Operator/Chat quando a tela publica esta aberta.
 
+## Controle de telas de projecao
+
+No `/operator`, use `ABRIR NOVA JANELA COM` para criar uma janela publica
+controlada. Uma tela publica aberta diretamente em `http://localhost:3000`
+tambem se registra sozinha. A janela recebe ou solicita um `projectionWindowId`,
+salva o mesmo ID em `sessionStorage`, registra-se em `/api/projection` e passa
+a receber comandos pelo SSE existente em `/api/events`.
+
+Depois de posicionar essa janela no monitor/projetor em modo Estender Tela, use
+`MUDAR PARA TELA` no `/operator` para trocar somente a janela de projecao ativa.
+O Operator nao navega nem recarrega. Abrir uma nova janela controlada torna essa
+janela a ativa; a estrutura do estado guarda multiplas janelas em
+`projection.windows`, entao comandos futuros podem ser direcionados por ID.
+
+Telas publicas controlaveis:
+
+- `Chatbot`: `/`
+- `Baralho Morbido`: `/baralho-morbido`
+- `Queda Aviao`: `/queda-aviao`
+- `Forca G Samples`: `/forca-g-samples`
+- `Forca G Shaders`: `/forca-g-shaders`
+- `Transicao Psicodelica`: `/transicao-psicodelica`
+- `Tea For Two`: `/tea-for-two`
+- `Piloto Videogame`: `/piloto-videogame`
+- `Tecnologia x Floresta`: `/tecnologia-floresta`
+
+Telas de controller, debug e treinamento nao entram no menu de projecao. Se o
+Safari bloquear `window.open()`, permita popups para `localhost:3000`; a abertura
+precisa acontecer a partir do clique do operador para ser aceita pelo navegador.
+
 O operator tambem pode ser aberto dentro da tela principal pelo botao `OP`,
 abaixo do botao `?`. Ele alterna entre chat em tela cheia e chat com terminal
 operador ao lado; em telas menores, aparece como gaveta animada.
+
+As telas privadas de operacao tem um menu comum no topo, configurado em
+`lib/controllerSurfaces.js`. O `/operator` funciona como hub e organiza os
+controllers em colunas por cena: uma cena com apenas um controller aparece uma
+vez; as quatro partes da Cena 2 ficam empilhadas na mesma coluna. Cada rota
+carrega apenas o controller ativo, sem misturar todos os controles em uma tela
+unica. As abas mostram `CENA 2A`, `CENA 2B` e assim por diante antes do nome.
+
+Grupos atuais:
+
+- `CENA 0`: `Bot / Malas`, rota `/operator`
+- `CENA 1`: `Queda / Emergencia`, rota `/queda-aviao-controller`
+- `CENA 2`: `Forca G — Samples`, `Forca G — Shaders`, `Baralho Morbido`,
+  `Transicao Psicodelica`
+- `CENA 3`: `Tea For Two`
+- `CENA 4`: `Piloto / Videogame`
+- `CAMADAS`: `Tecnologia x Floresta`
+- `OUTROS`: `Glitch Geral` e `Treino`
+
+Cada aba cenica troca a projecao para sua rota publica correspondente. `Bot /
+Malas` abre `/`, `Baralho Morbido` abre `/baralho-morbido`, `Queda /
+Emergencia` abre `/queda-aviao` e as demais cenas abrem uma tela preta propria
+enquanto sua logica publica ainda nao existe. `Forca G — Samples` e `Forca G —
+Shaders` mostram videos e imagens disparados no controller em tempo real.
+`Glitch Geral` nao troca a cena projetada: ele abre o controller e o glitch
+continua sendo aplicado sobre a tela publica que ja estiver ativa.
+
+Abaixo das abas existe uma barra de blackout compartilhada em todas as telas de
+controller. Ela controla `CHATBOT`, `BARALHO`, `LEGENDA`, `CENAS`, `TECNOLOGIA` e
+`TODOS`, mantendo o operator visivel como tela de recuperacao.
 
 Quando o Instagram embutido e/ou o operator estiverem visiveis, arraste as
 divisorias entre `chat | Instagram | operator` para ajustar o palco. O tamanho
@@ -77,7 +148,42 @@ controller altera a projecao via estado do servidor e SSE: tocar/pausar,
 avancar/voltar, ir para segmento, subdivisao do texto, fade, ritmo geral, tempo
 das rubricas, loop e texto base. A rota antiga `/queda-aviao/debug` continua
 apontando para o mesmo controller. A projecao abre em modo manual; use
-`TOCAR` para autoplay ou `PRÓXIMA` para avancar segmento por segmento.
+`TOCAR` para autoplay ou `PRÓXIMA` para avancar segmento por segmento. O botao
+`SALVAR TEXTO / DIAGRAMAÇÃO COMO PADRÃO` grava texto, subdivisao, fade, ritmo,
+tempo das rubricas e loop em `data/queda-aviao-default.json`; a proxima abertura
+do controller e da projecao usa esse padrao salvo. O fade padrao inicial e
+`0ms`, para troca seca de texto.
+
+## Controllers editaveis de cues
+
+`Forca G — Samples`, `Forca G — Shaders`, `Transicao Psicodelica`, `Tea For
+Two`, `Piloto / Videogame` e `Tecnologia x Floresta` usam o editor persistente
+de cues. Neles e possivel criar, duplicar e remover botoes, editar nome,
+atalho, cor, tipo, material e duracao em milissegundos. `SALVAR PADRÃO` grava a
+configuracao em `data/controller-cues.json`, para abrir igual na proxima sessao.
+
+Atalhos de teclado disparam os botoes, mas sao ignorados enquanto o foco estiver
+em `input`, `textarea`, `select` ou campo editavel. Os arquivos existentes em
+`assets/` aparecem na lista de material. O campo `Adicionar arquivo` salva novos
+arquivos em `assets/controller-cues/<controller>/` e atualiza a lista.
+Cada cue tem seu proprio botao `STOP`: ele corta a previa/arquivo local e o cue
+ativo na tela publica. No caso de `Forca G — Samples`, video e imagem sao
+reproduzidos na projecao publica correspondente; cues de audio mantem a tela
+preta e tentam tocar o arquivo no navegador da projecao.
+
+Na `CENA 2D`, o cue `Texto Subindo` tem tipo `TEXTO`: edite seu conteudo no
+campo `Texto projetado`, defina cor e duracao, salve o padrao e dispare o cue.
+A tela publica da Transicao Psicodelica sobe o texto pela projecao; os demais
+tipos continuam disponiveis para sons, videos e imagens.
+
+Na `CENA 2B`, os botoes `TÚNEL`, `REDOUT` e `DEFORMAR` aparecem sobre a previa
+do video. Eles aplicam a mesma camada sobre o video da projecao publica; use
+`LIMPAR` para remover os tres efeitos e o controle de intensidade para dosar a
+camada.
+
+O divisor entre o palco de cues e o editor tem uma alca redimensionavel, como o
+painel do bot. Arraste a alca ou use as setas `←` e `→` quando ela estiver em
+foco. A largura e lembrada no navegador, separadamente para cada controller.
 
 ## Baralho Morbido
 
@@ -166,15 +272,18 @@ Escurecer telas publicas a partir do operator:
 /blackout baralho off
 /blackout legenda on
 /blackout legenda off
+/blackout tecnologia on
+/blackout tecnologia off
 /blackout todos on
 /blackout todos off
 ```
 
-O topo do operator tem botoes dedicados para `BLACKOUT CHATBOT`,
-`BLACKOUT BARALHO`, `BLACKOUT LEGENDA` e `BLACKOUT TODOS`. Esses blackouts
-escurecem somente as telas publicas selecionadas; a tela do operator permanece
-visivel para recuperacao. Alvos aceitos incluem `chatbot`, `baralho`,
-`legenda`, `todos`, `chat`, `bot`, `baralho-morbido`, `queda-aviao` e `texto`.
+A barra comum dos controllers tem botoes dedicados para `CHATBOT`, `BARALHO`,
+`LEGENDA`, `TECNOLOGIA` e `TODOS`. Esses blackouts escurecem somente as telas
+publicas selecionadas; a tela do operator permanece visivel para recuperacao.
+Alvos aceitos incluem `chatbot`, `baralho`, `legenda`, `tecnologia`, `todos`,
+`chat`, `bot`, `baralho-morbido`, `queda-aviao`, `texto`,
+`tecnologia-floresta` e `floresta`.
 
 Abrir o Instagram real em Chromium visivel e seguir o perfil autorizado:
 

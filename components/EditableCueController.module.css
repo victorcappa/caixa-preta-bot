@@ -1,0 +1,306 @@
+.screen {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 8px minmax(280px, var(--cue-editor-width, 380px));
+  overflow: hidden;
+  background: #050505;
+  color: #ffffff;
+  font-family: "Courier New", Courier, monospace;
+}
+
+.preview {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(260px, 1fr) auto;
+  gap: 16px;
+  overflow: auto;
+  padding: 22px;
+}
+
+.header {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 1px solid #303030;
+  padding-bottom: 14px;
+}
+
+.header span,
+.form span {
+  color: #9cffbd;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.header h1 {
+  margin: 6px 0 0;
+  font-size: clamp(1.4rem, 3vw, 2.6rem);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.header p {
+  max-width: 780px;
+  margin: 10px 0 0;
+  color: #d7d7d7;
+  line-height: 1.4;
+}
+
+.header strong {
+  flex: 0 0 auto;
+  border: 1px solid #9cffbd;
+  color: #9cffbd;
+  padding: 8px 10px;
+  font-size: 0.75rem;
+}
+
+.stage {
+  position: relative;
+  min-height: 320px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #303030;
+  background: #000000;
+  overflow: hidden;
+}
+
+.stageOverlay {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  left: 10px;
+}
+
+.stage p {
+  color: #777777;
+}
+
+.media {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.audioPreview {
+  display: grid;
+  gap: 10px;
+  text-align: center;
+}
+
+.audioPreview span {
+  font-size: clamp(2rem, 7vw, 6rem);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.audioPreview small {
+  color: #d7d7d7;
+}
+
+.cueGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.cueItem {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  gap: 5px;
+}
+
+.cue,
+.selectedCue {
+  min-height: 74px;
+  display: grid;
+  gap: 6px;
+  align-content: center;
+  border: 1px solid color-mix(in srgb, var(--cue-color) 55%, #000000);
+  background: #111111;
+  color: var(--cue-color);
+  cursor: pointer;
+  padding: 10px;
+  text-align: left;
+}
+
+.selectedCue {
+  background: color-mix(in srgb, var(--cue-color) 20%, #000000);
+  box-shadow: inset 0 0 0 1px var(--cue-color);
+}
+
+.cue span,
+.selectedCue span {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.cue strong,
+.selectedCue strong {
+  color: #ffffff;
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+  text-transform: uppercase;
+}
+
+.cueStop {
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--cue-color) 42%, #000000);
+  background: #050505;
+  color: var(--cue-color);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.66rem;
+  writing-mode: vertical-rl;
+}
+
+.cueStop:hover,
+.cueStop:focus-visible {
+  border-color: var(--cue-color);
+  background: color-mix(in srgb, var(--cue-color) 18%, #000000);
+  outline: 0;
+}
+
+.editor {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  overflow: auto;
+  border-left: 1px solid #303030;
+  background: #101010;
+  padding: 18px;
+}
+
+.editorResizeHandle {
+  min-width: 8px;
+  min-height: 8px;
+  border-right: 1px solid #303030;
+  border-left: 1px solid #303030;
+  background: #000000;
+  cursor: col-resize;
+  touch-action: none;
+  transition: background 120ms ease, box-shadow 120ms ease;
+}
+
+.editorResizeHandle:hover,
+.editorResizeHandle:focus-visible {
+  outline: 0;
+  background: rgba(156, 255, 189, 0.16);
+  box-shadow: 0 0 18px rgba(156, 255, 189, 0.14);
+}
+
+.editorActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.editorActions button,
+.swatches button {
+  min-height: 36px;
+  border: 1px solid #4a4a4a;
+  background: #050505;
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+}
+
+.editorActions .saveButton {
+  grid-column: 1 / -1;
+  border-color: #9cffbd;
+  color: #9cffbd;
+}
+
+.editorActions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.46;
+}
+
+.form {
+  display: grid;
+  gap: 12px;
+}
+
+.form label {
+  display: grid;
+  gap: 6px;
+}
+
+.form input,
+.form select,
+.form textarea {
+  min-height: 38px;
+  border: 1px solid #3a3a3a;
+  background: #000000;
+  color: #ffffff;
+  padding: 8px;
+  font: inherit;
+}
+
+.form textarea {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.35;
+}
+
+.form input[type="color"] {
+  padding: 2px;
+}
+
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.swatches button {
+  min-height: 34px;
+}
+
+.upload input {
+  border-style: dashed;
+}
+
+.loading {
+  margin: 22px;
+  color: #9cffbd;
+}
+
+@media (max-width: 920px) {
+  .screen {
+    grid-template-columns: 1fr;
+    overflow: auto;
+  }
+
+  .preview,
+  .editor {
+    overflow: visible;
+  }
+
+  .editor {
+    border-left: 0;
+    border-top: 1px solid #303030;
+  }
+
+  .editorResizeHandle {
+    display: none;
+  }
+}
+
+@media (max-width: 680px) {
+  .preview,
+  .editor {
+    padding: 14px;
+  }
+
+  .header {
+    display: grid;
+  }
+}

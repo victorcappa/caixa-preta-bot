@@ -1,4 +1,4 @@
-export const DEFAULT_FADE_MS = 950;
+export const DEFAULT_FADE_MS = 0;
 
 export const scriptLines = [
   "1: QUANTAS MEDALHAS VOCÊ TEM?",

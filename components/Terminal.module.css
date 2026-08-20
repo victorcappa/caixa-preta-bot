@@ -1,6 +1,7 @@
 .terminal {
   width: 100vw;
-  height: 100vh;
+  height: 100%;
+  min-height: 0;
   padding: 28px;
   display: flex;
   flex-direction: column;

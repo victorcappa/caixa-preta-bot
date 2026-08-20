@@ -1,0 +1,67 @@
+.stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #000000;
+}
+
+.media {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+.risingText {
+  position: absolute;
+  right: 8vw;
+  bottom: -30vh;
+  left: 8vw;
+  color: var(--cue-color, #ffffff);
+  font-family: "Courier New", Courier, monospace;
+  font-size: clamp(1.6rem, 5vw, 5.6rem);
+  line-height: 1.08;
+  white-space: pre-wrap;
+  text-align: center;
+  animation: rise var(--cue-text-duration, 15000ms) linear forwards;
+}
+
+.shaderOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.shaderTunnel {
+  box-shadow: inset 0 0 min(40vw, 520px) rgba(0, 0, 0, var(--shader-tunnel));
+}
+
+.shaderRedout {
+  background: rgba(255, 24, 38, var(--shader-redout));
+  mix-blend-mode: screen;
+}
+
+.shaderDistortion {
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(112, 244, 255, var(--shader-distortion-a)) 0,
+    rgba(112, 244, 255, 0) 3px,
+    rgba(255, 71, 125, var(--shader-distortion-b)) 7px
+  );
+  animation: shaderDistort 180ms steps(2, end) infinite;
+}
+
+@keyframes rise {
+  to {
+    transform: translateY(-150vh);
+  }
+}
+
+@keyframes shaderDistort {
+  50% {
+    transform: translateX(var(--shader-shift)) skewX(-1deg);
+  }
+}

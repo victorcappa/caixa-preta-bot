@@ -1,3 +1,4 @@
+import ControllerSurface from "@/components/ControllerSurface";
 import BaralhoMorbidoController from "./BaralhoMorbidoController";
 
 export const metadata = {
@@ -6,5 +7,9 @@ export const metadata = {
 };
 
 export default function BaralhoMorbidoControllerPage() {
-  return <BaralhoMorbidoController />;
+  return (
+    <ControllerSurface>
+      <BaralhoMorbidoController />
+    </ControllerSurface>
+  );
 }

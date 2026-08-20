@@ -1,0 +1,87 @@
+.surface {
+  width: 100vw;
+  height: 100vh;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  overflow: hidden;
+  background: #000000;
+  color: var(--green);
+}
+
+.tabs {
+  min-width: 0;
+  flex: 0 0 auto;
+  overflow-x: auto;
+  padding: 7px 10px 8px;
+  border-bottom: 1px solid var(--green-soft);
+  background: #000000;
+  font-family: "Courier New", Courier, monospace;
+}
+
+.controllerGroups {
+  width: max-content;
+  min-width: 100%;
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.group {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 6px;
+}
+
+.tab,
+.activeTab {
+  flex: 0 0 auto;
+  min-height: 32px;
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  border: 1px solid var(--green-soft);
+  color: var(--green-dim);
+  padding: 6px 10px;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+  font-size: 0.82rem;
+}
+
+.tabSceneNumber {
+  color: var(--green);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.tab:hover,
+.tab:focus-visible,
+.activeTab {
+  border-color: var(--green);
+  color: var(--green);
+  outline: 0;
+}
+
+.activeTab {
+  background: rgba(0, 255, 102, 0.12);
+}
+
+.content {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .tabs {
+    padding: 7px;
+  }
+
+  .tab,
+  .activeTab {
+    min-height: 30px;
+    padding: 5px 8px;
+    font-size: 0.76rem;
+  }
+}

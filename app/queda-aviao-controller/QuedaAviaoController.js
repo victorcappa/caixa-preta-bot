@@ -210,7 +210,7 @@ export default function QuedaAviaoController() {
         <div className={styles.inlineActions}>
           <button disabled={pending} type="button" onClick={() => updatePlayback({ fadeMs: 0 })}>SEM FADE</button>
           <button disabled={pending} type="button" onClick={() => updatePlayback({ fadeMs: DEFAULT_FADE_MS })}>
-            FADE PADRÃO
+            PADRÃO
           </button>
         </div>
 
@@ -268,6 +268,15 @@ export default function QuedaAviaoController() {
             onChange={(event) => updatePlayback({ rawText: event.target.value, currentIndex: 0 })}
           />
         </label>
+
+        <button
+          className={styles.saveDefaultButton}
+          disabled={pending}
+          onClick={() => runAction("save-default", {}, "SALVAR PADRAO")}
+          type="button"
+        >
+          SALVAR TEXTO / DIAGRAMAÇÃO COMO PADRÃO
+        </button>
 
         <section className={styles.debug}>
           <h2>Debug</h2>

@@ -1,4 +1,5 @@
 import { showState } from "@/lib/showState";
+import { saveQuedaAviaoDefaults } from "@/lib/queda-aviao/state";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -25,6 +26,15 @@ export async function POST(request) {
       return Response.json({
         message: "QUEDA AVIAO DISPLAY DISCONNECTED",
         state
+      });
+    }
+
+    if (action === "save-default") {
+      const defaults = saveQuedaAviaoDefaults(showState.snapshot().quedaAviao);
+      return Response.json({
+        message: "QUEDA AVIAO PADRÃO SALVO",
+        defaults,
+        state: showState.snapshot().quedaAviao
       });
     }
 
