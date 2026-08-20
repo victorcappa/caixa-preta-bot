@@ -211,9 +211,10 @@ manifest ou arquivos `.txt` em `texts/`. Imagens `replace` substituem o conjunto
 visual atual; imagens `overlay` são acrescentadas e podem coexistir. Atalhos são
 locais ao controller, configuráveis, aparecem nos pads e ficam suspensos com
 foco em input, textarea, select ou conteúdo editável. Duplicatas são avisadas na
-tela e o primeiro item vence. O volume master atua em todas as vozes da projeção.
-Seu slider fica ancorado à direita do controller para permanecer acessível
-durante a rolagem da página.
+tela e o primeiro item vence. O volume geral atua sobre as vozes e vídeos com
+áudio sem apagar a regulagem individual de cada pad. O mesmo slider, acompanhado
+de `MUTE`, fica fixo à direita em todas as telas de controller e permanece
+acessível durante a rolagem.
 Áudios e imagens são pré-carregados; vídeos carregam metadados antes do primeiro
 disparo para evitar manter vários arquivos grandes integralmente em memória.
 

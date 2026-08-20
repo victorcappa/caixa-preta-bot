@@ -8,6 +8,7 @@ import {
   updateSceneAudioEffects
 } from "@/lib/sceneAudioGraph";
 import { normalizeSceneAudioEffects, SCENE_AUDIO_EFFECT_DEFAULTS } from "@/lib/sceneAudioEffects";
+import { GLOBAL_VOLUME_EVENT, readStoredGlobalVolume } from "@/lib/globalVolume";
 import { nextSceneOneSampleShortcut } from "@/lib/sceneOneSampleShortcuts";
 import SceneAudioEffectsControls from "./SceneAudioEffectsControls";
 import styles from "./EditableCueController.module.css";
@@ -127,6 +128,7 @@ const EditableCueController = forwardRef(function EditableCueController({
   const [status, setStatus] = useState("CONNECTING");
   const [saving, setSaving] = useState(false);
   const [playingCueIds, setPlayingCueIds] = useState([]);
+  const [globalVolume, setGlobalVolume] = useState(1);
   const [editorWidth, setEditorWidth] = useState(DEFAULT_EDITOR_WIDTH);
   const audioInstancesRef = useRef(new Map());
   const previewMediaRef = useRef(null);
@@ -136,6 +138,21 @@ const EditableCueController = forwardRef(function EditableCueController({
   const screenRef = useRef(null);
   const triggerCueRef = useRef(null);
   const toggleSelectedLoopRef = useRef(null);
+
+  useEffect(() => {
+    setGlobalVolume(readStoredGlobalVolume());
+    function onGlobalVolume(event) {
+      setGlobalVolume(Number(event.detail));
+    }
+    window.addEventListener(GLOBAL_VOLUME_EVENT, onGlobalVolume);
+    return () => window.removeEventListener(GLOBAL_VOLUME_EVENT, onGlobalVolume);
+  }, []);
+
+  useEffect(() => {
+    for (const instance of audioInstancesRef.current.values()) {
+      instance.audio.volume = clamp(instance.cueVolume * globalVolume, 0, 1);
+    }
+  }, [globalVolume]);
 
   function syncPlayingCueIds() {
     const cueIds = new Set();
@@ -381,8 +398,9 @@ const EditableCueController = forwardRef(function EditableCueController({
       const playbackId = crypto.randomUUID();
       const audio = new Audio(src);
       audio.loop = Boolean(cue.loop);
-      audio.volume = clamp(Number(cue.volume ?? 1), 0, 1);
-      const instance = { audio, cueId: cue.id, playbackId, timeoutId: null };
+      const cueVolume = clamp(Number(cue.volume ?? 1), 0, 1);
+      audio.volume = clamp(cueVolume * globalVolume, 0, 1);
+      const instance = { audio, cueId: cue.id, cueVolume, playbackId, timeoutId: null };
       audioInstancesRef.current.set(playbackId, instance);
       syncPlayingCueIds();
 
@@ -473,7 +491,8 @@ const EditableCueController = forwardRef(function EditableCueController({
         instance.audio.loop = Boolean(patch.loop);
       }
       if (patch.volume !== undefined) {
-        instance.audio.volume = clamp(Number(patch.volume), 0, 1);
+        instance.cueVolume = clamp(Number(patch.volume), 0, 1);
+        instance.audio.volume = clamp(instance.cueVolume * globalVolume, 0, 1);
       }
     }
     void enqueuePublicCue("update-audio", null, { cueId: cue.id, patch });

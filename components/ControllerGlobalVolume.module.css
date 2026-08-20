@@ -1,0 +1,38 @@
+.control {
+  position: fixed;
+  z-index: 200;
+  top: 7px;
+  right: 10px;
+  width: clamp(210px, 24vw, 300px);
+  min-height: 52px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 9px;
+  align-items: center;
+  border: 1px solid var(--green);
+  background: rgba(0, 8, 3, .97);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .68);
+  padding: 7px;
+  color: var(--green);
+  font-family: "Courier New", Courier, monospace;
+}
+
+.control button {
+  min-height: 36px;
+  border: 1px solid var(--green-soft);
+  background: #000;
+  color: var(--green);
+  cursor: pointer;
+  font: inherit;
+  font-size: .68rem;
+}
+
+.control label { display: grid; grid-template-columns: 1fr auto; gap: 3px 8px; min-width: 0; }
+.control span { font-size: .67rem; white-space: nowrap; }
+.control small { color: var(--green-dim); font-size: .52rem; }
+.control strong { color: #fff; font-size: .72rem; }
+.control input { grid-column: 1 / -1; width: 100%; accent-color: var(--green); }
+
+@media (max-width: 640px) {
+  .control { right: 7px; width: min(220px, calc(100vw - 14px)); }
+}

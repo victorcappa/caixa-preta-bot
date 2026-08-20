@@ -11,6 +11,7 @@ export default function QuedaAviaoPlayer() {
   const [playback, setPlayback] = useState(null);
   const [displayBlackout, setDisplayBlackout] = useState(null);
   const [sceneCue, setSceneCue] = useState(null);
+  const [globalVolume, setGlobalVolume] = useState(1);
 
   useEffect(() => {
     fetch("/api/queda-aviao", {
@@ -28,6 +29,7 @@ export default function QuedaAviaoPlayer() {
       .then((response) => response.json())
       .then((data) => {
         setSceneCue(data.sceneCue || null);
+        setGlobalVolume(data.globalVolume ?? 1);
       })
       .catch(() => {});
 
@@ -37,6 +39,7 @@ export default function QuedaAviaoPlayer() {
       setPlayback(payload.state?.quedaAviao || null);
       setDisplayBlackout(payload.state?.displayBlackout || null);
       setSceneCue(payload.state?.sceneCue || payload.sceneCue || null);
+      setGlobalVolume(payload.state?.globalVolume ?? payload.globalVolume ?? 1);
     };
 
     return () => {
@@ -65,6 +68,7 @@ export default function QuedaAviaoPlayer() {
     <main className={styles.screen}>
       <PublicSceneAudioOutput
         controllerId="queda-aviao-sampler"
+        globalVolume={globalVolume}
         sceneCue={sceneCue}
       />
       <DisplayBlackout blackout={displayBlackout} target="legenda" />

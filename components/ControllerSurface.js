@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import ControllerBlackoutBar from "./ControllerBlackoutBar";
+import ControllerGlobalVolume from "./ControllerGlobalVolume";
 import {
   getControllerSurfaceGroups,
   sortedControllerSurfaces,
@@ -66,6 +67,7 @@ export default function ControllerSurface({ children }) {
 
   return (
     <div className={styles.surface}>
+      <ControllerGlobalVolume />
       <nav className={styles.tabs} aria-label="Controllers cênicos">
         <div className={styles.controllerGroups}>
           {groupedSurfaces.map((group) => (

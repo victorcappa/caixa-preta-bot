@@ -14,7 +14,7 @@ function assetSrc(assetPath = "") {
   return assetPath ? `/api/game-assets?file=${encodeURIComponent(assetPath)}` : "";
 }
 
-function PublicCueMedia({ cue, onEnded = null }) {
+function PublicCueMedia({ cue, globalVolume = 1, onEnded = null }) {
   const mediaRef = useRef(null);
   const onEndedRef = useRef(onEnded);
   const src = assetSrc(cue?.assetPath);
@@ -44,6 +44,12 @@ function PublicCueMedia({ cue, onEnded = null }) {
       media.load();
     };
   }, [cue?.sequence, cue?.type, src]);
+
+  useEffect(() => {
+    const media = mediaRef.current;
+    if (!media || !["audio", "video"].includes(cue?.type)) return;
+    media.volume = Math.max(0, Math.min(1, Number(cue.volume ?? 1) * globalVolume));
+  }, [cue.volume, cue?.type, globalVolume]);
 
   useEffect(() => {
     const media = mediaRef.current;
@@ -90,12 +96,12 @@ function PublicCueMedia({ cue, onEnded = null }) {
       onEnded={onEnded || undefined}
       ref={mediaRef}
       src={src}
-      volume={Math.max(0, Math.min(1, Number(cue.volume ?? 1)))}
+      volume={Math.max(0, Math.min(1, Number(cue.volume ?? 1) * globalVolume))}
     />
   );
 }
 
-export function PublicSceneAudioOutput({ controllerId = "", sceneCue = null }) {
+export function PublicSceneAudioOutput({ controllerId = "", globalVolume = 1, sceneCue = null }) {
   const audioCues = (sceneCue?.audioCues || []).filter((cue) => (
     cue.controllerId === controllerId && cue.type === "audio" && cue.assetPath
   ));
@@ -116,6 +122,7 @@ export function PublicSceneAudioOutput({ controllerId = "", sceneCue = null }) {
   return audioCues.map((cue) => (
     <PublicCueMedia
       cue={cue}
+      globalVolume={globalVolume}
       key={cue.playbackId || `${cue.id}-${cue.sequence}`}
       onEnded={() => reportEnded(cue)}
     />
@@ -126,6 +133,7 @@ export default function PublicSceneStage({ blackoutTarget = "cenas", controllerI
   const [displayBlackout, setDisplayBlackout] = useState(null);
   const [sceneCue, setSceneCue] = useState(null);
   const [forcaGShaders, setForcaGShaders] = useState(null);
+  const [globalVolume, setGlobalVolume] = useState(1);
 
   useEffect(() => {
     fetch("/api/state")
@@ -134,6 +142,7 @@ export default function PublicSceneStage({ blackoutTarget = "cenas", controllerI
         setDisplayBlackout(data.displayBlackout || null);
         setSceneCue(data.sceneCue || null);
         setForcaGShaders(data.forcaGShaders || null);
+        setGlobalVolume(data.globalVolume ?? 1);
       })
       .catch(() => {});
 
@@ -143,6 +152,7 @@ export default function PublicSceneStage({ blackoutTarget = "cenas", controllerI
       setDisplayBlackout(payload.state?.displayBlackout || payload.displayBlackout || null);
       setSceneCue(payload.state?.sceneCue || payload.sceneCue || null);
       setForcaGShaders(payload.state?.forcaGShaders || payload.forcaGShaders || null);
+      setGlobalVolume(payload.state?.globalVolume ?? payload.globalVolume ?? 1);
     };
 
     return () => events.close();
@@ -170,8 +180,8 @@ export default function PublicSceneStage({ blackoutTarget = "cenas", controllerI
 
   return (
     <main className={styles.stage} aria-label="Cena publica">
-      {cue ? <PublicCueMedia cue={cue} key={cue.sequence} /> : null}
-      <PublicSceneAudioOutput controllerId={controllerId} sceneCue={sceneCue} />
+      {cue ? <PublicCueMedia cue={cue} globalVolume={globalVolume} key={cue.sequence} /> : null}
+      <PublicSceneAudioOutput controllerId={controllerId} globalVolume={globalVolume} sceneCue={sceneCue} />
       {shaderActive ? (
         <div
           aria-hidden="true"

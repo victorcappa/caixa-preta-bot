@@ -29,7 +29,7 @@ function reportError(item, message) {
   void post("error", { itemId: item.id, message });
 }
 
-function VisualMedia({ item, category }) {
+function VisualMedia({ globalVolume, item, category }) {
   const mediaRef = useRef(null);
   const itemRef = useRef(item);
   const src = assetSrc(item.assetPath);
@@ -44,7 +44,7 @@ function VisualMedia({ item, category }) {
   useEffect(() => {
     const media = mediaRef.current;
     if (!media || item.type !== "video") return;
-    media.volume = Math.max(0, Math.min(1, Number(itemRef.current.volume ?? 1)));
+    media.volume = Math.max(0, Math.min(1, Number(itemRef.current.volume ?? 1) * globalVolume));
     media.muted = Boolean(itemRef.current.muted);
     media.currentTime = 0;
     media.play().catch(async (error) => {
@@ -71,14 +71,14 @@ function VisualMedia({ item, category }) {
       media.removeAttribute("src");
       media.load();
     };
-  }, [category, item.playbackId, item.type]);
+  }, [category, globalVolume, item.playbackId, item.type]);
 
   useEffect(() => {
     const media = mediaRef.current;
     if (!media || item.type !== "video") return;
-    media.volume = Math.max(0, Math.min(1, Number(item.volume ?? 1)));
+    media.volume = Math.max(0, Math.min(1, Number(item.volume ?? 1) * globalVolume));
     media.muted = Boolean(item.muted);
-  }, [item.muted, item.type, item.volume]);
+  }, [globalVolume, item.muted, item.type, item.volume]);
 
   useEffect(() => {
     if (!item.stopping) return undefined;
@@ -119,7 +119,7 @@ function VisualMedia({ item, category }) {
   );
 }
 
-function AudioVoice({ item, masterVolume }) {
+function AudioVoice({ globalVolume, item }) {
   const ref = useRef(null);
   const itemRef = useRef(item);
   itemRef.current = item;
@@ -143,8 +143,8 @@ function AudioVoice({ item, masterVolume }) {
   }, [item.playbackId]);
 
   useEffect(() => {
-    if (ref.current) ref.current.volume = Math.max(0, Math.min(1, Number(item.volume ?? 1) * masterVolume));
-  }, [item.volume, masterVolume]);
+    if (ref.current) ref.current.volume = Math.max(0, Math.min(1, Number(item.volume ?? 1) * globalVolume));
+  }, [globalVolume, item.volume]);
 
   useEffect(() => {
     const audio = ref.current;
@@ -277,6 +277,7 @@ export default function ForcaGSamplerStage() {
   const [shaders, setShaders] = useState(null);
   const [glitch, setGlitch] = useState(null);
   const [blackout, setBlackout] = useState(null);
+  const [globalVolume, setGlobalVolume] = useState(1);
 
   useEffect(() => {
     let releasePreload = () => {};
@@ -287,6 +288,7 @@ export default function ForcaGSamplerStage() {
         setShaders(data.shaders || null);
         setGlitch(data.glitch || null);
         setBlackout(data.displayBlackout || null);
+        setGlobalVolume(data.globalVolume ?? 1);
         releasePreload = preload(data.config);
       })
       .catch(() => {});
@@ -299,11 +301,12 @@ export default function ForcaGSamplerStage() {
       if (state.forcaGShaders || payload.forcaGShaders) setShaders(state.forcaGShaders || payload.forcaGShaders);
       if (state.glitch || payload.glitch) setGlitch(state.glitch || payload.glitch);
       if (state.displayBlackout || payload.displayBlackout) setBlackout(state.displayBlackout || payload.displayBlackout);
+      if (state.globalVolume !== undefined || payload.globalVolume !== undefined) setGlobalVolume(state.globalVolume ?? payload.globalVolume);
     };
     return () => { events.close(); releasePreload(); };
   }, []);
 
-  const { layers = EMPTY_STATE.layers, audioCues = [], masterVolume = 1 } = sampler;
+  const { layers = EMPTY_STATE.layers, audioCues = [] } = sampler;
   const hasVisualMedia = Boolean(layers.video || layers.gLoc || (layers.images || []).length);
   return (
     <GlitchOverlay glitch={glitch}>
@@ -314,12 +317,12 @@ export default function ForcaGSamplerStage() {
           <img alt="Teste de visão em túnel" src={TUNNEL_REFERENCE_SRC} />
         </div>
       ) : null}
-      <div className={styles.videoLayer}>{layers.video ? <VisualMedia category="video" item={layers.video} key={layers.video.playbackId} /> : null}</div>
-      <div className={styles.gLocLayer}>{layers.gLoc ? <VisualMedia category="gLoc" item={layers.gLoc} key={layers.gLoc.playbackId} /> : null}</div>
-      <div className={styles.imageLayer}>{(layers.images || []).map((item) => <VisualMedia category="images" item={item} key={item.playbackId} />)}</div>
+      <div className={styles.videoLayer}>{layers.video ? <VisualMedia category="video" globalVolume={globalVolume} item={layers.video} key={layers.video.playbackId} /> : null}</div>
+      <div className={styles.gLocLayer}>{layers.gLoc ? <VisualMedia category="gLoc" globalVolume={globalVolume} item={layers.gLoc} key={layers.gLoc.playbackId} /> : null}</div>
+      <div className={styles.imageLayer}>{(layers.images || []).map((item) => <VisualMedia category="images" globalVolume={globalVolume} item={item} key={item.playbackId} />)}</div>
       <ShaderLayer shaders={shaders} />
       <div className={styles.textSlot}>{layers.text ? <TextLayer item={layers.text} key={layers.text.playbackId} /> : null}</div>
-      {audioCues.map((item) => <AudioVoice item={item} key={item.playbackId} masterVolume={masterVolume} />)}
+      {audioCues.map((item) => <AudioVoice globalVolume={globalVolume} item={item} key={item.playbackId} />)}
       <DisplayBlackout blackout={blackout} target="cenas" />
     </main>
     </GlitchOverlay>

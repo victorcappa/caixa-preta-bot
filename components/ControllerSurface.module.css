@@ -13,7 +13,7 @@
   min-width: 0;
   flex: 0 0 auto;
   overflow-x: auto;
-  padding: 7px 10px 8px;
+  padding: 7px 320px 8px 10px;
   border-bottom: 1px solid var(--green-soft);
   background: #000000;
   font-family: "Courier New", Courier, monospace;
@@ -78,7 +78,7 @@
 
 @media (max-width: 640px) {
   .tabs {
-    padding: 7px;
+    padding: 7px 230px 7px 7px;
   }
 
   .tab,

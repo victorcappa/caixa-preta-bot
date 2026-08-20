@@ -6,7 +6,6 @@ import SceneAudioEffectsControls from "./SceneAudioEffectsControls";
 import styles from "./ForcaGSamplerController.module.css";
 
 const EMPTY_STATE = { layers: { gLoc: null, video: null, images: [], text: null }, audioCues: [], masterVolume: 1, errors: {} };
-const MASTER_VOLUME_KEY = "caixa-preta.forca-g-sampler.master-volume";
 
 function isTypingTarget(target) {
   const tag = target?.tagName?.toLowerCase();
@@ -83,11 +82,6 @@ export default function ForcaGSamplerController() {
       setConfig(data.config);
       setSelectedAudioId((current) => current || data.config.sections?.audio?.[0]?.id || "");
       let nextState = data.state || EMPTY_STATE;
-      const storedVolume = window.localStorage.getItem(MASTER_VOLUME_KEY);
-      if (storedVolume !== null && Number.isFinite(Number(storedVolume))) {
-        const updated = await requestSampler("update", { category: "master", patch: { masterVolume: storedVolume } });
-        nextState = updated.state || nextState;
-      }
       setSampler(nextState);
       setShaders(data.shaders || null);
       setStatus(data.config.warnings?.length ? `${data.config.warnings.length} ASSET(S) COM ERRO` : "READY");
@@ -140,11 +134,6 @@ export default function ForcaGSamplerController() {
   async function applyShader(shaderAction, payload = {}) {
     const data = await send("shader", { shaderAction, payload });
     if (data?.shaders) setShaders(data.shaders);
-  }
-
-  function updateMasterVolume(value) {
-    window.localStorage.setItem(MASTER_VOLUME_KEY, `${value}`);
-    void send("update", { category: "master", patch: { masterVolume: value } });
   }
 
   function updateAudioEffects(itemId, audioEffects) {
@@ -230,16 +219,8 @@ export default function ForcaGSamplerController() {
   const gLoc = sampler.layers?.gLoc;
   const video = sampler.layers?.video;
   const selectedAudio = config?.sections?.audio?.find((item) => item.id === selectedAudioId) || null;
-  const masterVolume = Number(sampler.masterVolume ?? 1);
-
   return (
     <main className={styles.controller}>
-      <aside className={styles.masterVolumeDock} aria-label="Volume geral do sampler">
-        <label>VOLUME GERAL <strong>{Math.round(masterVolume * 100)}%</strong>
-          <input aria-label="Volume master" max="1" min="0" onChange={(event) => updateMasterVolume(event.target.value)} step="0.01" type="range" value={masterVolume} />
-        </label>
-      </aside>
-
       <header className={styles.hero}>
         <div><p>CENA 2A</p><h1>SAMPLER — FORÇA G</h1></div>
         <div className={styles.status}><span className={status === "READY" ? styles.readyDot : styles.statusDot} />{status}</div>

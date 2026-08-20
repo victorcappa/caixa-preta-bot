@@ -13,6 +13,7 @@ export async function GET() {
   return Response.json({
     config: readForcaGSamplerConfig(),
     state: snapshot.forcaGSampler,
+    globalVolume: snapshot.globalVolume,
     shaders: snapshot.forcaGShaders,
     glitch: snapshot.glitch,
     displayBlackout: snapshot.displayBlackout
