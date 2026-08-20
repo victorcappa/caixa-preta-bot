@@ -47,6 +47,7 @@ Depois abra:
 
 - `http://localhost:3000`
 - `http://localhost:3000/operator`
+- `http://localhost:3000/cena-0-controller`, controller dramatúrgico da Cena 0 — Bot / Malas
 - `http://localhost:3000/baralho-morbido`, para a tela publica do Baralho Morbido
 - `http://localhost:3000/baralho-morbido-controller`, para sortear e reiniciar o Baralho Morbido
 - `http://localhost:3000/queda-aviao`, para a projecao textual isolada de Queda Aviao
@@ -115,14 +116,14 @@ unica. As abas mostram `CENA 2A`, `CENA 2B` e assim por diante antes do nome.
 
 Grupos atuais:
 
-- `CENA 0`: `Bot / Malas`, rota `/operator`
+- `CENA 0`: `Bot / Malas`, rota `/cena-0-controller`
 - `CENA 1`: `Queda / Emergencia`, rota `/queda-aviao-controller`
 - `CENA 2`: `Forca G — Samples`, `Forca G — Shaders`, `Baralho Morbido`,
   `Transicao Psicodelica`
 - `CENA 3`: `Tea For Two`
 - `CENA 4`: `Piloto / Videogame`
 - `CAMADAS`: `Tecnologia x Floresta`
-- `OUTROS`: `Glitch Geral` e `Treino`
+- `OUTROS`: `Operator` (console técnico neutro), `Glitch Geral` e `Treino`
 
 Cada aba cenica troca a projecao para sua rota publica correspondente. `Bot /
 Malas` abre `/`, `Baralho Morbido` abre `/baralho-morbido`, `Queda /
@@ -131,6 +132,65 @@ enquanto sua logica publica ainda nao existe. `Forca G — Samples` e `Forca G �
 Shaders` mostram videos e imagens disparados no controller em tempo real.
 `Glitch Geral` nao troca a cena projetada: ele abre o controller e o glitch
 continua sendo aplicado sobre a tela publica que ja estiver ativa.
+
+## Cena 0 — Bot / Malas
+
+`/cena-0-controller` é a superfície privada dedicada à Cena 0. `/operator`
+continua disponível como console técnico e hub neutro; entrar nele não troca a
+projeção. O controller da Cena 0 organiza, sem timeline automática, os blocos
+`COLETA`, `PARTICIPANTE`, `MALAS`, `É BOLO`, `CANTAR 15s`, `GLITCH`,
+`INSTAGRAM` e `AEROPORTO / TEA FOR TWO`.
+
+Os dez botões grandes apenas definem em que etapa a apresentação está. Cada
+mudança registra etapa anterior, etapa atual, ação do operador, participante e
+acontecimentos recentes em `showState.sceneZero`; esse contexto é enviado ao
+mesmo modelo e à mesma persona do chat. O texto público não vem de uma tabela
+de falas. O modelo decide como formular a condução e se vale a pena reconhecer
+metalinguisticamente a operação humana. A etapa só muda em outro clique do
+operador.
+
+Na coleta, `NOVA PERGUNTA`, `REFORMULAR` e `COMENTAR RESULTADO` geram nova fala
+com contexto e objetivos, não um questionário fixo. O estado guarda as últimas
+perguntas, a ação coletiva extraída da fala e o último comentário. O histórico
+é reenviado ao modelo para reduzir repetição dentro da apresentação. Use o
+campo de contexto opcional para informar resultados reais, por exemplo
+"metade levantou a mão"; sem isso, o bot é instruído a não inventar contagens
+ou reações.
+
+`FAZER ESCOLHA` usa o pool existente de equipe, público e participantes da
+sessão, equilibrando nomes menos usados. Marcus Garcia e Victor Cappa são
+sempre removidos do pool. Repetir `FAZER ESCOLHA` preserva o nome já escolhido;
+somente `ESCOLHER OUTRA PESSOA` tenta uma nova seleção.
+
+O bloco `MALAS` chama o `SuitcaseDirector` existente. `É BOLO?` inicia e
+controla o jogo `verdade_ou_bolo` já registrado no `GameDirector`; comentários
+e provocações continuam sendo falas geradas, enquanto rodada, resposta e
+revelação permanecem estados determinísticos do jogo.
+
+O timer cênico usa duração fixa de 15 segundos e um `endsAt` mantido no estado
+do servidor. A projeção calcula a contagem pelo relógio final e mostra
+explicitamente `0` e `FIM`. Pausar grava os segundos restantes; continuar
+recalcula o fim; reiniciar cria uma nova sequência; cancelar remove a camada.
+Nenhuma dessas ações avança de etapa automaticamente.
+
+Os níveis `NORMAL`, `GLITCH 1` a `GLITCH 4` e `COLAPSO` dosam os parâmetros da
+camada visual já existente e também entram no contexto textual do bot. Não há
+progressão automática. Em colapso, o vídeo do aeroporto começa a contaminar o
+chat; ao selecionar `AEROPORTO`, a camada de glitch para e
+`painel-aeroporto.mp4` vira uma tela estável em loop até outra direção.
+
+`INICIAR INSTAGRAM` abre o mesmo `InstagramController`, perfil persistente,
+painel embutido e guardrails já usados por `/instagram`; não existe uma segunda
+automação. Login, 2FA/checkpoints, whitelist e conectividade continuam sendo
+dependências da integração real. `INTERROMPER INSTAGRAM` corta as rotinas do
+controller sem obrigar mudança de etapa.
+
+`PLAY`, `STOP` e `RESTART` usam
+`assets/audios/Doris Day - Tea For Two (1950).mp3`. O áudio toca no navegador
+do controller a partir do clique do operador e também é sinalizado à projeção;
+alguns navegadores podem exigir que a página pública já tenha recebido uma
+interação para permitir áudio remoto. Entrar em aeroporto ou Tea For Two nunca
+dispara a música automaticamente.
 
 Abaixo das abas existe uma barra de blackout compartilhada em todas as telas de
 controller. Ela controla `CHATBOT`, `BARALHO`, `LEGENDA`, `CENAS`, `TECNOLOGIA` e
