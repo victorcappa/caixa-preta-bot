@@ -597,8 +597,12 @@ Na primeira execucao, preencha no servidor o arquivo ignorado pelo Git
 ```
 
 O Chromium abre `instagram.com` por tras da interface e faz o login sozinho. O
-arquivo e lido apenas por `InstagramController` no servidor; usuario e senha nao
-sao enviados em respostas, status ou logs e nao entram no bundle client. O
+arquivo e lido pelo servidor; usuario e senha nao entram em estado, SSE, logs,
+prompt ou bundle client. Na Cena 0, `COPIAR SENHA DO INSTAGRAM` faz uma leitura
+pontual por `POST`, com cache desativado, e o servidor local grava a senha
+diretamente na área de transferência do macOS via `pbcopy`. A credencial nunca
+entra na resposta HTTP nem no JavaScript do navegador; um cabeçalho específico
+do controller impede que um formulário externo dispare essa cópia. O
 arquivo versionado `config/instagram-credentials.example.json` serve apenas como
 modelo e nao contem uma senha real. Tambem e possivel apontar outro caminho
 server-only com `INSTAGRAM_CREDENTIALS_FILE`.
