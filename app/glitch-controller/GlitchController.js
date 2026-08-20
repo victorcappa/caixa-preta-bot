@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import GlitchOverlay from "@/components/GlitchOverlay";
 import { GLITCH_PRESETS, presetParams } from "@/lib/glitch/state";
@@ -47,6 +48,7 @@ export default function GlitchController() {
   const [connection, setConnection] = useState("CONNECTING");
   const [log, setLog] = useState("SYSTEM READY");
   const [sequence, setSequence] = useState(1);
+  const [previewEnabled, setPreviewEnabled] = useState(false);
 
   useEffect(() => {
     fetch("/api/glitch")
@@ -81,13 +83,22 @@ export default function GlitchController() {
     return () => events.close();
   }, []);
 
+  useEffect(() => {
+    if (!previewEnabled) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => setPreviewEnabled(false), 5000);
+    return () => window.clearTimeout(timer);
+  }, [previewEnabled, sequence]);
+
   const previewGlitch = useMemo(() => ({
-    active: true,
+    active: previewEnabled,
     mode: "continuous",
     sequence,
     params,
     video: { active: false }
-  }), [params, sequence]);
+  }), [params, previewEnabled, sequence]);
 
   function updateParam(key, value) {
     const nextValue = Number(value);
@@ -127,11 +138,11 @@ export default function GlitchController() {
   return (
     <main className={styles.screen}>
       <section className={styles.preview}>
-        <GlitchOverlay glitch={previewGlitch} preview>
+        <GlitchOverlay glitch={previewGlitch} preview={previewEnabled}>
           <div className={styles.fakeBot}>
             <span>CAIXA PRETA</span>
             <p>TEM ALGUEM AI?</p>
-            <small>OPERATOR TEST / {preset.toUpperCase()}</small>
+            <small>{previewEnabled ? `PREVIA ATIVA / ${preset.toUpperCase()} / PARA EM 5s` : "PREVIA PAUSADA"}</small>
           </div>
         </GlitchOverlay>
       </section>
@@ -142,10 +153,18 @@ export default function GlitchController() {
             <span>CONTROLLER PRIVADO</span>
             <h1>GLITCH</h1>
           </div>
-          <strong className={connection === "CONNECTED" ? styles.connected : styles.disconnected}>{connection}</strong>
+          <div className={styles.headerActions}>
+            <strong className={connection === "CONNECTED" ? styles.connected : styles.disconnected}>{connection}</strong>
+            <Link className={styles.exitLink} href="/cena-0-controller">SAIR DO GLITCH</Link>
+          </div>
         </header>
 
         <div className={styles.actions}>
+          <button type="button" onClick={() => {
+            setSequence((current) => current + 1);
+            setPreviewEnabled(true);
+          }}>PREVIA 5s</button>
+          <button type="button" onClick={() => setPreviewEnabled(false)}>PARAR PREVIA</button>
           <button type="button" onClick={() => run("trigger")}>GLITCH</button>
           <button type="button" onClick={() => run("trigger", { preset: "strong", params: presetParams("strong") })}>GLITCH FORTE</button>
           <button type="button" onClick={() => run("continuous")}>START CONTINUO</button>

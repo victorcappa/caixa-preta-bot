@@ -75,7 +75,11 @@ export default function GlitchOverlay({ children, glitch = DEFAULT_GLITCH, previ
       const flashChance = clamp(Number(params.flashChance ?? 0.2), 0, 1);
       const modeBoost = glitch?.mode === "continuous" || glitch?.mode === "video" ? randomBetween(0.2, 1) : randomBetween(0.45, 1);
       const level = clamp(baseIntensity * modeBoost + randomBetween(0, jitter * 0.42), 0, 1);
-      const maxBlockCount = preview ? 10 : 32;
+      // Safari can stop processing navigation and STOP events when a strong
+      // preset rebuilds dozens of React nodes around 30 times per second.
+      // CSS keeps the motion between pulses, so a smaller DOM budget preserves
+      // the effect without monopolizing the main thread.
+      const maxBlockCount = preview ? 8 : 12;
       const blockCount = Math.round(clamp(Number(params.blockCount ?? 8), 0, maxBlockCount) * randomBetween(0.35, 1));
 
       if (video?.takeover) {
@@ -101,7 +105,7 @@ export default function GlitchOverlay({ children, glitch = DEFAULT_GLITCH, previ
 
       const interval = clamp(Number(params.intervalMs ?? 360), 40, 6000);
       const frequencyScale = 1 - frequency * 0.72;
-      const minimumInterval = preview ? 120 : 35;
+      const minimumInterval = preview ? 180 : 100;
       timer = setTimeout(pulse, Math.max(minimumInterval, interval * frequencyScale * randomBetween(0.35, 1.35)));
     }
 
