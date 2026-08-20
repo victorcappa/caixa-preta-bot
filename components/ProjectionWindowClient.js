@@ -73,9 +73,22 @@ export default function ProjectionWindowClient() {
     };
 
     postProjectionAction("register", projectionWindowId, currentProjectionPath())
-      .then((response) => response.json())
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "PROJECTION REGISTER ERROR");
+        }
+        return data;
+      })
       .then((data) => {
         const registeredId = data.projectionWindowId || data.state?.activeProjectionWindowId;
+
+        if (closed) {
+          if (registeredId) {
+            postProjectionAction("disconnect", registeredId, currentProjectionPath(), true).catch(() => {});
+          }
+          return;
+        }
 
         if (registeredId) {
           projectionWindowId = registeredId;
@@ -116,6 +129,10 @@ export default function ProjectionWindowClient() {
 
       closed = true;
       window.clearInterval(heartbeat);
+
+      if (!projectionWindowId) {
+        return;
+      }
 
       const body = JSON.stringify({
         action: "disconnect",
