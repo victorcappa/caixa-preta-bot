@@ -365,6 +365,18 @@ function VerdadeOuBoloShow({ game }) {
   const autoAdvanceDelayMs = Number(autoAdvanceCommand?.delayMs || 0);
   const showVideo = ["QUESTION", "VOTING", "ANSWER_LOCKED", "REVEAL", "ROUND_RESULT"].includes(state);
 
+  function playVideo(videoElement) {
+    videoElement.muted = false;
+    videoElement.play().catch((error) => {
+      if (error?.name === "AbortError") {
+        return;
+      }
+
+      videoElement.muted = true;
+      videoElement.play().catch(() => {});
+    });
+  }
+
   useEffect(() => {
     const videoElement = videoRef.current;
 
@@ -452,7 +464,7 @@ function VerdadeOuBoloShow({ game }) {
     lastVideoSequenceRef.current = videoCommand.sequence;
 
     if (videoCommand.action === "play") {
-      videoElement.play().catch(() => {});
+      playVideo(videoElement);
     }
 
     if (videoCommand.action === "pause") {
@@ -468,7 +480,7 @@ function VerdadeOuBoloShow({ game }) {
       }
 
       if (videoCommand.action === "restart") {
-        videoElement.play().catch(() => {});
+        playVideo(videoElement);
       }
     }
   }, [data.videoCommand, video.src]);

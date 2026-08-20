@@ -314,16 +314,20 @@ async function main() {
 
   controlled = director.controlStructuredGame({ ...state, game: boloState }, "select_answer", { answer: "bolo" });
   assert.equal(controlled.applied, true);
-  assert.equal(controlled.gameState.phase, "VOTING");
+  assert.equal(controlled.result.type, "answer_locked_video_started");
+  assert.equal(controlled.gameState.phase, "REVEAL");
   assert.equal(controlled.gameState.publicData.selectedAnswer, "bolo");
+  assert.equal(controlled.gameState.publicData.revealArmed, true);
+  assert.equal(controlled.gameState.publicData.voteCountdown, null);
+  assert.equal(controlled.gameState.publicData.videoCommand.action, "restart");
   boloState = controlled.gameState;
 
   controlled = director.controlStructuredGame({ ...state, game: boloState }, "next");
   assert.equal(controlled.applied, false);
-  assert.equal(controlled.result.reason, "vote_countdown_running");
+  assert.equal(controlled.result.reason, "reveal_video_playing");
   boloState = controlled.gameState;
 
-  controlled = director.controlStructuredGame({ ...state, game: boloState }, "vote_timeout");
+  controlled = director.controlStructuredGame({ ...state, game: boloState }, "video_ended");
   assert.equal(controlled.applied, true);
   assert.equal(controlled.gameState.phase, "REVEAL");
   assert.equal(controlled.gameState.publicData.roundResults.length, 1);
@@ -350,6 +354,8 @@ async function main() {
 
   controlled = director.controlStructuredGame({ ...state, game: boloState }, "select_answer", { answer: "bolo" });
   assert.equal(controlled.applied, true);
+  assert.equal(controlled.gameState.phase, "REVEAL");
+  assert.equal(controlled.gameState.publicData.revealArmed, true);
   boloState = controlled.gameState;
 
   controlled = director.controlStructuredGame({ ...state, game: boloState }, "reveal");
