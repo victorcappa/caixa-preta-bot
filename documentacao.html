@@ -488,9 +488,10 @@ npm run dev</code></pre>
 /game stop
 /game replace forca</code></pre>
                   <p>
-                    Em <code>Verdade ou Bolo?</code>, <code>REVELAR RESPOSTA</code> toca o video da
-                    rodada. Ao fim do video, a projecao abre 10 segundos de voto no canto da tela;
-                    sem voto, a rodada conta como erro e avanca automaticamente.
+                    Em <code>Verdade ou Bolo?</code>, chat e jogo ficam lado a lado. A rodada mostra
+                    primeiro o frame inicial pausado e so entao abre 10 segundos de voto.
+                    <code>REVELAR RESPOSTA</code> toca o video; ao fim, aparecem resultado e placar.
+                    Sem voto, a rodada conta como erro e avanca automaticamente.
                   </p>
                 </article>
 
@@ -543,11 +544,11 @@ npm run dev</code></pre>
                   <p>
                     Reutiliza o jogo estruturado <code>verdade_ou_bolo</code> do
                     <code>GameDirector</code>. O jogo entra direto na primeira rodada e mostra
-                    primeiro os 10 segundos de decisao. O video fica oculto e so toca depois de
-                    <code>REVELAR</code>; ao terminar, aparecem resultado e placar. O operador
+                    o frame inicial pausado antes de iniciar os 10 segundos de decisao. O video
+                    so toca depois de <code>REVELAR</code>; ao terminar, aparecem resultado e placar. O operador
                     controla o timing e avanca diretamente com <code>PROXIMA RODADA</code>. A
                     Caixa improvisa entrada, comentarios e provocacoes com o contexto atual, e
-                    essas falas aparecem sobre a tela do jogo.
+                    essas falas aparecem no chat ao lado da tela do jogo.
                   </p>
                 </article>
 

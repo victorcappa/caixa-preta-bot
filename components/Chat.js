@@ -258,15 +258,6 @@ export default function Chat() {
   }, [instagram.browserMode]);
 
   useEffect(() => {
-    if (game?.id !== "verdade_ou_bolo" || !game.active) {
-      return;
-    }
-
-    setOperatorMounted(true);
-    requestAnimationFrame(() => setOperatorOpen(true));
-  }, [game?.id, game?.active]);
-
-  useEffect(() => {
     scrollRef.current?.scrollIntoView({ block: "end" });
   }, [messages, pending, introStep, introDotsText, introText, typedReplies]);
 
@@ -707,16 +698,6 @@ export default function Chat() {
       event.source !== "agent" || new Date(event.createdAt).getTime() < activeTypingStartedAt
     ))
     : performanceEvents;
-  const latestVerdadeOuBoloComment = game?.id === "verdade_ou_bolo" && game.active
-    ? [...messages].reverse().find((message) => (
-      message.role === "assistant" &&
-      message.source === "scene-zero-operator" &&
-      new Date(message.timestamp).getTime() >= new Date(game.startedAt || 0).getTime()
-    ))
-    : null;
-  const visibleVerdadeOuBoloComment = latestVerdadeOuBoloComment
-    ? typedReplies[latestVerdadeOuBoloComment.id] ?? ""
-    : "";
   const visibleInstagramPanel = instagram?.embedded && instagram.status && instagram.status !== "DISCONNECTED" && !instagramPanelClosed;
   const instagramPanelKey = [
     instagram?.browserMode || "instagram",
@@ -834,7 +815,7 @@ export default function Chat() {
       ) : null}
 
       <section
-        className={`${styles.chatPane} ${visibleInstagramPanel ? styles.chatPaneWithInstagram : ""}`}
+        className={`${styles.chatPane} ${visibleInstagramPanel ? styles.chatPaneWithInstagram : ""} ${game?.id === "verdade_ou_bolo" && game.active ? styles.chatPaneWithGame : ""}`}
         aria-label="Chat publico"
         ref={chatPaneRef}
       >
@@ -844,7 +825,6 @@ export default function Chat() {
           activities={performanceActivities}
           events={visiblePerformanceEvents}
           game={game}
-          gameComment={visibleVerdadeOuBoloComment}
           suitcase={suitcase}
           onMachineBusyChange={setPerformancePending}
           phoneProjection={phoneProjection}

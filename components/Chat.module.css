@@ -27,6 +27,15 @@
   grid-template-columns: minmax(300px, 1fr) 8px minmax(280px, var(--instagram-width, 520px));
 }
 
+.chatPaneWithGame {
+  grid-template-columns: minmax(260px, 0.7fr) minmax(0, 1.3fr);
+}
+
+.chatPaneWithGame .embeddedTerminal {
+  grid-column: 1;
+  grid-row: 1;
+}
+
 .embeddedTerminal {
   width: 100%;
   height: 100%;

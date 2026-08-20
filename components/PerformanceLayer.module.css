@@ -8,6 +8,35 @@
   background: transparent;
 }
 
+.gameSplit {
+  position: relative;
+  inset: auto;
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  width: 100%;
+  height: 100vh;
+  border-left: 1px solid var(--green-soft);
+  container-type: inline-size;
+}
+
+.gameSplit .verdadeOuBolo {
+  padding: clamp(16px, 3cqw, 42px);
+}
+
+.gameSplit .vobHeader strong {
+  font-size: clamp(1.8rem, 7cqw, 6rem);
+}
+
+.gameSplit .vobHeader span {
+  font-size: clamp(0.9rem, 2.5cqw, 2rem);
+}
+
+.gameSplit .vobChoices {
+  gap: clamp(20px, 8cqw, 100px);
+  font-size: clamp(1.5rem, 5cqw, 4rem);
+}
+
 .hideUi {
   background: #000000;
 }
@@ -346,23 +375,6 @@
   color: var(--green-dim);
   font-size: clamp(1.4rem, 4vw, 5rem);
   font-weight: 900;
-}
-
-.vobComment {
-  position: absolute;
-  z-index: 4;
-  left: 50%;
-  bottom: clamp(92px, 13vh, 160px);
-  width: min(88vw, 1200px);
-  margin: 0;
-  padding: clamp(12px, 2vw, 24px);
-  transform: translateX(-50%);
-  border: 1px solid var(--green);
-  background: rgba(0, 0, 0, 0.94);
-  box-shadow: 0 0 30px rgba(0, 255, 102, 0.22);
-  font-size: clamp(1rem, 2.3vw, 2.6rem);
-  line-height: 1.2;
-  text-align: left;
 }
 
 .vobMissingVideo strong {

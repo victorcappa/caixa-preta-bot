@@ -278,13 +278,24 @@ async function main() {
 
   started = director.startGame(state, { requestedGame: "verdade-ou-bolo", source: "operator" });
   assert.equal(started.gameState.id, "verdade_ou_bolo");
-  assert.equal(started.gameState.phase, "VOTING");
-  assert.equal(started.gameState.publicData.state, "VOTING");
+  assert.equal(started.gameState.phase, "QUESTION");
+  assert.equal(started.gameState.publicData.state, "QUESTION");
   assert.equal(started.gameState.publicData.totalRounds, 4);
   assert.equal(started.gameState.publicData.currentRound.number, 1);
-  assert.equal(started.gameState.publicData.voteCountdown.durationSeconds, 10);
+  assert.equal(started.gameState.publicData.voteCountdown, null);
 
   let boloState = started.gameState;
+  let frameReady = director.controlStructuredGame({ ...state, game: boloState }, "video_ready");
+  assert.equal(frameReady.applied, true);
+  assert.equal(frameReady.gameState.phase, "VOTING");
+  assert.equal(frameReady.gameState.publicData.voteCountdown.durationSeconds, 10);
+  boloState = frameReady.gameState;
+
+  const duplicateFrameReady = director.controlStructuredGame({ ...state, game: boloState }, "video_ready");
+  assert.equal(duplicateFrameReady.applied, false);
+  assert.equal(duplicateFrameReady.result.type, "video_ready_ignored");
+  assert.equal(duplicateFrameReady.gameState.publicData.voteCountdown.endsAt, boloState.publicData.voteCountdown.endsAt);
+
   let controlled = director.controlStructuredGame({ ...state, game: boloState }, "video_play");
   assert.equal(controlled.applied, false);
   assert.equal(controlled.result.reason, "answer_not_revealed");
@@ -352,10 +363,14 @@ async function main() {
 
   controlled = director.controlStructuredGame({ ...state, game: boloState }, "next");
   assert.equal(controlled.applied, true);
-  assert.equal(controlled.gameState.phase, "VOTING");
+  assert.equal(controlled.gameState.phase, "QUESTION");
   assert.equal(controlled.gameState.publicData.currentRound.number, 2);
-  assert.equal(controlled.gameState.publicData.voteCountdown.durationSeconds, 10);
+  assert.equal(controlled.gameState.publicData.voteCountdown, null);
   boloState = controlled.gameState;
+
+  frameReady = director.controlStructuredGame({ ...state, game: boloState }, "video_ready");
+  assert.equal(frameReady.applied, true);
+  boloState = frameReady.gameState;
 
   controlled = director.controlStructuredGame({ ...state, game: boloState }, "previous_round");
   assert.equal(controlled.applied, true);
@@ -367,9 +382,12 @@ async function main() {
   controlled = director.controlStructuredGame({ ...state, game: boloState }, "next_round");
   assert.equal(controlled.applied, true);
   assert.equal(controlled.gameState.publicData.currentRound.number, 2);
-  assert.equal(controlled.gameState.phase, "VOTING");
+  assert.equal(controlled.gameState.phase, "QUESTION");
   boloState = controlled.gameState;
 
+  frameReady = director.controlStructuredGame({ ...state, game: boloState }, "video_ready");
+  assert.equal(frameReady.applied, true);
+  boloState = frameReady.gameState;
   assert.equal(boloState.phase, "VOTING");
   assert.equal(boloState.publicData.selectedAnswer, null);
   assert.equal(boloState.publicData.voteCountdown.durationSeconds, 10);
@@ -386,7 +404,7 @@ async function main() {
 
   controlled = director.controlStructuredGame({ ...state, game: boloState }, "next");
   assert.equal(controlled.applied, true);
-  assert.equal(controlled.gameState.phase, "VOTING");
+  assert.equal(controlled.gameState.phase, "QUESTION");
   assert.equal(controlled.gameState.publicData.currentRound.number, 3);
 
   console.log("GAME DIRECTOR: PASS");

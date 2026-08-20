@@ -701,13 +701,14 @@ encerrar ou `/game replace tipo` para substituir explicitamente. Em Maria
 Antonieta no modo em que a Caixa adivinha, `/game secret texto` define o segredo
 no servidor/operator sem enviar esse segredo para o modelo.
 
-Em `Verdade ou Bolo?`, iniciar o jogo abre diretamente a primeira rodada com
-10 segundos para decidir entre `VERDADE` e `BOLO`, sem mostrar nem tocar o
-video. Encerrada a contagem com um voto registrado, o operator usa
-`REVELAR RESPOSTA`: somente então o video toca e, ao terminar, o resultado e o
-placar aparecem. Sem voto, a rodada conta como erro e avanca automaticamente.
-Os botoes `COMENTAR` e `NOVA PROVOCAÇÃO` exibem a fala da Caixa sobre a propria
-tela do jogo. `PRÓXIMA RODADA` avanca diretamente para a rodada seguinte.
+Em `Verdade ou Bolo?`, chat e jogo aparecem lado a lado. Ao iniciar uma rodada,
+a projecao carrega e mostra primeiro o frame inicial pausado do video; somente
+depois desse frame estar pronto comecam os 10 segundos para decidir entre
+`VERDADE` e `BOLO`. Encerrada a contagem com um voto registrado, o operator usa
+`REVELAR RESPOSTA`: entao o video toca e, ao terminar, o resultado e o placar
+aparecem. Sem voto, a rodada conta como erro e avanca automaticamente. Os botoes
+`COMENTAR` e `NOVA PROVOCAÇÃO` publicam a fala da Caixa no chat ao lado do jogo.
+`PRÓXIMA RODADA` avanca diretamente para a rodada seguinte.
 
 Entrar no modo MALAS e gerar uma transicao contextual na projecao:
 
