@@ -617,7 +617,12 @@ se a tela publica esta conectada e tem botoes para:
 - `RESETAR BARALHO`, no rodape, como zona de recuperacao
 
 Os videos das cartas ficam em `assets/videos/baralho-morbido/` e sao servidos
-por `/api/game-assets`. A tela publica nao depende de SSE global: ela consulta
+por `/api/game-assets`. Sempre que a tela publica ou o controller e aberto, o
+Baralho relê essa pasta e cria uma carta para cada arquivo `.mp4`, `.m4v`,
+`.mov` ou `.webm`; o nome do arquivo, sem a extensao, vira o identificador da
+carta. O reset e cada novo sorteio tambem sincronizam a pasta, portanto nao e
+necessario editar codigo para adicionar ou remover cartas. A tela publica nao
+depende de SSE global: ela consulta
 `/api/baralho-morbido` em intervalo curto, evitando que o Baralho trave as
 outras telas abertas.
 

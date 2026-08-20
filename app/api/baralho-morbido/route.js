@@ -1,9 +1,19 @@
 import { showState } from "@/lib/showState";
+import { loadBaralhoMorbidoCards } from "@/lib/baralho-morbido/assets";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export async function GET() {
+function refreshCards(source) {
+  return showState.syncBaralhoMorbidoCards(loadBaralhoMorbidoCards(), { source });
+}
+
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  if (searchParams.get("refresh") === "1") {
+    refreshCards("open");
+  }
+
   const snapshot = showState.snapshot();
   return Response.json({
     ...snapshot.baralhoMorbido,
@@ -17,6 +27,14 @@ export async function POST(request) {
     const action = `${body.action || ""}`.toLowerCase();
 
     if (action === "draw" || action === "next") {
+      const refreshed = refreshCards("draw");
+      if (!refreshed.state.totalCards) {
+        return Response.json({
+          error: "NENHUM VIDEO ENCONTRADO EM assets/videos/baralho-morbido",
+          state: refreshed.state
+        }, { status: 400 });
+      }
+
       const result = showState.drawBaralhoMorbidoCard({ source: "controller" });
 
       if (!result.applied) {
@@ -34,14 +52,24 @@ export async function POST(request) {
     }
 
     if (action === "reset") {
-      const state = showState.resetBaralhoMorbido({ source: "controller" });
+      const cards = loadBaralhoMorbidoCards();
+      const state = showState.resetBaralhoMorbido({ source: "controller", cards });
       return Response.json({
         message: "BARALHO RESETADO",
         state
       });
     }
 
+    if (action === "refresh-assets") {
+      const result = refreshCards("open");
+      return Response.json({
+        message: `${result.state.totalCards} VIDEOS CARREGADOS`,
+        state: result.state
+      });
+    }
+
     if (action === "display-connect") {
+      refreshCards("display-open");
       const state = showState.setBaralhoMorbidoDisplayConnection(true);
       return Response.json({
         message: "BARALHO DISPLAY CONNECTED",

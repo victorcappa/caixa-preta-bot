@@ -7,7 +7,7 @@ import styles from "./BaralhoMorbidoDisplay.module.css";
 const INITIAL_STATE = {
   phase: "IDLE",
   drawSequence: 0,
-  totalCards: 10,
+  totalCards: 0,
   cards: [],
   usedIds: [],
   remainingIds: [],
@@ -84,6 +84,7 @@ function CardVideo({ card, expanded = false }) {
       return;
     }
 
+    video.loop = true;
     video.muted = false;
     const playAttempt = video.play();
 
@@ -110,6 +111,11 @@ function CardVideo({ card, expanded = false }) {
         key={src}
         loop
         onCanPlay={() => setLoaded(true)}
+        onEnded={(event) => {
+          const video = event.currentTarget;
+          video.currentTime = 0;
+          video.play().catch(() => {});
+        }}
         onError={() => setFailed(true)}
         onLoadedData={() => setLoaded(true)}
         playsInline
@@ -124,7 +130,7 @@ function CardVideo({ card, expanded = false }) {
 }
 
 function IdleDeck({ cards }) {
-  const deckCards = cards.length ? cards : Array.from({ length: 10 }, (_, index) => ({ id: `${index + 1}` }));
+  const deckCards = cards.length ? cards : [{ id: "empty" }];
 
   return (
     <div className={styles.idleDeck} aria-hidden="true">
@@ -135,10 +141,10 @@ function IdleDeck({ cards }) {
   );
 }
 
-function ShuffleDeck({ sequence }) {
+function ShuffleDeck({ cards, sequence }) {
   return (
     <div className={styles.shuffleDeck} key={`shuffle-${sequence}`} aria-hidden="true">
-      {Array.from({ length: 10 }, (_, index) => (
+      {Array.from({ length: Math.max(1, cards.length) }, (_, index) => (
         <CardBack className={styles.shuffleCard} compact index={index} key={index} />
       ))}
     </div>
@@ -174,7 +180,7 @@ export default function BaralhoMorbidoDisplay() {
     let active = true;
     let refreshing = false;
 
-    async function refreshDeck() {
+    async function refreshDeck(refreshAssets = false) {
       if (refreshing) {
         return;
       }
@@ -182,7 +188,8 @@ export default function BaralhoMorbidoDisplay() {
       refreshing = true;
 
       try {
-        const response = await fetch("/api/baralho-morbido", { cache: "no-store" });
+        const url = refreshAssets ? "/api/baralho-morbido?refresh=1" : "/api/baralho-morbido";
+        const response = await fetch(url, { cache: "no-store" });
         const data = await response.json();
 
         if (!active) {
@@ -207,7 +214,7 @@ export default function BaralhoMorbidoDisplay() {
       body: JSON.stringify({ action: "display-connect" })
     }).catch(() => {});
 
-    refreshDeck();
+    refreshDeck(true);
     const timer = window.setInterval(refreshDeck, 400);
 
     return () => {
@@ -248,7 +255,7 @@ export default function BaralhoMorbidoDisplay() {
   }, []);
 
   const revealedCount = deck.usedIds?.length || 0;
-  const totalCards = deck.totalCards || 10;
+  const totalCards = deck.totalCards ?? 0;
   const currentCard = deck.currentCard;
   const showIdle = deck.phase === "IDLE" || !currentCard;
   const showShuffle = deck.phase === "SHUFFLING";
@@ -293,7 +300,7 @@ export default function BaralhoMorbidoDisplay() {
 
       <section className={styles.stage} aria-live="polite">
         {showIdle ? <IdleDeck cards={deck.cards || []} /> : null}
-        {showShuffle ? <ShuffleDeck sequence={deck.drawSequence} /> : null}
+        {showShuffle ? <ShuffleDeck cards={deck.cards || []} sequence={deck.drawSequence} /> : null}
         {showSelection ? <SelectedCard card={currentCard} phase={deck.phase} /> : null}
         {showVideo ? (
           <div className={styles.expandedVideoCard}>
