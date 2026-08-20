@@ -143,6 +143,35 @@ async function main() {
     await projectionPage.goto("http://localhost:3000", { waitUntil: "domcontentloaded" });
     await projectionPage.getByText("CONNECTED", { exact: true }).first().waitFor({ timeout: 10000 });
     await projectionPage.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.lastRelaySinkAt > 0);
+
+    const secondOperatorPage = await context.newPage();
+    await secondOperatorPage.goto("http://localhost:3000/operator", { waitUntil: "domcontentloaded" });
+    await secondOperatorPage.getByText("CONNECTED", { exact: true }).first().waitFor({ timeout: 10000 });
+    await secondOperatorPage.getByRole("button", { name: "TEST DIGITAÇÃO" }).click();
+    await secondOperatorPage.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.context?.state === "running");
+    await projectionPage.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.relaySinks?.size === 2);
+    await secondOperatorPage.waitForTimeout(900);
+    for (const operatorPage of [page, secondOperatorPage]) {
+      await operatorPage.evaluate(() => {
+        const sound = window.__caixaPretaRobotSoundEngine;
+        window.__relayedTypingCount = 0;
+        const originalTyping = sound.typing.bind(sound);
+        sound.typing = (...args) => {
+          window.__relayedTypingCount += 1;
+          return originalTyping(...args);
+        };
+      });
+    }
+    await projectionPage.evaluate(() => window.__caixaPretaRobotSoundEngine.typing("D", { force: true }));
+    await projectionPage.waitForTimeout(100);
+    const relayedTypingCounts = await Promise.all([
+      page.evaluate(() => window.__relayedTypingCount),
+      secondOperatorPage.evaluate(() => window.__relayedTypingCount)
+    ]);
+    assert.equal(relayedTypingCounts.reduce((total, count) => total + count, 0), 1);
+    await secondOperatorPage.close();
+    await projectionPage.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.relaySinks?.size === 1);
+
     await page.evaluate(() => {
       const sound = window.__caixaPretaRobotSoundEngine;
       window.__relayedRobotEffects = [];
