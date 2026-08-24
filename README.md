@@ -116,6 +116,12 @@ vez; as partes da Cena 2 ficam empilhadas na mesma coluna. Cada rota
 carrega apenas o controller ativo, sem misturar todos os controles em uma tela
 unica. O sampler e os shaders da Força G compartilham a aba `CENA 2A`.
 
+Cada controller de cena também tem um bloquinho privado de anotações no canto
+inferior direito. Ele salva automaticamente em `data/scene-notes.json`, mantém
+notas independentes para cada aba cênica e pode ser minimizado durante a
+operação. Essas anotações nunca são enviadas para a projeção pública nem para o
+modelo.
+
 Grupos atuais:
 
 - `CENA 0`: `Bot / Malas`, rota `/cena-0-controller`
@@ -169,6 +175,19 @@ referenciados pelo manifest como G-LOC. Cues com arquivo que já tenham sido
 salvos pelo controller anterior em `data/controller-cues.json` também são
 incorporados quando ainda não aparecem no manifest, preservando compatibilidade.
 
+Para gerar novamente as três variações limpas da voz idosa do registro
+fonográfico, configure `OPENAI_API_KEY` em `.env.local` e rode:
+
+```bash
+npm run generate:elderly-voice
+```
+
+O script independente `scripts/generate-elderly-voice.js` usa
+`gpt-4o-mini-tts`, imprime voz, velocidade e direção de cada variação e grava os
+MP3 em `assets/sampler-forca-g/audio/`. Esses arquivos aparecem automaticamente
+no sampler; a apresentação deve informar ao público que as vozes são geradas
+por IA.
+
 Os áudios da cena 2 em `assets/audios/cena-2-efeitos/` também entram
 automaticamente na seção `SOM`, sem precisar duplicá-los no manifest. A ordem
 alfabética recebe inicialmente os atalhos `Q`, `W`, `E` e `R`; novos arquivos
@@ -218,8 +237,8 @@ tela e o primeiro item vence. O volume geral atua sobre as vozes e vídeos com
 áudio sem apagar a regulagem individual de cada pad. O mesmo slider, acompanhado
 de `MUTE`, fica fixo à direita em todas as telas de controller e permanece
 acessível durante a rolagem.
-Áudios e imagens são pré-carregados; vídeos carregam metadados antes do primeiro
-disparo para evitar manter vários arquivos grandes integralmente em memória.
+Somente imagens são pré-carregadas; áudios e vídeos aguardam o disparo do pad
+para não disputar conexões com a mídia que precisa tocar naquele instante.
 
 O painel de pedais abaixo dos pads de áudio é o mesmo da cena 1. Cada pad mantém
 sua própria combinação dos presets `LIMPO`, `RÁDIO`, `SATURADO`, `DESTRUÍDO` e
@@ -238,6 +257,10 @@ a janela pública com uma interação antes do ensaio por causa da política de
 autoplay do navegador. Se o browser bloquear o primeiro play com áudio, o G-LOC
 faz fallback automático para `MUTED`, continua exibindo o vídeo e atualiza o
 controle de som sem classificar o arquivo como quebrado.
+
+Para não esgotar as conexões do navegador, a projeção pré-carrega somente
+imagens. Áudios e vídeos iniciam a transferência quando o pad é disparado; isso
+evita que um banco grande de mídia deixe o elemento ativo em `NETWORK_EMPTY`.
 
 ## Cena 1 — Queda / Emergência
 

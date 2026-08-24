@@ -45,6 +45,15 @@ try {
   await controller.getByRole("region", { name: "G-LOC" }).waitFor();
   await controller.getByText("READY", { exact: true }).waitFor();
 
+  const soundRegion = controller.getByRole("region", { name: "SOM" });
+  await clickAndWait(controller, soundRegion.getByRole("button", { name: `Tocar ${firstAudio.label}` }));
+  await projection.locator("audio").waitFor({ state: "attached" });
+  await projection.waitForFunction(() => {
+    const audio = document.querySelector("audio");
+    return audio && !audio.paused && audio.readyState >= 2 && audio.currentTime > 0.05;
+  }, null, { timeout: 5000 });
+  await clickAndWait(controller, soundRegion.getByRole("button", { name: `Parar ${firstAudio.label}` }));
+
   const isabela = controller.getByRole("button", { name: "Tocar ISABELA" });
   assert.equal(await isabela.isEnabled(), true, "existing G-LOC pad should be enabled");
 
@@ -60,6 +69,10 @@ try {
   assert.equal(state.layers.gLoc.id, "g-loc-isabela");
   await projection.locator("video").waitFor();
   assert.equal(await projection.locator("video").count(), 1, "G-LOC should appear on projection");
+  await projection.waitForFunction(() => {
+    const video = document.querySelector("video");
+    return video && !video.paused && video.readyState >= 2 && video.currentTime > 0.05;
+  }, null, { timeout: 5000 });
 
   const beforeRestart = state.layers.gLoc.playbackId;
   const gLocRegion = controller.getByRole("region", { name: "G-LOC" });
@@ -91,6 +104,10 @@ try {
   state = await samplerState(context.request);
   assert.equal(state.layers.video.id, firstExplanationVideo.id, "explanation video pad should update the video layer");
   assert.equal(await projection.locator("video").count(), 2, "explanation video should coexist with the G-LOC layer");
+  await projection.waitForFunction((assetPath) => {
+    const target = [...document.querySelectorAll("video")].find((video) => decodeURIComponent(video.src).includes(assetPath));
+    return target && !target.paused && target.readyState >= 2 && target.currentTime > 0.05;
+  }, firstExplanationVideo.assetPath, { timeout: 5000 });
   await clickAndWait(controller, videoRegion.getByRole("button", { name: `Parar ${firstExplanationVideo.label}` }));
   assert.equal((await samplerState(context.request)).layers.video, null, "individual video stop should preserve other layers");
 
@@ -99,7 +116,6 @@ try {
   const shaderState = await context.request.get(`${BASE_URL}/api/state`).then((response) => response.json());
   assert.equal(shaderState.forcaGShaders.tunnel, true, "existing shader controls should affect sampler projection");
 
-  const soundRegion = controller.getByRole("region", { name: "SOM" });
   await clickAndWait(controller, soundRegion.getByRole("button", { name: `Tocar ${firstAudio.label}` }));
   await clickAndWait(controller, soundRegion.getByRole("button", { name: `Tocar ${secondAudio.label}` }));
   state = await samplerState(context.request);
@@ -108,6 +124,9 @@ try {
   state = await samplerState(context.request);
   assert.equal(state.audioCues.length, 3, "audio pad should retrigger as another voice");
   assert.equal(await projection.locator("audio").count(), 3, "projection should keep all polyphonic voices");
+  await projection.waitForFunction(() => (
+    [...document.querySelectorAll("audio")].every((audio) => !audio.paused && audio.readyState >= 2 && audio.currentTime > 0.05)
+  ), null, { timeout: 5000 });
   await controller.getByRole("region", { name: "Pedais do sample selecionado" }).getByText(firstAudio.label, { exact: true }).waitFor();
 
   const effectsResponse = await context.request.post(`${BASE_URL}/api/forca-g-sampler`, {

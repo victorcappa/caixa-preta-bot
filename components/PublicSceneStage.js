@@ -41,8 +41,6 @@ function PublicCueMedia({ cue, globalVolume = 1, onEnded = null }) {
     return () => {
       media.pause();
       detachSceneAudioEffects(media);
-      media.removeAttribute("src");
-      media.load();
     };
   }, [cue?.sequence, cue?.type, src]);
 
@@ -82,7 +80,7 @@ function PublicCueMedia({ cue, globalVolume = 1, onEnded = null }) {
   }
 
   if (cue.type === "video") {
-    return <video autoPlay className={styles.media} controls={false} playsInline ref={mediaRef} src={src} />;
+    return <video className={styles.media} controls={false} playsInline ref={mediaRef} src={src} />;
   }
 
   if (cue.type === "image") {
@@ -92,7 +90,6 @@ function PublicCueMedia({ cue, globalVolume = 1, onEnded = null }) {
 
   return (
     <audio
-      autoPlay
       loop={Boolean(cue.loop)}
       onEnded={onEnded || undefined}
       ref={mediaRef}

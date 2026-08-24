@@ -69,8 +69,6 @@ function VisualMedia({ globalVolume, item, category }) {
     });
     return () => {
       media.pause();
-      media.removeAttribute("src");
-      media.load();
     };
   }, [category, globalVolume, item.playbackId, item.type]);
 
@@ -93,7 +91,6 @@ function VisualMedia({ globalVolume, item, category }) {
   if (item.type === "video") {
     return (
       <video
-        autoPlay
         className={className}
         controls={false}
         loop={Boolean(item.loop)}
@@ -138,8 +135,6 @@ function AudioVoice({ globalVolume, item }) {
       cancelled = true;
       audio.pause();
       detachSceneAudioEffects(audio);
-      audio.removeAttribute("src");
-      audio.load();
     };
   }, [item.playbackId]);
 
@@ -184,7 +179,6 @@ function AudioVoice({ globalVolume, item }) {
 
   return (
     <audio
-      autoPlay
       loop={Boolean(item.loop)}
       onEnded={() => void post("stop", { category: "audio", itemId: item.id, playbackId: item.playbackId })}
       onError={() => reportError(item, "áudio indisponível ou formato não suportado")}
@@ -248,25 +242,11 @@ function preload(config) {
   tunnelReference.src = TUNNEL_REFERENCE_SRC;
   releases.push(() => { tunnelReference.src = ""; });
   for (const item of Object.values(config?.sections || {}).flat()) {
-    if (!item.available || !item.assetPath) continue;
+    if (!item.available || !item.assetPath || item.type !== "image") continue;
     const src = assetSrc(item.assetPath);
-    if (item.type === "image") {
-      const image = new Image();
-      image.src = src;
-      releases.push(() => { image.src = ""; });
-    } else if (item.type === "audio") {
-      const audio = new Audio();
-      audio.preload = "auto";
-      audio.src = src;
-      audio.load();
-      releases.push(() => { audio.removeAttribute("src"); audio.load(); });
-    } else if (item.type === "video") {
-      const video = document.createElement("video");
-      video.preload = "metadata";
-      video.src = src;
-      video.load();
-      releases.push(() => { video.removeAttribute("src"); video.load(); });
-    }
+    const image = new Image();
+    image.src = src;
+    releases.push(() => { image.src = ""; });
   }
   return () => releases.forEach((release) => release());
 }
