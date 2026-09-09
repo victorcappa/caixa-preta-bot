@@ -32,9 +32,9 @@ const COLLECTION_RESULTS = [
 
 const SCENE_ZERO_INDEX = [
   ["scene-zero-boot", "BOOT"],
-  ["scene-zero-top", "RESUMO"],
-  ["scene-zero-unlock", "AQUECIMENTO"],
-  ["scene-zero-suitcases", "MALAS"],
+  ["scene-zero-unlock", "ESQUENTAR PÚBLICO"],
+  ["scene-zero-participant", "ESCOLHER PARTICIPANTE"],
+  ["scene-zero-suitcases", "JOGO DAS MALAS"],
   ["scene-zero-extras", "OUTROS"]
 ];
 
@@ -414,18 +414,6 @@ export default function SceneZeroController() {
         >BOOT</button>
       </section>
 
-      <header className={styles.header} id="scene-zero-top">
-        <div>
-          <p>CENA 0</p>
-          <h1>OPERAÇÃO ESSENCIAL</h1>
-        </div>
-        <dl className={styles.statusGrid}>
-          <div><dt>ETAPA ATUAL</dt><dd>{sceneZeroStageLabel(sceneZero.stage)}</dd></div>
-          <div><dt>PARTICIPANTE</dt><dd>{sceneZero.currentParticipant?.name || "—"}</dd></div>
-          <div><dt>DESBLOQUEIO</dt><dd>{sceneZero.unlock?.progress || 0}%</dd></div>
-        </dl>
-      </header>
-
       <section className={styles.warmupDisclosure} data-ready={Boolean(snapshot.sceneZero)} id="scene-zero-unlock">
         <button
           aria-expanded={warmupOpen}
@@ -434,8 +422,8 @@ export default function SceneZeroController() {
           type="button"
         >
           <span className={styles.warmupDisclosureTitle}>
-            <strong>AQUECIMENTO DA PLATEIA</strong>
-            <small>AÇÕES E PROGRESSO DA VERIFICAÇÃO</small>
+            <strong>ESQUENTAR PÚBLICO</strong>
+            <small>AQUECIMENTO DA PLATEIA · AÇÕES E PROGRESSO</small>
           </span>
           <span className={styles.warmupDisclosureStatus}>
             {sceneZero.unlock?.progress || 0}% · {unlockStatusLabel}
@@ -454,6 +442,19 @@ export default function SceneZeroController() {
           </div>
         ) : null}
       </section>
+
+      <ControlBlock id="scene-zero-participant" title="ESCOLHER PARTICIPANTE" wide>
+        <Button primary onClick={() => sceneAction("participant-volunteers")} pending={pending || participantSelectionBusy}>INICIAR SELEÇÃO / 10s</Button>
+        <Button onClick={() => sceneAction("choose-another-participant")} pending={pending || participantSelectionBusy}>NOVA ROLETA / OUTRA PESSOA</Button>
+        <Readout label="ETAPA DA SELEÇÃO" value={participantSelection.status === "countdown" ? `MÃOS LEVANTADAS — ${participantCountdown}s` : participantSelection.status === "awaiting_invite" ? "AGUARDANDO FIM DA FALA" : (participantSelection.status || "idle").toUpperCase()} />
+        <Readout label="PARTICIPANTE ESCOLHIDO" value={sceneZero.currentParticipant?.name} />
+        <details className={styles.participantDetails}>
+          <summary>DETALHES DA ROLETA</summary>
+          <Readout label="NOMES NA ROLETA" value={(participantSelection.candidates || []).map((participant) => participant.name).join(" · ")} />
+          <Readout label="COMENTÁRIO DA ROLETA" value={participantSelection.lastComment} />
+          <small>Marcus Garcia e Victor Cappa nunca entram no sorteio.</small>
+        </details>
+      </ControlBlock>
 
       <ControlBlock id="scene-zero-suitcases" title="JOGO DAS MALAS" wide>
         <div className={styles.suitcaseOverview}>
@@ -572,7 +573,7 @@ export default function SceneZeroController() {
         >
           <span>
             <strong>OUTROS CONTROLES</strong>
-            <small>MEMÓRIA · PERSONALIDADE · DIREÇÃO · COLETA · PARTICIPANTE · GLITCH · NAVEGADOR · ÁUDIO</small>
+            <small>MEMÓRIA · PERSONALIDADE · DIREÇÃO · COLETA · GLITCH · NAVEGADOR · ÁUDIO</small>
           </span>
           <span className={styles.extrasDisclosureAction} aria-hidden="true" />
         </button>
@@ -735,16 +736,6 @@ export default function SceneZeroController() {
               ? `ERRO — ${collection.localContext.error || "não atualizado"}`
               : (collection.localContext?.status || "idle").toUpperCase()} />
           {questions.length ? <ol className={styles.history}>{questions.slice(0, 8).map((item) => <li key={item.id}>{item.text}</li>)}</ol> : null}
-        </ControlBlock>
-
-        <ControlBlock id="scene-zero-participant" title="PARTICIPANTE">
-          <Button primary onClick={() => sceneAction("participant-volunteers")} pending={pending || participantSelectionBusy}>INICIAR SELEÇÃO / 10s</Button>
-          <Button onClick={() => sceneAction("choose-another-participant")} pending={pending || participantSelectionBusy}>NOVA ROLETA / OUTRA PESSOA</Button>
-          <Readout label="MINI GAME" value={participantSelection.status === "countdown" ? `MÃOS LEVANTADAS — ${participantCountdown}s` : participantSelection.status === "awaiting_invite" ? "AGUARDANDO FIM DA FALA" : (participantSelection.status || "idle").toUpperCase()} />
-          <Readout label="NOMES NA ROLETA" value={(participantSelection.candidates || []).map((participant) => participant.name).join(" · ")} />
-          <Readout label="COMENTÁRIO DA ROLETA" value={participantSelection.lastComment} />
-          <Readout label="PARTICIPANTE ESCOLHIDO" value={sceneZero.currentParticipant?.name} />
-          <small>Marcus Garcia e Victor Cappa nunca entram no sorteio.</small>
         </ControlBlock>
 
         <ControlBlock id="scene-zero-singing" title="CANTAR 15s" wide>

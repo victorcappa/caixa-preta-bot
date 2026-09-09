@@ -51,12 +51,15 @@ try {
   const bootPanel = operator.getByRole("region", { name: "Boot da Cena 0" });
   const bootButton = bootPanel.getByRole("button", { name: "BOOT", exact: true });
   await bootButton.waitFor();
-  assert.equal(await bootPanel.evaluate((element) => element.nextElementSibling?.id), "scene-zero-top", "BOOT deve ser o primeiro bloco da Cena 0");
+  assert.equal(await bootPanel.evaluate((element) => element.nextElementSibling?.id), "scene-zero-unlock", "BOOT deve ser o primeiro bloco da Cena 0");
   const warmupDisclosure = operator.locator("#scene-zero-unlock");
   await operator.waitForFunction(() => document.querySelector("#scene-zero-unlock")?.dataset.ready === "true");
-  const warmupToggle = warmupDisclosure.getByRole("button", { name: /AQUECIMENTO DA PLATEIA/ });
+  const warmupToggle = warmupDisclosure.getByRole("button", { name: /ESQUENTAR PÚBLICO/ });
   assert.equal(await warmupToggle.getAttribute("aria-expanded"), "false", "aquecimento deve iniciar comprimido");
-  assert.equal(await warmupDisclosure.evaluate((element) => element.nextElementSibling?.id), "scene-zero-suitcases");
+  assert.equal(await warmupDisclosure.evaluate((element) => element.nextElementSibling?.id), "scene-zero-participant");
+  const participantBlock = operator.locator("#scene-zero-participant");
+  await participantBlock.getByRole("heading", { name: "ESCOLHER PARTICIPANTE" }).waitFor();
+  assert.equal(await participantBlock.evaluate((element) => element.nextElementSibling?.id), "scene-zero-suitcases");
   await operator.getByRole("heading", { name: "JOGO DAS MALAS" }).waitFor();
   const suitcaseOne = operator.getByRole("heading", { name: "MALA 1 — VERDADE OU BOLO" }).locator("..");
   const suitcaseComment = suitcaseOne.getByRole("button", { name: "COMENTAR", exact: true });

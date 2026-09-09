@@ -9,7 +9,7 @@
 .indexNav a b { color: #52665a; font-size: 9px; font-weight: 500; }
 .indexNav .activeIndexLink { color: #001c0c; background: #00ff66; border-left-color: #00ff66; font-weight: 800; }
 .indexNav .activeIndexLink b { color: #13592e; }
-.header { display: grid; grid-template-columns: minmax(220px, .65fr) 1.35fr; gap: 18px; align-items: end; margin-top: 14px; padding-bottom: 14px; border-bottom: 1px solid #303030; }
+.header { display: grid; grid-template-columns: minmax(220px, .65fr) 1.35fr; gap: 18px; align-items: end; padding-bottom: 14px; border-bottom: 1px solid #303030; }
 .header p, .header h1, .memoryPanel h2, .personalityPanel h2, .stagePanel h2, .block h2 { margin: 0; }
 .header p { color: #00ff66; letter-spacing: .18em; }
 .header h1 { margin-top: 4px; font-size: clamp(24px, 2.8vw, 38px); }
@@ -94,6 +94,10 @@
 .suitcaseCard > button { flex: 1 1 130px; }
 .suitcaseDetails { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 8px; padding-top: 10px; border-top: 1px solid #292929; }
 .suitcaseDetails[hidden] { display: none; }
+.participantDetails { flex: 1 1 100%; padding: 10px; color: #858585; border: 1px dashed #333; }
+.participantDetails summary { cursor: pointer; font-size: 10px; font-weight: 800; letter-spacing: .08em; }
+.participantDetails[open] { display: flex; flex-wrap: wrap; gap: 8px; }
+.participantDetails[open] summary { flex: 1 1 100%; }
 .activeSuitcase { border-color: #00ff66; box-shadow: inset 0 0 0 1px #00ff66; }
 .activeSuitcase h3 { color: #00ff66; }
 .suitcaseCard .timer { flex-basis: 150px; min-height: 116px; font-size: 72px; }

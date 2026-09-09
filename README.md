@@ -384,14 +384,14 @@ sem apagar os valores preparados. Para validar o fluxo completo no navegador, us
 
 `/cena-0-controller` é a superfície privada dedicada à Cena 0. `/operator`
 continua disponível como console técnico e hub neutro; entrar nele não troca a
-projeção. O controller da Cena 0 começa pelo `BOOT`, no topo de toda a área, e
-prioriza apenas três operações sempre visíveis: `BOOT`, `AQUECIMENTO DA
-PLATEIA` e `JOGO DAS MALAS`. O aquecimento começa
-comprimido. Memória, personalidade, direção, coleta, participante, canto,
+projeção. O controller da Cena 0 segue a ordem operacional `BOOT` → `ESQUENTAR
+PÚBLICO` → `ESCOLHER PARTICIPANTE` → `JOGO DAS MALAS`, sem outro painel entre
+essas etapas. O aquecimento começa comprimido; os detalhes da roleta também.
+Memória, personalidade, direção, coleta, canto,
 glitch, navegador e aeroporto/áudio permanecem preservados dentro de `OUTROS
 CONTROLES`, fechado por padrão.
 Um índice fixo exclusivo dessa rota ocupa a lateral direita e navega somente
-entre resumo, boot, aquecimento, malas e outros controles. A seção visível fica
+entre boot, aquecimento, participante, malas e outros controles. A seção visível fica
 destacada; em telas estreitas, o mesmo índice vira uma faixa fixa compacta na
 parte inferior para não cobrir os controles.
 
