@@ -115,7 +115,9 @@ O chatbot público mostra apenas `publicMessage`, a última fala relevante da
 Caixa Preta, com tipografia responsiva de projeção. `conversation` continua
 guardando todas as mensagens para contexto do modelo e histórico do operator.
 Uma nova fala substitui visualmente a anterior; `LIMPAR TELA` remove somente
-`publicMessage` e preserva a conversa.
+`publicMessage` e preserva a conversa. Durante a digitação, o início de cada
+linha permanece fixo e os caracteres avançam para a direita, sem recentralizar
+ou rebalancear o texto a cada atualização.
 
 No `/operator`, `ESQUENTAR PÚBLICO` oferece ações físicas, intensidades
 `LEVE`, `MÉDIO` e `ESTRANHO`, 43 prompts em

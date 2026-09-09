@@ -171,7 +171,8 @@
 .currentMessage p {
   margin: 0;
   white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .messageFrame {
@@ -189,8 +190,8 @@
   font-weight: 700;
   line-height: 1.08;
   letter-spacing: -0.035em;
-  text-align: center;
-  text-wrap: balance;
+  text-align: left;
+  text-wrap: wrap;
   text-shadow: 0 0 28px rgba(0, 255, 102, 0.14);
 }
 
@@ -206,7 +207,7 @@
 .actionCue {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 10px;
   color: var(--green-dim);
   text-transform: uppercase;

@@ -60,8 +60,27 @@ async function readLayout(page) {
       fontSize: Number.parseFloat(style.fontSize),
       lineHeight: Number.parseFloat(style.lineHeight),
       overflowWrap: style.overflowWrap,
-      wordBreak: style.wordBreak
+      wordBreak: style.wordBreak,
+      textAlign: style.textAlign,
+      textWrap: style.textWrap
     };
+  });
+}
+
+async function firstCharacterX(page, minimumLength) {
+  await page.waitForFunction((length) => {
+    const stage = document.querySelector('[aria-label="Fala atual da Caixa Preta"]');
+    const message = [...(stage?.querySelectorAll("p") || [])].find((element) => element.textContent.includes("rápido"));
+    return (message?.firstChild?.textContent?.length || 0) >= length;
+  }, minimumLength);
+
+  return page.evaluate(() => {
+    const stage = document.querySelector('[aria-label="Fala atual da Caixa Preta"]');
+    const message = [...stage.querySelectorAll("p")].find((element) => element.textContent.includes("rápido"));
+    const range = document.createRange();
+    range.setStart(message.firstChild, 0);
+    range.setEnd(message.firstChild, 1);
+    return range.getBoundingClientRect().x;
   });
 }
 
@@ -77,6 +96,8 @@ try {
   const wide = await context.newPage();
   await wide.setViewportSize({ width: 1920, height: 1080 });
   await wide.goto(BASE_URL, { waitUntil: "domcontentloaded" });
+  const earlyCharacterX = await firstCharacterX(wide, 8);
+  const laterCharacterX = await firstCharacterX(wide, 40);
   const wideLayout = await readLayout(wide);
 
   assert(wideLayout.stage.width >= 700, `chat panel too narrow: ${wideLayout.stage.width}px`);
@@ -86,6 +107,9 @@ try {
   assert(wideLayout.message.bottom <= wideLayout.stage.bottom, "chat message must fit inside its panel");
   assert.equal(wideLayout.overflowWrap, "break-word");
   assert.equal(wideLayout.wordBreak, "normal");
+  assert.equal(wideLayout.textAlign, "left");
+  assert.notEqual(wideLayout.textWrap, "balance");
+  assert(Math.abs(earlyCharacterX - laterCharacterX) <= 1, `first character moved ${Math.abs(earlyCharacterX - laterCharacterX)}px while typing`);
   await wide.screenshot({ path: "/private/tmp/caixa-preta-verdade-ou-bolo-layout-wide.png" });
 
   const compact = await context.newPage();
@@ -103,5 +127,6 @@ try {
     compact: { stageHeight: compactLayout.stage.height, fontSize: compactLayout.fontSize }
   });
 } finally {
+  await context.request.post(`${BASE_URL}/api/operator`, { data: { command: "/reset" } }).catch(() => {});
   await browser.close();
 }
