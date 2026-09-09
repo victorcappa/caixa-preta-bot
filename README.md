@@ -134,6 +134,9 @@ carrega teatro, técnica e elenco, detecta a plateia e trava no limite
 configurável (inicialmente `78%`). A barra pertence a
 `showState.sceneZero.unlock`: continua visível sobre o chat durante o
 aquecimento e só sai da projeção depois da sequência `PEÇA DESBLOQUEADA`.
+Ao travar, a primeira fala pública é exatamente `... DESBLOQUEIE A PEÇA`; o
+sistema então espera, sem escolher ou enviar nada sozinho, até o operador
+acionar a primeira pergunta em `ESQUENTAR PÚBLICO`.
 Os estados semânticos são `STANDBY`, `BOOTING`, `WAITING_FOR_AUDIENCE`,
 `WARMING_AUDIENCE`, `UNLOCKING` e `UNLOCKED`; enquanto a peça está bloqueada,
 esse contexto também é enviado ao bot.

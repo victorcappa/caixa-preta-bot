@@ -69,7 +69,9 @@ try {
   }
   assert.equal(snapshot.sceneZero.unlock.status, "WAITING_FOR_AUDIENCE");
   assert.equal(snapshot.sceneZero.unlock.progress, 78);
-  assert.equal(snapshot.publicMessage.content, "ainda falta uma coisa. vocês.");
+  assert.equal(snapshot.publicMessage.content, "... DESBLOQUEIE A PEÇA");
+  assert.equal(snapshot.audienceWarmup.active, false, "a BIOS deve esperar a primeira pergunta do operador");
+  assert.equal(snapshot.audienceWarmup.sequence, null, "nenhuma pergunta pode ser escolhida automaticamente");
 
   await display.getByLabel("BIOS da Cena 0").waitFor();
   await display.getByText("DESBLOQUEIE A PEÇA", { exact: true }).waitFor();

@@ -14,7 +14,7 @@ export const PLAY_UNLOCK_CONFIG = {
   unlockStepMs: 620,
   handoffDurationMs: 2400,
   feedbackDurationMs: 1600,
-  openingLine: "ainda falta uma coisa. vocês.",
+  openingLine: "... DESBLOQUEIE A PEÇA",
   sounds: {
     tick: { frequency: 440, durationMs: 90, volume: 0.035, oscillator: "sine" },
     warning: { frequency: 190, durationMs: 150, volume: 0.045, oscillator: "square" },
