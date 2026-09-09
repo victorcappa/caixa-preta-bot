@@ -9,15 +9,26 @@
 .indexNav a b { color: #52665a; font-size: 9px; font-weight: 500; }
 .indexNav .activeIndexLink { color: #001c0c; background: #00ff66; border-left-color: #00ff66; font-weight: 800; }
 .indexNav .activeIndexLink b { color: #13592e; }
-.header { display: grid; grid-template-columns: minmax(220px, .6fr) 1.4fr; gap: 24px; align-items: end; padding-bottom: 22px; border-bottom: 1px solid #303030; }
+.header { display: grid; grid-template-columns: minmax(220px, .65fr) 1.35fr; gap: 18px; align-items: end; padding-bottom: 14px; border-bottom: 1px solid #303030; }
 .header p, .header h1, .memoryPanel h2, .personalityPanel h2, .stagePanel h2, .block h2 { margin: 0; }
 .header p { color: #00ff66; letter-spacing: .18em; }
-.header h1 { margin-top: 4px; font-size: clamp(28px, 4vw, 54px); }
+.header h1 { margin-top: 4px; font-size: clamp(24px, 2.8vw, 38px); }
 .statusGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0; }
-.statusGrid div { min-height: 72px; padding: 12px; background: #101010; border: 1px solid #303030; }
+.statusGrid div { min-height: 54px; padding: 9px 10px; background: #101010; border: 1px solid #303030; }
 .statusGrid dt { color: #8b8b8b; font-size: 11px; letter-spacing: .12em; }
-.statusGrid dd { margin: 10px 0 0; color: #00ff66; font-weight: 800; }
-.warmupDisclosure { margin-top: 22px; border: 1px solid #39704e; background: #07100a; }
+.statusGrid dd { margin: 6px 0 0; color: #00ff66; font-weight: 800; }
+.bootPanel { display: grid; grid-template-columns: minmax(220px, 1fr) auto minmax(160px, 220px); gap: 18px; align-items: center; margin-top: 14px; padding: 14px 18px; color: #fff; background: #0b160f; border: 1px solid #00ff66; }
+.bootHeading { display: flex; gap: 13px; align-items: center; }
+.bootHeading > span { color: #001c0c; background: #00ff66; padding: 7px 8px; font-size: 11px; font-weight: 900; }
+.bootHeading h2, .bootHeading p { margin: 0; }
+.bootHeading h2 { color: #00ff66; font-size: 20px; letter-spacing: .12em; }
+.bootHeading p { margin-top: 3px; color: #82a98f; font-size: 10px; letter-spacing: .08em; }
+.bootStatus { display: grid; gap: 2px; min-width: 145px; text-align: right; }
+.bootStatus strong { color: #00ff66; font-size: 20px; }
+.bootStatus span { color: #82a98f; font-size: 10px; letter-spacing: .08em; }
+.bootPrimary { min-height: 50px; padding: 10px 24px; color: #001c0c; background: #00ff66; border: 1px solid #00ff66; font: inherit; font-size: 18px; font-weight: 950; letter-spacing: .14em; cursor: pointer; }
+.bootPrimary:disabled { color: #62816d; background: #102318; border-color: #315b40; cursor: default; }
+.warmupDisclosure { margin-top: 10px; border: 1px solid #39704e; background: #07100a; }
 .warmupDisclosureToggle { width: 100%; display: grid; grid-template-columns: minmax(220px, 1fr) auto auto; gap: 16px; align-items: center; min-height: 76px; padding: 14px 18px; color: #00ff66; background: transparent; border: 0; cursor: pointer; font: inherit; text-align: left; }
 .warmupDisclosureToggle:hover, .warmupDisclosureToggle:focus-visible { background: #0b1a10; outline: 1px solid #00ff66; outline-offset: -1px; }
 .warmupDisclosureTitle { display: grid; gap: 4px; }
@@ -30,6 +41,17 @@
 .warmupDisclosureBody { padding: 0 14px 14px; }
 .warmupDisclosureBody > section { margin-bottom: 0; }
 .controller > .block { margin-top: 14px; }
+.extrasDisclosure { margin-top: 14px; border: 1px solid #303030; background: #0a0a0a; }
+.extrasDisclosureToggle { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; min-height: 62px; padding: 12px 18px; color: #b7b7b7; background: transparent; border: 0; cursor: pointer; font: inherit; text-align: left; }
+.extrasDisclosureToggle:hover, .extrasDisclosureToggle:focus-visible { color: #fff; background: #111; outline: 1px solid #555; outline-offset: -1px; }
+.extrasDisclosureToggle > span:first-child { display: grid; gap: 4px; }
+.extrasDisclosureToggle strong { color: #e5e5e5; font-size: 14px; letter-spacing: .1em; }
+.extrasDisclosureToggle small { overflow: hidden; color: #717171; font-size: 9px; letter-spacing: .07em; text-overflow: ellipsis; white-space: nowrap; }
+.extrasDisclosureAction::after { content: "ABRIR"; display: inline-block; min-width: 78px; padding: 7px 9px; color: #ddd; border: 1px solid #555; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-align: center; }
+.extrasDisclosureToggle[aria-expanded="true"] { border-bottom: 1px solid #303030; }
+.extrasDisclosureToggle[aria-expanded="true"] .extrasDisclosureAction::after { content: "FECHAR"; }
+.extrasDisclosureBody { padding: 0 14px 14px; }
+.extrasDisclosureBody > .memoryPanel, .extrasDisclosureBody > .personalityPanel, .extrasDisclosureBody > .stagePanel { margin-top: 14px; }
 .memoryPanel { display: grid; gap: 14px; margin-top: 22px; padding: 18px; border: 1px solid #39704e; background: #09100b; }
 .memoryHeading { display: flex; justify-content: space-between; gap: 18px; align-items: start; }
 .memoryHeading h2 { color: #00ff66; letter-spacing: .08em; font-size: 17px; }
@@ -64,9 +86,14 @@
 .block h2 { margin-bottom: 14px; color: #00ff66; letter-spacing: .08em; font-size: 17px; }
 .wide { grid-column: 1 / -1; }
 .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
+.suitcaseOverview { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; min-height: 38px; padding: 7px 10px; color: #929292; background: #080808; border-left: 3px solid #00ff66; font-size: 10px; letter-spacing: .08em; }
+.suitcaseOverview strong { color: #00ff66; }
 .suitcaseGrid { flex: 1 1 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .suitcaseCard { min-width: 0; padding: 14px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 8px; border: 1px solid #303030; background: #090909; }
 .suitcaseCard h3 { flex: 1 1 100%; margin: 0 0 8px; color: #eee; font-size: 15px; letter-spacing: .07em; }
+.suitcaseCard > button { flex: 1 1 130px; }
+.suitcaseDetails { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 8px; padding-top: 10px; border-top: 1px solid #292929; }
+.suitcaseDetails[hidden] { display: none; }
 .activeSuitcase { border-color: #00ff66; box-shadow: inset 0 0 0 1px #00ff66; }
 .activeSuitcase h3 { color: #00ff66; }
 .suitcaseCard .timer { flex-basis: 150px; min-height: 116px; font-size: 72px; }
@@ -110,4 +137,4 @@
 @media (max-width: 1280px) { .suitcaseGrid { grid-template-columns: 1fr; } }
 @media (max-width: 1000px) { .controller { padding-right: 190px; } .indexNav { right: 8px; width: 154px; } .header, .personalityPanel { grid-template-columns: 1fr; } .personalityQuickGrid { grid-column: auto; grid-template-columns: repeat(2, minmax(0, 1fr)); } .personalityPanel .readout { grid-column: auto; } .stageGrid { grid-template-columns: repeat(2, 1fr); } .blocks { grid-template-columns: 1fr; } .wide { grid-column: auto; } .levels { grid-template-columns: repeat(2, 1fr); } .quickGrid { grid-template-columns: repeat(3, 1fr); } .glitchVideoConfig, .browserQuickCommands { grid-template-columns: 1fr; } .glitchDurationPresets { grid-column: auto; } }
 @media (max-width: 520px) { .memoryHeading { display: grid; } .memoryComposer, .browserQuickField { grid-template-columns: 1fr; } .browserQuickField input, .browserQuickField button { grid-column: 1; grid-row: auto; } }
-@media (max-width: 700px) { .controller { padding: 18px 18px 178px; } .warmupDisclosureToggle { grid-template-columns: 1fr auto; } .warmupDisclosureStatus { grid-column: 1 / -1; grid-row: 2; white-space: normal; } .warmupDisclosureAction { grid-column: 2; grid-row: 1; } .indexNav { top: auto; right: 10px; bottom: 10px; left: 10px; width: auto; max-height: 142px; } .indexNav > span { display: none; } .indexNav nav { grid-template-columns: repeat(3, minmax(0, 1fr)); } .indexNav a { grid-template-columns: 20px minmax(0, 1fr); min-height: 26px; font-size: 9px; } }
+@media (max-width: 700px) { .controller { padding: 18px 18px 178px; } .bootPanel { grid-template-columns: 1fr auto; } .bootPrimary { grid-column: 1 / -1; } .warmupDisclosureToggle { grid-template-columns: 1fr auto; } .warmupDisclosureStatus { grid-column: 1 / -1; grid-row: 2; white-space: normal; } .warmupDisclosureAction { grid-column: 2; grid-row: 1; } .indexNav { top: auto; right: 10px; bottom: 10px; left: 10px; width: auto; max-height: 142px; } .indexNav > span { display: none; } .indexNav nav { grid-template-columns: repeat(3, minmax(0, 1fr)); } .indexNav a { grid-template-columns: 20px minmax(0, 1fr); min-height: 26px; font-size: 9px; } }

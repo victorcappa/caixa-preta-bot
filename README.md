@@ -119,12 +119,13 @@ Uma nova fala substitui visualmente a anterior; `LIMPAR TELA` remove somente
 linha permanece fixo e os caracteres avançam para a direita, sem recentralizar
 ou rebalancear o texto a cada atualização.
 
-No `/operator`, `ESQUENTAR PÚBLICO` oferece ações físicas, intensidades
+No `/operator`, `AQUECIMENTO DA PLATEIA` oferece ações físicas, intensidades
 `LEVE`, `MÉDIO` e `ESTRANHO`, 43 prompts em
 `data/audience-warmup-prompts.js`, frase manual, preview e `SURPREENDA-ME`.
 O módulo começa comprimido e alterna entre `EXPANDIR` e `COMPRIMIR` ao tocar no
 cabeçalho; `JOGO DAS MALAS` fica imediatamente abaixo, sempre visível no fluxo
-do operator.
+do operator. A lista completa das 43 falas também começa comprimida dentro do
+aquecimento e pode ser aberta quando necessária.
 `GERAR PERGUNTA` e `SURPREENDA-ME` geram e enviam a primeira etapa imediatamente,
 sem confirmação intermediária. Na frase manual, `Enter` envia e `Shift+Enter`
 insere uma quebra de linha. Depois do envio, o operador pode avançar, repetir,
@@ -380,14 +381,15 @@ sem apagar os valores preparados. Para validar o fluxo completo no navegador, us
 
 `/cena-0-controller` é a superfície privada dedicada à Cena 0. `/operator`
 continua disponível como console técnico e hub neutro; entrar nele não troca a
-projeção. O controller da Cena 0 organiza, sem timeline automática, os blocos
-`BIOS / DESBLOQUEIO`, `COLETA`, `PARTICIPANTE`, `JOGO DAS MALAS`,
-`CANTAR 15s` legado, `GLITCH`,
-`GOOGLE + INSTAGRAM` e `AEROPORTO / TEA FOR TWO`.
-Um índice fixo exclusivo dessa rota ocupa a lateral direita e navega com scroll
-suave entre topo, memória, personalidade, direção e cada bloco operacional. A seção
-visível fica destacada; em telas estreitas, o mesmo índice vira uma faixa fixa
-compacta na parte inferior para não cobrir os controles.
+projeção. O controller da Cena 0 prioriza apenas três operações sempre visíveis:
+`BOOT`, `AQUECIMENTO DA PLATEIA` e `JOGO DAS MALAS`. O aquecimento começa
+comprimido. Memória, personalidade, direção, coleta, participante, canto,
+glitch, navegador e aeroporto/áudio permanecem preservados dentro de `OUTROS
+CONTROLES`, fechado por padrão.
+Um índice fixo exclusivo dessa rota ocupa a lateral direita e navega somente
+entre resumo, boot, aquecimento, malas e outros controles. A seção visível fica
+destacada; em telas estreitas, o mesmo índice vira uma faixa fixa compacta na
+parte inferior para não cobrir os controles.
 
 No bloco `GLITCH`, além dos níveis dramatúrgicos, o operator pode escolher um
 vídeo real de `assets/videos/glitch/`, ativar loop e configurar entre `0,6` e

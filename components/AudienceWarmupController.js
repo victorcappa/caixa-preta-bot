@@ -5,7 +5,7 @@ import { AUDIENCE_WARMUP_ACTIONS, AUDIENCE_WARMUP_INTENSITIES, AUDIENCE_WARMUP_P
 import { PLAY_UNLOCK_CONFIG } from "@/data/scene-zero-unlock";
 import styles from "./AudienceWarmupController.module.css";
 
-export default function AudienceWarmupController({ state, unlock, disabled = false, onLog = () => {} }) {
+export default function AudienceWarmupController({ state, unlock, disabled = false, onLog = () => {}, showBootButton = true }) {
   const warmup = state || {};
   const playUnlock = unlock || {};
   const [manual, setManual] = useState("");
@@ -13,6 +13,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
   const [progressDraft, setProgressDraft] = useState(0);
   const [requestPending, setRequestPending] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [promptLibraryOpen, setPromptLibraryOpen] = useState(false);
 
   useEffect(() => setHydrated(true), []);
   useEffect(() => setProgressDraft(Math.max(0, Math.min(100, Number(playUnlock.progress) || 0))), [playUnlock.progress]);
@@ -91,7 +92,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
           <div><dt>ÚLTIMA AVALIAÇÃO</dt><dd>{playUnlock.lastProgressAction || "—"}</dd></div>
           <div><dt>ÚLTIMA AÇÃO QUE AUMENTOU</dt><dd>{playUnlock.lastIncreaseAction || "—"}</dd></div>
         </dl>
-        {standby ? (
+        {standby && showBootButton ? (
           <button className={styles.bootButton} disabled={busy} onClick={() => act("unlock-boot")} type="button">BOOT</button>
         ) : null}
         {booting ? (
@@ -134,12 +135,17 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
         </div>
       </section>
 
-      <section className={styles.promptLibrary} aria-label="Ações configuradas da verificação humana">
-        <header>
-          <small>LISTA EDITÁVEL · data/audience-warmup-prompts.js</small>
-          <h3>AÇÕES CONFIGURADAS</h3>
-        </header>
-        <div className={styles.promptList}>
+      <section className={styles.promptLibraryDisclosure} aria-label="Ações configuradas da verificação humana">
+        <button aria-expanded={promptLibraryOpen} onClick={() => setPromptLibraryOpen((currentValue) => !currentValue)} type="button">
+          <span><strong>AÇÕES CONFIGURADAS</strong><small>{AUDIENCE_WARMUP_PROMPTS.length} FALAS DISPONÍVEIS</small></span>
+          <b>{promptLibraryOpen ? "COMPRIMIR" : "EXPANDIR"}</b>
+        </button>
+        {promptLibraryOpen ? <div className={styles.promptLibrary}>
+          <header>
+            <small>LISTA EDITÁVEL · data/audience-warmup-prompts.js</small>
+            <h3>AÇÕES CONFIGURADAS</h3>
+          </header>
+          <div className={styles.promptList}>
           {AUDIENCE_WARMUP_PROMPTS.map((prompt) => {
             const scored = playUnlock.scoredActionIds?.includes(prompt.id) && !prompt.repeatableProgress;
             return (
@@ -156,7 +162,8 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
               </article>
             );
           })}
-        </div>
+          </div>
+        </div> : null}
       </section>
 
       <fieldset className={styles.fieldset}>

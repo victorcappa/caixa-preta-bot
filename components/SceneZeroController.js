@@ -31,18 +31,11 @@ const COLLECTION_RESULTS = [
 ];
 
 const SCENE_ZERO_INDEX = [
-  ["scene-zero-top", "TOPO"],
-  ["scene-zero-unlock", "ESQUENTAR PÚBLICO"],
+  ["scene-zero-top", "RESUMO"],
+  ["scene-zero-boot", "BOOT"],
+  ["scene-zero-unlock", "AQUECIMENTO"],
   ["scene-zero-suitcases", "MALAS"],
-  ["scene-zero-memory", "MEMÓRIA"],
-  ["scene-zero-personality", "PERSONALIDADE"],
-  ["scene-zero-direction", "DIREÇÃO"],
-  ["scene-zero-collection", "PERGUNTAS / COLETA"],
-  ["scene-zero-participant", "PARTICIPANTE"],
-  ["scene-zero-singing", "CANTAR 15s"],
-  ["scene-zero-glitch", "GLITCH"],
-  ["scene-zero-browser", "GOOGLE + INSTAGRAM"],
-  ["scene-zero-airport", "AEROPORTO / TEA"]
+  ["scene-zero-extras", "OUTROS"]
 ];
 
 function remainingTimer(timer, now, fallback = 15) {
@@ -71,6 +64,8 @@ export default function SceneZeroController() {
   const [glitchVideoTransitionSeconds, setGlitchVideoTransitionSeconds] = useState(5.2);
   const [activeIndexSection, setActiveIndexSection] = useState("scene-zero-top");
   const [warmupOpen, setWarmupOpen] = useState(false);
+  const [extrasOpen, setExtrasOpen] = useState(false);
+  const [openSuitcaseControls, setOpenSuitcaseControls] = useState(null);
   const [notice, setNotice] = useState("SISTEMA PRONTO");
   const [now, setNow] = useState(Date.now());
   const teaAudioRef = useRef(null);
@@ -104,6 +99,11 @@ export default function SceneZeroController() {
   useEffect(() => robotSoundEngine.armAutoUnlock(), []);
 
   useEffect(() => robotSoundEngine.armAudioRelay(), []);
+
+  useEffect(() => {
+    const activeSuitcase = snapshot.sceneZero?.suitcaseGame?.currentSuitcase;
+    setOpenSuitcaseControls([1, 2, 3].includes(activeSuitcase) ? activeSuitcase : null);
+  }, [snapshot.sceneZero?.suitcaseGame?.currentSuitcase]);
 
   useEffect(() => {
     if (snapshot.instagram?.embeddedPanelSequence > 0) {
@@ -167,6 +167,32 @@ export default function SceneZeroController() {
     } catch (error) {
       setNotice(error.message);
       return null;
+    } finally {
+      setPending("");
+    }
+  }
+
+  async function bootScene() {
+    if (pending || sceneZero.unlock?.status !== "STANDBY") return;
+    setPending("unlock-boot");
+    setNotice("INICIANDO BIOS...");
+    try {
+      const response = await fetch("/api/audience-warmup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "unlock-boot" })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "ERRO AO INICIAR BIOS");
+      if (data.unlock) {
+        setSnapshot((current) => ({
+          ...current,
+          sceneZero: { ...current.sceneZero, unlock: data.unlock }
+        }));
+      }
+      setNotice(data.message || "BIOS INICIADA");
+    } catch (error) {
+      setNotice(error.message);
     } finally {
       setPending("");
     }
@@ -368,14 +394,34 @@ export default function SceneZeroController() {
       <header className={styles.header} id="scene-zero-top">
         <div>
           <p>CENA 0</p>
-          <h1>BOT / MALAS</h1>
+          <h1>OPERAÇÃO ESSENCIAL</h1>
         </div>
         <dl className={styles.statusGrid}>
           <div><dt>ETAPA ATUAL</dt><dd>{sceneZeroStageLabel(sceneZero.stage)}</dd></div>
           <div><dt>PARTICIPANTE</dt><dd>{sceneZero.currentParticipant?.name || "—"}</dd></div>
-          <div><dt>GLITCH</dt><dd>{(sceneZero.glitchLevel || "normal").toUpperCase()}</dd></div>
+          <div><dt>DESBLOQUEIO</dt><dd>{sceneZero.unlock?.progress || 0}%</dd></div>
         </dl>
       </header>
+
+      <section aria-label="Boot da Cena 0" className={styles.bootPanel} id="scene-zero-boot">
+        <div className={styles.bootHeading}>
+          <span>01</span>
+          <div>
+            <h2>BOOT</h2>
+            <p>INICIA A BIOS E A VERIFICAÇÃO HUMANA</p>
+          </div>
+        </div>
+        <div className={styles.bootStatus}>
+          <strong>{sceneZero.unlock?.progress || 0}%</strong>
+          <span>{(sceneZero.unlock?.status || "STANDBY").replaceAll("_", " ")}</span>
+        </div>
+        <button
+          className={styles.bootPrimary}
+          disabled={Boolean(pending) || sceneZero.unlock?.status !== "STANDBY"}
+          onClick={bootScene}
+          type="button"
+        >BOOT</button>
+      </section>
 
       <section className={styles.warmupDisclosure} data-ready={Boolean(snapshot.sceneZero)} id="scene-zero-unlock">
         <button
@@ -385,8 +431,8 @@ export default function SceneZeroController() {
           type="button"
         >
           <span className={styles.warmupDisclosureTitle}>
-            <strong>ESQUENTAR PÚBLICO</strong>
-            <small>BIOS / VERIFICAÇÃO HUMANA</small>
+            <strong>AQUECIMENTO DA PLATEIA</strong>
+            <small>AÇÕES E PROGRESSO DA VERIFICAÇÃO</small>
           </span>
           <span className={styles.warmupDisclosureStatus}>
             {sceneZero.unlock?.progress || 0}% · {(sceneZero.unlock?.status || "STANDBY").replaceAll("_", " ")}
@@ -398,6 +444,7 @@ export default function SceneZeroController() {
             <AudienceWarmupController
               disabled={Boolean(pending)}
               onLog={(line) => setNotice(line)}
+              showBootButton={false}
               state={snapshot.audienceWarmup}
               unlock={sceneZero.unlock}
             />
@@ -406,12 +453,17 @@ export default function SceneZeroController() {
       </section>
 
       <ControlBlock id="scene-zero-suitcases" title="JOGO DAS MALAS" wide>
-        <Readout label="PROGRESSÃO" value={`${(suitcaseGame.status || "idle").toUpperCase()} · MALA ATUAL ${suitcaseGame.currentSuitcase || "—"} · ANTERIOR ${suitcaseGame.previousSuitcase || "—"}`} />
-        <Readout label="PARTICIPANTE" value={sceneZero.currentParticipant?.name} />
+        <div className={styles.suitcaseOverview}>
+          <span>{(suitcaseGame.status || "idle").toUpperCase()}</span>
+          <strong>MALA ATUAL: {suitcaseGame.currentSuitcase || "—"}</strong>
+          <span>PARTICIPANTE: {sceneZero.currentParticipant?.name || "—"}</span>
+        </div>
         <div className={styles.suitcaseGrid}>
           <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 1 ? styles.activeSuitcase : ""}`}>
             <h3>MALA 1 — VERDADE OU BOLO</h3>
-            <Button primary onClick={() => sceneAction("suitcase-one-start")} pending={pending}>INICIAR VERDADE OU BOLO</Button>
+            <Button primary onClick={() => { setOpenSuitcaseControls(1); sceneAction("suitcase-one-start"); }} pending={pending}>INICIAR</Button>
+            <Button onClick={() => setOpenSuitcaseControls((current) => current === 1 ? null : 1)} pressed={openSuitcaseControls === 1}>{openSuitcaseControls === 1 ? "COMPRIMIR" : "CONTROLES"}</Button>
+            <div className={styles.suitcaseDetails} hidden={openSuitcaseControls !== 1}>
             <Readout label="JOGO EXISTENTE" value={game.id === "verdade_ou_bolo" ? `${game.phase || "ATIVO"}` : "INATIVO"} />
             <Button onClick={() => sceneAction("cake-comment")} pending={pending}>COMENTAR</Button>
             <Button onClick={() => sceneAction("cake-provoke")} pending={pending}>NOVA PROVOCAÇÃO</Button>
@@ -420,11 +472,14 @@ export default function SceneZeroController() {
             <Button onClick={() => operatorCommand("/game bolo")} pending={pending}>BOLO</Button>
             <Button onClick={() => operatorCommand("/game reveal")} pending={pending}>REVELAR</Button>
             <Button danger onClick={() => sceneAction("cake-end")} pending={pending}>ENCERRAR</Button>
+            </div>
           </section>
 
           <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 2 ? styles.activeSuitcase : ""}`}>
             <h3>MALA 2 — GINCANA</h3>
-            <Button primary onClick={() => sceneAction("suitcase-two-start")} pending={pending}>INICIAR MALA 2</Button>
+            <Button primary onClick={() => { setOpenSuitcaseControls(2); sceneAction("suitcase-two-start"); }} pending={pending}>INICIAR</Button>
+            <Button onClick={() => setOpenSuitcaseControls((current) => current === 2 ? null : 2)} pressed={openSuitcaseControls === 2}>{openSuitcaseControls === 2 ? "COMPRIMIR" : "CONTROLES"}</Button>
+            <div className={styles.suitcaseDetails} hidden={openSuitcaseControls !== 2}>
             <Button onClick={() => sceneAction("gincana-draw")} pending={pending || suitcaseGame.currentSuitcase !== 2}>SORTEAR GINCANA</Button>
             <Button onClick={() => sceneAction("gincana-draw")} pending={pending || suitcaseGame.currentSuitcase !== 2 || !gincana.currentTask}>SORTEAR OUTRA</Button>
             <Readout label="TAREFA SORTEADA" value={gincana.currentTask?.instruction} />
@@ -450,11 +505,14 @@ export default function SceneZeroController() {
             }} pending={pending || !gincana.currentTask}>FALHOU / TEMPO ESGOTADO</Button>
             <Readout label="RESULTADO" value={gincana.result ? `${gincana.result.toUpperCase()} · ${gincana.elapsedSeconds ?? 0}s decorridos` : "AGUARDANDO"} />
             <Readout label="ÚLTIMO COMENTÁRIO DO BOT" value={gincana.lastComment} />
+            </div>
           </section>
 
           <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 3 ? styles.activeSuitcase : ""}`}>
             <h3>MALA 3 — INSTAGRAM / GLITCH</h3>
-            <Button primary onClick={() => sceneAction("suitcase-three-start")} pending={pending}>INICIAR MALA 3</Button>
+            <Button primary onClick={() => { setOpenSuitcaseControls(3); sceneAction("suitcase-three-start"); }} pending={pending}>INICIAR</Button>
+            <Button onClick={() => setOpenSuitcaseControls((current) => current === 3 ? null : 3)} pressed={openSuitcaseControls === 3}>{openSuitcaseControls === 3 ? "COMPRIMIR" : "CONTROLES"}</Button>
+            <div className={styles.suitcaseDetails} hidden={openSuitcaseControls !== 3}>
             <div className={styles.levels}>
               {SCENE_ZERO_GLITCH_LEVELS.map((level) => (
                 <Button primary={sceneZero.glitchLevel === level} key={`mala-${level}`} onClick={() => sceneAction("set-glitch", { level })} pending={pending}>
@@ -488,6 +546,7 @@ export default function SceneZeroController() {
                 <InstagramBrowserPanel instagram={instagram} onClose={() => updateInstagramPanelVisibility(false)} />
               </div>
             ) : null}
+            </div>
           </section>
         </div>
 
@@ -500,6 +559,21 @@ export default function SceneZeroController() {
           <Button danger onClick={() => operatorCommand("/mala abort")} pending={pending}>INTERROMPER JOGO LEGADO</Button>
         </details>
       </ControlBlock>
+
+      <section className={styles.extrasDisclosure} id="scene-zero-extras">
+        <button
+          aria-expanded={extrasOpen}
+          className={styles.extrasDisclosureToggle}
+          onClick={() => setExtrasOpen((current) => !current)}
+          type="button"
+        >
+          <span>
+            <strong>OUTROS CONTROLES</strong>
+            <small>MEMÓRIA · PERSONALIDADE · DIREÇÃO · COLETA · PARTICIPANTE · GLITCH · NAVEGADOR · ÁUDIO</small>
+          </span>
+          <span className={styles.extrasDisclosureAction} aria-hidden="true" />
+        </button>
+        {extrasOpen ? <div className={styles.extrasDisclosureBody}>
 
       <section className={styles.memoryPanel} id="scene-zero-memory">
         <div className={styles.memoryHeading}>
@@ -813,6 +887,8 @@ export default function SceneZeroController() {
           <Button danger onClick={() => teaAction("tea-stop")} pending={pending}>STOP</Button>
         </ControlBlock>
       </div>
+        </div> : null}
+      </section>
       <footer className={styles.notice}>{pending ? `PROCESSANDO: ${pending}` : notice}</footer>
     </main>
   );

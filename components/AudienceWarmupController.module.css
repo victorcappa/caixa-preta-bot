@@ -24,6 +24,14 @@
 .progressSetter .soundToggle { grid-column: 1 / -1; display: flex; align-items: center; gap: 7px; color: var(--green-dim); font-size: .72rem; }
 .progressSetter .resetUnlock { grid-column: 1 / -1; border-color: var(--danger); color: var(--danger); }
 .promptLibrary { display: grid; gap: 9px; }
+.promptLibraryDisclosure { border: 1px solid #263c2d; background: #080b09; }
+.promptLibraryDisclosure > button { width: 100%; display: flex; justify-content: space-between; gap: 14px; align-items: center; min-height: 52px; padding: 10px 12px; color: #d2d2d2; background: transparent; border: 0; cursor: pointer; font: inherit; text-align: left; }
+.promptLibraryDisclosure > button:hover, .promptLibraryDisclosure > button:focus-visible { background: #101711; outline: 1px solid #42624b; outline-offset: -1px; }
+.promptLibraryDisclosure > button span { display: grid; gap: 3px; }
+.promptLibraryDisclosure > button strong { color: #fff; font-size: .8rem; letter-spacing: .08em; }
+.promptLibraryDisclosure > button small { color: var(--green-dim); font-size: .62rem; letter-spacing: .08em; }
+.promptLibraryDisclosure > button b { color: #001c0c; background: var(--green); padding: 6px 8px; font-size: .62rem; letter-spacing: .08em; }
+.promptLibraryDisclosure .promptLibrary { padding: 0 10px 10px; border-top: 1px solid #263c2d; }
 .promptLibrary header h3 { margin: 3px 0 0; color: #fff; font-size: .88rem; letter-spacing: .09em; }
 .promptLibrary header small { color: var(--green-dim); font-size: .64rem; letter-spacing: .08em; }
 .promptList { max-height: 430px; display: grid; gap: 8px; padding-right: 4px; overflow-y: auto; }
