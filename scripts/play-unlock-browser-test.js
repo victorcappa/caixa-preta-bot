@@ -67,64 +67,78 @@ try {
     await unlock(context.request, "advance-boot");
     snapshot = await state(context.request);
   }
-  assert.equal(snapshot.sceneZero.unlock.status, "WAITING_FOR_AUDIENCE");
-  assert.equal(snapshot.sceneZero.unlock.progress, 50);
-  assert.equal(snapshot.publicMessage.content, "... DESBLOQUEIE A PEÇA");
-  assert.equal(snapshot.audienceWarmup.active, false, "a BIOS deve esperar a primeira pergunta do operador");
-  assert.equal(snapshot.audienceWarmup.sequence, null, "nenhuma pergunta pode ser escolhida automaticamente");
-
+  assert.equal(snapshot.sceneZero.unlock.status, "BOOT_FAILED");
+  assert.equal(snapshot.sceneZero.unlock.progress, 78);
+  assert.equal(snapshot.publicMessage, null, "o erro da BIOS não deve criar fala do chatbot");
   await display.getByLabel("BIOS da Cena 0").waitFor();
-  await display.getByText("DESBLOQUEIE A PEÇA", { exact: true }).waitFor();
+  await display.getByText("AÇÃO COLETIVA", { exact: true }).waitFor();
   await new Promise((resolve) => setTimeout(resolve, 800));
   await display.screenshot({ path: "/private/tmp/caixa-preta-bios-stalled.png" });
-  await display.getByLabel("Desbloquear a peça").waitFor({ timeout: 5000 });
+  const verificationTitle = display.getByText("PROVE QUE VOCÊ É HUMANO", { exact: true });
+  await verificationTitle.waitFor({ timeout: 7000 });
+  assert.equal(await verificationTitle.count(), 1, "o título deve aparecer uma única vez");
+  snapshot = await state(context.request);
+  assert.equal(snapshot.sceneZero.unlock.status, "HUMAN_VERIFICATION");
+  assert.equal(snapshot.publicMessage, null, "a primeira pergunta não pode coexistir com o título");
+  await new Promise((resolve) => setTimeout(resolve, 900));
+  await display.screenshot({ path: "/private/tmp/caixa-preta-human-verification-title.png" });
+
+  snapshot = await waitForUnlock(context.request, (value) => value.status === "WARMING_AUDIENCE", 7000);
+  assert.equal(snapshot.sceneZero.unlock.progress, 78);
+  assert.equal(snapshot.sceneZero.unlock.verificationTitleSequence, 1);
+  assert.equal(snapshot.publicMessage.content, "Quem veio de transporte público bate palmas.");
+  await verificationTitle.waitFor({ state: "detached" });
+  await display.getByLabel("Desbloquear a peça").waitFor();
+  await display.getByText(snapshot.publicMessage.content, { exact: true }).waitFor();
+
+  await unlockPanel.getByRole("button", { name: "CONFIRMAR AÇÃO +4%", exact: true }).click();
+  snapshot = await waitForUnlock(context.request, (value) => Boolean(value.pendingProgress));
+  assert.equal(snapshot.sceneZero.unlock.progress, 78, "o feedback técnico deve aparecer antes de a barra subir");
+  assert(snapshot.sceneZero.unlock.technicalFeedback);
+  snapshot = await waitForUnlock(context.request, (value) => value.progress === 82);
+  assert(snapshot.sceneZero.unlock.scoredActionIds.includes("transport-01"));
 
   const manualText = "Quem ouviu a máquina bate palmas.";
-  const warmupResponse = await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "send", text: manualText } });
+  const warmupResponse = await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "send", text: manualText, progressValue: 5 } });
   assert.equal(warmupResponse.ok(), true);
-  snapshot = await waitForUnlock(context.request, (value) => value.status === "WARMING_AUDIENCE");
-  assert.equal(snapshot.sceneZero.unlock.progress, 50, "projetar a ação deve aguardar a avaliação do operador");
-  await unlockPanel.getByRole("button", { name: "AÇÃO AUMENTOU +2%", exact: true }).click();
-  snapshot = await waitForUnlock(context.request, (value) => value.progress === 52);
-  await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "send", text: `${manualText} De novo.` } });
-  await unlockPanel.getByRole("button", { name: "AÇÃO DIMINUIU −2%", exact: true }).click();
-  snapshot = await waitForUnlock(context.request, (value) => value.progress === 50);
-  await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "send", text: `${manualText} Última vez.` } });
-  snapshot = await state(context.request);
-  assert.equal(snapshot.sceneZero.unlock.progress, 50, "nova fala deve aguardar uma nova avaliação");
-  assert.match(await unlockPanel.textContent(), /100% SÓ ACONTECE NO FIM DO JOGO DAS MALAS/);
-  assert.equal(await unlockPanel.getByRole("button", { name: "COMPLETAR BARRA" }).count(), 0);
-  assert.equal(await unlockPanel.getByRole("button", { name: "DESBLOQUEAR AGORA" }).count(), 0);
+  await unlockPanel.getByRole("button", { name: "CONFIRMAR AÇÃO +5%", exact: true }).click();
+  snapshot = await waitForUnlock(context.request, (value) => value.progress === 87);
 
-  const prematureFinish = await context.request.post(`${BASE_URL}/api/scene-zero`, { data: { action: "suitcase-finish" } });
-  assert.equal(prematureFinish.status(), 409, "o fim manual das malas exige que a Mala 3 esteja ativa");
-  snapshot = await state(context.request);
-  assert.equal(snapshot.sceneZero.unlock.progress, 50);
+  await unlock(context.request, "set-progress", { progress: 84 });
+  snapshot = await waitForUnlock(context.request, (value) => value.progress === 84);
+  await unlock(context.request, "increase-participation", { amount: 2 });
+  snapshot = await waitForUnlock(context.request, (value) => value.progress === 86 && !value.pendingProgress);
+  await unlock(context.request, "decrease-participation", { amount: 2 });
+  snapshot = await waitForUnlock(context.request, (value) => value.progress === 84 && !value.pendingProgress);
 
-  const rejected = await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "unlock-complete" } });
-  assert.equal(rejected.status(), 400, "a API não deve manter um atalho manual de conclusão");
+  assert.equal(await unlockPanel.getByRole("button", { name: "COMPLETAR BARRA", exact: true }).count(), 1);
+  assert.equal(await unlockPanel.getByRole("button", { name: "DESBLOQUEAR AGORA", exact: true }).count(), 1);
 
   const soundToggle = operator.getByLabel("ÁUDIO BIOS / UNLOCK");
   await soundToggle.click();
   snapshot = await waitForUnlock(context.request, (value) => value.soundEnabled === false);
   assert.equal(snapshot.sceneZero.unlock.soundEnabled, false);
 
-  const suitcaseFinish = await context.request.post(`${BASE_URL}/api/operator`, { data: { command: "/mala win" } });
-  assert.equal(suitcaseFinish.ok(), true);
-  snapshot = await waitForUnlock(context.request, (value) => value.progress > 50 && value.progress < 100);
-  assert.equal(snapshot.sceneZero.suitcaseGame.status, "finished");
-  assert.equal(snapshot.sceneZero.unlock.animation.kind, "complete", "o fim das malas deve animar a barra");
+  await unlockPanel.getByRole("button", { name: "COMPLETAR BARRA", exact: true }).click();
+  snapshot = await waitForUnlock(context.request, (value) => value.progress > 84 && value.progress < 100);
+  assert.equal(snapshot.sceneZero.unlock.animation.kind, "complete", "completar barra deve animar a partir do percentual atual");
   await display.getByText("PEÇA DESBLOQUEADA", { exact: true }).waitFor({ timeout: 8000 });
   await display.screenshot({ path: "/private/tmp/caixa-preta-play-unlocked.png" });
   snapshot = await waitForUnlock(context.request, (value) => value.status === "UNLOCKED");
   assert.equal(snapshot.sceneZero.unlock.onPlayUnlocked.name, "onPlayUnlocked");
-  assert.equal(snapshot.sceneZero.unlock.onPlayUnlocked.source, "suitcases-finished");
+  assert.equal(snapshot.sceneZero.unlock.onPlayUnlocked.source, "operator-complete");
   await display.getByLabel("Desbloquear a peça").waitFor({ state: "detached" });
 
   await operator.getByRole("button", { name: "REINICIAR DESBLOQUEIO" }).click();
   snapshot = await waitForUnlock(context.request, (value) => value.status === "STANDBY");
   assert.equal(snapshot.sceneZero.unlock.progress, 0);
   await bootButton.waitFor();
+
+  await bootButton.click();
+  await waitForUnlock(context.request, (value) => value.status === "BOOTING");
+  await unlock(context.request, "unlock-now");
+  snapshot = await waitForUnlock(context.request, (value) => value.status === "UNLOCKED");
+  assert.equal(snapshot.sceneZero.unlock.onPlayUnlocked.source, "operator-force");
 
   console.log("play unlock browser tests passed");
 } finally {

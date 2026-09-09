@@ -6,7 +6,15 @@ export const AUDIENCE_WARMUP_ACTIONS = [
   { id: "word", icon: "🗣", label: "Falar uma palavra", instruction: "fala uma palavra", progressValue: 6 },
   { id: "sound", icon: "🔊", label: "Fazer um som", instruction: "faz um som", progressValue: 7 },
   { id: "silence", icon: "🤫", label: "Ficar em silêncio", instruction: "fica em silêncio", progressValue: 4 },
-  { id: "look", icon: "👀", label: "Olhar para alguém", instruction: "olha para alguém", progressValue: 2 }
+  { id: "look", icon: "👀", label: "Olhar para alguém", instruction: "olha para alguém", progressValue: 2 },
+  { id: "stand", icon: "↑", label: "Levantar", instruction: "levanta da cadeira", progressValue: 6 },
+  { id: "sit", icon: "↓", label: "Sentar", instruction: "senta novamente", progressValue: 3 },
+  { id: "point", icon: "→", label: "Apontar", instruction: "aponta para alguém", progressValue: 3 },
+  { id: "snap", icon: "⋆", label: "Estalar os dedos", instruction: "estala os dedos", progressValue: 4 },
+  { id: "lean", icon: "/", label: "Inclinar o corpo", instruction: "inclina o corpo", progressValue: 3 },
+  { id: "turn", icon: "↶", label: "Olhar para trás", instruction: "olha para trás", progressValue: 3 },
+  { id: "eyes", icon: "—", label: "Fechar os olhos", instruction: "fecha os olhos", progressValue: 5 },
+  { id: "laugh", icon: ":)", label: "Rir", instruction: "ri", progressValue: 4 }
 ];
 
 export const AUDIENCE_WARMUP_INTENSITIES = [
@@ -49,7 +57,16 @@ const AUDIENCE_WARMUP_PROMPT_LIBRARY = [
   { id: "collective-03", text: "Fiquem em silêncio até perceberem o menor som desta sala.", action: "silence", category: "coletividade", intensity: "medium", tags: ["escuta"] },
   { id: "collective-04", text: "Olhe para alguém que você ainda não tinha notado.", action: "look", category: "coletividade", intensity: "light", tags: ["atenção"] },
   { id: "collective-05", text: "Quem está pronto para responder a uma máquina levanta as duas mãos.", action: "hands", category: "coletividade", intensity: "strange", progressValue: 7, tags: ["máquina"] },
-  { id: "absurd-05", text: "Se você suspeita que esta pergunta foi feita especialmente para você, faça um som.", action: "sound", category: "absurdo", intensity: "strange", tags: ["máquina", "presença"] }
+  { id: "absurd-05", text: "Se você suspeita que esta pergunta foi feita especialmente para você, faça um som.", action: "sound", category: "absurdo", intensity: "strange", tags: ["máquina", "presença"] },
+  { id: "movement-stand", text: "Quem veio sozinho levanta da cadeira por um instante.", action: "stand", category: "movimento", intensity: "medium", tags: ["presença", "companhia"] },
+  { id: "movement-sit", text: "Quem ainda confia no sistema senta novamente.", action: "sit", category: "movimento", intensity: "strange", progressValue: 0, tags: ["confiança"] },
+  { id: "gesture-point", text: "Aponte para alguém que parece mais humano do que você.", action: "point", category: "gesto", intensity: "strange", tags: ["observação"] },
+  { id: "sound-snap", text: "Quem mudou de ideia nos últimos cinco minutos estala os dedos.", action: "snap", category: "som", intensity: "medium", tags: ["decisão"] },
+  { id: "movement-lean", text: "Todo mundo inclina o corpo para o mesmo lado.", action: "lean", category: "coletivo", intensity: "light", progressValue: 6, feedbackOverride: "SINCRONIZAÇÃO ................. ACEITÁVEL", tags: ["sincronia"] },
+  { id: "movement-turn", text: "Olhem para trás ao mesmo tempo.", action: "turn", category: "coletivo", intensity: "medium", progressValue: 5, tags: ["sincronia"] },
+  { id: "subjective-eyes", text: "Quem já sentiu saudade de alguém fecha os olhos por três segundos.", action: "eyes", category: "subjetivo", intensity: "medium", tags: ["saudade"] },
+  { id: "collective-eyes", text: "Fechem os olhos. Respirem fundo. Abram os olhos ao mesmo tempo.", action: "eyes", category: "coletivo", intensity: "strange", progressValue: 8, repeatableProgress: true, feedbackOverride: "ATENÇÃO COMPARTILHADA ......... DETECTADA", tags: ["respiração", "sincronia"] },
+  { id: "sound-laugh", text: "Quem está completamente no controle da própria vida ri.", action: "laugh", category: "subjetivo", intensity: "strange", tags: ["controle"] }
 ];
 
 const ACTION_PROGRESS = Object.fromEntries(

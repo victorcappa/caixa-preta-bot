@@ -9,8 +9,12 @@ import { PLAY_UNLOCK_CONFIG, PLAY_UNLOCK_STATES } from "../data/scene-zero-unloc
 import {
   adjustPlayUnlockProgress,
   advancePlayUnlockBoot,
+  beginPlayUnlockHumanVerification,
+  commitPlayUnlockProgress,
   completePlayUnlock,
   createInitialPlayUnlockState,
+  preparePlayUnlockProgress,
+  readyPlayUnlockAudience,
   recordPlayUnlockAudienceAction,
   startPlayUnlockBoot,
   stallPlayUnlockBoot
@@ -28,6 +32,8 @@ for (const action of AUDIENCE_WARMUP_ACTIONS) {
   const generated = chooseAudienceWarmupPrompt({ action: action.id, random: () => 0 });
   assert.equal(generated.action, action.id, `geração incompatível: ${action.id}`);
 }
+assert(AUDIENCE_WARMUP_PROMPTS.some((prompt) => prompt.progressValue === 0), "deve existir ação configurável sem progresso");
+assert(AUDIENCE_WARMUP_PROMPTS.some((prompt) => prompt.repeatableProgress), "deve existir ação com progresso repetível");
 
 const wordSequence = createAudienceWarmupSequence({ text: "Quando eu disser três, digam o bairro.", action: "word", countdown: 3 });
 assert.equal(wordSequence.requiresCountdown, true);
@@ -61,28 +67,40 @@ for (const expectedStep of PLAY_UNLOCK_CONFIG.bootSteps) {
   unlock = advanced.state;
 }
 unlock = stallPlayUnlockBoot(unlock);
+assert.equal(unlock.status, PLAY_UNLOCK_STATES.BOOT_FAILED);
+assert.equal(unlock.progress, 78);
+unlock = beginPlayUnlockHumanVerification(unlock, "2026-09-09T00:00:20.000Z");
+assert.equal(unlock.status, PLAY_UNLOCK_STATES.HUMAN_VERIFICATION);
+assert.equal(unlock.verificationTitleSequence, 1);
+unlock = readyPlayUnlockAudience(unlock, "2026-09-09T00:00:24.000Z");
 assert.equal(unlock.status, PLAY_UNLOCK_STATES.WAITING_FOR_AUDIENCE);
 assert.equal(unlock.progress, PLAY_UNLOCK_CONFIG.bootLimit);
 
-const firstAction = recordPlayUnlockAudienceAction(unlock, { label: "Palmas", externalInput: { sequenceId: "warmup-1" } });
+const firstAction = recordPlayUnlockAudienceAction(unlock, { label: "Palmas", progressId: "clap-once", progressValue: 4, externalInput: { sequenceId: "warmup-1" } });
 assert.equal(firstAction.applied, true);
 assert.equal(firstAction.state.progress, PLAY_UNLOCK_CONFIG.bootLimit, "projetar a ação ainda não avalia o resultado");
 assert.equal(firstAction.state.status, PLAY_UNLOCK_STATES.WARMING_AUDIENCE);
-const repeatedAction = recordPlayUnlockAudienceAction(firstAction.state, { label: "Palmas de novo", externalInput: { sequenceId: "warmup-1" } });
+const repeatedAction = recordPlayUnlockAudienceAction(firstAction.state, { label: "Palmas de novo", progressId: "clap-once", progressValue: 4, externalInput: { sequenceId: "warmup-2" } });
 assert.equal(repeatedAction.applied, true);
 assert.equal(repeatedAction.state.progress, PLAY_UNLOCK_CONFIG.bootLimit, "repetir a fala sem avaliação não deve alterar a barra");
 const increased = adjustPlayUnlockProgress(repeatedAction.state, 2, { label: "ação funcionou" });
 assert.equal(increased.applied, true);
-assert.equal(increased.state.progress, 52);
+assert.equal(increased.state.progress, 80);
 assert.equal(increased.state.lastIncreaseAction, "ação funcionou");
 assert.equal(adjustPlayUnlockProgress(increased.state, -2).reason, "ACTION_ALREADY_EVALUATED", "cada ação aceita somente uma avaliação");
-const nextAction = recordPlayUnlockAudienceAction(increased.state, { label: "Silêncio", externalInput: { sequenceId: "warmup-2" } });
+const nextAction = recordPlayUnlockAudienceAction(increased.state, { label: "Silêncio", progressId: "silence-once", progressValue: 2, externalInput: { sequenceId: "warmup-3" } });
 const decreased = adjustPlayUnlockProgress(nextAction.state, -2, { label: "ação falhou" });
-assert.equal(decreased.state.progress, 50);
+assert.equal(decreased.state.progress, 78);
 assert.equal(decreased.state.lastIncreaseAction, "ação funcionou", "redução não substitui a última ação que aumentou");
-const almostComplete = recordPlayUnlockAudienceAction({ ...decreased.state, progress: 98 }, { label: "Coro", externalInput: { sequenceId: "warmup-3" } });
+const almostComplete = recordPlayUnlockAudienceAction({ ...decreased.state, progress: 98 }, { label: "Coro", progressId: "choir-once", progressValue: 10, externalInput: { sequenceId: "warmup-4" } });
 const capped = adjustPlayUnlockProgress(almostComplete.state, 10, { label: "quase completo" });
-assert.equal(capped.state.progress, 99, "ações pequenas nunca podem desbloquear a peça antes das malas");
+assert.equal(capped.state.progress, 100, "ações físicas podem concluir a verificação");
+const queuedAction = recordPlayUnlockAudienceAction({ ...decreased.state, progress: 80 }, { label: "Som", progressId: "sound-once", progressValue: 7, externalInput: { sequenceId: "warmup-5" } });
+const prepared = preparePlayUnlockProgress(queuedAction.state, 7, { now: "2026-09-09T00:00:30.000Z" });
+assert.equal(prepared.state.progress, 80, "o feedback técnico deve preceder a atualização da barra");
+assert.match(prepared.state.technicalFeedback, /DETECTADA|RECEBIDA|REGISTRADO|ACEITÁVEL|AUMENTANDO|COMPATÍVEL|VÁLIDA|PROVÁVEL|ACEITA|ANDAMENTO/);
+const committed = commitPlayUnlockProgress(prepared.state, "2026-09-09T00:00:31.000Z");
+assert.equal(committed.state.progress, 87);
 const completed = completePlayUnlock(capped.state, { source: "suitcases-finished" });
 assert.equal(completed.status, PLAY_UNLOCK_STATES.UNLOCKED);
 assert.equal(completed.progress, 100);

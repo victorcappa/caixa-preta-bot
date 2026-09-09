@@ -35,8 +35,7 @@ function PlayUnlockProjection({ unlock, now }) {
   const soundSequenceRef = useRef(null);
   const status = unlock?.status;
   const hidden = !status || [PLAY_UNLOCK_STATES.STANDBY, PLAY_UNLOCK_STATES.UNLOCKED].includes(status);
-  const showStalledTerminal = status === PLAY_UNLOCK_STATES.WAITING_FOR_AUDIENCE
-    && Date.parse(unlock.handoffUntil || "") > now;
+  const showStalledTerminal = status === PLAY_UNLOCK_STATES.BOOT_FAILED;
 
   useEffect(() => {
     if (hidden || unlock.soundEnabled === false || soundSequenceRef.current === unlock.soundSequence) return;
@@ -47,7 +46,9 @@ function PlayUnlockProjection({ unlock, now }) {
       if (!context) return;
       const soundId = status === PLAY_UNLOCK_STATES.UNLOCKING
         ? "unlock"
-        : status === PLAY_UNLOCK_STATES.WAITING_FOR_AUDIENCE
+        : status === PLAY_UNLOCK_STATES.HUMAN_VERIFICATION
+          ? "verification"
+          : status === PLAY_UNLOCK_STATES.BOOT_FAILED
           ? "warning"
           : status === PLAY_UNLOCK_STATES.WARMING_AUDIENCE
             ? "progress"
@@ -90,6 +91,17 @@ function PlayUnlockProjection({ unlock, now }) {
     );
   }
 
+  if (status === PLAY_UNLOCK_STATES.HUMAN_VERIFICATION) {
+    return (
+      <section className={`${styles.biosOverlay} ${styles.verificationOverlay}`} aria-label="Protocolo de verificação humana" aria-live="assertive">
+        <div className={styles.verificationTitle} key={unlock.verificationTitleSequence}>
+          <strong>{PLAY_UNLOCK_CONFIG.verificationTitle}</strong>
+          <UnlockProgressBar progress={unlock.progress} />
+        </div>
+      </section>
+    );
+  }
+
   if (status === PLAY_UNLOCK_STATES.UNLOCKING) {
     return (
       <section className={`${styles.biosOverlay} ${styles.unlockingOverlay}`} aria-label="Sequência de desbloqueio da peça" aria-live="assertive">
@@ -109,7 +121,7 @@ function PlayUnlockProjection({ unlock, now }) {
     <aside className={styles.unlockHud} aria-label="Desbloquear a peça" aria-live="polite">
       <div className={styles.unlockHudHeading}>
         <span>DESBLOQUEAR A PEÇA</span>
-        <small>{status === PLAY_UNLOCK_STATES.WAITING_FOR_AUDIENCE ? "AGUARDANDO JOGO DAS MALAS" : "AÇÃO COLETIVA · MALAS PENDENTES"}</small>
+        <small>{status === PLAY_UNLOCK_STATES.WAITING_FOR_AUDIENCE ? "AGUARDANDO PRIMEIRA RESPOSTA" : "VERIFICAÇÃO HUMANA EM ANDAMENTO"}</small>
       </div>
       <UnlockProgressBar progress={unlock.progress} />
       {unlock.technicalFeedback && Date.parse(unlock.technicalFeedbackUntil || "") > now

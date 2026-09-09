@@ -10,6 +10,16 @@ async function warmup(request, action, payload = {}) {
   return data.audienceWarmup;
 }
 
+async function waitForUnlockStatus(request, status, timeoutMs = 10000) {
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < timeoutMs) {
+    const snapshot = await (await request.get(`${BASE_URL}/api/state`)).json();
+    if (snapshot.sceneZero.unlock.status === status) return snapshot;
+    await new Promise((resolve) => setTimeout(resolve, 80));
+  }
+  throw new Error(`timeout waiting for ${status}`);
+}
+
 const browser = await chromium.launch({ headless: true });
 const context = await browser.newContext();
 const externalRequests = [];
@@ -39,8 +49,14 @@ try {
     assert.equal(response.ok(), true);
     unlockState = (await response.json()).unlock;
   }
-  assert.equal(unlockState.status, "WAITING_FOR_AUDIENCE");
-  const conversationAfterBoot = (await (await context.request.get(`${BASE_URL}/api/state`)).json()).conversation.length;
+  assert.equal(unlockState.status, "BOOT_FAILED");
+  assert.equal(unlockState.progress, 78);
+  await display.getByText("PROVE QUE VOCÊ É HUMANO", { exact: true }).waitFor({ timeout: 7000 });
+  const afterIntro = await waitForUnlockStatus(context.request, "WARMING_AUDIENCE");
+  assert.equal(afterIntro.sceneZero.unlock.verificationTitleSequence, 1);
+  assert.equal(await display.getByText("PROVE QUE VOCÊ É HUMANO", { exact: true }).count(), 0);
+  const conversationAfterBoot = afterIntro.conversation.length;
+  assert.equal(conversationAfterBoot, 1, "a primeira pergunta física deve iniciar após o título isolado");
   const wordAction = operator.getByRole("button", { name: /Falar uma palavra/ });
   await operator.waitForFunction(() => document.querySelector('[aria-labelledby="audience-warmup-title"]')?.getAttribute("aria-busy") === "false");
   assert.equal(await wordAction.isEnabled(), true, `ação deve estar habilitada; page errors: ${pageErrors.join(" | ")}`);
@@ -68,10 +84,11 @@ try {
   assert.equal(snapshot.publicMessage.content, generatedText);
 
   const manualText = "Quem veio acompanhado levanta a mão.";
-  await operator.getByLabel("FRASE MANUAL").fill(manualText);
+  const manualField = operator.getByRole("textbox", { name: /FRASE MANUAL/ });
+  await manualField.fill(manualText);
   await Promise.all([
     operator.waitForResponse((response) => response.url().endsWith("/api/audience-warmup") && response.request().postDataJSON()?.action === "send"),
-    operator.getByLabel("FRASE MANUAL").press("Enter")
+    manualField.press("Enter")
   ]);
   await display.getByText(manualText, { exact: true }).waitFor();
   await display.screenshot({ path: "/private/tmp/caixa-preta-warmup-short.png" });

@@ -858,7 +858,6 @@ export default function Chat() {
               <div className={styles.messageFrame} key={publicMessage.id}>
                 {audienceWarmup?.display?.messageId === publicMessage.id ? (
                   <div className={styles.actionCue}>
-                    <span aria-hidden="true">{audienceWarmup.display.icon}</span>
                     <small>{audienceWarmup.display.actionLabel}</small>
                   </div>
                 ) : null}

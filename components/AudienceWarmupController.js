@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AUDIENCE_WARMUP_ACTIONS, AUDIENCE_WARMUP_INTENSITIES } from "@/data/audience-warmup-prompts";
+import { AUDIENCE_WARMUP_ACTIONS, AUDIENCE_WARMUP_INTENSITIES, AUDIENCE_WARMUP_PROMPTS } from "@/data/audience-warmup-prompts";
 import { PLAY_UNLOCK_CONFIG } from "@/data/scene-zero-unlock";
 import styles from "./AudienceWarmupController.module.css";
 
@@ -9,10 +9,13 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
   const warmup = state || {};
   const playUnlock = unlock || {};
   const [manual, setManual] = useState("");
+  const [manualProgress, setManualProgress] = useState(0);
+  const [progressDraft, setProgressDraft] = useState(0);
   const [requestPending, setRequestPending] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => setHydrated(true), []);
+  useEffect(() => setProgressDraft(Math.max(0, Math.min(100, Number(playUnlock.progress) || 0))), [playUnlock.progress]);
 
   async function act(action, payload = {}) {
     setRequestPending(true);
@@ -43,13 +46,14 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
   const standby = playUnlock.status === "STANDBY";
   const booting = playUnlock.status === "BOOTING";
   const warming = ["WAITING_FOR_AUDIENCE", "WARMING_AUDIENCE"].includes(playUnlock.status);
-  const warmupDisabled = busy || standby || booting;
-  const actionEvaluated = Boolean(sequence?.id && playUnlock.scoredActionIds?.includes(sequence.id));
+  const warmupDisabled = busy || !warming || Boolean(playUnlock.pendingProgress);
+  const currentProgressValue = Math.max(0, Number(sequence?.progressValue) || 0);
+  const actionEvaluated = Boolean(sequence?.progressId && playUnlock.scoredActionIds?.includes(sequence.progressId) && !sequence.repeatableProgress);
 
   function sendManual() {
     const text = manual.trim();
     if (!text || busy) return;
-    void act("send", { text }).then((result) => result && setManual(""));
+    void act("send", { text, progressValue: manualProgress }).then((result) => result && setManual(""));
   }
 
   return (
@@ -100,14 +104,23 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
         ) : null}
         {warming ? (
           <>
-            <p className={styles.unlockRule}>AVALIE CADA PEQUENA AÇÃO. A BARRA PODE SUBIR OU DESCER, MAS 100% SÓ ACONTECE NO FIM DO JOGO DAS MALAS.</p>
+            <p className={styles.unlockRule}>PROTOCOLO DE VERIFICAÇÃO HUMANA. CADA AÇÃO PONTUA UMA VEZ, EXCETO QUANDO MARCADA COMO REPETÍVEL.</p>
             <div className={styles.unlockControls}>
-              <button disabled={busy || !sequence || actionEvaluated} onClick={() => act("unlock-increment", { amount: PLAY_UNLOCK_CONFIG.manualProgressStep, label: current?.text || sequence?.label })} type="button">AÇÃO AUMENTOU +{PLAY_UNLOCK_CONFIG.manualProgressStep}%</button>
-              <button disabled={busy || !sequence || actionEvaluated} onClick={() => act("unlock-decrement", { amount: PLAY_UNLOCK_CONFIG.manualProgressStep, label: current?.text || sequence?.label })} type="button">AÇÃO DIMINUIU −{PLAY_UNLOCK_CONFIG.manualProgressStep}%</button>
+              <button disabled={busy || !sequence || !currentProgressValue || actionEvaluated || playUnlock.pendingProgress} onClick={() => act("unlock-increment", { amount: currentProgressValue, label: sequence?.steps?.[0]?.text || sequence?.label })} type="button">CONFIRMAR AÇÃO +{currentProgressValue}%</button>
+              <button disabled={busy || !sequence || actionEvaluated || playUnlock.pendingProgress} onClick={() => act("unlock-decrement", { amount: PLAY_UNLOCK_CONFIG.manualProgressStep, label: current?.text || sequence?.label })} type="button">AÇÃO DIMINUIU −{PLAY_UNLOCK_CONFIG.manualProgressStep}%</button>
             </div>
           </>
         ) : null}
         <div className={styles.progressSetter}>
+          <label>
+            DEFINIR PROGRESSO
+            <input max="100" min="0" onChange={(event) => setProgressDraft(event.target.value)} type="number" value={progressDraft} />
+          </label>
+          <button disabled={!warming || busy || playUnlock.pendingProgress} onClick={() => act("unlock-set-progress", { progress: progressDraft })} type="button">APLICAR PROGRESSO</button>
+          <button disabled={!warming || busy || playUnlock.pendingProgress} onClick={() => act("unlock-increase-participation", { amount: PLAY_UNLOCK_CONFIG.manualProgressStep })} type="button">+ PARTICIPAÇÃO</button>
+          <button disabled={!warming || busy || playUnlock.pendingProgress} onClick={() => act("unlock-decrease-participation", { amount: PLAY_UNLOCK_CONFIG.manualProgressStep })} type="button">− PARTICIPAÇÃO</button>
+          <button className={styles.completeBar} disabled={!warming || busy} onClick={() => act("unlock-complete")} type="button">COMPLETAR BARRA</button>
+          <button className={styles.forceUnlock} disabled={standby || busy} onClick={() => act("unlock-unlock-now")} type="button">DESBLOQUEAR AGORA</button>
           <label className={styles.soundToggle}>
             <input
               checked={playUnlock.soundEnabled !== false}
@@ -118,6 +131,31 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
             ÁUDIO BIOS / UNLOCK
           </label>
           <button className={styles.resetUnlock} disabled={busy} onClick={() => act("unlock-reset")} type="button">REINICIAR DESBLOQUEIO</button>
+        </div>
+      </section>
+
+      <section className={styles.promptLibrary} aria-label="Ações configuradas da verificação humana">
+        <header>
+          <small>LISTA EDITÁVEL · data/audience-warmup-prompts.js</small>
+          <h3>AÇÕES CONFIGURADAS</h3>
+        </header>
+        <div className={styles.promptList}>
+          {AUDIENCE_WARMUP_PROMPTS.map((prompt) => {
+            const scored = playUnlock.scoredActionIds?.includes(prompt.id) && !prompt.repeatableProgress;
+            return (
+              <article className={styles.promptItem} key={prompt.id}>
+                <div>
+                  <small>{prompt.category} · {prompt.id}</small>
+                  <p>{prompt.text}</p>
+                  <strong>{prompt.progressValue > 0 ? `+${prompt.progressValue}%` : "0% · SEM PROGRESSO"} · {prompt.repeatableProgress ? "REPETÍVEL" : scored ? "JÁ PONTUOU" : "AINDA NÃO PONTUOU"}</strong>
+                </div>
+                <div>
+                  <button disabled={warmupDisabled} onClick={() => act("trigger-prompt", { promptId: prompt.id, withProgress: true })} type="button">DISPARAR{prompt.progressValue > 0 ? ` +${prompt.progressValue}%` : ""}</button>
+                  <button disabled={warmupDisabled} onClick={() => act("trigger-prompt", { promptId: prompt.id, withProgress: false })} type="button">DISPARAR SEM PROGRESSO</button>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </section>
 
@@ -176,12 +214,16 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
         />
         <small>ENTER ENVIA · SHIFT+ENTER QUEBRA A LINHA</small>
       </label>
+      <label className={styles.manualProgress}>
+        PROGRESSO DA FRASE MANUAL
+        <input max="100" min="0" onChange={(event) => setManualProgress(Number(event.target.value))} type="number" value={manualProgress} />
+      </label>
 
       <div className={styles.preview} aria-label="Preview do esquentar público" aria-live="polite">
         <small>{manual.trim() ? "FRASE MANUAL — ENTER ENVIA" : "ÚLTIMA FRASE GERADA E ENVIADA"}</small>
         <p>{manual.trim() || warmup.preview || "Escolha uma ação e gere uma pergunta."}</p>
         <strong>
-          O OPERADOR AVALIA CADA AÇÃO · LIMITE 99% · 100% SOMENTE NO FIM DAS MALAS
+          A BARRA CONTINUA DA BIOS · FEEDBACK TÉCNICO ANTES DE CADA AUMENTO
         </strong>
       </div>
 

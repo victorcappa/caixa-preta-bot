@@ -1,6 +1,8 @@
 export const PLAY_UNLOCK_STATES = {
   STANDBY: "STANDBY",
   BOOTING: "BOOTING",
+  BOOT_FAILED: "BOOT_FAILED",
+  HUMAN_VERIFICATION: "HUMAN_VERIFICATION",
   WAITING_FOR_AUDIENCE: "WAITING_FOR_AUDIENCE",
   WARMING_AUDIENCE: "WARMING_AUDIENCE",
   UNLOCKING: "UNLOCKING",
@@ -8,18 +10,22 @@ export const PLAY_UNLOCK_STATES = {
 };
 
 export const PLAY_UNLOCK_CONFIG = {
-  bootLimit: 50,
+  bootLimit: 78,
   manualProgressStep: 2,
+  feedbackLeadMs: 480,
+  bootFailureDurationMs: 2800,
+  verificationTitleDurationMs: 3200,
   completeAnimationMs: 1800,
   animationFrames: 18,
   unlockStepMs: 620,
-  handoffDurationMs: 2400,
   feedbackDurationMs: 1600,
-  openingLine: "... DESBLOQUEIE A PEÇA",
+  verificationTitle: "PROVE QUE VOCÊ É HUMANO",
+  firstPromptId: "transport-01",
   sounds: {
     tick: { frequency: 440, durationMs: 90, volume: 0.035, oscillator: "sine" },
     warning: { frequency: 190, durationMs: 150, volume: 0.045, oscillator: "square" },
     progress: { frequency: 610, durationMs: 80, volume: 0.03, oscillator: "sine" },
+    verification: { frequency: 330, durationMs: 180, volume: 0.045, oscillator: "square" },
     unlock: { frequency: 880, durationMs: 110, volume: 0.04, oscillator: "square" }
   },
   bootSteps: [
@@ -32,21 +38,21 @@ export const PLAY_UNLOCK_CONFIG = {
     },
     {
       id: "theatre",
-      progress: 11,
+      progress: 12,
       durationMs: 620,
       sound: "tick",
       lines: ["TEATRO ........................ DETECTADO"]
     },
     {
       id: "deterministic-title",
-      progress: 17,
+      progress: 19,
       durationMs: 540,
       sound: "tick",
-      lines: ["", "MÓDULOS DETERMINÍSTICOS"]
+      lines: ["", "MÓDULOS TÉCNICOS"]
     },
     {
       id: "technical-a",
-      progress: 24,
+      progress: 30,
       durationMs: 820,
       sound: "tick",
       lines: [
@@ -57,7 +63,7 @@ export const PLAY_UNLOCK_CONFIG = {
     },
     {
       id: "technical-b",
-      progress: 31,
+      progress: 42,
       durationMs: 820,
       sound: "tick",
       lines: [
@@ -68,14 +74,14 @@ export const PLAY_UNLOCK_CONFIG = {
     },
     {
       id: "human-title",
-      progress: 36,
+      progress: 49,
       durationMs: 560,
       sound: "tick",
-      lines: ["", "MÓDULOS NÃO DETERMINÍSTICOS"]
+      lines: ["", "MÓDULOS HUMANOS / NÃO DETERMINÍSTICOS"]
     },
     {
       id: "cast",
-      progress: 43,
+      progress: 59,
       durationMs: 850,
       sound: "tick",
       lines: [
@@ -85,36 +91,67 @@ export const PLAY_UNLOCK_CONFIG = {
       ]
     },
     {
-      id: "audience",
-      progress: 47,
-      durationMs: 720,
+      id: "final-verification",
+      progress: 70,
+      durationMs: 1100,
       sound: "tick",
-      lines: ["", "ENTRADA EXTERNA NÃO CONTROLADA", "PLATEIA ........................ DETECTADA"]
+      lines: [
+        "",
+        "verificação final...",
+        "programação .................... OK",
+        "traquitanas .................... OK",
+        "som ............................ OK",
+        "vídeo .......................... OK",
+        "cenário ........................ OK",
+        "luz ............................ OK",
+        "",
+        "TEATRO ......................... OK"
+      ]
     },
     {
-      id: "final-check",
-      progress: 50,
+      id: "audience",
+      progress: 78,
       durationMs: 900,
       sound: "warning",
-      lines: ["", "verificando participação..."]
+      lines: [
+        "PLATEIA ........................ DETECTADA",
+        "",
+        "verificando participação..."
+      ]
     }
   ],
   stalledLines: [
     "PARTICIPAÇÃO ................... INSUFICIENTE",
     "",
-    "ERRO: não foi possível concluir a inicialização.",
-    "dependência necessária: JOGO DAS MALAS",
+    "ERRO:",
+    "não foi possível concluir a inicialização.",
     "",
-    "tentando desbloquear espetáculo...",
-    "DESBLOQUEIE A PEÇA",
-    "aguardando conclusão das malas...",
+    "dependência necessária:",
+    "",
+    "AÇÃO COLETIVA",
+    "",
     "_"
   ],
+  technicalFeedbacks: [
+    "AÇÃO COLETIVA ................. DETECTADA",
+    "RESPOSTA HUMANA ............... RECEBIDA",
+    "MOVIMENTO COLETIVO ............ REGISTRADO",
+    "RESPOSTA SONORA ............... RECEBIDA",
+    "SINCRONIZAÇÃO ................. ACEITÁVEL",
+    "ATENÇÃO COMPARTILHADA ......... DETECTADA",
+    "COESÃO DA PLATEIA ............. AUMENTANDO",
+    "PADRÃO HUMANO ................. COMPATÍVEL",
+    "COMPORTAMENTO ORGÂNICO ........ DETECTADO",
+    "REAÇÃO COLETIVA ............... VÁLIDA",
+    "SINAL NÃO AUTOMATIZADO ........ PROVÁVEL",
+    "ENTRADA EXTERNA ............... ACEITA",
+    "VERIFICAÇÃO HUMANA ............ EM ANDAMENTO"
+  ],
   unlockLines: [
+    "VERIFICAÇÃO HUMANA ............ CONCLUÍDA",
     "PARTICIPAÇÃO DA PLATEIA ........ OK",
-    "AÇÃO COLETIVA .................. VALIDADA",
     "TODAS AS DEPENDÊNCIAS .......... SATISFEITAS",
-    "desbloqueando sistema...",
+    "desbloqueando...",
     "...",
     "CAIXA PRETA .................... PRONTA",
     "PEÇA DESBLOQUEADA"

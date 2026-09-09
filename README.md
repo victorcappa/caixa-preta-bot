@@ -117,8 +117,8 @@ guardando todas as mensagens para contexto do modelo e histórico do operator.
 Uma nova fala substitui visualmente a anterior; `LIMPAR TELA` remove somente
 `publicMessage` e preserva a conversa.
 
-No `/operator`, `ESQUENTAR PÚBLICO` oferece oito ações físicas, intensidades
-`LEVE`, `MÉDIO` e `ESTRANHO`, 34 prompts em
+No `/operator`, `ESQUENTAR PÚBLICO` oferece ações físicas, intensidades
+`LEVE`, `MÉDIO` e `ESTRANHO`, 43 prompts em
 `data/audience-warmup-prompts.js`, frase manual, preview e `SURPREENDA-ME`.
 `GERAR PERGUNTA` e `SURPREENDA-ME` geram e enviam a primeira etapa imediatamente,
 sem confirmação intermediária. Na frase manual, `Enter` envia e `Shift+Enter`
@@ -130,26 +130,31 @@ pequena da ação esperada.
 A abertura da Cena 0 começa em `STANDBY`: ao abrir ou executar `/reset`, a
 projeção fica totalmente preta, sem cursor, texto, campo público ou animação.
 Somente o botão `BOOT`, no controller, inicia a BIOS orientada a dados. Ela
-carrega teatro, técnica e elenco, detecta a plateia e trava em `50%`. A barra pertence a
+carrega teatro, técnica e elenco, detecta a plateia e trava em `78%`. A barra pertence a
 `showState.sceneZero.unlock`: continua visível sobre o chat durante o
 aquecimento e só sai da projeção depois da sequência `PEÇA DESBLOQUEADA`.
-Ao travar, a primeira fala pública é exatamente `... DESBLOQUEIE A PEÇA`; o
-sistema então espera, sem escolher ou enviar nada sozinho, até o operador
-acionar a primeira pergunta em `ESQUENTAR PÚBLICO`.
-Os estados semânticos são `STANDBY`, `BOOTING`, `WAITING_FOR_AUDIENCE`,
+Ao travar, a BIOS mostra o erro e a dependência `AÇÃO COLETIVA`. Depois, a tela
+é reorganizada e `PROVE QUE VOCÊ É HUMANO` aparece sozinha uma única vez. A
+primeira pergunta física só entra depois dessa pausa; o título nunca volta
+durante a rodada. Não há imagens nem CAPTCHA visual nesse protocolo.
+Os estados semânticos são `STANDBY`, `BOOTING`, `BOOT_FAILED`,
+`HUMAN_VERIFICATION`, `WAITING_FOR_AUDIENCE`,
 `WARMING_AUDIENCE`, `UNLOCKING` e `UNLOCKED`; enquanto a peça está bloqueada,
 esse contexto também é enviado ao bot.
 
-As partituras de aquecimento registram a ação coletiva e deixam a avaliação
-real com o operador: `AÇÃO AUMENTOU +2%` ou `AÇÃO DIMINUIU −2%`. A barra pode
-oscilar entre `0%` e `99%`; cada partitura aceita uma única avaliação. Ela só
-chega a `100%` quando o estado central das malas emite `suitcases_finished`. No fluxo
-manual, isso acontece pelo botão `FINALIZAR JOGO DAS MALAS / PREENCHER BARRA`,
-disponível após iniciar a Mala 3; os comandos legados de vitória ou derrota das
-malas passam pelo mesmo evento. Não há definição direta de percentual nem
-desbloqueio de emergência no controller. Além da avaliação das ações, ele mantém
-`BOOT`, pausa/avanço da BIOS, áudio e reinício. A configuração de conteúdo,
-duração, feedback e conclusão fica em
+Cada item da lista mostra texto, categoria, `progressValue`, estado de pontuação
+e `repeatableProgress`. `DISPARAR` envia a ação e aplica seu progresso;
+`DISPARAR SEM PROGRESSO` preserva a barra. Por padrão, um mesmo ID pontua uma
+vez; itens repetíveis podem pontuar novamente e itens com `progressValue: 0`
+servem como perguntas sem avanço. O feedback técnico aparece antes da mudança
+de percentual, gira por uma sequência controlada e nunca se acumula na tela.
+
+O controller também mantém `+ PARTICIPAÇÃO`, `− PARTICIPAÇÃO`, definição exata
+de progresso, `COMPLETAR BARRA`, `DESBLOQUEAR AGORA`, áudio, pausa/avanço da
+BIOS e reinício. `COMPLETAR BARRA` anima do valor atual até `100%` e inicia a
+sequência final sem exigir todas as ações. A integração legada com o fim das
+malas continua podendo concluir a mesma barra central, sem criar um segundo
+estado. A configuração de conteúdo, ritmo, feedback e conclusão fica em
 `data/scene-zero-unlock.js`; `onPlayUnlocked` fica registrado no estado e no
 evento SSE para futuras integrações de luz, som, vídeo e mecanismos.
 
