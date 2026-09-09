@@ -46,6 +46,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
   const remaining = Math.max(0, 100 - progress);
   const standby = playUnlock.status === "STANDBY";
   const booting = playUnlock.status === "BOOTING";
+  const bootFailed = playUnlock.status === "BOOT_FAILED";
   const warming = ["WAITING_FOR_AUDIENCE", "WARMING_AUDIENCE"].includes(playUnlock.status);
   const warmupDisabled = busy || !warming || Boolean(playUnlock.pendingProgress);
   const currentProgressValue = Math.max(0, Number(sequence?.progressValue) || 0);
@@ -103,6 +104,9 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
             <button disabled={busy} onClick={() => act("unlock-advance-boot")} type="button">AVANÇAR BIOS</button>
           </div>
         ) : null}
+        {bootFailed ? (
+          <button className={styles.startWarmup} disabled={busy} onClick={() => act("unlock-start-warmup")} type="button">INICIAR AQUECIMENTO</button>
+        ) : null}
         {warming ? (
           <>
             <p className={styles.unlockRule}>PROTOCOLO DE VERIFICAÇÃO HUMANA. CADA AÇÃO PONTUA UMA VEZ, EXCETO QUANDO MARCADA COMO REPETÍVEL.</p>
@@ -121,7 +125,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
           <button disabled={!warming || busy || playUnlock.pendingProgress} onClick={() => act("unlock-increase-participation", { amount: PLAY_UNLOCK_CONFIG.manualProgressStep })} type="button">+ PARTICIPAÇÃO</button>
           <button disabled={!warming || busy || playUnlock.pendingProgress} onClick={() => act("unlock-decrease-participation", { amount: PLAY_UNLOCK_CONFIG.manualProgressStep })} type="button">− PARTICIPAÇÃO</button>
           <button className={styles.completeBar} disabled={!warming || busy} onClick={() => act("unlock-complete")} type="button">COMPLETAR BARRA</button>
-          <button className={styles.forceUnlock} disabled={standby || busy} onClick={() => act("unlock-unlock-now")} type="button">DESBLOQUEAR AGORA</button>
+          <button className={styles.forceUnlock} disabled={!warming || busy} onClick={() => act("unlock-unlock-now")} type="button">DESBLOQUEAR AGORA</button>
           <label className={styles.soundToggle}>
             <input
               checked={playUnlock.soundEnabled !== false}

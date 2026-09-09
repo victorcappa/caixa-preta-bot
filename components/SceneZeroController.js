@@ -338,6 +338,9 @@ export default function SceneZeroController() {
   }
 
   const sceneZero = snapshot.sceneZero || {};
+  const unlockStatusLabel = sceneZero.unlock?.status === "BOOT_FAILED"
+    ? "AGUARDANDO INÍCIO MANUAL"
+    : (sceneZero.unlock?.status || "STANDBY").replaceAll("_", " ");
   const collection = sceneZero.collection || {};
   const timer = sceneZero.timer || {};
   const seconds = remainingTimer(timer, now);
@@ -413,7 +416,7 @@ export default function SceneZeroController() {
         </div>
         <div className={styles.bootStatus}>
           <strong>{sceneZero.unlock?.progress || 0}%</strong>
-          <span>{(sceneZero.unlock?.status || "STANDBY").replaceAll("_", " ")}</span>
+          <span>{unlockStatusLabel}</span>
         </div>
         <button
           className={styles.bootPrimary}
@@ -435,7 +438,7 @@ export default function SceneZeroController() {
             <small>AÇÕES E PROGRESSO DA VERIFICAÇÃO</small>
           </span>
           <span className={styles.warmupDisclosureStatus}>
-            {sceneZero.unlock?.progress || 0}% · {(sceneZero.unlock?.status || "STANDBY").replaceAll("_", " ")}
+            {sceneZero.unlock?.progress || 0}% · {unlockStatusLabel}
           </span>
           <span className={styles.warmupDisclosureAction} aria-hidden="true" />
         </button>

@@ -20,6 +20,8 @@ async function prepareUnlockedProjection(request) {
     await post(request, "/api/audience-warmup", { action: "unlock-advance-boot" });
   }
 
+  await post(request, "/api/audience-warmup", { action: "unlock-start-warmup" });
+
   const startedAt = Date.now();
   while (Date.now() - startedAt < 15000) {
     const snapshot = await (await request.get(`${BASE_URL}/api/state`)).json();

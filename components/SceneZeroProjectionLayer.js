@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PLAY_UNLOCK_CONFIG, PLAY_UNLOCK_STATES, playUnlockBootLines } from "@/data/scene-zero-unlock";
 import { shouldShowGincanaTimer } from "@/lib/scene-zero/suitcaseGame";
+import BlinkingCursor from "./BlinkingCursor";
 import useCountdownSound from "./useCountdownSound";
 import styles from "./SceneZeroProjectionLayer.module.css";
 
@@ -35,7 +36,8 @@ function PlayUnlockProjection({ unlock, now }) {
   const soundSequenceRef = useRef(null);
   const status = unlock?.status;
   const hidden = !status || [PLAY_UNLOCK_STATES.STANDBY, PLAY_UNLOCK_STATES.UNLOCKED].includes(status);
-  const showStalledTerminal = status === PLAY_UNLOCK_STATES.BOOT_FAILED;
+  const showStalledTerminal = status === PLAY_UNLOCK_STATES.BOOT_FAILED
+    && Date.parse(unlock.handoffUntil || "") > now;
 
   useEffect(() => {
     if (hidden || unlock.soundEnabled === false || soundSequenceRef.current === unlock.soundSequence) return;
@@ -87,6 +89,14 @@ function PlayUnlockProjection({ unlock, now }) {
           <UnlockProgressBar progress={unlock.progress} />
           {unlock.bootPaused ? <p className={styles.biosPaused}>BIOS PAUSADA PELO OPERADOR</p> : null}
         </div>
+      </section>
+    );
+  }
+
+  if (status === PLAY_UNLOCK_STATES.BOOT_FAILED) {
+    return (
+      <section className={`${styles.biosOverlay} ${styles.waitingCursorOverlay}`} aria-label="Aguardando início do aquecimento">
+        <BlinkingCursor />
       </section>
     );
   }

@@ -138,11 +138,14 @@ projeção fica totalmente preta, sem cursor, texto, campo público ou animaçã
 Somente o botão `BOOT`, no controller, inicia a BIOS orientada a dados. Ela
 carrega teatro, técnica e elenco, detecta a plateia e trava em `78%`. A barra pertence a
 `showState.sceneZero.unlock`: continua visível sobre o chat durante o
-aquecimento e só sai da projeção depois da sequência `PEÇA DESBLOQUEADA`.
-Ao travar, a BIOS mostra o erro e a dependência `AÇÃO COLETIVA`. Depois, a tela
-é reorganizada e `PROVE QUE VOCÊ É HUMANO` aparece sozinha uma única vez. A
-primeira pergunta física só entra depois dessa pausa; o título nunca volta
-durante a rodada. Não há imagens nem CAPTCHA visual nesse protocolo.
+aquecimento e sai da projeção quando a verificação termina.
+Ao travar, a BIOS mostra o erro e a dependência `AÇÃO COLETIVA`; depois, limpa a
+tela e mantém somente um cursor piscando. O estado permanece parado aí por tempo
+indeterminado. O operador precisa abrir `AQUECIMENTO DA PLATEIA` e acionar
+`INICIAR AQUECIMENTO`. Só então `... PROVE QUE VOCÊ É HUMANO` aparece sozinha
+uma única vez, antes da primeira pergunta física. O título nunca volta durante
+a rodada. Não há imagens nem CAPTCHA visual nesse protocolo, nem a mensagem
+`PEÇA DESBLOQUEADA` na conclusão.
 Os estados semânticos são `STANDBY`, `BOOTING`, `BOOT_FAILED`,
 `HUMAN_VERIFICATION`, `WAITING_FOR_AUDIENCE`,
 `WARMING_AUDIENCE`, `UNLOCKING` e `UNLOCKED`; enquanto a peça está bloqueada,

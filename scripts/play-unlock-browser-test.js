@@ -102,7 +102,16 @@ try {
   await display.getByText("AÇÃO COLETIVA", { exact: true }).waitFor();
   await new Promise((resolve) => setTimeout(resolve, 800));
   await display.screenshot({ path: "/private/tmp/caixa-preta-bios-stalled.png" });
-  const verificationTitle = display.getByText("PROVE QUE VOCÊ É HUMANO", { exact: true });
+  await display.getByLabel("Aguardando início do aquecimento").waitFor({ timeout: 7000 });
+  snapshot = await state(context.request);
+  assert.equal(snapshot.sceneZero.unlock.status, "BOOT_FAILED", "aquecimento não deve começar automaticamente");
+  assert.equal(snapshot.publicMessage, null);
+  assert.equal(await display.getByText("... PROVE QUE VOCÊ É HUMANO", { exact: true }).count(), 0);
+  await display.screenshot({ path: "/private/tmp/caixa-preta-awaiting-warmup-cursor.png" });
+
+  const startWarmupButton = unlockPanel.getByRole("button", { name: "INICIAR AQUECIMENTO", exact: true });
+  await startWarmupButton.click();
+  const verificationTitle = display.getByText("... PROVE QUE VOCÊ É HUMANO", { exact: true });
   await verificationTitle.waitFor({ timeout: 7000 });
   assert.equal(await verificationTitle.count(), 1, "o título deve aparecer uma única vez");
   snapshot = await state(context.request);
@@ -150,7 +159,8 @@ try {
   await unlockPanel.getByRole("button", { name: "COMPLETAR BARRA", exact: true }).click();
   snapshot = await waitForUnlock(context.request, (value) => value.progress > 84 && value.progress < 100);
   assert.equal(snapshot.sceneZero.unlock.animation.kind, "complete", "completar barra deve animar a partir do percentual atual");
-  await display.getByText("PEÇA DESBLOQUEADA", { exact: true }).waitFor({ timeout: 8000 });
+  await display.getByText("CAIXA PRETA .................... PRONTA", { exact: true }).waitFor({ timeout: 8000 });
+  assert.equal(await display.getByText("PEÇA DESBLOQUEADA", { exact: true }).count(), 0);
   await display.screenshot({ path: "/private/tmp/caixa-preta-play-unlocked.png" });
   snapshot = await waitForUnlock(context.request, (value) => value.status === "UNLOCKED");
   assert.equal(snapshot.sceneZero.unlock.onPlayUnlocked.name, "onPlayUnlocked");
@@ -163,7 +173,13 @@ try {
   await bootButton.waitFor();
 
   await bootButton.click();
-  await waitForUnlock(context.request, (value) => value.status === "BOOTING");
+  snapshot = await waitForUnlock(context.request, (value) => value.status === "BOOTING");
+  for (let index = 0; index < 12 && snapshot.sceneZero.unlock.status === "BOOTING"; index += 1) {
+    await unlock(context.request, "advance-boot");
+    snapshot = await state(context.request);
+  }
+  await unlock(context.request, "start-warmup");
+  await waitForUnlock(context.request, (value) => value.status === "WARMING_AUDIENCE", 7000);
   await unlock(context.request, "unlock-now");
   snapshot = await waitForUnlock(context.request, (value) => value.status === "UNLOCKED");
   assert.equal(snapshot.sceneZero.unlock.onPlayUnlocked.source, "operator-force");

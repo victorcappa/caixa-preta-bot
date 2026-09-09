@@ -9,6 +9,7 @@
 .unlockTrack { height: clamp(18px, 2.3vw, 34px); overflow: hidden; border: 1px solid #00ff66; background: repeating-linear-gradient(90deg, rgba(0,255,102,.035) 0 15px, transparent 15px 20px); }
 .unlockTrack span { display: block; height: 100%; background: repeating-linear-gradient(90deg, #00ff66 0 15px, transparent 15px 20px); filter: drop-shadow(0 0 8px rgba(0,255,102,.5)); transition: width 700ms cubic-bezier(.2,.75,.18,1); }
 .biosPaused { margin: 0; color: #ffb52d; font-size: clamp(14px, 1.3vw, 22px); letter-spacing: .12em; }
+.waitingCursorOverlay { place-items: center; font-size: clamp(38px, 5vw, 76px); }
 .verificationOverlay { background: radial-gradient(circle at center, rgba(0,255,102,.075), transparent 48%), #000; }
 .verificationTitle { width: min(1180px, 92vw); display: grid; gap: clamp(48px, 9vh, 100px); text-align: center; }
 .verificationTitle > strong { color: #fff; font-size: clamp(34px, 6vw, 94px); line-height: .95; letter-spacing: .08em; text-shadow: 0 0 18px rgba(0,255,102,.28); animation: verificationTitleIn 700ms steps(5) both; }

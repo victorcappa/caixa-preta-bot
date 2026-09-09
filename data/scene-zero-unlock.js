@@ -19,7 +19,7 @@ export const PLAY_UNLOCK_CONFIG = {
   animationFrames: 18,
   unlockStepMs: 620,
   feedbackDurationMs: 1600,
-  verificationTitle: "PROVE QUE VOCÊ É HUMANO",
+  verificationTitle: "... PROVE QUE VOCÊ É HUMANO",
   firstPromptId: "transport-01",
   sounds: {
     tick: { frequency: 440, durationMs: 90, volume: 0.035, oscillator: "sine" },
@@ -153,8 +153,7 @@ export const PLAY_UNLOCK_CONFIG = {
     "TODAS AS DEPENDÊNCIAS .......... SATISFEITAS",
     "desbloqueando...",
     "...",
-    "CAIXA PRETA .................... PRONTA",
-    "PEÇA DESBLOQUEADA"
+    "CAIXA PRETA .................... PRONTA"
   ]
 };
 

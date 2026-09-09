@@ -64,10 +64,14 @@ try {
   }
   assert.equal(unlockState.status, "BOOT_FAILED");
   assert.equal(unlockState.progress, 78);
-  await display.getByText("PROVE QUE VOCÊ É HUMANO", { exact: true }).waitFor({ timeout: 7000 });
+  await display.getByLabel("Aguardando início do aquecimento").waitFor({ timeout: 7000 });
+  unlockState = (await (await context.request.get(`${BASE_URL}/api/state`)).json()).sceneZero.unlock;
+  assert.equal(unlockState.status, "BOOT_FAILED", "o cursor deve aguardar o comando manual");
+  await operator.getByRole("button", { name: "INICIAR AQUECIMENTO", exact: true }).click();
+  await display.getByText("... PROVE QUE VOCÊ É HUMANO", { exact: true }).waitFor({ timeout: 7000 });
   const afterIntro = await waitForUnlockStatus(context.request, "WARMING_AUDIENCE");
   assert.equal(afterIntro.sceneZero.unlock.verificationTitleSequence, 1);
-  assert.equal(await display.getByText("PROVE QUE VOCÊ É HUMANO", { exact: true }).count(), 0);
+  assert.equal(await display.getByText("... PROVE QUE VOCÊ É HUMANO", { exact: true }).count(), 0);
   const conversationAfterBoot = afterIntro.conversation.length;
   assert.equal(conversationAfterBoot, 1, "a primeira pergunta física deve iniciar após o título isolado");
   const wordAction = operator.getByRole("button", { name: /Falar uma palavra/ });

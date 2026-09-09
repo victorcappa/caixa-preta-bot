@@ -15,6 +15,7 @@
 .unlockReadouts dd { margin: 4px 0 0; overflow-wrap: anywhere; color: #fff; font-size: .75rem; }
 .bootControls, .unlockControls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
 .bootButton { min-height: 58px !important; border-color: #fff !important; background: var(--green) !important; color: #000 !important; font-size: 1.08rem !important; font-weight: 900 !important; letter-spacing: .18em; }
+.startWarmup { min-height: 58px !important; border-color: #fff !important; background: var(--green) !important; color: #000 !important; font-size: .92rem !important; font-weight: 900 !important; letter-spacing: .12em; }
 .unlockRule { margin: 0; padding: 9px; border: 1px dashed #d7ff41; color: #d7ff41; font-size: .72rem; line-height: 1.45; letter-spacing: .07em; }
 .completeBar { border-color: #d7ff41 !important; color: #d7ff41 !important; }
 .forceUnlock { border-color: #ffb52d !important; color: #ffb52d !important; }
