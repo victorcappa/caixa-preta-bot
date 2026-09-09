@@ -444,12 +444,8 @@ async function enterStage(stage, detail) {
   if (stage === "suitcases") {
     showState.setMode(SHOW_MODES.malas);
     if (!showState.snapshot().suitcase?.active) showState.startSuitcases({ source: "scene-zero-operator" });
-    const researchPromise = researchCurrentSceneZeroParticipant();
-    const [turn, research] = await Promise.all([
-      speak(STAGE_DIRECTIONS[stage], detail),
-      researchPromise
-    ]);
-    return { ...changed, turn, research, state: showState.snapshot().sceneZero };
+    const turn = await speak(STAGE_DIRECTIONS[stage], detail);
+    return { ...changed, turn, research: null, state: showState.snapshot().sceneZero };
   }
 
   if (stage === "cake") {

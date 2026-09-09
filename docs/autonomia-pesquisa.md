@@ -27,26 +27,19 @@ O cache usa `modo + query normalizada`. Em `NORMAL`, fatos gerais/locais duram 3
 
 O padrão é `NORMAL`:
 
-| Modo | Buscas externas/turno | Ações Instagram/turno | Timeout web | Contexto de busca |
+| Modo | Buscas externas/turno | Ações Instagram autônomas | Timeout web | Contexto de busca |
 | --- | ---: | ---: | ---: | --- |
 | `LOW` | 1 | 0 | 10 s | low |
-| `NORMAL` | 3 | 1 | 15 s | low |
-| `HIGH` | 5 | 2 | 25 s | medium |
+| `NORMAL` | 3 | 0 | 15 s | low |
+| `HIGH` | 5 | 0 | 25 s | medium |
 
 Falha, timeout ou esgotamento de orçamento volta para a conversa normal e não aparece como erro técnico para a plateia. A atividade completa fica disponível no operator.
 
 ## Instagram
 
-Não há uma segunda integração. As tools `instagram_search`, `instagram_open_profile`, `instagram_get_recent_posts`, `instagram_open_post` e `instagram_analyze_post` reutilizam `lib/instagram/InstagramController.js`, o perfil Playwright persistente, a whitelist, login, 2FA/checkpoint, frame embutido e análise visual já existentes.
+O modelo não recebe tools de Instagram. `lib/research/ResearchDirector.js` mantém `autonomousInstagramEnabled=false` mesmo se uma configuração tentar ligá-lo, e `lib/instagram/autonomousTools.js` devolve `BOT_EXTERNAL_NAVIGATION_BLOCKED` sem criar ou navegar um browser. Entrar no estágio das malas também não inicia pesquisa automaticamente.
 
-As tools autônomas são somente de leitura: não seguem, curtem, comentam nem enviam direct. Como o navegador aparece no layout público do chatbot, a navegação é considerada performática.
-
-Fora de uma etapa roteirizada de Instagram, duas permissões precisam estar simultaneamente ligadas:
-
-- `Instagram Autônomo`;
-- `Pesquisa Performática`.
-
-Durante o Instagram obrigatório das malas/sceneZero, os directors continuam donos de pessoa, ordem, tempo, glitch, preview, envio e projeção. A autonomia só observa/escolhe material dentro desse estado. Desligar `Instagram Autônomo` desliga as tools do modelo, mas não remove os controles manuais nem as rotinas roteirizadas existentes.
+A integração real existente continua disponível somente por uma ação explícita e inequívoca do operador nos controles da Cena 0 ou pelo comando manual `/instagram`. Login, whitelist, preview e demais guardas permanecem iguais.
 
 ## Discoveries, open loops e callbacks
 
@@ -61,7 +54,7 @@ O interest score é produzido pelo modelo com seis dimensões entre `0` e `1`: `
 O card `AUTONOMIA` no `/operator` controla:
 
 - `Research` on/off;
-- `Instagram Autônomo` on/off;
+- estado `Instagram somente manual`;
 - `Pesquisa Performática` on/off;
 - `Research Budget` low/normal/high;
 - atividade recente com horário, canal, query/alvo e estado.
@@ -70,7 +63,6 @@ Os mesmos controles estão disponíveis por terminal:
 
 ```text
 /autonomy research on|off
-/autonomy instagram on|off
 /autonomy performative on|off
 /autonomy budget low|normal|high
 ```
@@ -84,7 +76,6 @@ Valores iniciais opcionais:
 ```bash
 CAIXA_PRETA_RESEARCH_ENABLED=true
 CAIXA_PRETA_RESEARCH_BUDGET=normal
-CAIXA_PRETA_AUTONOMOUS_INSTAGRAM=false
 CAIXA_PRETA_PERFORMATIVE_RESEARCH=false
 CAIXA_PRETA_WEB_SEARCH=true
 ```

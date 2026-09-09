@@ -8,7 +8,6 @@ import GlitchOverlay from "./GlitchOverlay";
 import OperatorConsole from "./OperatorConsole";
 import PerformanceLayer from "./PerformanceLayer";
 import SceneZeroProjectionLayer from "./SceneZeroProjectionLayer";
-import Terminal from "./Terminal";
 import styles from "./Chat.module.css";
 import { PUBLIC_TYPE_INTERVAL_MS } from "@/lib/messageTiming";
 import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
@@ -36,6 +35,8 @@ function storedNumber(key, fallback) {
 
 export default function Chat() {
   const [messages, setMessages] = useState([]);
+  const [publicMessage, setPublicMessage] = useState(null);
+  const [audienceWarmup, setAudienceWarmup] = useState(null);
   const [typedReplies, setTypedReplies] = useState({});
   const [introText, setIntroText] = useState("");
   const [introDotsText, setIntroDotsText] = useState("");
@@ -142,6 +143,8 @@ export default function Chat() {
         setRobotSound(payload.state.robotSound || null);
         setDisplayBlackout(payload.state.displayBlackout || null);
         setSceneZero(payload.state.sceneZero || null);
+        setAudienceWarmup(payload.state.audienceWarmup || null);
+        setPublicMessage(payload.state.publicMessage || [...(payload.state.conversation || [])].reverse().find((message) => message.role === "assistant") || null);
         hydrateInitialMessages(payload.state.conversation || []);
         return;
       }
@@ -157,6 +160,8 @@ export default function Chat() {
       setRobotSound(payload.state.robotSound || null);
       setDisplayBlackout(payload.state.displayBlackout || null);
       setSceneZero(payload.state.sceneZero || null);
+      setAudienceWarmup(payload.state.audienceWarmup || null);
+      setPublicMessage(payload.state.publicMessage || null);
     }, (nextStatus) => setStatus(nextStatus === "connected" ? "CONNECTED" : "DISCONNECTED"));
   }, []);
 
@@ -307,22 +312,31 @@ export default function Chat() {
       return undefined;
     }
 
-    for (const message of messages) {
-      if (seenMessageIdsRef.current.has(message.id)) {
-        continue;
+    const message = publicMessage;
+    if (!message && messages.length > 0) {
+      for (const [messageId, timer] of typingTimersRef.current.entries()) {
+        clearInterval(timer);
+        stoppedTypingIdsRef.current.add(messageId);
       }
-
+      typingTimersRef.current.clear();
+      typingQueueRef.current = [];
+      robotSoundEngine.complete();
+    }
+    if (message?.role === "assistant" && !seenMessageIdsRef.current.has(message.id)) {
+      for (const [messageId, timer] of typingTimersRef.current.entries()) {
+        clearInterval(timer);
+        stoppedTypingIdsRef.current.add(messageId);
+      }
+      typingTimersRef.current.clear();
+      typingQueueRef.current = [];
       seenMessageIdsRef.current.add(message.id);
       stoppedTypingIdsRef.current.delete(message.id);
-
-      if (message.role === "assistant") {
-        typingQueueRef.current.push(message);
-      }
+      typingQueueRef.current.push(message);
     }
 
     drainTypingQueue();
     return undefined;
-  }, [drainTypingQueue, messages, sceneZero?.stage]);
+  }, [drainTypingQueue, messages, publicMessage, sceneZero?.stage]);
 
   useEffect(() => {
     const waitingMessageIds = [
@@ -658,7 +672,7 @@ export default function Chat() {
     !stoppedTypingIdsRef.current.has(message.id)
   ));
   const machineBusy = pending || performancePending || Boolean(activeTypingAssistant);
-  const footer = (
+  const publicInput = (
     <form className={styles.form} onSubmit={submitMessage}>
       <span aria-hidden="true">&gt;</span>
       <input
@@ -815,13 +829,13 @@ export default function Chat() {
           phoneProjection={phoneProjection}
         />
 
-        <Terminal title="CAIXA PRETA" footer={footer} className={styles.embeddedTerminal}>
-          <div className={styles.messages}>
-            {messages.length === 0 && introStep === "cursor" ? (
+        <main className={styles.publicStage} aria-label="Fala atual da Caixa Preta">
+          <div className={styles.currentMessage}>
+            {!publicMessage && messages.length === 0 && introStep === "cursor" ? (
               <p className={styles.introCursor}>&gt; <span>_</span></p>
             ) : null}
 
-            {messages.length === 0 && introStep === "dots" ? (
+            {!publicMessage && messages.length === 0 && introStep === "dots" ? (
               <p className={styles.introDots}>
                 &gt; {introDotsText}
                 {introDotsText !== INTRO_DOTS_TEXT ? (
@@ -830,7 +844,7 @@ export default function Chat() {
               </p>
             ) : null}
 
-            {messages.length === 0 && introStep === "ready" ? (
+            {!publicMessage && messages.length === 0 && introStep === "ready" ? (
               <p className={styles.machine}>
                 &gt; {introText}
                 {introText !== INTRO_READY_TEXT ? (
@@ -839,31 +853,29 @@ export default function Chat() {
               </p>
             ) : null}
 
-            {messages.map((message) => {
-              const typingStarted = Object.hasOwn(typedReplies, message.id);
-              if (message.role === "assistant" && !typingStarted) {
-                return null;
-              }
-
-              return (
-                <p
-                  className={message.role === "assistant" ? styles.machine : styles.public}
-                  key={message.id}
-                >
-                  <span>{message.role === "assistant" ? ">" : "PUBLICO >"}</span>{" "}
-                  {message.role === "assistant" ? typedReplies[message.id] ?? "" : message.content}
-                  {message.role === "assistant" && typedReplies[message.id] !== message.content ? (
+            {publicMessage ? (
+              <div className={styles.messageFrame} key={publicMessage.id}>
+                {audienceWarmup?.display?.messageId === publicMessage.id ? (
+                  <div className={styles.actionCue}>
+                    <span aria-hidden="true">{audienceWarmup.display.icon}</span>
+                    <small>{audienceWarmup.display.actionLabel}</small>
+                  </div>
+                ) : null}
+                <p className={`${styles.machine} ${publicMessage.content.length > 180 ? styles.machineLong : publicMessage.content.length > 95 ? styles.machineMedium : ""}`}>
+                  {typedReplies[publicMessage.id] ?? ""}
+                  {typedReplies[publicMessage.id] !== publicMessage.content ? (
                     <span className={styles.replyCursor} aria-hidden="true">_</span>
                   ) : null}
                 </p>
-              );
-            })}
+              </div>
+            ) : null}
 
-            {pending ? <p className={styles.machine}>&gt; _</p> : null}
+            {pending && !publicMessage ? <p className={styles.machine}>_</p> : null}
             {error ? <p className={styles.error}>&gt; {error}</p> : null}
             <div ref={scrollRef} />
           </div>
-        </Terminal>
+          <footer className={styles.publicInput}>{publicInput}</footer>
+        </main>
         {visibleInstagramPanel ? (
           <>
             <div

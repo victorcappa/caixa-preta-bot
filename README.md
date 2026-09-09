@@ -109,6 +109,27 @@ O operator tambem pode ser aberto dentro da tela principal pelo botao `OP`,
 abaixo do botao `?`. Ele alterna entre chat em tela cheia e chat com terminal
 operador ao lado; em telas menores, aparece como gaveta animada.
 
+## UI pública e Esquentar Público
+
+O chatbot público mostra apenas `publicMessage`, a última fala relevante da
+Caixa Preta, com tipografia responsiva de projeção. `conversation` continua
+guardando todas as mensagens para contexto do modelo e histórico do operator.
+Uma nova fala substitui visualmente a anterior; `LIMPAR TELA` remove somente
+`publicMessage` e preserva a conversa.
+
+No `/operator`, `ESQUENTAR PÚBLICO` oferece oito ações físicas, intensidades
+`LEVE`, `MÉDIO` e `ESTRANHO`, 34 prompts em
+`data/audience-warmup-prompts.js`, frase manual, preview e `SURPREENDA-ME`.
+Depois de `ENVIAR PARA O BOT`, o operador pode avançar, repetir, cancelar ou
+limpar a partitura. O avanço automático é opcional, configurável e sempre
+cancelável. A projeção mostra somente a etapa corrente e uma indicação pequena
+da ação esperada.
+
+Instagram nunca é aberto pelo bot, por tools autônomas ou ao entrar em uma
+etapa. A integração existente só navega após clique/comando explícito do
+operador. A proteção central em `lib/externalNavigationGuard.js` também rejeita
+eventos do agente que tentem carregar URL, deep link ou navegação externa.
+
 As telas privadas de operacao tem um menu comum no topo, configurado em
 `lib/controllerSurfaces.js`. O `/operator` funciona como hub e organiza os
 controllers em colunas por cena: uma cena com apenas um controller aparece uma
@@ -462,7 +483,7 @@ post real.
 
 O botão de Robson resolve a entrada `Robinson Rogério` de
 `data/instagram-participants.json` (`@rogerio.robinson`); Janaína resolve
-`Janaína Leite` (`@janainaleite`). A rotina reutiliza o mesmo
+`Janaína Leite` (`@janainafontesleite`). A rotina reutiliza o mesmo
 `InstagramController`, perfil persistente, login, iframe, whitelist e guardas
 de 2FA/checkpoint. Para cada perfil, abre por índice até dez posts. Cada post é
 capturado e analisado visualmente, o texto legível da página é extraído e o
@@ -482,8 +503,8 @@ projeção depois que o controller retorna envio. `PAUSAR` e `PARAR` interrompem
 as rotinas; trocar entre Robson e Janaína preserva o histórico recente para o
 modelo não tratar a segunda visita como uma sessão sem passado.
 
-Ao entrar em `JOGO DAS MALAS`, o navegador Playwright embedded já usado pelo
-Instagram pesquisa automaticamente o nome do participante escolhido. A
+Em `JOGO DAS MALAS`, a pesquisa do participante só começa quando o operador
+aciona explicitamente `PESQUISAR PARTICIPANTE`. A
 sequência abre o Google, percorre os resultados, visita uma página pública que
 pareça relevante, faz scroll e tenta localizar e abrir um perfil público do
 Instagram. A pesquisa é somente leitura: não segue, curte, comenta, envia
@@ -842,8 +863,8 @@ elementos locais do painel de controle e não entram na captura enviada à
 projeção pública. Durante cada entrada, a captura contínua pausa brevemente para
 que o gesto não concorra com a atualização do frame.
 Fechar o painel pelo `X` continua preservando a sessão real. Uma nova solicitação
-para abrir Instagram, Google ou uma pesquisa incrementa o sinal de apresentação
-e reabre automaticamente o painel embedded, mesmo quando o controller reutiliza
+manual para abrir Instagram, Google ou uma pesquisa incrementa o sinal de apresentação
+e reabre o painel embedded, mesmo quando o controller reutiliza
 um navegador que já estava vivo.
 
 Depois de `/instagram`, o operador pode escrever em linguagem natural; o modelo
@@ -1072,7 +1093,7 @@ Formato:
 {
   "id": "janaina",
   "name": "Janaína Leite",
-  "instagramHandle": "@janainaleite",
+  "instagramHandle": "@janainafontesleite",
   "instagramUrl": "",
   "enabled": true,
   "preparedFeed": [

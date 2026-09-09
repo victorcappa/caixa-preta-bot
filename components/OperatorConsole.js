@@ -6,6 +6,7 @@ import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
 import InstagramBrowserPanel from "./InstagramBrowserPanel";
 import { setSharedInstagramPanelVisible } from "@/lib/instagram/panelClient";
 import RobotSoundControls from "./RobotSoundControls";
+import AudienceWarmupController from "./AudienceWarmupController";
 import Terminal from "./Terminal";
 import styles from "./OperatorConsole.module.css";
 
@@ -551,6 +552,12 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             <span>PROMPT VERSION: {state.context?.promptVersion || 1}</span>
           </div>
 
+          <AudienceWarmupController
+            disabled={pending}
+            onLog={addLog}
+            state={state.audienceWarmup}
+          />
+
           {!embedded && instagram.embedded && instagram.status !== "DISCONNECTED" && instagram.embeddedPanelVisible !== false && !instagramPanelClosed ? (
             <div className={styles.instagramBrowserPanel}>
               <InstagramBrowserPanel instagram={instagram} onClose={() => updateInstagramPanelVisibility(false)} />
@@ -584,7 +591,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             <strong>AUTONOMIA</strong>
             <p>
               RESEARCH: {research.researchEnabled ? "ON" : "OFF"}
-              {"\n"}INSTAGRAM AUTÔNOMO: {research.autonomousInstagramEnabled ? "ON" : "OFF"}
+              {"\n"}INSTAGRAM AUTÔNOMO: BLOQUEADO
               {"\n"}PESQUISA PERFORMÁTICA: {research.performativeResearchEnabled ? "ON" : "OFF"}
             </p>
             <div className={styles.inlineControls}>
@@ -598,11 +605,10 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
               </button>
               <button
                 className={styles.approveButton}
-                disabled={pending}
-                onClick={() => sendOperatorCommand(`/autonomy instagram ${research.autonomousInstagramEnabled ? "off" : "on"}`, "AUTONOMY ERROR")}
+                disabled
                 type="button"
               >
-                INSTAGRAM {research.autonomousInstagramEnabled ? "OFF" : "ON"}
+                INSTAGRAM SOMENTE MANUAL
               </button>
               <button
                 className={styles.approveButton}

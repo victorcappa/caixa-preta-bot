@@ -24,6 +24,8 @@
     "test:scene-two-d-audio-effects": "node --no-warnings scripts/scene-two-d-audio-effects-browser-test.js",
     "test:robot-sound": "node --no-warnings scripts/robot-sound-test.js",
     "test:robot-sound:browser": "node --no-warnings scripts/robot-sound-browser-test.js",
+    "test:audience-warmup": "node --no-warnings scripts/audience-warmup-test.js",
+    "test:audience-warmup:browser": "node --no-warnings scripts/audience-warmup-browser-test.js",
     "generate:elderly-voice": "node scripts/generate-elderly-voice.js"
   },
   "dependencies": {

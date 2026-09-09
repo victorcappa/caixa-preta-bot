@@ -38,8 +38,9 @@ async function main() {
     research: director.updateResearchSettings(initial, { autonomousInstagramEnabled: true }),
     suitcase: { active: true, activeExperience: "instagram" }
   };
-  assert(director.canUseInstagramTools(scriptedInstagramState));
-  assert(director.getResearchTools(scriptedInstagramState).some((tool) => tool.name === "instagram_analyze_post"));
+  assert.equal(scriptedInstagramState.research.autonomousInstagramEnabled, false);
+  assert.equal(director.canUseInstagramTools(scriptedInstagramState), false);
+  assert(!director.getResearchTools(scriptedInstagramState).some((tool) => tool.name.startsWith("instagram_")));
   const lowInstagramState = {
     ...scriptedInstagramState,
     research: director.updateResearchSettings(scriptedInstagramState.research, { budgetMode: "low" })

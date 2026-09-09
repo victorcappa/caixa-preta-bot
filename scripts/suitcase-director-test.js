@@ -10,7 +10,7 @@ async function main() {
   assert.equal(director.interpretSuitcaseContent("tem escrito insta").type, "instagram");
   assert.equal(director.interpretSuitcaseContent("e um desafio, tipo puzzle").type, "mini_game");
   assert.equal(director.interpretSuitcaseContent("nao entendi o objeto").type, "unknown");
-  assert.equal(director.findInstagramParticipantByName("Janaína Leite")?.instagramHandle, "@janainaleite");
+  assert.equal(director.findInstagramParticipantByName("Janaína Leite")?.instagramHandle, "@janainafontesleite");
   assert.equal(director.findInstagramParticipantByName("Pessoa inexistente"), null);
 
   let state = director.createInitialSuitcaseState();
