@@ -68,13 +68,14 @@ try {
     snapshot = await state(context.request);
   }
   assert.equal(snapshot.sceneZero.unlock.status, "WAITING_FOR_AUDIENCE");
-  assert.equal(snapshot.sceneZero.unlock.progress, 78);
+  assert.equal(snapshot.sceneZero.unlock.progress, 50);
   assert.equal(snapshot.publicMessage.content, "... DESBLOQUEIE A PEÇA");
   assert.equal(snapshot.audienceWarmup.active, false, "a BIOS deve esperar a primeira pergunta do operador");
   assert.equal(snapshot.audienceWarmup.sequence, null, "nenhuma pergunta pode ser escolhida automaticamente");
 
   await display.getByLabel("BIOS da Cena 0").waitFor();
   await display.getByText("DESBLOQUEIE A PEÇA", { exact: true }).waitFor();
+  await new Promise((resolve) => setTimeout(resolve, 800));
   await display.screenshot({ path: "/private/tmp/caixa-preta-bios-stalled.png" });
   await display.getByLabel("Desbloquear a peça").waitFor({ timeout: 5000 });
 
@@ -82,18 +83,23 @@ try {
   const warmupResponse = await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "send", text: manualText } });
   assert.equal(warmupResponse.ok(), true);
   snapshot = await waitForUnlock(context.request, (value) => value.status === "WARMING_AUDIENCE");
-  assert.equal(snapshot.sceneZero.unlock.progress, 78, "o aquecimento deve manter a barra no limite da BIOS");
-  await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "send", text: manualText } });
+  assert.equal(snapshot.sceneZero.unlock.progress, 50, "projetar a ação deve aguardar a avaliação do operador");
+  await unlockPanel.getByRole("button", { name: "AÇÃO AUMENTOU +2%", exact: true }).click();
+  snapshot = await waitForUnlock(context.request, (value) => value.progress === 52);
+  await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "send", text: `${manualText} De novo.` } });
+  await unlockPanel.getByRole("button", { name: "AÇÃO DIMINUIU −2%", exact: true }).click();
+  snapshot = await waitForUnlock(context.request, (value) => value.progress === 50);
+  await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "send", text: `${manualText} Última vez.` } });
   snapshot = await state(context.request);
-  assert.equal(snapshot.sceneZero.unlock.progress, 78, "repetições também não devem preencher a barra");
-  assert.match(await unlockPanel.textContent(), /SÓ É PREENCHIDA AO FINALIZAR O JOGO DAS MALAS/);
+  assert.equal(snapshot.sceneZero.unlock.progress, 50, "nova fala deve aguardar uma nova avaliação");
+  assert.match(await unlockPanel.textContent(), /100% SÓ ACONTECE NO FIM DO JOGO DAS MALAS/);
   assert.equal(await unlockPanel.getByRole("button", { name: "COMPLETAR BARRA" }).count(), 0);
   assert.equal(await unlockPanel.getByRole("button", { name: "DESBLOQUEAR AGORA" }).count(), 0);
 
   const prematureFinish = await context.request.post(`${BASE_URL}/api/scene-zero`, { data: { action: "suitcase-finish" } });
   assert.equal(prematureFinish.status(), 409, "o fim manual das malas exige que a Mala 3 esteja ativa");
   snapshot = await state(context.request);
-  assert.equal(snapshot.sceneZero.unlock.progress, 78);
+  assert.equal(snapshot.sceneZero.unlock.progress, 50);
 
   const rejected = await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "unlock-complete" } });
   assert.equal(rejected.status(), 400, "a API não deve manter um atalho manual de conclusão");
@@ -105,7 +111,7 @@ try {
 
   const suitcaseFinish = await context.request.post(`${BASE_URL}/api/operator`, { data: { command: "/mala win" } });
   assert.equal(suitcaseFinish.ok(), true);
-  snapshot = await waitForUnlock(context.request, (value) => value.progress > 78 && value.progress < 100);
+  snapshot = await waitForUnlock(context.request, (value) => value.progress > 50 && value.progress < 100);
   assert.equal(snapshot.sceneZero.suitcaseGame.status, "finished");
   assert.equal(snapshot.sceneZero.unlock.animation.kind, "complete", "o fim das malas deve animar a barra");
   await display.getByText("PEÇA DESBLOQUEADA", { exact: true }).waitFor({ timeout: 8000 });

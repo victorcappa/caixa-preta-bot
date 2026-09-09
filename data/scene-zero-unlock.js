@@ -8,7 +8,8 @@ export const PLAY_UNLOCK_STATES = {
 };
 
 export const PLAY_UNLOCK_CONFIG = {
-  bootLimit: 78,
+  bootLimit: 50,
+  manualProgressStep: 2,
   completeAnimationMs: 1800,
   animationFrames: 18,
   unlockStepMs: 620,
@@ -24,28 +25,28 @@ export const PLAY_UNLOCK_CONFIG = {
   bootSteps: [
     {
       id: "machine",
-      progress: 8,
+      progress: 5,
       durationMs: 520,
       sound: "tick",
       lines: ["CAIXA PRETA BIOS v0.0", "inicializando máquina..."]
     },
     {
       id: "theatre",
-      progress: 18,
+      progress: 11,
       durationMs: 620,
       sound: "tick",
       lines: ["TEATRO ........................ DETECTADO"]
     },
     {
       id: "deterministic-title",
-      progress: 26,
+      progress: 17,
       durationMs: 540,
       sound: "tick",
       lines: ["", "MÓDULOS DETERMINÍSTICOS"]
     },
     {
       id: "technical-a",
-      progress: 38,
+      progress: 24,
       durationMs: 820,
       sound: "tick",
       lines: [
@@ -56,7 +57,7 @@ export const PLAY_UNLOCK_CONFIG = {
     },
     {
       id: "technical-b",
-      progress: 49,
+      progress: 31,
       durationMs: 820,
       sound: "tick",
       lines: [
@@ -67,14 +68,14 @@ export const PLAY_UNLOCK_CONFIG = {
     },
     {
       id: "human-title",
-      progress: 56,
+      progress: 36,
       durationMs: 560,
       sound: "tick",
       lines: ["", "MÓDULOS NÃO DETERMINÍSTICOS"]
     },
     {
       id: "cast",
-      progress: 68,
+      progress: 43,
       durationMs: 850,
       sound: "tick",
       lines: [
@@ -85,14 +86,14 @@ export const PLAY_UNLOCK_CONFIG = {
     },
     {
       id: "audience",
-      progress: 74,
+      progress: 47,
       durationMs: 720,
       sound: "tick",
       lines: ["", "ENTRADA EXTERNA NÃO CONTROLADA", "PLATEIA ........................ DETECTADA"]
     },
     {
       id: "final-check",
-      progress: 78,
+      progress: 50,
       durationMs: 900,
       sound: "warning",
       lines: ["", "verificando participação..."]

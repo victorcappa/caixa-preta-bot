@@ -44,6 +44,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
   const booting = playUnlock.status === "BOOTING";
   const warming = ["WAITING_FOR_AUDIENCE", "WARMING_AUDIENCE"].includes(playUnlock.status);
   const warmupDisabled = busy || standby || booting;
+  const actionEvaluated = Boolean(sequence?.id && playUnlock.scoredActionIds?.includes(sequence.id));
 
   function sendManual() {
     const text = manual.trim();
@@ -83,6 +84,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
           <div><dt>ESTADO</dt><dd>{playUnlock.status || "—"}</dd></div>
           <div><dt>TRAVA DA BIOS</dt><dd>{playUnlock.bootLimit ?? PLAY_UNLOCK_CONFIG.bootLimit}%</dd></div>
           <div><dt>FALTA</dt><dd>{remaining}%</dd></div>
+          <div><dt>ÚLTIMA AVALIAÇÃO</dt><dd>{playUnlock.lastProgressAction || "—"}</dd></div>
           <div><dt>ÚLTIMA AÇÃO QUE AUMENTOU</dt><dd>{playUnlock.lastIncreaseAction || "—"}</dd></div>
         </dl>
         {standby ? (
@@ -96,7 +98,15 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
             <button disabled={busy} onClick={() => act("unlock-advance-boot")} type="button">AVANÇAR BIOS</button>
           </div>
         ) : null}
-        {warming ? <p className={styles.unlockRule}>A BARRA FICA EM {playUnlock.bootLimit ?? PLAY_UNLOCK_CONFIG.bootLimit}% E SÓ É PREENCHIDA AO FINALIZAR O JOGO DAS MALAS.</p> : null}
+        {warming ? (
+          <>
+            <p className={styles.unlockRule}>AVALIE CADA PEQUENA AÇÃO. A BARRA PODE SUBIR OU DESCER, MAS 100% SÓ ACONTECE NO FIM DO JOGO DAS MALAS.</p>
+            <div className={styles.unlockControls}>
+              <button disabled={busy || !sequence || actionEvaluated} onClick={() => act("unlock-increment", { amount: PLAY_UNLOCK_CONFIG.manualProgressStep, label: current?.text || sequence?.label })} type="button">AÇÃO AUMENTOU +{PLAY_UNLOCK_CONFIG.manualProgressStep}%</button>
+              <button disabled={busy || !sequence || actionEvaluated} onClick={() => act("unlock-decrement", { amount: PLAY_UNLOCK_CONFIG.manualProgressStep, label: current?.text || sequence?.label })} type="button">AÇÃO DIMINUIU −{PLAY_UNLOCK_CONFIG.manualProgressStep}%</button>
+            </div>
+          </>
+        ) : null}
         <div className={styles.progressSetter}>
           <label className={styles.soundToggle}>
             <input
@@ -171,7 +181,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
         <small>{manual.trim() ? "FRASE MANUAL — ENTER ENVIA" : "ÚLTIMA FRASE GERADA E ENVIADA"}</small>
         <p>{manual.trim() || warmup.preview || "Escolha uma ação e gere uma pergunta."}</p>
         <strong>
-          AQUECIMENTO NÃO ALTERA A BARRA · DESBLOQUEIO SOMENTE NO FIM DAS MALAS
+          O OPERADOR AVALIA CADA AÇÃO · LIMITE 99% · 100% SOMENTE NO FIM DAS MALAS
         </strong>
       </div>
 

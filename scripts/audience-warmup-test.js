@@ -7,6 +7,7 @@ import { createInitialResearchState, getResearchTools, updateResearchSettings } 
 import { executeAutonomousInstagramTool } from "../lib/instagram/autonomousTools.js";
 import { PLAY_UNLOCK_CONFIG, PLAY_UNLOCK_STATES } from "../data/scene-zero-unlock.js";
 import {
+  adjustPlayUnlockProgress,
   advancePlayUnlockBoot,
   completePlayUnlock,
   createInitialPlayUnlockState,
@@ -63,15 +64,26 @@ unlock = stallPlayUnlockBoot(unlock);
 assert.equal(unlock.status, PLAY_UNLOCK_STATES.WAITING_FOR_AUDIENCE);
 assert.equal(unlock.progress, PLAY_UNLOCK_CONFIG.bootLimit);
 
-const firstAction = recordPlayUnlockAudienceAction(unlock, { label: "Palmas" });
+const firstAction = recordPlayUnlockAudienceAction(unlock, { label: "Palmas", externalInput: { sequenceId: "warmup-1" } });
 assert.equal(firstAction.applied, true);
-assert.equal(firstAction.state.progress, PLAY_UNLOCK_CONFIG.bootLimit, "aquecimento não deve preencher a barra");
+assert.equal(firstAction.state.progress, PLAY_UNLOCK_CONFIG.bootLimit, "projetar a ação ainda não avalia o resultado");
 assert.equal(firstAction.state.status, PLAY_UNLOCK_STATES.WARMING_AUDIENCE);
-const repeatedAction = recordPlayUnlockAudienceAction(firstAction.state, { label: "Palmas de novo" });
+const repeatedAction = recordPlayUnlockAudienceAction(firstAction.state, { label: "Palmas de novo", externalInput: { sequenceId: "warmup-1" } });
 assert.equal(repeatedAction.applied, true);
-assert.equal(repeatedAction.state.progress, PLAY_UNLOCK_CONFIG.bootLimit, "repetições também não devem preencher a barra");
-assert.equal(repeatedAction.state.lastIncreaseAction, "BIOS / final-check", "nenhuma ação de aquecimento deve ser registrada como aumento");
-const completed = completePlayUnlock(repeatedAction.state, { source: "suitcases-finished" });
+assert.equal(repeatedAction.state.progress, PLAY_UNLOCK_CONFIG.bootLimit, "repetir a fala sem avaliação não deve alterar a barra");
+const increased = adjustPlayUnlockProgress(repeatedAction.state, 2, { label: "ação funcionou" });
+assert.equal(increased.applied, true);
+assert.equal(increased.state.progress, 52);
+assert.equal(increased.state.lastIncreaseAction, "ação funcionou");
+assert.equal(adjustPlayUnlockProgress(increased.state, -2).reason, "ACTION_ALREADY_EVALUATED", "cada ação aceita somente uma avaliação");
+const nextAction = recordPlayUnlockAudienceAction(increased.state, { label: "Silêncio", externalInput: { sequenceId: "warmup-2" } });
+const decreased = adjustPlayUnlockProgress(nextAction.state, -2, { label: "ação falhou" });
+assert.equal(decreased.state.progress, 50);
+assert.equal(decreased.state.lastIncreaseAction, "ação funcionou", "redução não substitui a última ação que aumentou");
+const almostComplete = recordPlayUnlockAudienceAction({ ...decreased.state, progress: 98 }, { label: "Coro", externalInput: { sequenceId: "warmup-3" } });
+const capped = adjustPlayUnlockProgress(almostComplete.state, 10, { label: "quase completo" });
+assert.equal(capped.state.progress, 99, "ações pequenas nunca podem desbloquear a peça antes das malas");
+const completed = completePlayUnlock(capped.state, { source: "suitcases-finished" });
 assert.equal(completed.status, PLAY_UNLOCK_STATES.UNLOCKED);
 assert.equal(completed.progress, 100);
 assert.equal(completed.onPlayUnlocked.name, "onPlayUnlocked");
