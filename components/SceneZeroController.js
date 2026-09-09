@@ -406,12 +406,20 @@ export default function SceneZeroController() {
           <strong>{sceneZero.unlock?.progress || 0}%</strong>
           <span>{unlockStatusLabel}</span>
         </div>
-        <button
-          className={styles.bootPrimary}
-          disabled={Boolean(pending) || sceneZero.unlock?.status !== "STANDBY"}
-          onClick={bootScene}
-          type="button"
-        >BOOT</button>
+        <div className={styles.bootActions}>
+          <button
+            className={styles.bootPrimary}
+            disabled={Boolean(pending) || sceneZero.unlock?.status !== "STANDBY"}
+            onClick={bootScene}
+            type="button"
+          >BOOT</button>
+          <button
+            className={styles.bootReset}
+            disabled={Boolean(pending)}
+            onClick={() => operatorCommand("/reset")}
+            type="button"
+          >REINICIAR</button>
+        </div>
       </section>
 
       <section className={styles.warmupDisclosure} data-ready={Boolean(snapshot.sceneZero)} id="scene-zero-unlock">

@@ -146,6 +146,9 @@ indeterminado. O operador precisa abrir `AQUECIMENTO DA PLATEIA` e acionar
 uma única vez, antes da primeira pergunta física. O título nunca volta durante
 a rodada. Não há imagens nem CAPTCHA visual nesse protocolo, nem a mensagem
 `PEÇA DESBLOQUEADA` na conclusão.
+Ao lado de `BOOT`, `REINICIAR` executa o reset global: sinaliza parada para as
+requisições em curso, encerra rotinas externas e internas, limpa jogos, timers,
+glitch, navegador e aquecimento e devolve a projeção ao preto de `STANDBY`.
 Os estados semânticos são `STANDBY`, `BOOTING`, `BOOT_FAILED`,
 `HUMAN_VERIFICATION`, `WAITING_FOR_AUDIENCE`,
 `WARMING_AUDIENCE`, `UNLOCKING` e `UNLOCKED`; enquanto a peça está bloqueada,

@@ -19,6 +19,39 @@ function parseCommand(raw) {
   return { name, content };
 }
 
+async function stopAllRoutines() {
+  const stopped = [];
+  markStopAll();
+  showState.signalStopAll({ source: "operator" });
+  const controller = getExistingInstagramController();
+
+  if (controller) {
+    const instagramStop = await controller.stopAllRoutines();
+    showState.updateInstagram({
+      ...controller.getStatus(),
+      message: instagramStop.message
+    });
+    stopped.push("instagram");
+  }
+
+  showState.clearPerformance();
+  showState.controlGlitch("stop", {}, { source: "operator" });
+  showState.controlDisplayBlackout("all", false, { source: "operator" });
+  showState.stopActivities("operator_stopped");
+
+  if (showState.snapshot().game?.active) {
+    showState.stopGame({ status: "operator_stopped", source: "operator" });
+    stopped.push("game");
+  }
+
+  if (showState.snapshot().suitcase?.active) {
+    showState.abortSuitcases({ source: "operator" });
+    stopped.push("suitcase");
+  }
+
+  return stopped;
+}
+
 function withTimeout(promise, ms, errorMessage) {
   return Promise.race([
     promise,
@@ -244,6 +277,7 @@ export async function POST(request) {
     const { name, content } = parseCommand(rawCommand);
 
     if (name === "/reset") {
+      await stopAllRoutines();
       showState.reset();
       return Response.json({ message: "SESSION RESET" });
     }
@@ -254,35 +288,7 @@ export async function POST(request) {
     }
 
     if (name === "/stopall") {
-      const stopped = [];
-      markStopAll();
-      showState.signalStopAll({ source: "operator" });
-      const controller = getExistingInstagramController();
-
-      if (controller) {
-        const instagramStop = await controller.stopAllRoutines();
-        showState.updateInstagram({
-          ...controller.getStatus(),
-          message: instagramStop.message
-        });
-        stopped.push("instagram");
-      }
-
-      showState.clearPerformance();
-      showState.controlGlitch("stop", {}, { source: "operator" });
-      showState.controlDisplayBlackout("all", false, { source: "operator" });
-      showState.stopActivities("operator_stopped");
-
-      if (showState.snapshot().game?.active) {
-        showState.stopGame({ status: "operator_stopped", source: "operator" });
-        stopped.push("game");
-      }
-
-      if (showState.snapshot().suitcase?.active) {
-        showState.abortSuitcases({ source: "operator" });
-        stopped.push("suitcase");
-      }
-
+      const stopped = await stopAllRoutines();
       return Response.json({ message: `STOPALL ${stopped.length ? stopped.join(" ") : "idle"}`.toUpperCase() });
     }
 

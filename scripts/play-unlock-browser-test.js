@@ -50,7 +50,12 @@ try {
   await operator.goto(`${BASE_URL}/cena-0-controller`, { waitUntil: "domcontentloaded" });
   const bootPanel = operator.getByRole("region", { name: "Boot da Cena 0" });
   const bootButton = bootPanel.getByRole("button", { name: "BOOT", exact: true });
+  const restartButton = bootPanel.getByRole("button", { name: "REINICIAR", exact: true });
   await bootButton.waitFor();
+  await restartButton.waitFor();
+  const bootBox = await bootButton.boundingBox();
+  const restartBox = await restartButton.boundingBox();
+  assert(Math.abs(bootBox.y - restartBox.y) < 2, "BOOT e REINICIAR devem ficar lado a lado");
   assert.equal(await bootPanel.evaluate((element) => element.nextElementSibling?.id), "scene-zero-unlock", "BOOT deve ser o primeiro bloco da Cena 0");
   const warmupDisclosure = operator.locator("#scene-zero-unlock");
   await operator.waitForFunction(() => document.querySelector("#scene-zero-unlock")?.dataset.ready === "true");
@@ -84,6 +89,17 @@ try {
   const unlockPanel = operator.getByLabel("Desbloqueio da peça");
   await unlockPanel.waitFor();
   assert.equal(await unlockPanel.getByRole("button", { name: "BOOT", exact: true }).count(), 0, "BOOT deve permanecer apenas no painel principal");
+  await bootButton.click();
+  snapshot = await waitForUnlock(context.request, (value) => value.status === "BOOTING");
+  await restartButton.click();
+  snapshot = await waitForUnlock(context.request, (value) => value.status === "STANDBY");
+  assert.equal(snapshot.sceneZero.unlock.progress, 0);
+  await display.waitForFunction(() => document.body.innerText.trim() === "");
+  assert.equal((await display.locator("body").innerText()).trim(), "", "REINICIAR deve devolver a projeção ao preto inicial");
+  await new Promise((resolve) => setTimeout(resolve, 750));
+  snapshot = await state(context.request);
+  assert.equal(snapshot.sceneZero.unlock.status, "STANDBY", "a rotina da BIOS deve permanecer cancelada após REINICIAR");
+
   await bootButton.click();
   snapshot = await waitForUnlock(context.request, (value) => value.status === "BOOTING");
 
