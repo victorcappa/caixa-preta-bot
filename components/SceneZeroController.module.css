@@ -17,6 +17,19 @@
 .statusGrid div { min-height: 72px; padding: 12px; background: #101010; border: 1px solid #303030; }
 .statusGrid dt { color: #8b8b8b; font-size: 11px; letter-spacing: .12em; }
 .statusGrid dd { margin: 10px 0 0; color: #00ff66; font-weight: 800; }
+.warmupDisclosure { margin-top: 22px; border: 1px solid #39704e; background: #07100a; }
+.warmupDisclosureToggle { width: 100%; display: grid; grid-template-columns: minmax(220px, 1fr) auto auto; gap: 16px; align-items: center; min-height: 76px; padding: 14px 18px; color: #00ff66; background: transparent; border: 0; cursor: pointer; font: inherit; text-align: left; }
+.warmupDisclosureToggle:hover, .warmupDisclosureToggle:focus-visible { background: #0b1a10; outline: 1px solid #00ff66; outline-offset: -1px; }
+.warmupDisclosureTitle { display: grid; gap: 4px; }
+.warmupDisclosureTitle strong { font-size: 18px; letter-spacing: .1em; }
+.warmupDisclosureTitle small, .warmupDisclosureStatus { color: #82a98f; font-size: 10px; letter-spacing: .1em; }
+.warmupDisclosureStatus { white-space: nowrap; }
+.warmupDisclosureAction::after { content: "EXPANDIR"; display: inline-block; min-width: 88px; padding: 7px 9px; color: #001c0c; background: #00ff66; font-size: 10px; font-weight: 900; letter-spacing: .08em; text-align: center; }
+.warmupDisclosureToggle[aria-expanded="true"] { border-bottom: 1px solid #39704e; }
+.warmupDisclosureToggle[aria-expanded="true"] .warmupDisclosureAction::after { content: "COMPRIMIR"; }
+.warmupDisclosureBody { padding: 0 14px 14px; }
+.warmupDisclosureBody > section { margin-bottom: 0; }
+.controller > .block { margin-top: 14px; }
 .memoryPanel { display: grid; gap: 14px; margin-top: 22px; padding: 18px; border: 1px solid #39704e; background: #09100b; }
 .memoryHeading { display: flex; justify-content: space-between; gap: 18px; align-items: start; }
 .memoryHeading h2 { color: #00ff66; letter-spacing: .08em; font-size: 17px; }
@@ -97,4 +110,4 @@
 @media (max-width: 1280px) { .suitcaseGrid { grid-template-columns: 1fr; } }
 @media (max-width: 1000px) { .controller { padding-right: 190px; } .indexNav { right: 8px; width: 154px; } .header, .personalityPanel { grid-template-columns: 1fr; } .personalityQuickGrid { grid-column: auto; grid-template-columns: repeat(2, minmax(0, 1fr)); } .personalityPanel .readout { grid-column: auto; } .stageGrid { grid-template-columns: repeat(2, 1fr); } .blocks { grid-template-columns: 1fr; } .wide { grid-column: auto; } .levels { grid-template-columns: repeat(2, 1fr); } .quickGrid { grid-template-columns: repeat(3, 1fr); } .glitchVideoConfig, .browserQuickCommands { grid-template-columns: 1fr; } .glitchDurationPresets { grid-column: auto; } }
 @media (max-width: 520px) { .memoryHeading { display: grid; } .memoryComposer, .browserQuickField { grid-template-columns: 1fr; } .browserQuickField input, .browserQuickField button { grid-column: 1; grid-row: auto; } }
-@media (max-width: 700px) { .controller { padding: 18px 18px 178px; } .indexNav { top: auto; right: 10px; bottom: 10px; left: 10px; width: auto; max-height: 142px; } .indexNav > span { display: none; } .indexNav nav { grid-template-columns: repeat(3, minmax(0, 1fr)); } .indexNav a { grid-template-columns: 20px minmax(0, 1fr); min-height: 26px; font-size: 9px; } }
+@media (max-width: 700px) { .controller { padding: 18px 18px 178px; } .warmupDisclosureToggle { grid-template-columns: 1fr auto; } .warmupDisclosureStatus { grid-column: 1 / -1; grid-row: 2; white-space: normal; } .warmupDisclosureAction { grid-column: 2; grid-row: 1; } .indexNav { top: auto; right: 10px; bottom: 10px; left: 10px; width: auto; max-height: 142px; } .indexNav > span { display: none; } .indexNav nav { grid-template-columns: repeat(3, minmax(0, 1fr)); } .indexNav a { grid-template-columns: 20px minmax(0, 1fr); min-height: 26px; font-size: 9px; } }

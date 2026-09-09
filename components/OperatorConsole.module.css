@@ -104,6 +104,126 @@
   border-bottom: 1px solid var(--green-soft);
 }
 
+.warmupDisclosure {
+  flex: 0 0 auto;
+  margin-top: 14px;
+  border: 1px solid var(--green-soft);
+  background: #020602;
+}
+
+.warmupDisclosureToggle {
+  width: 100%;
+  min-height: 66px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 10px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--green);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.warmupDisclosureToggle:hover,
+.warmupDisclosureToggle:focus-visible {
+  outline: 1px solid var(--green);
+  outline-offset: -1px;
+  background: rgba(0, 255, 102, 0.06);
+}
+
+.warmupDisclosureToggle span {
+  display: grid;
+  gap: 4px;
+}
+
+.warmupDisclosureToggle strong {
+  letter-spacing: 0.08em;
+}
+
+.warmupDisclosureToggle small {
+  color: var(--green-dim);
+}
+
+.warmupDisclosureToggle b::after {
+  content: "EXPANDIR";
+  display: inline-block;
+  min-width: 84px;
+  padding: 7px 9px;
+  color: #000;
+  background: var(--green);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.warmupDisclosureToggle[aria-expanded="true"] {
+  border-bottom: 1px solid var(--green-soft);
+}
+
+.warmupDisclosureToggle[aria-expanded="true"] b::after {
+  content: "COMPRIMIR";
+}
+
+.warmupDisclosureBody {
+  padding: 0 14px 14px;
+}
+
+.warmupDisclosureBody > section {
+  margin-bottom: 0;
+}
+
+.suitcasePanel {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid var(--green-soft);
+  background: #030503;
+}
+
+.suitcasePanel header {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: end;
+}
+
+.suitcasePanel h2,
+.suitcasePanel small,
+.suitcasePanel p {
+  margin: 0;
+}
+
+.suitcasePanel h2 {
+  margin-top: 4px;
+  color: var(--green);
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+}
+
+.suitcasePanel small,
+.suitcaseStatus {
+  color: var(--green-dim);
+  font-size: 0.76rem;
+}
+
+.suitcasePanel a {
+  color: var(--green);
+  font-size: 0.76rem;
+}
+
+.suitcaseControlGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 0;
+}
+
+.suitcaseControlGrid .panicButton {
+  margin: 0;
+}
+
 .connected {
   color: var(--green);
 }

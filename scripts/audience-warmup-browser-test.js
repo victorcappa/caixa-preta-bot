@@ -37,8 +37,21 @@ try {
   operator.on("pageerror", (error) => pageErrors.push(error.message));
   await operator.setViewportSize({ width: 1440, height: 1000 });
   await operator.goto(`${BASE_URL}/operator`, { waitUntil: "domcontentloaded" });
+  await operator.getByText("CONNECTED", { exact: true }).waitFor();
 
+  const warmupDisclosure = operator.locator("#operator-warmup");
+  const warmupToggle = warmupDisclosure.getByRole("button", { name: /ESQUENTAR PÚBLICO/ });
+  assert.equal(await warmupToggle.getAttribute("aria-expanded"), "false", "esquentar público deve iniciar comprimido no operator");
+  assert.equal(await warmupDisclosure.evaluate((element) => element.nextElementSibling?.getAttribute("aria-labelledby")), "operator-suitcase-title");
+  await operator.getByRole("region", { name: "JOGO DAS MALAS" }).waitFor();
+  await operator.screenshot({ path: "/private/tmp/caixa-preta-operator-maletas-collapsed.png" });
+  await warmupToggle.click();
+  await operator.waitForFunction(() => document.querySelector("#operator-warmup button")?.getAttribute("aria-expanded") === "true");
   await operator.getByRole("heading", { name: "ESQUENTAR PÚBLICO" }).waitFor();
+  await warmupToggle.click();
+  await operator.waitForFunction(() => document.querySelector("#operator-warmup button")?.getAttribute("aria-expanded") === "false");
+  await warmupToggle.click();
+  await operator.waitForFunction(() => document.querySelector("#operator-warmup button")?.getAttribute("aria-expanded") === "true");
   await Promise.all([
     operator.waitForResponse((response) => response.url().endsWith("/api/audience-warmup") && response.request().postDataJSON()?.action === "unlock-boot"),
     operator.getByRole("button", { name: "BOOT", exact: true }).click()

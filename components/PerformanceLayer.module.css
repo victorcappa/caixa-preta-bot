@@ -611,6 +611,32 @@
   }
 }
 
+@media (max-width: 1100px) {
+  .gameSplit {
+    grid-column: 1;
+    grid-row: 2;
+    height: 100%;
+    border-top: 1px solid var(--green-soft);
+    border-left: 0;
+  }
+
+  .gameSplit .verdadeOuBolo {
+    padding: clamp(12px, 2.4cqw, 24px);
+  }
+
+  .gameSplit .vobHeader strong {
+    font-size: clamp(1.3rem, 5cqw, 3.4rem);
+  }
+
+  .gameSplit .vobVideoFrame {
+    width: min(100%, calc(44vh * 16 / 9));
+  }
+
+  .gameSplit .vobChoices {
+    font-size: clamp(1.15rem, 4.2cqw, 2.8rem);
+  }
+}
+
 @keyframes flash {
   0%,
   50% {

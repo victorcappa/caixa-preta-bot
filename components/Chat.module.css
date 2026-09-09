@@ -46,12 +46,57 @@
 }
 
 .chatPaneWithGame {
-  grid-template-columns: minmax(260px, 0.7fr) minmax(0, 1.3fr);
+  grid-template-columns: minmax(360px, 0.84fr) minmax(0, 1.16fr);
 }
 
 .chatPaneWithGame .embeddedTerminal {
   grid-column: 1;
   grid-row: 1;
+}
+
+.chatPaneWithGame .publicStage {
+  container-type: inline-size;
+  border-right: 1px solid var(--green-soft);
+  box-shadow: inset -24px 0 52px rgba(0, 255, 102, 0.035);
+}
+
+.chatPaneWithGame .currentMessage {
+  padding: clamp(72px, 10vh, 120px) clamp(24px, 3vw, 58px) clamp(54px, 7vh, 86px);
+}
+
+.chatPaneWithGame .messageFrame {
+  width: min(100%, 720px);
+  padding: clamp(22px, 4cqw, 40px) 0;
+  border-top: 1px solid rgba(0, 255, 102, 0.22);
+  border-bottom: 1px solid rgba(0, 255, 102, 0.22);
+}
+
+.chatPaneWithGame .currentMessage p {
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.chatPaneWithGame .machine {
+  font-size: clamp(1.6rem, 6cqw, 3.6rem);
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+}
+
+.chatPaneWithGame .machineMedium {
+  font-size: clamp(1.45rem, 5.2cqw, 3.15rem);
+}
+
+.chatPaneWithGame .machineLong {
+  font-size: clamp(1.3rem, 4.4cqw, 2.65rem);
+  line-height: 1.18;
+}
+
+.chatPaneWithGame .actionCue span {
+  font-size: clamp(1rem, 3.8cqw, 1.8rem);
+}
+
+.chatPaneWithGame .actionCue small {
+  font-size: clamp(0.65rem, 2cqw, 0.9rem);
 }
 
 .embeddedTerminal {
@@ -461,5 +506,39 @@
     border-bottom: 1px solid var(--green-soft);
     border-left: 0;
     cursor: row-resize;
+  }
+
+  .chatPaneWithGame {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(320px, 0.55fr) minmax(0, 1fr);
+  }
+
+  .chatPaneWithGame .publicStage {
+    grid-column: 1;
+    grid-row: 1;
+    border-right: 0;
+    border-bottom: 1px solid var(--green-soft);
+    box-shadow: inset 0 -18px 42px rgba(0, 255, 102, 0.035);
+  }
+
+  .chatPaneWithGame .currentMessage {
+    padding: 108px clamp(28px, 8vw, 84px) 14px;
+  }
+
+  .chatPaneWithGame .messageFrame {
+    width: min(100%, 860px);
+    padding: 10px 0;
+  }
+
+  .chatPaneWithGame .machine {
+    font-size: clamp(1.35rem, 3.4cqw, 2.15rem);
+  }
+
+  .chatPaneWithGame .machineMedium {
+    font-size: clamp(1.25rem, 3cqw, 1.9rem);
+  }
+
+  .chatPaneWithGame .machineLong {
+    font-size: clamp(1.15rem, 2.6cqw, 1.65rem);
   }
 }

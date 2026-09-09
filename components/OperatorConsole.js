@@ -34,6 +34,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   const [glitchVideoLoop, setGlitchVideoLoop] = useState(false);
   const [projectionMenu, setProjectionMenu] = useState(null);
   const [instagramPanelClosed, setInstagramPanelClosed] = useState(false);
+  const [warmupOpen, setWarmupOpen] = useState(false);
   const scrollRef = useRef(null);
   const projectionWindowRefs = useRef(new Map());
 
@@ -552,12 +553,54 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             <span>PROMPT VERSION: {state.context?.promptVersion || 1}</span>
           </div>
 
-          <AudienceWarmupController
-            disabled={pending}
-            onLog={addLog}
-            state={state.audienceWarmup}
-            unlock={state.sceneZero?.unlock}
-          />
+          <section className={styles.warmupDisclosure} id="operator-warmup">
+            <button
+              aria-expanded={warmupOpen}
+              className={styles.warmupDisclosureToggle}
+              onClick={() => setWarmupOpen((current) => !current)}
+              type="button"
+            >
+              <span>
+                <strong>ESQUENTAR PÚBLICO</strong>
+                <small>BIOS / VERIFICAÇÃO HUMANA · {state.sceneZero?.unlock?.progress || 0}%</small>
+              </span>
+              <b aria-hidden="true" />
+            </button>
+            {warmupOpen ? (
+              <div className={styles.warmupDisclosureBody}>
+                <AudienceWarmupController
+                  disabled={pending}
+                  onLog={addLog}
+                  state={state.audienceWarmup}
+                  unlock={state.sceneZero?.unlock}
+                />
+              </div>
+            ) : null}
+          </section>
+
+          <section className={styles.suitcasePanel} aria-labelledby="operator-suitcase-title">
+            <header>
+              <div>
+                <small>CENA 0 / CONTROLES RÁPIDOS</small>
+                <h2 id="operator-suitcase-title">JOGO DAS MALAS</h2>
+              </div>
+              <a href="/cena-0-controller#scene-zero-suitcases">ABRIR CONTROLES DETALHADOS</a>
+            </header>
+            <p className={styles.suitcaseStatus}>
+              {(suitcase.phase || "IDLE").toUpperCase()} · {suitcase.activeExperience || "SEM MALA ATIVA"} · {suitcaseGame?.id || "SEM MINI GAME"}
+            </p>
+            <div className={`${styles.controlGrid} ${styles.suitcaseControlGrid}`}>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala start", "MALA ERROR")} type="button">INICIAR JOGO DAS MALAS</button>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala 1", "MALA ERROR")} type="button">MALA 1 / NOME</button>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala 2", "MALA ERROR")} type="button">MALA 2 / INSTAGRAM</button>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala 3", "MALA ERROR")} type="button">MALA 3 / MINI GAME</button>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala next", "MALA ERROR")} type="button">PRÓXIMA PESSOA</button>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala win", "MALA ERROR")} type="button">FORÇAR VITÓRIA</button>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala lose", "MALA ERROR")} type="button">FORÇAR DERROTA</button>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala reset", "MALA ERROR")} type="button">REINICIAR</button>
+              <button className={styles.panicButton} disabled={pending} onClick={() => sendOperatorCommand("/mala abort", "MALA ERROR")} type="button">INTERROMPER</button>
+            </div>
+          </section>
 
           {!embedded && instagram.embedded && instagram.status !== "DISCONNECTED" && instagram.embeddedPanelVisible !== false && !instagramPanelClosed ? (
             <div className={styles.instagramBrowserPanel}>
@@ -744,32 +787,6 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             >
               STOP VIDEO / VOLTAR AO BOT
             </button>
-          </div>
-          <article className={styles.memory}>
-            <strong>SUITCASE DEBUG</strong>
-            <p>
-              CURRENT EXPERIENCE: {suitcase.activeExperience || "NONE"}
-              {"\n"}CURRENT GAME: {suitcaseGame?.id || "NONE"}
-              {"\n"}CURRENT STATE: {suitcase.phase || "IDLE"}
-              {"\n"}LAST USER INPUT: {suitcase.lastUserInput || "-"}
-              {"\n"}LAST BOT INTENT: {suitcase.lastBotIntent || "-"}
-              {"\n"}QUESTION COUNT: {suitcase.guessWho?.questionCount ?? "-"}
-              {"\n"}TIMER: {suitcase.instagram?.remainingTime ?? "-"}
-              {"\n"}SELECTED PERSON: {suitcase.instagram?.selectedPerson?.name || "-"}
-              {"\n"}SELECTED WORD: {suitcaseGame?.publicState?.progress || suitcaseGame?.publicState?.scrambled || suitcaseGame?.publicState?.prompt || "-"}
-              {"\n"}GAME RESULT: {suitcase.result || "-"}
-            </p>
-          </article>
-          <div className={styles.controlGrid}>
-            <button disabled={pending} onClick={() => sendOperatorCommand("/mala start", "MALA ERROR")} type="button">START SUITCASES</button>
-            <button disabled={pending} onClick={() => sendOperatorCommand("/mala abort", "MALA ERROR")} type="button">ABORT CURRENT GAME</button>
-            <button disabled={pending} onClick={() => sendOperatorCommand("/mala reset", "MALA ERROR")} type="button">RESET GAME</button>
-            <button disabled={pending} onClick={() => sendOperatorCommand("/mala 1", "MALA ERROR")} type="button">FORCE SUITCASE 1 / NAME</button>
-            <button disabled={pending} onClick={() => sendOperatorCommand("/mala 2", "MALA ERROR")} type="button">FORCE SUITCASE 2 / INSTAGRAM</button>
-            <button disabled={pending} onClick={() => sendOperatorCommand("/mala 3", "MALA ERROR")} type="button">FORCE SUITCASE 3 / RANDOM GAME</button>
-            <button disabled={pending} onClick={() => sendOperatorCommand("/mala next", "MALA ERROR")} type="button">NEXT INSTAGRAM PERSON</button>
-            <button disabled={pending} onClick={() => sendOperatorCommand("/mala win", "MALA ERROR")} type="button">FORCE WIN</button>
-            <button disabled={pending} onClick={() => sendOperatorCommand("/mala lose", "MALA ERROR")} type="button">FORCE LOSE</button>
           </div>
           <article className={styles.memory}>
             <strong>GAME DIRECTOR</strong>

@@ -120,6 +120,9 @@ Uma nova fala substitui visualmente a anterior; `LIMPAR TELA` remove somente
 No `/operator`, `ESQUENTAR PÚBLICO` oferece ações físicas, intensidades
 `LEVE`, `MÉDIO` e `ESTRANHO`, 43 prompts em
 `data/audience-warmup-prompts.js`, frase manual, preview e `SURPREENDA-ME`.
+O módulo começa comprimido e alterna entre `EXPANDIR` e `COMPRIMIR` ao tocar no
+cabeçalho; `JOGO DAS MALAS` fica imediatamente abaixo, sempre visível no fluxo
+do operator.
 `GERAR PERGUNTA` e `SURPREENDA-ME` geram e enviam a primeira etapa imediatamente,
 sem confirmação intermediária. Na frase manual, `Enter` envia e `Shift+Enter`
 insere uma quebra de linha. Depois do envio, o operador pode avançar, repetir,
@@ -981,7 +984,10 @@ encerrar ou `/game replace tipo` para substituir explicitamente. Em Maria
 Antonieta no modo em que a Caixa adivinha, `/game secret texto` define o segredo
 no servidor/operator sem enviar esse segredo para o modelo.
 
-Em `Verdade ou Bolo?`, chat e jogo aparecem lado a lado. Ao iniciar uma rodada,
+Em `Verdade ou Bolo?`, chat e jogo aparecem em paineis separados e lado a lado
+em telas largas. A fala da Caixa usa uma escala propria para a largura do painel,
+sem quebrar palavras ou disputar espaco com o video; em telas menores, os paineis
+passam a ficar empilhados. Ao iniciar uma rodada,
 a projecao carrega e mostra primeiro o frame inicial pausado do video; somente
 depois desse frame estar pronto comecam os 10 segundos para decidir entre
 `VERDADE` e `BOLO`. Ao chegar a zero, a rodada revela imediatamente a resposta,
