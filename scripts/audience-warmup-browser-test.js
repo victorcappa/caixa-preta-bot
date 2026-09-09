@@ -78,21 +78,22 @@ try {
 
   await warmup(context.request, "select-action", { selectedAction: "word" });
   await warmup(context.request, "set-interval", { intervalMs: 800 });
-  await warmup(context.request, "send", { text: "Quando eu disser três, digam uma cor." });
-  await display.getByText("Três.", { exact: true }).waitFor({ timeout: 8000 });
+  await warmup(context.request, "send", { text: "Quando eu disser quatro, digam uma cor." });
+  await display.getByText("Quatro.", { exact: true }).waitFor({ timeout: 9000 });
   snapshot = await (await context.request.get(`${BASE_URL}/api/state`)).json();
-  assert.deepEqual(snapshot.audienceWarmup.history.slice(-4).map((entry) => entry.text), [
-    "Quando eu disser três, digam uma cor.",
+  assert.deepEqual(snapshot.audienceWarmup.history.slice(-5).map((entry) => entry.text), [
+    "Quando eu disser quatro, digam uma cor.",
     "Um.",
     "Dois.",
-    "Três."
-  ], "uma instrução que promete três deve cumprir a contagem automaticamente");
-  assert.equal(snapshot.audienceWarmup.awaitingOperator, true, "depois do três, a reação volta a aguardar o operador");
+    "Três.",
+    "Quatro."
+  ], "uma instrução deve cumprir automaticamente a contagem que prometeu");
+  assert.equal(snapshot.audienceWarmup.awaitingOperator, true, "depois do último número, a reação volta a aguardar o operador");
   const beforeRepeat = (await (await context.request.get(`${BASE_URL}/api/state`)).json()).conversation.length;
   await warmup(context.request, "repeat");
   snapshot = await (await context.request.get(`${BASE_URL}/api/state`)).json();
   assert.equal(snapshot.conversation.length, beforeRepeat + 1);
-  assert.equal(snapshot.publicMessage.content, "Três.");
+  assert.equal(snapshot.publicMessage.content, "Quatro.");
   await warmup(context.request, "cancel");
   snapshot = await (await context.request.get(`${BASE_URL}/api/state`)).json();
   assert.equal(snapshot.audienceWarmup.active, false);
