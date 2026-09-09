@@ -555,7 +555,7 @@ export default function SceneZeroController() {
         </ControlBlock>
 
         <ControlBlock id="scene-zero-suitcases" title="JOGO DAS MALAS" wide>
-          <Readout label="PROGRESSÃO" value={`MANUAL · MALA ATUAL ${suitcaseGame.currentSuitcase || "—"} · ANTERIOR ${suitcaseGame.previousSuitcase || "—"}`} />
+          <Readout label="PROGRESSÃO" value={`${(suitcaseGame.status || "idle").toUpperCase()} · MALA ATUAL ${suitcaseGame.currentSuitcase || "—"} · ANTERIOR ${suitcaseGame.previousSuitcase || "—"}`} />
           <Readout label="PARTICIPANTE" value={sceneZero.currentParticipant?.name} />
           <div className={styles.suitcaseGrid}>
             <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 1 ? styles.activeSuitcase : ""}`}>
@@ -630,6 +630,8 @@ export default function SceneZeroController() {
               <Button danger onClick={() => sceneAction("suitcase-instagram-stop")} pending={pending || !suitcaseInstagram.currentProfile}>PARAR</Button>
               <Readout label="POSTS PROCESSADOS / COMENTADOS" value={`${suitcaseInstagram.processedPostKeys?.length || 0} / ${suitcaseInstagram.commentedPostKeys?.length || 0}`} />
               <Readout label="COMENTÁRIOS RECENTES" value={(suitcaseInstagram.recentComments || []).slice(-5).map((entry) => `${entry.profile} · POST ${entry.postIndex}: ${entry.comment} [${entry.status}]`).join("\n")} />
+              <Button primary onClick={() => sceneAction("suitcase-finish")} pending={pending || suitcaseGame.currentSuitcase !== 3 || suitcaseGame.status === "finished"}>FINALIZAR JOGO DAS MALAS / PREENCHER BARRA</Button>
+              <Readout label="FIM DO JOGO" value={suitcaseGame.status === "finished" ? `FINALIZADO · ${suitcaseGame.endedAt ? new Date(suitcaseGame.endedAt).toLocaleTimeString("pt-BR") : "REGISTRADO"}` : "A BARRA PERMANECE TRAVADA ATÉ ESTE COMANDO"} />
               {instagram.embedded && instagram.status !== "DISCONNECTED" && instagram.embeddedPanelVisible !== false && !instagramPanelClosed ? (
                 <div className={styles.instagramPanel}>
                   <InstagramBrowserPanel instagram={instagram} onClose={() => updateInstagramPanelVisibility(false)} />

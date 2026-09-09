@@ -1,4 +1,5 @@
 export const PLAY_UNLOCK_STATES = {
+  STANDBY: "STANDBY",
   BOOTING: "BOOTING",
   WAITING_FOR_AUDIENCE: "WAITING_FOR_AUDIENCE",
   WARMING_AUDIENCE: "WARMING_AUDIENCE",
@@ -8,14 +9,11 @@ export const PLAY_UNLOCK_STATES = {
 
 export const PLAY_UNLOCK_CONFIG = {
   bootLimit: 78,
-  manualProgressStep: 2,
-  actionAnimationMs: 700,
   completeAnimationMs: 1800,
   animationFrames: 18,
   unlockStepMs: 620,
   handoffDurationMs: 2400,
   feedbackDurationMs: 1600,
-  feedbackEvery: 2,
   openingLine: "ainda falta uma coisa. vocês.",
   sounds: {
     tick: { frequency: 440, durationMs: 90, volume: 0.035, oscillator: "sine" },
@@ -104,11 +102,11 @@ export const PLAY_UNLOCK_CONFIG = {
     "PARTICIPAÇÃO ................... INSUFICIENTE",
     "",
     "ERRO: não foi possível concluir a inicialização.",
-    "dependência necessária: AÇÃO COLETIVA",
+    "dependência necessária: JOGO DAS MALAS",
     "",
     "tentando desbloquear espetáculo...",
     "DESBLOQUEIE A PEÇA",
-    "aguardando entrada externa...",
+    "aguardando conclusão das malas...",
     "_"
   ],
   unlockLines: [
@@ -119,17 +117,6 @@ export const PLAY_UNLOCK_CONFIG = {
     "...",
     "CAIXA PRETA .................... PRONTA",
     "PEÇA DESBLOQUEADA"
-  ],
-  technicalFeedback: [
-    "AÇÃO COLETIVA ................. DETECTADA",
-    "RESPOSTA HUMANA ............... RECEBIDA",
-    "PARTICIPAÇÃO .................. AUMENTANDO",
-    "ATENÇÃO COMPARTILHADA ......... DETECTADA",
-    "SINCRONIZAÇÃO ................. ACEITÁVEL",
-    "RESPOSTA SONORA ............... RECEBIDA",
-    "MOVIMENTO COLETIVO ............ REGISTRADO",
-    "COESÃO DA PLATEIA ............. AUMENTANDO",
-    "ENTRADA EXTERNA ............... ACEITA"
   ]
 };
 

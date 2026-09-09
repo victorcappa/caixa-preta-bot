@@ -9,12 +9,10 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
   const warmup = state || {};
   const playUnlock = unlock || {};
   const [manual, setManual] = useState("");
-  const [progressInput, setProgressInput] = useState(`${playUnlock.progress ?? 0}`);
   const [requestPending, setRequestPending] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => setHydrated(true), []);
-  useEffect(() => setProgressInput(`${playUnlock.progress ?? 0}`), [playUnlock.progress]);
 
   async function act(action, payload = {}) {
     setRequestPending(true);
@@ -42,13 +40,10 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
   const next = sequence?.steps?.[warmup.currentStep + 1] || null;
   const progress = Math.max(0, Math.min(100, Number(playUnlock.progress) || 0));
   const remaining = Math.max(0, 100 - progress);
+  const standby = playUnlock.status === "STANDBY";
   const booting = playUnlock.status === "BOOTING";
   const warming = ["WAITING_FOR_AUDIENCE", "WARMING_AUDIENCE"].includes(playUnlock.status);
-
-  function defineProgress() {
-    if (busy) return;
-    void act("unlock-set-progress", { progress: Number(progressInput) });
-  }
+  const warmupDisabled = busy || standby || booting;
 
   function sendManual() {
     const text = manual.trim();
@@ -90,6 +85,9 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
           <div><dt>FALTA</dt><dd>{remaining}%</dd></div>
           <div><dt>ÚLTIMA AÇÃO QUE AUMENTOU</dt><dd>{playUnlock.lastIncreaseAction || "—"}</dd></div>
         </dl>
+        {standby ? (
+          <button className={styles.bootButton} disabled={busy} onClick={() => act("unlock-boot")} type="button">BOOT</button>
+        ) : null}
         {booting ? (
           <div className={styles.bootControls}>
             <button disabled={busy} onClick={() => act(playUnlock.bootPaused ? "unlock-resume-boot" : "unlock-pause-boot")} type="button">
@@ -98,29 +96,8 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
             <button disabled={busy} onClick={() => act("unlock-advance-boot")} type="button">AVANÇAR BIOS</button>
           </div>
         ) : null}
-        <div className={styles.unlockControls}>
-          <button disabled={busy || !warming} onClick={() => act("unlock-increment", { amount: PLAY_UNLOCK_CONFIG.manualProgressStep })} type="button">+ PARTICIPAÇÃO</button>
-          <button disabled={busy || !warming} onClick={() => act("unlock-decrement", { amount: PLAY_UNLOCK_CONFIG.manualProgressStep })} type="button">− PARTICIPAÇÃO</button>
-          <button className={styles.completeBar} disabled={busy || !warming || progress >= 100} onClick={() => act("unlock-complete")} type="button">COMPLETAR BARRA</button>
-          <button className={styles.forceUnlock} disabled={busy || playUnlock.status === "UNLOCKED"} onClick={() => act("unlock-force")} type="button">DESBLOQUEAR AGORA</button>
-        </div>
+        {warming ? <p className={styles.unlockRule}>A BARRA FICA EM {playUnlock.bootLimit ?? PLAY_UNLOCK_CONFIG.bootLimit}% E SÓ É PREENCHIDA AO FINALIZAR O JOGO DAS MALAS.</p> : null}
         <div className={styles.progressSetter}>
-          <label>
-            DEFINIR PROGRESSO
-            <input
-              aria-label="Percentual de desbloqueio"
-              disabled={busy || booting || playUnlock.status === "UNLOCKING"}
-              max="100"
-              min="0"
-              onChange={(event) => setProgressInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") defineProgress();
-              }}
-              type="number"
-              value={progressInput}
-            />
-          </label>
-          <button disabled={busy || booting || playUnlock.status === "UNLOCKING"} onClick={defineProgress} type="button">DEFINIR</button>
           <label className={styles.soundToggle}>
             <input
               checked={playUnlock.soundEnabled !== false}
@@ -146,7 +123,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
               onClick={() => act("select-action", { selectedAction: action.id })}
               type="button"
             >
-              <span aria-hidden="true">{action.icon}</span> {action.label} <small>+{action.progressValue}%</small>
+              <span aria-hidden="true">{action.icon}</span> {action.label}
             </button>
           ))}
         </div>
@@ -169,14 +146,15 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
       </fieldset>
 
       <div className={styles.generateRow}>
-        <button disabled={busy} onClick={() => { setManual(""); act("generate"); }} type="button">GERAR PERGUNTA</button>
-        <button className={styles.surprise} disabled={busy} onClick={() => { setManual(""); act("surprise"); }} type="button">SURPREENDA-ME</button>
+        <button disabled={warmupDisabled} onClick={() => { setManual(""); act("generate"); }} type="button">GERAR PERGUNTA</button>
+        <button className={styles.surprise} disabled={warmupDisabled} onClick={() => { setManual(""); act("surprise"); }} type="button">SURPREENDA-ME</button>
       </div>
 
       <label className={styles.manualField}>
         FRASE MANUAL
         <textarea
           maxLength={500}
+          disabled={warmupDisabled}
           onChange={(event) => setManual(event.target.value)}
           onKeyDown={(event) => {
             if (event.key !== "Enter" || event.shiftKey) return;
@@ -193,7 +171,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
         <small>{manual.trim() ? "FRASE MANUAL — ENTER ENVIA" : "ÚLTIMA FRASE GERADA E ENVIADA"}</small>
         <p>{manual.trim() || warmup.preview || "Escolha uma ação e gere uma pergunta."}</p>
         <strong>
-          PROGRESSO: +{sequence?.progressValue ?? AUDIENCE_WARMUP_ACTIONS.find((action) => action.id === warmup.selectedAction)?.progressValue ?? 0}% · {sequence?.repeatableProgress ? "REPETÍVEL" : "PRIMEIRA EXECUÇÃO"}
+          AQUECIMENTO NÃO ALTERA A BARRA · DESBLOQUEIO SOMENTE NO FIM DAS MALAS
         </strong>
       </div>
 
@@ -230,8 +208,8 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
       </div>
 
       <div className={styles.transport}>
-        <button disabled={busy || !sequence || !next} onClick={() => act("next")} type="button">PRÓXIMO</button>
-        <button disabled={busy || !current} onClick={() => act("repeat")} type="button">REPETIR</button>
+        <button disabled={warmupDisabled || !sequence || !next} onClick={() => act("next")} type="button">PRÓXIMO</button>
+        <button disabled={warmupDisabled || !current} onClick={() => act("repeat")} type="button">REPETIR</button>
         <button className={styles.cancel} disabled={busy || !warmup.active} onClick={() => act("cancel")} type="button">CANCELAR</button>
         <button className={styles.clear} disabled={busy} onClick={() => act("clear")} type="button">LIMPAR TELA</button>
       </div>

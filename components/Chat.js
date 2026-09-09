@@ -672,6 +672,7 @@ export default function Chat() {
     !stoppedTypingIdsRef.current.has(message.id)
   ));
   const machineBusy = pending || performancePending || Boolean(activeTypingAssistant);
+  const bootStandby = !sceneZero || sceneZero.unlock?.status === "STANDBY";
   const publicInput = (
     <form className={styles.form} onSubmit={submitMessage}>
       <span aria-hidden="true">&gt;</span>
@@ -717,7 +718,7 @@ export default function Chat() {
   return (
     <GlitchOverlay glitch={glitch}>
       <div
-        className={`${styles.workspace} ${operatorOpen ? styles.workspaceWithOperator : ""}`}
+        className={`${styles.workspace} ${operatorOpen ? styles.workspaceWithOperator : ""} ${bootStandby ? styles.bootStandby : ""}`}
         ref={workspaceRef}
         style={layoutStyle}
       >

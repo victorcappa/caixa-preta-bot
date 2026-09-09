@@ -31,18 +31,34 @@ const context = await browser.newContext();
 
 try {
   await context.request.post(`${BASE_URL}/api/operator`, { data: { command: "/reset" } });
-  let snapshot = await waitForUnlock(context.request, (value) => value.status === "WAITING_FOR_AUDIENCE", 12000);
-  assert.equal(snapshot.sceneZero.unlock.progress, 78, "BIOS automática deve travar no limite configurado");
 
-  await context.request.post(`${BASE_URL}/api/operator`, { data: { command: "/reset" } });
-  await unlock(context.request, "pause-boot");
-  snapshot = await state(context.request);
-  const pausedProgress = snapshot.sceneZero.unlock.progress;
-  assert.equal(snapshot.sceneZero.unlock.status, "BOOTING");
-  assert.equal(snapshot.sceneZero.unlock.bootPaused, true);
   const display = await context.newPage();
   await display.setViewportSize({ width: 1920, height: 1080 });
   await display.goto(BASE_URL, { waitUntil: "domcontentloaded" });
+  await display.waitForFunction(() => document.querySelector('[aria-label="Chat publico"]'));
+  await new Promise((resolve) => setTimeout(resolve, 4500));
+
+  let snapshot = await state(context.request);
+  assert.equal(snapshot.sceneZero.unlock.status, "STANDBY");
+  assert.equal(snapshot.sceneZero.unlock.progress, 0);
+  assert.equal((await display.locator("body").innerText()).trim(), "", "a projeção deve permanecer totalmente vazia antes do BOOT");
+  assert.equal(await display.getByLabel("BIOS da Cena 0").count(), 0);
+  await display.screenshot({ path: "/private/tmp/caixa-preta-standby-black.png" });
+
+  const operator = await context.newPage();
+  await operator.setViewportSize({ width: 1440, height: 1100 });
+  await operator.goto(`${BASE_URL}/cena-0-controller`, { waitUntil: "domcontentloaded" });
+  const unlockPanel = operator.getByLabel("Desbloqueio da peça");
+  await unlockPanel.waitFor();
+  const bootButton = unlockPanel.getByRole("button", { name: "BOOT", exact: true });
+  await bootButton.waitFor();
+  await bootButton.click();
+  snapshot = await waitForUnlock(context.request, (value) => value.status === "BOOTING");
+
+  await unlock(context.request, "pause-boot");
+  snapshot = await state(context.request);
+  const pausedProgress = snapshot.sceneZero.unlock.progress;
+  assert.equal(snapshot.sceneZero.unlock.bootPaused, true);
   await new Promise((resolve) => setTimeout(resolve, 750));
   snapshot = await state(context.request);
   assert.equal(snapshot.sceneZero.unlock.progress, pausedProgress, "BIOS pausada não deve avançar sozinha");
@@ -57,60 +73,50 @@ try {
 
   await display.getByLabel("BIOS da Cena 0").waitFor();
   await display.getByText("DESBLOQUEIE A PEÇA", { exact: true }).waitFor();
-  await new Promise((resolve) => setTimeout(resolve, 800));
   await display.screenshot({ path: "/private/tmp/caixa-preta-bios-stalled.png" });
   await display.getByLabel("Desbloquear a peça").waitFor({ timeout: 5000 });
-  await display.screenshot({ path: "/private/tmp/caixa-preta-unlock-warmup.png" });
-  assert.equal(await display.getByRole("button", { name: "COMPLETAR BARRA" }).count(), 0, "controles privados não podem aparecer na projeção");
 
-  const operator = await context.newPage();
-  await operator.setViewportSize({ width: 1440, height: 1100 });
-  await operator.goto(`${BASE_URL}/cena-0-controller`, { waitUntil: "domcontentloaded" });
-  const unlockPanel = operator.getByLabel("Desbloqueio da peça");
-  await unlockPanel.waitFor();
-  await operator.waitForFunction(() => document.querySelector('[aria-label="Desbloqueio da peça"]')?.textContent.includes("FALTA22%"));
-  assert.match(await unlockPanel.textContent(), /TRAVA DA BIOS78%/);
-  assert.match(await unlockPanel.textContent(), /FALTA22%/);
+  const manualText = "Quem ouviu a máquina bate palmas.";
+  const warmupResponse = await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "send", text: manualText } });
+  assert.equal(warmupResponse.ok(), true);
+  snapshot = await waitForUnlock(context.request, (value) => value.status === "WARMING_AUDIENCE");
+  assert.equal(snapshot.sceneZero.unlock.progress, 78, "o aquecimento deve manter a barra no limite da BIOS");
+  await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "send", text: manualText } });
+  snapshot = await state(context.request);
+  assert.equal(snapshot.sceneZero.unlock.progress, 78, "repetições também não devem preencher a barra");
+  assert.match(await unlockPanel.textContent(), /SÓ É PREENCHIDA AO FINALIZAR O JOGO DAS MALAS/);
+  assert.equal(await unlockPanel.getByRole("button", { name: "COMPLETAR BARRA" }).count(), 0);
+  assert.equal(await unlockPanel.getByRole("button", { name: "DESBLOQUEAR AGORA" }).count(), 0);
 
-  const progressInput = operator.getByLabel("Percentual de desbloqueio");
-  await progressInput.fill("85");
-  await operator.getByRole("button", { name: "DEFINIR", exact: true }).click();
-  snapshot = await waitForUnlock(context.request, (value) => value.progress === 85);
-  assert.equal(snapshot.sceneZero.unlock.status, "WARMING_AUDIENCE");
+  const prematureFinish = await context.request.post(`${BASE_URL}/api/scene-zero`, { data: { action: "suitcase-finish" } });
+  assert.equal(prematureFinish.status(), 409, "o fim manual das malas exige que a Mala 3 esteja ativa");
+  snapshot = await state(context.request);
+  assert.equal(snapshot.sceneZero.unlock.progress, 78);
 
-  await operator.getByRole("button", { name: "− PARTICIPAÇÃO" }).click();
-  snapshot = await waitForUnlock(context.request, (value) => value.progress === 83);
-  await operator.getByRole("button", { name: "+ PARTICIPAÇÃO" }).click();
-  snapshot = await waitForUnlock(context.request, (value) => value.progress === 85);
+  const rejected = await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "unlock-complete" } });
+  assert.equal(rejected.status(), 400, "a API não deve manter um atalho manual de conclusão");
 
   const soundToggle = operator.getByLabel("ÁUDIO BIOS / UNLOCK");
   await soundToggle.click();
   snapshot = await waitForUnlock(context.request, (value) => value.soundEnabled === false);
   assert.equal(snapshot.sceneZero.unlock.soundEnabled, false);
 
-  const manualText = "Quem ouviu a máquina bate palmas.";
-  await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "send", text: manualText } });
-  snapshot = await waitForUnlock(context.request, (value) => value.progress === 89);
-  await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "send", text: manualText } });
-  await new Promise((resolve) => setTimeout(resolve, 150));
-  snapshot = await state(context.request);
-  assert.equal(snapshot.sceneZero.unlock.progress, 89, "a mesma ação não deve pontuar novamente");
-
-  await operator.getByRole("button", { name: "COMPLETAR BARRA" }).click();
-  snapshot = await waitForUnlock(context.request, (value) => value.progress > 89 && value.progress < 100);
-  assert.equal(snapshot.sceneZero.unlock.animation.kind, "complete", "completar deve animar antes de 100%");
+  const suitcaseFinish = await context.request.post(`${BASE_URL}/api/operator`, { data: { command: "/mala win" } });
+  assert.equal(suitcaseFinish.ok(), true);
+  snapshot = await waitForUnlock(context.request, (value) => value.progress > 78 && value.progress < 100);
+  assert.equal(snapshot.sceneZero.suitcaseGame.status, "finished");
+  assert.equal(snapshot.sceneZero.unlock.animation.kind, "complete", "o fim das malas deve animar a barra");
   await display.getByText("PEÇA DESBLOQUEADA", { exact: true }).waitFor({ timeout: 8000 });
   await display.screenshot({ path: "/private/tmp/caixa-preta-play-unlocked.png" });
   snapshot = await waitForUnlock(context.request, (value) => value.status === "UNLOCKED");
   assert.equal(snapshot.sceneZero.unlock.onPlayUnlocked.name, "onPlayUnlocked");
+  assert.equal(snapshot.sceneZero.unlock.onPlayUnlocked.source, "suitcases-finished");
   await display.getByLabel("Desbloquear a peça").waitFor({ state: "detached" });
 
   await operator.getByRole("button", { name: "REINICIAR DESBLOQUEIO" }).click();
-  snapshot = await waitForUnlock(context.request, (value) => value.status === "BOOTING" && value.progress < 78);
-  assert.deepEqual(snapshot.sceneZero.unlock.scoredActionIds, []);
-  await operator.getByRole("button", { name: "DESBLOQUEAR AGORA" }).click();
-  snapshot = await waitForUnlock(context.request, (value) => value.status === "UNLOCKED");
-  assert.equal(snapshot.sceneZero.unlock.onPlayUnlocked.source, "operator-force");
+  snapshot = await waitForUnlock(context.request, (value) => value.status === "STANDBY");
+  assert.equal(snapshot.sceneZero.unlock.progress, 0);
+  await bootButton.waitFor();
 
   console.log("play unlock browser tests passed");
 } finally {

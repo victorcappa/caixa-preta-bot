@@ -34,12 +34,12 @@ function UnlockProgressBar({ progress }) {
 function PlayUnlockProjection({ unlock, now }) {
   const soundSequenceRef = useRef(null);
   const status = unlock?.status;
-  const unlocked = !status || status === PLAY_UNLOCK_STATES.UNLOCKED;
+  const hidden = !status || [PLAY_UNLOCK_STATES.STANDBY, PLAY_UNLOCK_STATES.UNLOCKED].includes(status);
   const showStalledTerminal = status === PLAY_UNLOCK_STATES.WAITING_FOR_AUDIENCE
     && Date.parse(unlock.handoffUntil || "") > now;
 
   useEffect(() => {
-    if (unlocked || unlock.soundEnabled === false || soundSequenceRef.current === unlock.soundSequence) return;
+    if (hidden || unlock.soundEnabled === false || soundSequenceRef.current === unlock.soundSequence) return;
     soundSequenceRef.current = unlock.soundSequence;
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -68,9 +68,9 @@ function PlayUnlockProjection({ unlock, now }) {
     } catch {
       // Browsers may block boot audio before a physical interaction.
     }
-  }, [status, unlock?.bootStep, unlock?.soundEnabled, unlock?.soundSequence, unlocked]);
+  }, [status, unlock?.bootStep, unlock?.soundEnabled, unlock?.soundSequence, hidden]);
 
-  if (unlocked) return null;
+  if (hidden) return null;
 
   if (status === PLAY_UNLOCK_STATES.BOOTING || showStalledTerminal) {
     const lines = [
@@ -109,7 +109,7 @@ function PlayUnlockProjection({ unlock, now }) {
     <aside className={styles.unlockHud} aria-label="Desbloquear a peça" aria-live="polite">
       <div className={styles.unlockHudHeading}>
         <span>DESBLOQUEAR A PEÇA</span>
-        <small>{status === PLAY_UNLOCK_STATES.WAITING_FOR_AUDIENCE ? "AGUARDANDO PARTICIPAÇÃO" : "AÇÃO COLETIVA EM CURSO"}</small>
+        <small>{status === PLAY_UNLOCK_STATES.WAITING_FOR_AUDIENCE ? "AGUARDANDO JOGO DAS MALAS" : "AÇÃO COLETIVA · MALAS PENDENTES"}</small>
       </div>
       <UnlockProgressBar progress={unlock.progress} />
       {unlock.technicalFeedback && Date.parse(unlock.technicalFeedbackUntil || "") > now

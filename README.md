@@ -127,21 +127,25 @@ cancelar ou limpar a partitura. O avanço automático é opcional, configurável
 sempre cancelável. A projeção mostra somente a etapa corrente e uma indicação
 pequena da ação esperada.
 
-A abertura da Cena 0 começa em uma BIOS orientada a dados. Ela carrega teatro,
-técnica e elenco, detecta a plateia e trava no limite configurável (inicialmente
-`78%`) porque falta `AÇÃO COLETIVA`. A barra pertence a
+A abertura da Cena 0 começa em `STANDBY`: ao abrir ou executar `/reset`, a
+projeção fica totalmente preta, sem cursor, texto, campo público ou animação.
+Somente o botão `BOOT`, no controller, inicia a BIOS orientada a dados. Ela
+carrega teatro, técnica e elenco, detecta a plateia e trava no limite
+configurável (inicialmente `78%`). A barra pertence a
 `showState.sceneZero.unlock`: continua visível sobre o chat durante o
 aquecimento e só sai da projeção depois da sequência `PEÇA DESBLOQUEADA`.
-Os estados semânticos são `BOOTING`, `WAITING_FOR_AUDIENCE`,
+Os estados semânticos são `STANDBY`, `BOOTING`, `WAITING_FOR_AUDIENCE`,
 `WARMING_AUDIENCE`, `UNLOCKING` e `UNLOCKED`; enquanto a peça está bloqueada,
 esse contexto também é enviado ao bot.
 
-Cada prompt recebe `progressValue` e, por padrão, pontua somente na primeira
-execução. `repeatableProgress: true` libera repetições e `progressValue: 0`
-mantém uma ação puramente dramatúrgica. O controller mostra percentual, limite
-da BIOS, falta, estado e última ação, além de pausa/avanço da BIOS, ajuste
-manual, `COMPLETAR BARRA` animado, `DESBLOQUEAR AGORA`, áudio e reinício. A
-configuração de conteúdo, duração, progresso, feedback e conclusão fica em
+As partituras de aquecimento registram a ação coletiva, mas nunca alteram o
+percentual: a barra permanece em `78%` durante toda a Cena 0. Ela só anima até
+`100%` quando o estado central das malas emite `suitcases_finished`. No fluxo
+manual, isso acontece pelo botão `FINALIZAR JOGO DAS MALAS / PREENCHER BARRA`,
+disponível após iniciar a Mala 3; os comandos legados de vitória ou derrota das
+malas passam pelo mesmo evento. Não há ajuste manual nem desbloqueio de
+emergência no controller. Ele mantém apenas `BOOT`, pausa/avanço da BIOS, áudio
+e reinício. A configuração de conteúdo, duração, feedback e conclusão fica em
 `data/scene-zero-unlock.js`; `onPlayUnlocked` fica registrado no estado e no
 evento SSE para futuras integrações de luz, som, vídeo e mecanismos.
 

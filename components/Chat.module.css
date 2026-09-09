@@ -14,6 +14,24 @@
   gap: 0;
 }
 
+.bootStandby {
+  grid-template-columns: minmax(0, 1fr);
+  background: #000;
+}
+
+.bootStandby > button,
+.bootStandby > [role="dialog"],
+.bootStandby > [role="separator"],
+.bootStandby > aside,
+.bootStandby .chatPane > * {
+  display: none !important;
+}
+
+.bootStandby .chatPane {
+  grid-template-columns: minmax(0, 1fr);
+  background: #000;
+}
+
 .chatPane {
   position: relative;
   min-width: 0;

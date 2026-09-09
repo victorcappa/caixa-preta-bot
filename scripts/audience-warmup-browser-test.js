@@ -29,6 +29,18 @@ try {
   await operator.goto(`${BASE_URL}/operator`, { waitUntil: "domcontentloaded" });
 
   await operator.getByRole("heading", { name: "ESQUENTAR PÚBLICO" }).waitFor();
+  await Promise.all([
+    operator.waitForResponse((response) => response.url().endsWith("/api/audience-warmup") && response.request().postDataJSON()?.action === "unlock-boot"),
+    operator.getByRole("button", { name: "BOOT", exact: true }).click()
+  ]);
+  let unlockState = (await (await context.request.get(`${BASE_URL}/api/state`)).json()).sceneZero.unlock;
+  for (let index = 0; index < 12 && unlockState.status === "BOOTING"; index += 1) {
+    const response = await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "unlock-advance-boot" } });
+    assert.equal(response.ok(), true);
+    unlockState = (await response.json()).unlock;
+  }
+  assert.equal(unlockState.status, "WAITING_FOR_AUDIENCE");
+  const conversationAfterBoot = (await (await context.request.get(`${BASE_URL}/api/state`)).json()).conversation.length;
   const wordAction = operator.getByRole("button", { name: /Falar uma palavra/ });
   await operator.waitForFunction(() => document.querySelector('[aria-labelledby="audience-warmup-title"]')?.getAttribute("aria-busy") === "false");
   assert.equal(await wordAction.isEnabled(), true, `ação deve estar habilitada; page errors: ${pageErrors.join(" | ")}`);
@@ -52,7 +64,7 @@ try {
   await display.screenshot({ path: "/private/tmp/caixa-preta-warmup-medium.png" });
 
   let snapshot = await (await context.request.get(`${BASE_URL}/api/state`)).json();
-  assert.equal(snapshot.conversation.length, 1);
+  assert.equal(snapshot.conversation.length, conversationAfterBoot + 1);
   assert.equal(snapshot.publicMessage.content, generatedText);
 
   const manualText = "Quem veio acompanhado levanta a mão.";
@@ -65,7 +77,7 @@ try {
   await display.screenshot({ path: "/private/tmp/caixa-preta-warmup-short.png" });
   assert.equal(await display.getByText(generatedText, { exact: true }).count(), 0, "a fala anterior não deve ocupar a projeção");
   snapshot = await (await context.request.get(`${BASE_URL}/api/state`)).json();
-  assert.equal(snapshot.conversation.length, 2, "histórico interno deve preservar A e B");
+  assert.equal(snapshot.conversation.length, conversationAfterBoot + 2, "histórico interno deve preservar A e B além da fala da BIOS");
 
   const beforeSurprise = snapshot.conversation.length;
   await Promise.all([

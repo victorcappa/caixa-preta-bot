@@ -10,8 +10,8 @@ import {
   advancePlayUnlockBoot,
   completePlayUnlock,
   createInitialPlayUnlockState,
-  scorePlayUnlockAction,
-  setPlayUnlockProgress,
+  recordPlayUnlockAudienceAction,
+  startPlayUnlockBoot,
   stallPlayUnlockBoot
 } from "../lib/scene-zero/unlock.js";
 
@@ -49,8 +49,11 @@ assert.equal(clampAudienceWarmupInterval(10), 800);
 assert.equal(clampAudienceWarmupInterval(99999), 15000);
 
 let unlock = createInitialPlayUnlockState("2026-09-09T00:00:00.000Z");
-assert.equal(unlock.status, PLAY_UNLOCK_STATES.BOOTING);
+assert.equal(unlock.status, PLAY_UNLOCK_STATES.STANDBY);
 assert.equal(unlock.progress, 0);
+assert.equal(unlock.startedAt, null);
+unlock = startPlayUnlockBoot(unlock, "2026-09-09T00:00:01.000Z");
+assert.equal(unlock.status, PLAY_UNLOCK_STATES.BOOTING);
 for (const expectedStep of PLAY_UNLOCK_CONFIG.bootSteps) {
   const advanced = advancePlayUnlockBoot(unlock);
   assert.equal(advanced.step.id, expectedStep.id);
@@ -60,27 +63,19 @@ unlock = stallPlayUnlockBoot(unlock);
 assert.equal(unlock.status, PLAY_UNLOCK_STATES.WAITING_FOR_AUDIENCE);
 assert.equal(unlock.progress, PLAY_UNLOCK_CONFIG.bootLimit);
 
-const firstAction = scorePlayUnlockAction(unlock, { actionId: "palmas", label: "Palmas", progressValue: 4 });
+const firstAction = recordPlayUnlockAudienceAction(unlock, { label: "Palmas" });
 assert.equal(firstAction.applied, true);
-assert.equal(firstAction.state.progress, PLAY_UNLOCK_CONFIG.bootLimit + 4);
+assert.equal(firstAction.state.progress, PLAY_UNLOCK_CONFIG.bootLimit, "aquecimento não deve preencher a barra");
 assert.equal(firstAction.state.status, PLAY_UNLOCK_STATES.WARMING_AUDIENCE);
-const duplicateAction = scorePlayUnlockAction(firstAction.state, { actionId: "palmas", label: "Palmas", progressValue: 4 });
-assert.equal(duplicateAction.applied, false, "uma ação comum não pode pontuar duas vezes");
-assert.equal(duplicateAction.reason, "ALREADY_SCORED");
-const repeatedAction = scorePlayUnlockAction(firstAction.state, { actionId: "palmas", label: "Palmas", progressValue: 4, repeatableProgress: true });
-assert.equal(repeatedAction.applied, true, "repeatableProgress deve permitir nova pontuação");
-assert.equal(repeatedAction.state.progress, PLAY_UNLOCK_CONFIG.bootLimit + 8);
-const zeroAction = scorePlayUnlockAction(repeatedAction.state, { actionId: "pausa", progressValue: 0 });
-assert.equal(zeroAction.applied, false, "ação dramatúrgica com zero não deve alterar a barra");
-const almostThere = setPlayUnlockProgress(repeatedAction.state, 98);
-const naturalFinish = scorePlayUnlockAction(almostThere, { actionId: "coro", progressValue: 7 });
-assert.equal(naturalFinish.reached100, true);
-assert.equal(naturalFinish.state.status, PLAY_UNLOCK_STATES.UNLOCKING);
-const completed = completePlayUnlock(naturalFinish.state, { source: "test" });
+const repeatedAction = recordPlayUnlockAudienceAction(firstAction.state, { label: "Palmas de novo" });
+assert.equal(repeatedAction.applied, true);
+assert.equal(repeatedAction.state.progress, PLAY_UNLOCK_CONFIG.bootLimit, "repetições também não devem preencher a barra");
+assert.equal(repeatedAction.state.lastIncreaseAction, "BIOS / final-check", "nenhuma ação de aquecimento deve ser registrada como aumento");
+const completed = completePlayUnlock(repeatedAction.state, { source: "suitcases-finished" });
 assert.equal(completed.status, PLAY_UNLOCK_STATES.UNLOCKED);
 assert.equal(completed.progress, 100);
 assert.equal(completed.onPlayUnlocked.name, "onPlayUnlocked");
-assert.equal(setPlayUnlockProgress(firstAction.state, 85).progress, 85, "ajuste manual deve aceitar percentuais intermediários");
+assert.equal(completed.onPlayUnlocked.source, "suitcases-finished");
 assert.equal(createInitialPlayUnlockState().scoredActionIds.length, 0, "reinício deve limpar ações contabilizadas");
 
 assert.throws(
@@ -99,6 +94,7 @@ const sceneZeroRoute = fs.readFileSync(new URL("../app/api/scene-zero/route.js",
 const participantResearchCalls = sceneZeroRoute.match(/researchCurrentSceneZeroParticipant\(\)/g) || [];
 assert.equal(participantResearchCalls.length, 2, "pesquisa de participante deve existir apenas na declaração e no handler manual");
 assert.match(sceneZeroRoute, /action === "suitcase-research-person"/);
+assert.match(sceneZeroRoute, /action === "suitcase-finish"/);
 assert.doesNotMatch(sceneZeroRoute, /const researchPromise = researchCurrentSceneZeroParticipant/);
 
 console.log(`audience warmup tests passed (${AUDIENCE_WARMUP_PROMPTS.length} prompts)`);

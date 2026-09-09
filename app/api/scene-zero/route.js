@@ -286,6 +286,20 @@ async function activateSuitcase(suitcaseNumber, detail = "") {
   return { applied: true, state: showState.snapshot().sceneZero, turn };
 }
 
+async function finishSceneZeroSuitcaseGame() {
+  const sceneZero = showState.snapshot().sceneZero;
+  if (sceneZero.suitcaseGame?.currentSuitcase !== 3) {
+    return { applied: false, error: "INICIE A MALA 3 ANTES DE FINALIZAR O JOGO", state: sceneZero };
+  }
+  if (sceneZero.suitcaseGame?.status === "finished") {
+    return { applied: false, error: "JOGO DAS MALAS JÁ FINALIZADO", state: sceneZero };
+  }
+
+  await interruptPreviousSuitcase(null);
+  showState.finishSuitcases("finished", { source: "scene-zero-operator" });
+  return { applied: true, state: showState.snapshot().sceneZero };
+}
+
 async function drawGincana() {
   const state = showState.privateSnapshot();
   const usedTaskIds = state.sceneZero.suitcaseGame?.gincana?.usedTaskIds || [];
@@ -571,6 +585,12 @@ export async function POST(request) {
       const result = await activateSuitcase(suitcaseNumber, detail);
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
       return Response.json({ message: `MALA ${suitcaseNumber} ATIVA — PROGRESSÃO MANUAL`, sceneZero: result.state, text: result.turn?.text });
+    }
+
+    if (action === "suitcase-finish") {
+      const result = await finishSceneZeroSuitcaseGame();
+      if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 409 });
+      return Response.json({ message: "JOGO DAS MALAS FINALIZADO — BARRA EM CONCLUSÃO", sceneZero: result.state });
     }
 
     if (action === "gincana-draw") {
