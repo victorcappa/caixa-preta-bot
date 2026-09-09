@@ -8,7 +8,7 @@ async function main() {
   const initial = sound.createInitialRobotSoundState();
   assert.equal(initial.enabled, true);
   assert.equal(initial.preset, "normal");
-  assert.equal(initial.typingFrequency, 1);
+  assert.equal(initial.typingFrequency, 0.35);
   assert.equal(initial.outputResetSequence, 0);
   assert(initial.masterVolume > 0 && initial.masterVolume < 0.5);
 
