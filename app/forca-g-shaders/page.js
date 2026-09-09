@@ -1,4 +1,4 @@
-import SceneProjectionPage from "@/components/SceneProjectionPage";
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "Forca G Shaders",
@@ -6,5 +6,5 @@ export const metadata = {
 };
 
 export default function ForcaGShadersPage() {
-  return <SceneProjectionPage controllerId="forca-g-shaders" />;
+  redirect("/forca-g-samples");
 }

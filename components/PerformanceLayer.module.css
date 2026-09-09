@@ -8,6 +8,49 @@
   background: transparent;
 }
 
+.gameSplit {
+  position: relative;
+  inset: auto;
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  width: 100%;
+  height: 100vh;
+  border-left: 1px solid var(--green-soft);
+  container-type: inline-size;
+}
+
+.gameSplit .verdadeOuBolo {
+  padding: clamp(16px, 3cqw, 42px);
+}
+
+.gameSplit .vobHeader strong {
+  font-size: clamp(1.8rem, 7cqw, 6rem);
+}
+
+.gameSplit .vobHeader span {
+  font-size: clamp(0.9rem, 2.5cqw, 2rem);
+}
+
+.gameSplit .vobChoices {
+  gap: clamp(20px, 8cqw, 100px);
+  font-size: clamp(1.5rem, 5cqw, 4rem);
+}
+
+.gameSplit .vobReveal {
+  padding: clamp(18px, 5cqw, 64px);
+}
+
+.gameSplit .vobReveal strong {
+  width: 100%;
+  max-width: 100%;
+  font-size: clamp(2.4rem, 14cqw, 10rem);
+}
+
+.gameSplit .vobReveal span {
+  font-size: clamp(1.4rem, 7cqw, 5rem);
+}
+
 .hideUi {
   background: #000000;
 }
@@ -331,6 +374,23 @@
   text-align: center;
 }
 
+.vobDecisionPrompt {
+  display: grid;
+  gap: clamp(10px, 2vh, 22px);
+  text-align: center;
+}
+
+.vobDecisionPrompt strong {
+  font-size: clamp(4rem, 13vw, 16rem);
+  line-height: 0.82;
+}
+
+.vobDecisionPrompt span {
+  color: var(--green-dim);
+  font-size: clamp(1.4rem, 4vw, 5rem);
+  font-weight: 900;
+}
+
 .vobMissingVideo strong {
   font-size: clamp(2rem, 6vw, 7rem);
 }
@@ -394,13 +454,19 @@
   display: grid;
   place-content: center;
   gap: clamp(16px, 3vh, 34px);
+  min-width: 0;
+  padding: clamp(24px, 5vw, 80px);
   text-align: center;
   background: rgba(0, 0, 0, 0.82);
 }
 
 .vobReveal strong {
-  font-size: clamp(5rem, 18vw, 22rem);
-  line-height: 0.82;
+  width: 100%;
+  max-width: 100%;
+  font-size: clamp(3rem, 11vw, 13rem);
+  line-height: 0.88;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
   text-shadow: 8px 0 rgba(0, 255, 102, 0.24), -6px 0 rgba(255, 255, 255, 0.14);
 }
 

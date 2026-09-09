@@ -7,7 +7,7 @@ import styles from "./BaralhoMorbidoDisplay.module.css";
 const INITIAL_STATE = {
   phase: "IDLE",
   drawSequence: 0,
-  totalCards: 10,
+  totalCards: 0,
   cards: [],
   usedIds: [],
   remainingIds: [],
@@ -35,8 +35,6 @@ function CardBack({ className = "", index = 0, compact = false }) {
         <div className={styles.cardSigil} aria-hidden="true">
           <span />
         </div>
-        <strong>BARALHO</strong>
-        <small>MORBIDO</small>
       </div>
     </div>
   );
@@ -52,13 +50,15 @@ function MissingVideo({ card }) {
   );
 }
 
-function CardVideo({ card, expanded = false }) {
+function CardVideo({ card, expanded = false, shouldPlay = false }) {
   const videoRef = useRef(null);
+  const playStartedRef = useRef(false);
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const src = card?.video?.src || "";
 
   useEffect(() => {
+    playStartedRef.current = false;
     setFailed(false);
     setLoaded(false);
   }, [src]);
@@ -80,22 +80,52 @@ function CardVideo({ card, expanded = false }) {
   useEffect(() => {
     const video = videoRef.current;
 
-    if (!video || !src || failed) {
-      return;
+    if (!video || !src || failed || !shouldPlay) {
+      video?.pause();
+      return undefined;
     }
 
-    video.muted = false;
-    const playAttempt = video.play();
+    let firstFrameId = 0;
+    let layoutFrameId = 0;
 
-    if (!playAttempt?.catch) {
-      return;
+    function playAfterLayout() {
+      if (playStartedRef.current) {
+        return;
+      }
+
+      video.pause();
+      video.currentTime = 0;
+      firstFrameId = window.requestAnimationFrame(() => {
+        layoutFrameId = window.requestAnimationFrame(() => {
+          playStartedRef.current = true;
+          video.muted = false;
+          const playAttempt = video.play();
+
+          if (!playAttempt?.catch) {
+            return;
+          }
+
+          playAttempt.catch(() => {
+            video.muted = true;
+            video.play().catch(() => {});
+          });
+        });
+      });
     }
 
-    playAttempt.catch(() => {
-      video.muted = true;
-      video.play().catch(() => {});
-    });
-  }, [failed, src]);
+    if (video.readyState >= 2) {
+      playAfterLayout();
+    } else {
+      video.addEventListener("loadeddata", playAfterLayout, { once: true });
+    }
+
+    return () => {
+      video.removeEventListener("loadeddata", playAfterLayout);
+      window.cancelAnimationFrame(firstFrameId);
+      window.cancelAnimationFrame(layoutFrameId);
+      video.pause();
+    };
+  }, [failed, shouldPlay, src]);
 
   if (!src || failed) {
     return <MissingVideo card={card} />;
@@ -104,9 +134,9 @@ function CardVideo({ card, expanded = false }) {
   return (
     <div className={`${styles.videoFace} ${expanded ? styles.videoFaceExpanded : ""}`}>
       <video
-        autoPlay
         className={styles.video}
         controls={false}
+        data-playback={shouldPlay ? "playing" : "preview"}
         key={src}
         loop
         onCanPlay={() => setLoaded(true)}
@@ -124,7 +154,7 @@ function CardVideo({ card, expanded = false }) {
 }
 
 function IdleDeck({ cards }) {
-  const deckCards = cards.length ? cards : Array.from({ length: 10 }, (_, index) => ({ id: `${index + 1}` }));
+  const deckCards = cards.length ? cards : [{ id: "empty" }];
 
   return (
     <div className={styles.idleDeck} aria-hidden="true">
@@ -135,10 +165,10 @@ function IdleDeck({ cards }) {
   );
 }
 
-function ShuffleDeck({ sequence }) {
+function ShuffleDeck({ cards, sequence }) {
   return (
     <div className={styles.shuffleDeck} key={`shuffle-${sequence}`} aria-hidden="true">
-      {Array.from({ length: 10 }, (_, index) => (
+      {Array.from({ length: Math.max(1, cards.length) }, (_, index) => (
         <CardBack className={styles.shuffleCard} compact index={index} key={index} />
       ))}
     </div>
@@ -174,7 +204,7 @@ export default function BaralhoMorbidoDisplay() {
     let active = true;
     let refreshing = false;
 
-    async function refreshDeck() {
+    async function refreshDeck(refreshAssets = false) {
       if (refreshing) {
         return;
       }
@@ -182,7 +212,8 @@ export default function BaralhoMorbidoDisplay() {
       refreshing = true;
 
       try {
-        const response = await fetch("/api/baralho-morbido", { cache: "no-store" });
+        const url = refreshAssets ? "/api/baralho-morbido?refresh=1" : "/api/baralho-morbido";
+        const response = await fetch(url, { cache: "no-store" });
         const data = await response.json();
 
         if (!active) {
@@ -207,7 +238,7 @@ export default function BaralhoMorbidoDisplay() {
       body: JSON.stringify({ action: "display-connect" })
     }).catch(() => {});
 
-    refreshDeck();
+    refreshDeck(true);
     const timer = window.setInterval(refreshDeck, 400);
 
     return () => {
@@ -248,7 +279,7 @@ export default function BaralhoMorbidoDisplay() {
   }, []);
 
   const revealedCount = deck.usedIds?.length || 0;
-  const totalCards = deck.totalCards || 10;
+  const totalCards = deck.totalCards ?? 0;
   const currentCard = deck.currentCard;
   const showIdle = deck.phase === "IDLE" || !currentCard;
   const showShuffle = deck.phase === "SHUFFLING";
@@ -283,7 +314,6 @@ export default function BaralhoMorbidoDisplay() {
       <header className={styles.header}>
         <div>
           <span className={styles.kicker}>JACKPOT SINISTRO</span>
-          <h1>BARALHO MÓRBIDO</h1>
         </div>
         <div className={styles.counter}>
           <span>{jackpotText}</span>
@@ -293,11 +323,11 @@ export default function BaralhoMorbidoDisplay() {
 
       <section className={styles.stage} aria-live="polite">
         {showIdle ? <IdleDeck cards={deck.cards || []} /> : null}
-        {showShuffle ? <ShuffleDeck sequence={deck.drawSequence} /> : null}
+        {showShuffle ? <ShuffleDeck cards={deck.cards || []} sequence={deck.drawSequence} /> : null}
         {showSelection ? <SelectedCard card={currentCard} phase={deck.phase} /> : null}
         {showVideo ? (
           <div className={styles.expandedVideoCard}>
-            <CardVideo card={currentCard} expanded />
+            <CardVideo card={currentCard} expanded shouldPlay />
           </div>
         ) : null}
       </section>

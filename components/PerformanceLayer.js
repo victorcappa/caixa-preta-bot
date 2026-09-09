@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import useCountdownSound from "./useCountdownSound";
 import styles from "./PerformanceLayer.module.css";
 
 function randomPosition(index) {
@@ -215,7 +216,7 @@ export default function PerformanceLayer({
   }
 
   return (
-    <div className={`${styles.layer} ${hideUi ? styles.hideUi : ""} ${glitch ? styles.glitch : ""}`} aria-live="polite">
+    <div className={`${styles.layer} ${visibleVerdadeOuBolo ? styles.gameSplit : ""} ${hideUi ? styles.hideUi : ""} ${glitch ? styles.glitch : ""}`} aria-live="polite">
       {blackout ? <div className={styles.blackout} /> : null}
       {glitch ? <div className={styles.glitchText}>{glitch.payload.text || "////"}</div> : null}
       {visiblePhoneProjection ? (
@@ -349,7 +350,7 @@ function VerdadeOuBoloShow({ game }) {
   const lastAudioSequenceRef = useRef(null);
   const lastAutoAdvanceSequenceRef = useRef(null);
   const lastVoteTimeoutRef = useRef(null);
-  const [, setVideoReadyKey] = useState(0);
+  const lastVideoReadyRef = useRef(null);
   const currentRound = data.currentRound || {};
   const video = currentRound.video || {};
   const state = data.state || game.phase;
@@ -362,12 +363,53 @@ function VerdadeOuBoloShow({ game }) {
   const autoAdvanceAction = autoAdvanceCommand?.action || null;
   const autoAdvanceSequence = autoAdvanceCommand?.sequence || null;
   const autoAdvanceDelayMs = Number(autoAdvanceCommand?.delayMs || 0);
+  const showVideo = ["QUESTION", "VOTING", "ANSWER_LOCKED", "REVEAL", "ROUND_RESULT"].includes(state);
+
+  function playVideo(videoElement) {
+    videoElement.muted = false;
+    videoElement.play().catch((error) => {
+      if (error?.name === "AbortError") {
+        return;
+      }
+
+      videoElement.muted = true;
+      videoElement.play().catch(() => {});
+    });
+  }
 
   useEffect(() => {
     const videoElement = videoRef.current;
 
+    if (state !== "QUESTION") {
+      return undefined;
+    }
+
+    const readyKey = `${currentRound.id || currentRound.number || "round"}:${video.src || "missing"}`;
+    let firstFrameRequest = null;
+    let fallbackFrame = null;
+    let fallbackTimer = null;
+
+    async function startVotingAfterFrame() {
+      if (lastVideoReadyRef.current === readyKey) {
+        return;
+      }
+
+      lastVideoReadyRef.current = readyKey;
+
+      try {
+        await fetch("/api/operator", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ command: "/game video-ready" })
+        });
+      } catch {
+        lastVideoReadyRef.current = null;
+      }
+    }
+
     if (!videoElement || !video.src) {
-      return;
+      fallbackFrame = requestAnimationFrame(() => startVotingAfterFrame());
+      return () => cancelAnimationFrame(fallbackFrame);
     }
 
     videoElement.pause();
@@ -382,12 +424,34 @@ function VerdadeOuBoloShow({ game }) {
         // Seeking before enough data exists is codec-dependent.
       }
 
-      setVideoReadyKey((value) => value + 1);
+      if (typeof videoElement.requestVideoFrameCallback === "function") {
+        firstFrameRequest = videoElement.requestVideoFrameCallback(() => startVotingAfterFrame());
+        fallbackTimer = window.setTimeout(startVotingAfterFrame, 1000);
+        return;
+      }
+
+      fallbackFrame = requestAnimationFrame(() => startVotingAfterFrame());
     }
 
-    videoElement.addEventListener("loadeddata", markReady, { once: true });
-    return () => videoElement.removeEventListener("loadeddata", markReady);
-  }, [video.src]);
+    if (videoElement.readyState >= 2) {
+      markReady();
+    } else {
+      videoElement.addEventListener("loadeddata", markReady, { once: true });
+    }
+
+    return () => {
+      videoElement.removeEventListener("loadeddata", markReady);
+      if (firstFrameRequest !== null && typeof videoElement.cancelVideoFrameCallback === "function") {
+        videoElement.cancelVideoFrameCallback(firstFrameRequest);
+      }
+      if (fallbackFrame !== null) {
+        cancelAnimationFrame(fallbackFrame);
+      }
+      if (fallbackTimer !== null) {
+        window.clearTimeout(fallbackTimer);
+      }
+    };
+  }, [currentRound.id, currentRound.number, state, video.src]);
 
   useEffect(() => {
     const videoElement = videoRef.current;
@@ -400,7 +464,7 @@ function VerdadeOuBoloShow({ game }) {
     lastVideoSequenceRef.current = videoCommand.sequence;
 
     if (videoCommand.action === "play") {
-      videoElement.play().catch(() => {});
+      playVideo(videoElement);
     }
 
     if (videoCommand.action === "pause") {
@@ -416,7 +480,7 @@ function VerdadeOuBoloShow({ game }) {
       }
 
       if (videoCommand.action === "restart") {
-        videoElement.play().catch(() => {});
+        playVideo(videoElement);
       }
     }
   }, [data.videoCommand, video.src]);
@@ -509,15 +573,25 @@ function VerdadeOuBoloShow({ game }) {
 
     lastVoteTimeoutRef.current = timeoutKey;
 
-    try {
-      await fetch("/api/operator", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command: "/game vote-timeout" })
-      });
-    } catch {
-      // The operator can still reveal/recover manually if this network hop fails.
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const response = await fetch("/api/operator", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ command: "/game vote-timeout" })
+        });
+
+        if (response.ok) {
+          return;
+        }
+      } catch {
+        // Retry below before leaving manual reveal as the recovery path.
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 350 * (attempt + 1)));
     }
+
+    lastVoteTimeoutRef.current = null;
   }
 
   if (state === "INTRO") {
@@ -550,7 +624,7 @@ function VerdadeOuBoloShow({ game }) {
       </header>
 
       <div className={styles.vobVideoFrame}>
-        {video.src ? (
+        {showVideo && video.src ? (
           <video
             className={styles.vobVideo}
             controls={false}
@@ -560,10 +634,15 @@ function VerdadeOuBoloShow({ game }) {
             ref={videoRef}
             src={video.src}
           />
-        ) : (
+        ) : showVideo ? (
           <div className={styles.vobMissingVideo}>
             <strong>VIDEO AUSENTE</strong>
             <span>assets/videos/verdade-ou-bolo/</span>
+          </div>
+        ) : (
+          <div className={styles.vobDecisionPrompt}>
+            <strong>DECIDAM</strong>
+            <span>VERDADE OU BOLO?</span>
           </div>
         )}
       </div>
@@ -579,7 +658,7 @@ function VerdadeOuBoloShow({ game }) {
 
       {["REVEAL", "ROUND_RESULT"].includes(state) && result ? (
         <div className={`${styles.vobReveal} ${result.won ? styles.vobRevealWin : styles.vobRevealLose}`}>
-          <strong>{revealedAnswer === "verdade" ? "VERDADE!" : "E BOLO!"}</strong>
+          <strong>{revealedAnswer === "verdade" ? "É VERDADE" : "NÃO É VERDADE"}</strong>
           <span>{result.noVote ? "SEM VOTO" : result.won ? "ACERTARAM" : "ERRARAM"}</span>
         </div>
       ) : null}
@@ -604,6 +683,9 @@ function VobVoteCountdown({ countdown, onComplete }) {
   const [value, setValue] = useState(() => vobCountdownRemaining(countdown));
   const completedRef = useRef(false);
   const onCompleteRef = useRef(onComplete);
+  useCountdownSound(value, {
+    countdownKey: `vob:${countdown?.startedAt || ""}:${countdown?.endsAt || ""}`
+  });
 
   useEffect(() => {
     onCompleteRef.current = onComplete;
@@ -726,6 +808,7 @@ function Countdown({ event, onComplete }) {
   const [value, setValue] = useState(() => countdownRemaining(event.payload));
   const completedRef = useRef(false);
   const onCompleteRef = useRef(onComplete);
+  useCountdownSound(value, { countdownKey: `performance:${event.id}` });
 
   useEffect(() => {
     onCompleteRef.current = onComplete;

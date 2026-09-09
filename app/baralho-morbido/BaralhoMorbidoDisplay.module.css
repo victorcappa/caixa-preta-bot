@@ -83,17 +83,6 @@
   text-transform: uppercase;
 }
 
-.header h1 {
-  margin: 0;
-  color: #ffe8a6;
-  font-size: clamp(2.2rem, 6.2vh, 5.4rem);
-  line-height: 0.92;
-  letter-spacing: 0;
-  text-shadow:
-    0 0 12px rgba(255, 219, 115, 0.52),
-    0 0 34px rgba(255, 44, 103, 0.32);
-}
-
 .kicker {
   display: block;
   margin-bottom: 0.6vh;
@@ -195,25 +184,6 @@
   left: 7%;
   color: #ffe28a;
   font-size: clamp(0.6rem, 1.6vh, 1rem);
-  font-weight: 900;
-}
-
-.cardInnerBorder strong,
-.cardInnerBorder small {
-  position: absolute;
-  color: #ffe49a;
-  text-shadow: 0 0 12px rgba(255, 215, 96, 0.62);
-}
-
-.cardInnerBorder strong {
-  bottom: 16%;
-  font-size: clamp(0.8rem, 2.2vh, 1.4rem);
-}
-
-.cardInnerBorder small {
-  bottom: 10%;
-  color: #ff5d8e;
-  font-size: clamp(0.58rem, 1.5vh, 0.9rem);
   font-weight: 900;
 }
 
@@ -338,7 +308,8 @@
 .video {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
   background: #000;
 }
 
@@ -387,11 +358,6 @@
   color: #70f4ff;
   font-size: clamp(0.62rem, 1.4vh, 0.9rem);
   word-break: break-word;
-}
-
-.phaseSHUFFLING .header h1,
-.phaseREVEALING .header h1 {
-  animation: titleFlicker 0.32s steps(2) infinite;
 }
 
 .phaseIDLE {
@@ -523,17 +489,6 @@
   to {
     opacity: 1;
     transform: translateX(50%) scale(1.04);
-  }
-}
-
-@keyframes titleFlicker {
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.82;
   }
 }
 

@@ -102,6 +102,16 @@
   color: #d7d7d7;
 }
 
+.audioPreview .audioPreviewText {
+  max-width: 72ch;
+  margin: 10px auto 0;
+  color: #ffffff;
+  font-size: clamp(0.8rem, 1.25vw, 1.15rem);
+  line-height: 1.4;
+  text-align: left;
+  white-space: pre-wrap;
+}
+
 .cueGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -111,8 +121,10 @@
 .cueItem {
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 48px;
   gap: 5px;
+  border: 1px solid color-mix(in srgb, var(--cue-color) 25%, #000000);
+  background: #080808;
+  padding: 5px;
 }
 
 .cue,
@@ -129,6 +141,23 @@
   text-align: left;
 }
 
+.cue:disabled,
+.selectedCue:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.75);
+  opacity: 0.55;
+}
+
+.playingCueItem {
+  border-color: var(--cue-color);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--cue-color) 22%, transparent);
+}
+
+.playingCue {
+  background: color-mix(in srgb, var(--cue-color) 28%, #000000);
+  animation: cuePlayingPulse 1s ease-in-out infinite alternate;
+}
+
 .selectedCue {
   background: color-mix(in srgb, var(--cue-color) 20%, #000000);
   box-shadow: inset 0 0 0 1px var(--cue-color);
@@ -136,6 +165,9 @@
 
 .cue span,
 .selectedCue span {
+  justify-self: start;
+  border: 1px solid currentColor;
+  padding: 2px 5px;
   font-size: 0.72rem;
   text-transform: uppercase;
 }
@@ -146,6 +178,158 @@
   font-size: 1rem;
   overflow-wrap: anywhere;
   text-transform: uppercase;
+}
+
+.cue small,
+.selectedCue small {
+  color: var(--cue-color);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.cueRuntimeControls {
+  display: grid;
+  grid-template-columns: minmax(78px, auto) minmax(78px, auto) minmax(58px, auto) minmax(110px, 1fr);
+  gap: 5px;
+}
+
+.cueRuntimeControls button {
+  min-height: 34px;
+  border: 1px solid #3f3f3f;
+  background: #050505;
+  color: #d7d7d7;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.cueRuntimeControls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.cueRuntimeControls .loopActive {
+  border-color: var(--cue-color);
+  background: color-mix(in srgb, var(--cue-color) 18%, #000000);
+  color: var(--cue-color);
+}
+
+.cueRuntimeControls label {
+  display: grid;
+  grid-template-columns: auto minmax(50px, 1fr);
+  gap: 5px;
+  align-items: center;
+  color: #bdbdbd;
+  font-size: 0.64rem;
+}
+
+.cueRuntimeControls input {
+  width: 100%;
+}
+
+.stopAllButton {
+  width: 100%;
+  min-height: 54px;
+  border: 2px solid #ff6f91;
+  background: #2b0710;
+  color: #ffb4c6;
+  cursor: pointer;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.stopAllButton:hover,
+.stopAllButton:focus-visible {
+  background: #ff6f91;
+  color: #000000;
+  outline: 0;
+}
+
+.embeddedSampler {
+  display: grid;
+  gap: 12px;
+  border: 1px solid #454545;
+  background: #0b0b0b;
+  color: #ffffff;
+  padding: 14px;
+  font-family: "Courier New", Courier, monospace;
+}
+
+.embeddedHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.embeddedHeader span {
+  color: #ff9eb6;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.embeddedHeader h2 {
+  margin: 4px 0 0;
+  color: #ffffff;
+  font-size: 1.15rem;
+}
+
+.embeddedHeader p {
+  margin: 6px 0 0;
+  color: #bdbdbd;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.embeddedHeader strong {
+  flex: 0 0 auto;
+  color: #9cffbd;
+  font-size: 0.68rem;
+}
+
+.embeddedSampler .cueGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.embeddedSampler .cue,
+.embeddedSampler .selectedCue {
+  min-height: 86px;
+}
+
+.embeddedSampler .cueRuntimeControls {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.embeddedSampler .cueRuntimeControls label {
+  grid-column: 1 / -1;
+}
+
+.embeddedEditor {
+  border-top: 1px solid #303030;
+  padding-top: 10px;
+}
+
+.embeddedEditor summary {
+  color: #9cffbd;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.embeddedEditorBody {
+  display: grid;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+@keyframes cuePlayingPulse {
+  to {
+    box-shadow: inset 0 0 0 1px var(--cue-color), 0 0 14px color-mix(in srgb, var(--cue-color) 28%, transparent);
+  }
 }
 
 .cueStop {
@@ -302,5 +486,15 @@
 
   .header {
     display: grid;
+  }
+
+  .embeddedSampler .cueGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .playingCue {
+    animation: none;
   }
 }

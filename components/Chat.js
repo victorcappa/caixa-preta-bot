@@ -1,17 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import DisplayBlackout from "./DisplayBlackout";
 import InstagramBrowserPanel from "./InstagramBrowserPanel";
+import { setSharedInstagramPanelVisible } from "@/lib/instagram/panelClient";
 import GlitchOverlay from "./GlitchOverlay";
 import OperatorConsole from "./OperatorConsole";
 import PerformanceLayer from "./PerformanceLayer";
-import Terminal from "./Terminal";
+import SceneZeroProjectionLayer from "./SceneZeroProjectionLayer";
 import styles from "./Chat.module.css";
+import { PUBLIC_TYPE_INTERVAL_MS } from "@/lib/messageTiming";
+import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
+import { subscribePublicRealtime } from "@/lib/publicRealtime";
 
 const INTRO_READY_TEXT = "TEM ALGUEM AI?";
 const INTRO_DOTS_TEXT = "...";
-const TYPE_INTERVAL_MS = 42;
+const TYPE_INTERVAL_MS = PUBLIC_TYPE_INTERVAL_MS;
 const DEFAULT_OPERATOR_WIDTH = 520;
 const DEFAULT_INSTAGRAM_WIDTH = 520;
 const DEFAULT_INSTAGRAM_HEIGHT = 480;
@@ -31,6 +35,8 @@ function storedNumber(key, fallback) {
 
 export default function Chat() {
   const [messages, setMessages] = useState([]);
+  const [publicMessage, setPublicMessage] = useState(null);
+  const [audienceWarmup, setAudienceWarmup] = useState(null);
   const [typedReplies, setTypedReplies] = useState({});
   const [introText, setIntroText] = useState("");
   const [introDotsText, setIntroDotsText] = useState("");
@@ -46,7 +52,9 @@ export default function Chat() {
   const [game, setGame] = useState(null);
   const [suitcase, setSuitcase] = useState(null);
   const [glitch, setGlitch] = useState(null);
+  const [robotSound, setRobotSound] = useState(null);
   const [displayBlackout, setDisplayBlackout] = useState(null);
+  const [sceneZero, setSceneZero] = useState(null);
   const [introStep, setIntroStep] = useState("cursor");
   const [manualOpen, setManualOpen] = useState(false);
   const [operatorMounted, setOperatorMounted] = useState(false);
@@ -61,10 +69,40 @@ export default function Chat() {
   const initializedMessagesRef = useRef(false);
   const seenMessageIdsRef = useRef(new Set());
   const typingTimersRef = useRef(new Map());
+  const typingQueueRef = useRef([]);
+  const concurrentTypingRef = useRef(false);
+  const drainTypingQueueRef = useRef(null);
   const introTimerRef = useRef(null);
   const introDotsTimerRef = useRef(null);
   const chatRequestControllerRef = useRef(null);
   const stoppedTypingIdsRef = useRef(new Set());
+  const notifiedTypedIdsRef = useRef(new Set());
+  const soundOutputResetSequenceRef = useRef(null);
+
+  const notifySceneZeroMessageTyped = useCallback((messageId) => {
+    if (!messageId || notifiedTypedIdsRef.current.has(messageId)) return;
+    notifiedTypedIdsRef.current.add(messageId);
+
+    const send = async (attempt = 0) => {
+      try {
+        const response = await fetch("/api/scene-zero", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "message-typed", messageId }),
+          keepalive: true
+        });
+        if (!response.ok) throw new Error("scene-zero timing ack failed");
+      } catch {
+        if (attempt < 2) {
+          window.setTimeout(() => send(attempt + 1), 500 * (attempt + 1));
+          return;
+        }
+        notifiedTypedIdsRef.current.delete(messageId);
+      }
+    };
+
+    send();
+  }, []);
 
   useEffect(() => {
     function hydrateInitialMessages(nextMessages) {
@@ -82,32 +120,14 @@ export default function Chat() {
       initializedMessagesRef.current = true;
     }
 
-    fetch("/api/state")
-      .then((response) => response.json())
-      .then((data) => {
-        setPerformanceEvents(data.performance?.events || []);
-        setPerformanceActivities(data.performance?.activities || []);
-        setPhoneProjection(data.performance?.phoneProjection || { status: "hidden" });
-        setInstagram(data.instagram || { status: "DISCONNECTED", embedded: true });
-        setGame(data.game || null);
-        setSuitcase(data.suitcase || null);
-        setGlitch(data.glitch || null);
-        setDisplayBlackout(data.displayBlackout || null);
-
-        if (!initializedMessagesRef.current) {
-          hydrateInitialMessages(data.conversation || []);
-          return;
-        }
-
-        setMessages(data.conversation || []);
-      })
-      .catch(() => setStatus("DISCONNECTED"));
-
-    const events = new EventSource("/api/events?client=chat");
-    events.onopen = () => setStatus("CONNECTED");
-    events.onerror = () => setStatus("DISCONNECTED");
-    events.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
+    return subscribePublicRealtime((payload) => {
+      if (payload.event?.type === "stop-all") {
+        window.dispatchEvent(new CustomEvent("caixa-preta:stopall"));
+        return;
+      }
+      if (payload.event?.type === "reset") {
+        robotSoundEngine.stopAll();
+      }
       if (payload.event?.type === "baralho-morbido" || payload.event?.type === "baralho-morbido-display") {
         return;
       }
@@ -120,7 +140,11 @@ export default function Chat() {
         setGame(payload.state.game || null);
         setSuitcase(payload.state.suitcase || null);
         setGlitch(payload.state.glitch || null);
+        setRobotSound(payload.state.robotSound || null);
         setDisplayBlackout(payload.state.displayBlackout || null);
+        setSceneZero(payload.state.sceneZero || null);
+        setAudienceWarmup(payload.state.audienceWarmup || null);
+        setPublicMessage(payload.state.publicMessage || [...(payload.state.conversation || [])].reverse().find((message) => message.role === "assistant") || null);
         hydrateInitialMessages(payload.state.conversation || []);
         return;
       }
@@ -133,10 +157,12 @@ export default function Chat() {
       setGame(payload.state.game || null);
       setSuitcase(payload.state.suitcase || null);
       setGlitch(payload.state.glitch || null);
+      setRobotSound(payload.state.robotSound || null);
       setDisplayBlackout(payload.state.displayBlackout || null);
-    };
-
-    return () => events.close();
+      setSceneZero(payload.state.sceneZero || null);
+      setAudienceWarmup(payload.state.audienceWarmup || null);
+      setPublicMessage(payload.state.publicMessage || null);
+    }, (nextStatus) => setStatus(nextStatus === "connected" ? "CONNECTED" : "DISCONNECTED"));
   }, []);
 
   useEffect(() => {
@@ -144,6 +170,37 @@ export default function Chat() {
     setInstagramWidth(storedNumber("caixa-preta.instagramWidth", DEFAULT_INSTAGRAM_WIDTH));
     setInstagramHeight(storedNumber("caixa-preta.instagramHeight", DEFAULT_INSTAGRAM_HEIGHT));
   }, []);
+
+  useEffect(() => robotSoundEngine.armAutoUnlock(), []);
+
+  useEffect(() => robotSoundEngine.armAudioRelay(), []);
+
+  useEffect(() => {
+    if (!robotSound) return;
+
+    robotSoundEngine.setSettings(robotSound);
+    const resetSequence = Number(robotSound.outputResetSequence || 0);
+    if (soundOutputResetSequenceRef.current !== null && resetSequence !== soundOutputResetSequenceRef.current) {
+      void robotSoundEngine.reconnectOutput();
+    }
+    soundOutputResetSequenceRef.current = resetSequence;
+  }, [robotSound]);
+
+  useEffect(() => {
+    robotSoundEngine.setGlitch(glitch || {});
+  }, [glitch]);
+
+  const browserProcessing = ["STARTING", "NAVIGATING", "ACTING"].includes(instagram.status);
+  const informationProcessing = pending || performancePending || browserProcessing;
+
+  useEffect(() => {
+    if (informationProcessing) {
+      robotSoundEngine.startThinking();
+    } else {
+      robotSoundEngine.stopThinking();
+    }
+    return () => robotSoundEngine.stopThinking();
+  }, [informationProcessing]);
 
   useEffect(() => {
     if (!manualOpen) {
@@ -167,27 +224,87 @@ export default function Chat() {
   }, [instagram.status]);
 
   useEffect(() => {
-    if (game?.id !== "verdade_ou_bolo" || !game.active) {
-      return;
+    if (instagram.embeddedPanelSequence > 0) {
+      setInstagramPanelClosed(false);
     }
+  }, [instagram.embeddedPanelSequence]);
 
-    setOperatorMounted(true);
-    requestAnimationFrame(() => setOperatorOpen(true));
-  }, [game?.id, game?.active]);
+  useEffect(() => {
+    if (instagram.embeddedPanelVisible === false) setInstagramPanelClosed(true);
+    if (instagram.embeddedPanelVisible === true) setInstagramPanelClosed(false);
+  }, [instagram.embeddedPanelVisible]);
+
+  useEffect(() => {
+    if (instagram.browserMode !== "google_guidance") return;
+    const halfScreen = Math.round(window.innerWidth / 2);
+    setInstagramWidth(halfScreen);
+  }, [instagram.browserMode]);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ block: "end" });
   }, [messages, pending, introStep, introDotsText, introText, typedReplies]);
 
+  const startTypingMessage = useCallback((message) => {
+    if (!message?.id || typingTimersRef.current.has(message.id)) {
+      return;
+    }
+
+    setTypedReplies((current) => ({ ...current, [message.id]: "" }));
+    robotSoundEngine.wake();
+    let index = 0;
+    const timer = setInterval(() => {
+      index += 1;
+      setTypedReplies((current) => ({
+        ...current,
+        [message.id]: message.content.slice(0, index)
+      }));
+      robotSoundEngine.typing(message.content[index - 1]);
+
+      if (index >= message.content.length) {
+        clearInterval(timer);
+        typingTimersRef.current.delete(message.id);
+        robotSoundEngine.complete();
+        robotSoundEngine.success();
+        if (["scene-zero-collection", "scene-zero-roulette", "scene-zero-cake-comment"].includes(message.source)) {
+          notifySceneZeroMessageTyped(message.id);
+        }
+        drainTypingQueueRef.current?.();
+      }
+    }, TYPE_INTERVAL_MS);
+
+    typingTimersRef.current.set(message.id, timer);
+  }, [notifySceneZeroMessageTyped]);
+
+  const drainTypingQueue = useCallback(() => {
+    if (concurrentTypingRef.current) {
+      while (typingQueueRef.current.length) {
+        startTypingMessage(typingQueueRef.current.shift());
+      }
+      return;
+    }
+
+    if (typingTimersRef.current.size === 0 && typingQueueRef.current.length > 0) {
+      startTypingMessage(typingQueueRef.current.shift());
+    }
+  }, [startTypingMessage]);
+
   useEffect(() => {
+    drainTypingQueueRef.current = drainTypingQueue;
+  }, [drainTypingQueue]);
+
+  useEffect(() => {
+    concurrentTypingRef.current = ["glitch", "collapse"].includes(sceneZero?.stage);
+
     if (initializedMessagesRef.current && messages.length === 0) {
       for (const timer of typingTimersRef.current.values()) {
         clearInterval(timer);
       }
 
       typingTimersRef.current.clear();
+      typingQueueRef.current = [];
       seenMessageIdsRef.current.clear();
       stoppedTypingIdsRef.current.clear();
+      notifiedTypedIdsRef.current.clear();
       setTypedReplies({});
     }
 
@@ -195,39 +312,52 @@ export default function Chat() {
       return undefined;
     }
 
-    for (const message of messages) {
-      if (seenMessageIdsRef.current.has(message.id)) {
-        continue;
+    const message = publicMessage;
+    if (!message && messages.length > 0) {
+      for (const [messageId, timer] of typingTimersRef.current.entries()) {
+        clearInterval(timer);
+        stoppedTypingIdsRef.current.add(messageId);
       }
-
+      typingTimersRef.current.clear();
+      typingQueueRef.current = [];
+      robotSoundEngine.complete();
+    }
+    if (message?.role === "assistant" && !seenMessageIdsRef.current.has(message.id)) {
+      for (const [messageId, timer] of typingTimersRef.current.entries()) {
+        clearInterval(timer);
+        stoppedTypingIdsRef.current.add(messageId);
+      }
+      typingTimersRef.current.clear();
+      typingQueueRef.current = [];
       seenMessageIdsRef.current.add(message.id);
       stoppedTypingIdsRef.current.delete(message.id);
-
-      if (message.role !== "assistant") {
-        continue;
-      }
-
-      setTypedReplies((current) => ({ ...current, [message.id]: "" }));
-
-      let index = 0;
-      const timer = setInterval(() => {
-        index += 1;
-        setTypedReplies((current) => ({
-          ...current,
-          [message.id]: message.content.slice(0, index)
-        }));
-
-        if (index >= message.content.length) {
-          clearInterval(timer);
-          typingTimersRef.current.delete(message.id);
-        }
-      }, TYPE_INTERVAL_MS);
-
-      typingTimersRef.current.set(message.id, timer);
+      typingQueueRef.current.push(message);
     }
 
+    drainTypingQueue();
     return undefined;
-  }, [messages]);
+  }, [drainTypingQueue, messages, publicMessage, sceneZero?.stage]);
+
+  useEffect(() => {
+    const waitingMessageIds = [
+      sceneZero?.participantSelection?.status === "awaiting_invite"
+        ? sceneZero.participantSelection.inviteMessageId
+        : null,
+      sceneZero?.collection?.activeCountdown?.status === "awaiting_message"
+        ? sceneZero.collection.activeCountdown.messageId
+        : null,
+      game?.id === "verdade_ou_bolo" && ["REVEAL", "ROUND_RESULT"].includes(game?.data?.state)
+        ? [...messages].reverse().find((message) => message.source === "scene-zero-cake-comment")?.id
+        : null
+    ].filter(Boolean);
+
+    for (const messageId of waitingMessageIds) {
+      const message = messages.find((candidate) => candidate.id === messageId);
+      if (message && typedReplies[messageId] === message.content) {
+        notifySceneZeroMessageTyped(messageId);
+      }
+    }
+  }, [game?.data?.state, game?.id, messages, notifySceneZeroMessageTyped, sceneZero, typedReplies]);
 
   useEffect(() => {
     const typingTimers = typingTimersRef.current;
@@ -236,10 +366,12 @@ export default function Chat() {
       for (const timer of typingTimers.values()) {
         clearInterval(timer);
       }
+      typingQueueRef.current = [];
 
       clearInterval(introTimerRef.current);
       clearInterval(introDotsTimerRef.current);
       chatRequestControllerRef.current?.abort();
+      robotSoundEngine.stopAll();
     };
   }, []);
 
@@ -254,8 +386,10 @@ export default function Chat() {
       }
 
       typingTimersRef.current.clear();
+      typingQueueRef.current = [];
       clearInterval(introTimerRef.current);
       clearInterval(introDotsTimerRef.current);
+      robotSoundEngine.stopAll();
       setPending(false);
     }
 
@@ -299,6 +433,7 @@ export default function Chat() {
     introDotsTimerRef.current = setInterval(() => {
       index += 1;
       setIntroDotsText(INTRO_DOTS_TEXT.slice(0, index));
+      robotSoundEngine.typing(INTRO_DOTS_TEXT[index - 1]);
 
       if (index >= INTRO_DOTS_TEXT.length) {
         clearInterval(introDotsTimerRef.current);
@@ -320,15 +455,18 @@ export default function Chat() {
     }
 
     setIntroText("");
+    robotSoundEngine.wake();
 
     let index = 0;
     introTimerRef.current = setInterval(() => {
       index += 1;
       setIntroText(INTRO_READY_TEXT.slice(0, index));
+      robotSoundEngine.typing(INTRO_READY_TEXT[index - 1]);
 
       if (index >= INTRO_READY_TEXT.length) {
         clearInterval(introTimerRef.current);
         introTimerRef.current = null;
+        robotSoundEngine.complete();
       }
     }, TYPE_INTERVAL_MS);
 
@@ -368,6 +506,7 @@ export default function Chat() {
     } catch (requestError) {
       if (requestError.name !== "AbortError") {
         setError(requestError.message);
+        robotSoundEngine.error();
       }
     } finally {
       if (chatRequestControllerRef.current === controller) {
@@ -533,7 +672,8 @@ export default function Chat() {
     !stoppedTypingIdsRef.current.has(message.id)
   ));
   const machineBusy = pending || performancePending || Boolean(activeTypingAssistant);
-  const footer = (
+  const bootStandby = !sceneZero || sceneZero.unlock?.status === "STANDBY";
+  const publicInput = (
     <form className={styles.form} onSubmit={submitMessage}>
       <span aria-hidden="true">&gt;</span>
       <input
@@ -554,8 +694,15 @@ export default function Chat() {
       event.source !== "agent" || new Date(event.createdAt).getTime() < activeTypingStartedAt
     ))
     : performanceEvents;
-  const visibleInstagramPanel = instagram?.embedded && instagram.status && instagram.status !== "DISCONNECTED" && !instagramPanelClosed;
+  const visibleInstagramPanel = instagram?.embedded
+    && instagram.status
+    && instagram.status !== "DISCONNECTED"
+    && instagram.embeddedPanelVisible !== false
+    && !instagramPanelClosed;
   const instagramPanelKey = [
+    instagram?.browserMode || "instagram",
+    instagram?.research?.person || "",
+    instagram?.research?.step || "",
     instagram?.targetProfile || instagram?.account || "instagram",
     instagram?.status || "DISCONNECTED",
     instagram?.currentUrl || "",
@@ -571,7 +718,7 @@ export default function Chat() {
   return (
     <GlitchOverlay glitch={glitch}>
       <div
-        className={`${styles.workspace} ${operatorOpen ? styles.workspaceWithOperator : ""}`}
+        className={`${styles.workspace} ${operatorOpen ? styles.workspaceWithOperator : ""} ${bootStandby ? styles.bootStandby : ""}`}
         ref={workspaceRef}
         style={layoutStyle}
       >
@@ -668,11 +815,12 @@ export default function Chat() {
       ) : null}
 
       <section
-        className={`${styles.chatPane} ${visibleInstagramPanel ? styles.chatPaneWithInstagram : ""}`}
+        className={`${styles.chatPane} ${visibleInstagramPanel ? styles.chatPaneWithInstagram : ""} ${game?.id === "verdade_ou_bolo" && game.active ? styles.chatPaneWithGame : ""}`}
         aria-label="Chat publico"
         ref={chatPaneRef}
       >
         <DisplayBlackout blackout={displayBlackout} target="chatbot" />
+        <SceneZeroProjectionLayer sceneZero={sceneZero} />
         <PerformanceLayer
           activities={performanceActivities}
           events={visiblePerformanceEvents}
@@ -682,13 +830,13 @@ export default function Chat() {
           phoneProjection={phoneProjection}
         />
 
-        <Terminal title="CAIXA PRETA" footer={footer} className={styles.embeddedTerminal}>
-          <div className={styles.messages}>
-            {messages.length === 0 && introStep === "cursor" ? (
+        <main className={styles.publicStage} aria-label="Fala atual da Caixa Preta">
+          <div className={styles.currentMessage}>
+            {!publicMessage && messages.length === 0 && introStep === "cursor" ? (
               <p className={styles.introCursor}>&gt; <span>_</span></p>
             ) : null}
 
-            {messages.length === 0 && introStep === "dots" ? (
+            {!publicMessage && messages.length === 0 && introStep === "dots" ? (
               <p className={styles.introDots}>
                 &gt; {introDotsText}
                 {introDotsText !== INTRO_DOTS_TEXT ? (
@@ -697,7 +845,7 @@ export default function Chat() {
               </p>
             ) : null}
 
-            {messages.length === 0 && introStep === "ready" ? (
+            {!publicMessage && messages.length === 0 && introStep === "ready" ? (
               <p className={styles.machine}>
                 &gt; {introText}
                 {introText !== INTRO_READY_TEXT ? (
@@ -706,24 +854,29 @@ export default function Chat() {
               </p>
             ) : null}
 
-            {messages.map((message) => (
-              <p
-                className={message.role === "assistant" ? styles.machine : styles.public}
-                key={message.id}
-              >
-                <span>{message.role === "assistant" ? ">" : "PUBLICO >"}</span>{" "}
-                {message.role === "assistant" ? typedReplies[message.id] ?? "" : message.content}
-                {message.role === "assistant" && typedReplies[message.id] !== message.content ? (
-                  <span className={styles.replyCursor} aria-hidden="true">_</span>
+            {publicMessage ? (
+              <div className={styles.messageFrame} key={publicMessage.id}>
+                {audienceWarmup?.display?.messageId === publicMessage.id ? (
+                  <div className={styles.actionCue}>
+                    <span aria-hidden="true">{audienceWarmup.display.icon}</span>
+                    <small>{audienceWarmup.display.actionLabel}</small>
+                  </div>
                 ) : null}
-              </p>
-            ))}
+                <p className={`${styles.machine} ${publicMessage.content.length > 180 ? styles.machineLong : publicMessage.content.length > 95 ? styles.machineMedium : ""}`}>
+                  {typedReplies[publicMessage.id] ?? ""}
+                  {typedReplies[publicMessage.id] !== publicMessage.content ? (
+                    <span className={styles.replyCursor} aria-hidden="true">_</span>
+                  ) : null}
+                </p>
+              </div>
+            ) : null}
 
-            {pending ? <p className={styles.machine}>&gt; _</p> : null}
+            {pending && !publicMessage ? <p className={styles.machine}>_</p> : null}
             {error ? <p className={styles.error}>&gt; {error}</p> : null}
             <div ref={scrollRef} />
           </div>
-        </Terminal>
+          <footer className={styles.publicInput}>{publicInput}</footer>
+        </main>
         {visibleInstagramPanel ? (
           <>
             <div
@@ -738,7 +891,14 @@ export default function Chat() {
             <InstagramBrowserPanel
               key={instagramPanelKey}
               instagram={instagram}
-              onClose={() => setInstagramPanelClosed(true)}
+              onClose={async () => {
+                setInstagramPanelClosed(true);
+                try {
+                  await setSharedInstagramPanelVisible(false);
+                } catch {
+                  setInstagramPanelClosed(false);
+                }
+              }}
             />
           </>
         ) : null}

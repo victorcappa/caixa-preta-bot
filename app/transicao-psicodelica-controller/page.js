@@ -9,7 +9,7 @@ export const metadata = {
 export default function TransicaoPsicodelicaControllerPage() {
   return (
     <ControllerSurface>
-      <EditableCueController controllerId="transicao-psicodelica" />
+      <EditableCueController controllerId="transicao-psicodelica" showAudioEffects />
     </ControllerSurface>
   );
 }

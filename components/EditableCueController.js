@@ -1,6 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import {
+  attachSceneAudioEffects,
+  detachSceneAudioEffects,
+  fadeOutMedia,
+  updateSceneAudioEffects
+} from "@/lib/sceneAudioGraph";
+import { normalizeSceneAudioEffects, SCENE_AUDIO_EFFECT_DEFAULTS } from "@/lib/sceneAudioEffects";
+import { GLOBAL_VOLUME_EVENT, readStoredGlobalVolume } from "@/lib/globalVolume";
+import { nextSceneOneSampleShortcut } from "@/lib/sceneOneSampleShortcuts";
+import SceneAudioEffectsControls from "./SceneAudioEffectsControls";
 import styles from "./EditableCueController.module.css";
 
 const EMPTY_ASSETS = { audio: [], video: [], image: [] };
@@ -48,17 +58,25 @@ function shortcutMatches(event, shortcut = "") {
   return event.key.toLowerCase() === normalized;
 }
 
-function createCue(allowedTypes, colors) {
+function createCue(allowedTypes, colors, shortcut = "") {
   return {
     id: crypto.randomUUID(),
     label: "Novo Botão",
-    shortcut: "",
+    shortcut,
     type: allowedTypes[0] || "audio",
     assetPath: "",
     durationMs: 0,
+    loop: false,
+    volume: 1,
+    audioEffects: normalizeSceneAudioEffects(SCENE_AUDIO_EFFECT_DEFAULTS),
     color: colors[0] || "#00ff66",
     text: ""
   };
+}
+
+function cueLabelFromAssetPath(assetPath = "") {
+  const filename = assetPath.split("/").pop() || "Novo Botão";
+  return filename.replace(/\.[^.]+$/, "") || "Novo Botão";
 }
 
 async function fetchCueConfig(controllerId) {
@@ -77,7 +95,7 @@ async function saveCueConfig(controllerId, config) {
   return { response, data };
 }
 
-async function postSceneCue(controllerId, action, cue = null) {
+async function postSceneCue(controllerId, action, cue = null, extra = {}) {
   const response = await fetch("/api/controller-cues/play", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -85,14 +103,23 @@ async function postSceneCue(controllerId, action, cue = null) {
       controllerId,
       action,
       cue,
-      cueId: cue?.id || ""
+      cueId: cue?.id || extra.cueId || "",
+      ...extra
     })
   });
   const data = await response.json();
   return { response, data };
 }
 
-export default function EditableCueController({ controllerId, renderStageOverlay = null }) {
+const EditableCueController = forwardRef(function EditableCueController({
+  controllerId,
+  embedded = false,
+  importDirectory = "",
+  importType = "audio",
+  onSelectedCueChange = null,
+  renderStageOverlay = null,
+  showAudioEffects = false
+}, ref) {
   const [config, setConfig] = useState(null);
   const [assets, setAssets] = useState(EMPTY_ASSETS);
   const [colors, setColors] = useState(["#00ff66"]);
@@ -100,11 +127,67 @@ export default function EditableCueController({ controllerId, renderStageOverlay
   const [preview, setPreview] = useState(null);
   const [status, setStatus] = useState("CONNECTING");
   const [saving, setSaving] = useState(false);
+  const [playingCueIds, setPlayingCueIds] = useState([]);
+  const [globalVolume, setGlobalVolume] = useState(1);
   const [editorWidth, setEditorWidth] = useState(DEFAULT_EDITOR_WIDTH);
-  const audioRef = useRef(null);
+  const audioInstancesRef = useRef(new Map());
+  const previewMediaRef = useRef(null);
   const clearPreviewRef = useRef(null);
+  const publicCueRequestRef = useRef(Promise.resolve());
+  const effectsSaveRequestRef = useRef(Promise.resolve());
   const screenRef = useRef(null);
   const triggerCueRef = useRef(null);
+  const toggleSelectedLoopRef = useRef(null);
+
+  useEffect(() => {
+    setGlobalVolume(readStoredGlobalVolume());
+    function onGlobalVolume(event) {
+      setGlobalVolume(Number(event.detail));
+    }
+    window.addEventListener(GLOBAL_VOLUME_EVENT, onGlobalVolume);
+    return () => window.removeEventListener(GLOBAL_VOLUME_EVENT, onGlobalVolume);
+  }, []);
+
+  useEffect(() => {
+    for (const instance of audioInstancesRef.current.values()) {
+      instance.audio.volume = clamp(instance.cueVolume * globalVolume, 0, 1);
+    }
+  }, [globalVolume]);
+
+  function syncPlayingCueIds() {
+    const cueIds = new Set();
+    for (const instance of audioInstancesRef.current.values()) {
+      cueIds.add(instance.cueId);
+    }
+    setPlayingCueIds([...cueIds]);
+  }
+
+  function releaseAudioInstance(playbackId, { notifyProjection = false } = {}) {
+    const instance = audioInstancesRef.current.get(playbackId);
+    if (!instance) {
+      return;
+    }
+
+    window.clearTimeout(instance.timeoutId);
+    instance.fadeCancel?.();
+    instance.audio.pause();
+    detachSceneAudioEffects(instance.audio);
+    instance.audio.removeAttribute("src");
+    audioInstancesRef.current.delete(playbackId);
+    syncPlayingCueIds();
+
+    if (notifyProjection) {
+      void enqueuePublicCue("stop-instance", null, { playbackId });
+    }
+  }
+
+  function stopLocalCue(cueId = "") {
+    for (const [playbackId, instance] of audioInstancesRef.current.entries()) {
+      if (!cueId || instance.cueId === cueId) {
+        releaseAudioInstance(playbackId);
+      }
+    }
+  }
 
   useEffect(() => {
     setEditorWidth(storedEditorWidth(controllerId));
@@ -134,13 +217,64 @@ export default function EditableCueController({ controllerId, renderStageOverlay
 
     return () => {
       active = false;
+      stopLocalCue();
     };
+    // Audio instances belong to this mounted controller only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [controllerId]);
 
   const cues = useMemo(() => config?.cues || [], [config?.cues]);
   const selectedCue = cues.find((cue) => cue.id === selectedCueId) || cues[0] || null;
   const allowedTypes = useMemo(() => config?.allowedTypes || ["audio"], [config?.allowedTypes]);
+  const playingCueIdSet = useMemo(() => new Set(playingCueIds), [playingCueIds]);
   triggerCueRef.current = triggerCue;
+  toggleSelectedLoopRef.current = () => {
+    if (selectedCue?.type === "audio") {
+      updateAudioRuntime(selectedCue, { loop: !selectedCue.loop });
+      setStatus(`LOOP ${selectedCue.loop ? "OFF" : "ON"} — ${selectedCue.label}`);
+    }
+  };
+
+  useEffect(() => {
+    onSelectedCueChange?.(selectedCue);
+  }, [onSelectedCueChange, selectedCue]);
+
+  function updateCueAudioEffects(cueId, settings, { persist = false } = {}) {
+    if (!config || !cueId) return Promise.resolve(null);
+    const normalized = normalizeSceneAudioEffects(settings);
+    const nextConfig = {
+      ...config,
+      cues: config.cues.map((cue) => cue.id === cueId
+        ? { ...cue, audioEffects: normalized }
+        : cue)
+    };
+    setConfig(nextConfig);
+
+    for (const instance of audioInstancesRef.current.values()) {
+      if (instance.cueId !== cueId) continue;
+      if (!updateSceneAudioEffects(instance.audio, normalized) && normalized.enabled) {
+        void attachSceneAudioEffects(instance.audio, normalized);
+      }
+    }
+    void enqueuePublicCue("update-audio", null, {
+      cueId,
+      patch: { audioEffects: normalized }
+    });
+
+    if (!persist) return Promise.resolve(normalized);
+    const request = effectsSaveRequestRef.current
+      .catch(() => {})
+      .then(() => saveCueConfig(controllerId, nextConfig))
+      .then(({ response, data }) => {
+        if (!response.ok) throw new Error(data.error || "EFFECT SAVE ERROR");
+        setStatus("EFEITOS SALVOS");
+        return data.config;
+      });
+    effectsSaveRequestRef.current = request.catch(() => {});
+    return request;
+  }
+
+  useImperativeHandle(ref, () => ({ updateCueAudioEffects }));
 
   const availableAssets = useMemo(() => {
     const grouped = {};
@@ -150,9 +284,23 @@ export default function EditableCueController({ controllerId, renderStageOverlay
     return grouped;
   }, [allowedTypes, assets]);
 
+  const availableAssetPaths = useMemo(() => new Set(
+    Object.values(assets).flat().map((asset) => asset.path)
+  ), [assets]);
+
+  function cueHasFile(cue) {
+    return cue.type === "text" || (Boolean(cue.assetPath) && availableAssetPaths.has(cue.assetPath));
+  }
+
   useEffect(() => {
     function handleKeydown(event) {
-      if (isTypingTarget(event.target)) {
+      if (event.defaultPrevented || isTypingTarget(event.target)) {
+        return;
+      }
+
+      if (event.key.toLowerCase() === "l" && !event.metaKey && !event.ctrlKey && !event.altKey) {
+        event.preventDefault();
+        toggleSelectedLoopRef.current?.();
         return;
       }
 
@@ -178,7 +326,8 @@ export default function EditableCueController({ controllerId, renderStageOverlay
   }
 
   function addCue() {
-    const cue = createCue(allowedTypes, colors);
+    const shortcut = controllerId === "queda-aviao-sampler" ? nextSceneOneSampleShortcut(cues) : "";
+    const cue = createCue(allowedTypes, colors, shortcut);
     setConfig((current) => ({
       ...current,
       cues: [...current.cues, cue]
@@ -195,7 +344,7 @@ export default function EditableCueController({ controllerId, renderStageOverlay
       ...selectedCue,
       id: crypto.randomUUID(),
       label: `${selectedCue.label} copia`,
-      shortcut: ""
+      shortcut: controllerId === "queda-aviao-sampler" ? nextSceneOneSampleShortcut(cues) : ""
     };
 
     setConfig((current) => ({
@@ -221,30 +370,70 @@ export default function EditableCueController({ controllerId, renderStageOverlay
   function triggerCue(cue) {
     window.clearTimeout(clearPreviewRef.current);
     setSelectedCueId(cue.id);
-    setStatus(`PLAY ${cue.label}`);
-
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
 
     const src = assetSrc(cue.assetPath);
+    if (cue.type !== "text" && !cueHasFile(cue)) {
+      setStatus(`SEM ARQUIVO — ${cue.label}`);
+      return;
+    }
+
+    setStatus(`PLAY ${cue.label}`);
+
+    if (cue.type !== "audio" && previewMediaRef.current) {
+      previewMediaRef.current.pause();
+    }
+
     setPreview({ ...cue, src, sequence: crypto.randomUUID() });
-    void triggerPublicCue(cue);
 
     if (cue.type === "audio" && src) {
+      const existingLoop = [...audioInstancesRef.current.values()].find((instance) => (
+        instance.cueId === cue.id && instance.audio.loop
+      ));
+
+      if (cue.loop && existingLoop) {
+        setStatus(`LOOP JÁ TOCANDO — ${cue.label}`);
+        return;
+      }
+
+      const playbackId = crypto.randomUUID();
       const audio = new Audio(src);
-      audioRef.current = audio;
-      audio.play().catch(() => setStatus("AUDIO PLAY BLOCKED"));
+      audio.loop = Boolean(cue.loop);
+      const cueVolume = clamp(Number(cue.volume ?? 1), 0, 1);
+      audio.volume = clamp(cueVolume * globalVolume, 0, 1);
+      const instance = { audio, cueId: cue.id, cueVolume, playbackId, timeoutId: null };
+      audioInstancesRef.current.set(playbackId, instance);
+      syncPlayingCueIds();
+
+      if (cue.audioEffects?.enabled) {
+        void attachSceneAudioEffects(audio, cue.audioEffects);
+      }
+
+      audio.addEventListener("ended", () => releaseAudioInstance(playbackId, { notifyProjection: true }), { once: true });
+      audio.addEventListener("error", () => {
+        releaseAudioInstance(playbackId, { notifyProjection: true });
+        setStatus(`AUDIO ERROR — ${cue.label}`);
+      }, { once: true });
+
+      if (cue.durationMs > 0) {
+        instance.timeoutId = window.setTimeout(
+          () => releaseAudioInstance(playbackId, { notifyProjection: true }),
+          cue.durationMs
+        );
+      }
+
+      audio.play().catch(() => {
+        releaseAudioInstance(playbackId);
+        setStatus("AUDIO PLAY BLOCKED");
+      });
+      void triggerPublicCue({ ...cue, playbackId });
+      return;
     }
+
+    void triggerPublicCue(cue);
 
     if (cue.durationMs > 0) {
       clearPreviewRef.current = window.setTimeout(() => {
         setPreview(null);
-        if (audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current = null;
-        }
       }, cue.durationMs);
     }
   }
@@ -252,9 +441,10 @@ export default function EditableCueController({ controllerId, renderStageOverlay
   function stopCue(cue) {
     window.clearTimeout(clearPreviewRef.current);
 
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
+    stopLocalCue(cue.id);
+
+    if (previewMediaRef.current) {
+      previewMediaRef.current.pause();
     }
 
     setPreview(null);
@@ -262,9 +452,61 @@ export default function EditableCueController({ controllerId, renderStageOverlay
     void stopPublicCue(cue);
   }
 
+  function fadeOutCue(cue) {
+    const instances = [...audioInstancesRef.current.entries()].filter(([, instance]) => instance.cueId === cue.id);
+    if (instances.length === 0) return;
+
+    setStatus(`FADE OUT — ${cue.label}`);
+    for (const [playbackId, instance] of instances) {
+      instance.fadeCancel?.();
+      instance.fadeCancel = fadeOutMedia(instance.audio, 2000, () => {
+        instance.fadeCancel = null;
+        releaseAudioInstance(playbackId);
+      });
+    }
+    void enqueuePublicCue("update-audio", null, {
+      cueId: cue.id,
+      patch: { fadeOutMs: 2000 }
+    });
+  }
+
+  function stopAllSamples() {
+    window.clearTimeout(clearPreviewRef.current);
+    stopLocalCue();
+    if (previewMediaRef.current) {
+      previewMediaRef.current.pause();
+    }
+    setPreview(null);
+    setStatus("SILÊNCIO — TODOS OS SAMPLES PARADOS");
+    void enqueuePublicCue("stop-all", null);
+  }
+
+  function updateAudioRuntime(cue, patch) {
+    updateCue(cue.id, patch);
+    for (const instance of audioInstancesRef.current.values()) {
+      if (instance.cueId !== cue.id) {
+        continue;
+      }
+      if (patch.loop !== undefined) {
+        instance.audio.loop = Boolean(patch.loop);
+      }
+      if (patch.volume !== undefined) {
+        instance.cueVolume = clamp(Number(patch.volume), 0, 1);
+        instance.audio.volume = clamp(instance.cueVolume * globalVolume, 0, 1);
+      }
+    }
+    void enqueuePublicCue("update-audio", null, { cueId: cue.id, patch });
+  }
+
+  function enqueuePublicCue(action, cue, extra = {}) {
+    const request = publicCueRequestRef.current.then(() => postSceneCue(controllerId, action, cue, extra));
+    publicCueRequestRef.current = request.catch(() => {});
+    return request;
+  }
+
   async function triggerPublicCue(cue) {
     try {
-      const { response, data } = await postSceneCue(controllerId, "play", cue);
+      const { response, data } = await enqueuePublicCue("play", cue);
 
       if (!response.ok) {
         setStatus(data.error || "PUBLIC CUE ERROR");
@@ -276,7 +518,7 @@ export default function EditableCueController({ controllerId, renderStageOverlay
 
   async function stopPublicCue(cue) {
     try {
-      const { response, data } = await postSceneCue(controllerId, "stop", cue);
+      const { response, data } = await enqueuePublicCue("stop", cue);
 
       if (!response.ok) {
         setStatus(data.error || "PUBLIC STOP ERROR");
@@ -372,6 +614,74 @@ export default function EditableCueController({ controllerId, renderStageOverlay
     }
   }
 
+  async function importFolderAssets() {
+    if (!config || !importDirectory || saving) {
+      return;
+    }
+
+    setSaving(true);
+    setStatus("LENDO PASTA...");
+
+    try {
+      const { response: refreshResponse, data: refreshData } = await fetchCueConfig(controllerId);
+
+      if (!refreshResponse.ok) {
+        setStatus(refreshData.error || "FOLDER READ ERROR");
+        return;
+      }
+
+      const normalizedDirectory = importDirectory.replace(/^\/+|\/+$/g, "");
+      const prefix = `${normalizedDirectory}/`;
+      const folderAssets = (refreshData.assets?.[importType] || []).filter((asset) => {
+        const relativePath = asset.path.startsWith(prefix) ? asset.path.slice(prefix.length) : "";
+        return relativePath && !relativePath.includes("/");
+      });
+      const existingPaths = new Set(config.cues.map((cue) => cue.assetPath).filter(Boolean));
+      const importedCues = folderAssets
+        .filter((asset) => !existingPaths.has(asset.path))
+        .reduce((result, asset, index) => {
+          const shortcut = controllerId === "queda-aviao-sampler"
+            ? nextSceneOneSampleShortcut([...config.cues, ...result])
+            : "";
+          result.push({
+            ...createCue([importType], colors, shortcut),
+            label: cueLabelFromAssetPath(asset.path),
+            type: importType,
+            assetPath: asset.path,
+            color: colors[(config.cues.length + index) % colors.length] || "#00ff66"
+          });
+          return result;
+        }, []);
+
+      setAssets(refreshData.assets || assets);
+
+      if (importedCues.length === 0) {
+        setStatus(`PASTA SINCRONIZADA — ${folderAssets.length} ARQUIVOS`);
+        return;
+      }
+
+      const nextConfig = { ...config, cues: [...config.cues, ...importedCues] };
+      const { response: saveResponse, data: saveData } = await saveCueConfig(controllerId, nextConfig);
+
+      if (!saveResponse.ok) {
+        setStatus(saveData.error || "FOLDER IMPORT ERROR");
+        return;
+      }
+
+      setConfig(saveData.config);
+      setAssets(saveData.assets || refreshData.assets || assets);
+      setColors(saveData.colors || colors);
+      setSelectedCueId(importedCues[0].id);
+      setStatus(importedCues.length === 1
+        ? "1 BOTÃO CRIADO DA PASTA"
+        : `${importedCues.length} BOTÕES CRIADOS DA PASTA`);
+    } catch {
+      setStatus("FOLDER IMPORT ERROR");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function uploadAsset(event) {
     const file = event.target.files?.[0];
 
@@ -408,99 +718,127 @@ export default function EditableCueController({ controllerId, renderStageOverlay
     }
   }
 
-  if (!config) {
+  function renderCueGrid() {
     return (
-      <main className={styles.screen}>
-        <p className={styles.loading}>{status}</p>
-      </main>
-    );
-  }
+      <section className={styles.cueGrid} aria-label="Botões de sample">
+        {cues.map((cue) => {
+          const playing = playingCueIdSet.has(cue.id);
+          const hasFile = cueHasFile(cue);
 
-  return (
-    <main
-      className={styles.screen}
-      ref={screenRef}
-      style={{ "--cue-editor-width": `${editorWidth}px` }}
-    >
-      <section className={styles.preview}>
-        <header className={styles.header}>
-          <div>
-            <span>CONTROLLER EDITÁVEL</span>
-            <h1>{config.title}</h1>
-            <p>{config.description}</p>
-          </div>
-          <strong>{status}</strong>
-        </header>
-
-        <div className={styles.stage}>
-          {preview?.type === "video" && preview.src ? (
-            <video key={preview.sequence} autoPlay className={styles.media} src={preview.src} />
-          ) : null}
-          {preview?.type === "image" && preview.src ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img alt="" className={styles.media} src={preview.src} />
-          ) : null}
-          {preview?.type === "audio" ? (
-            <div className={styles.audioPreview}>
-              <span style={{ color: preview.color }}>{preview.label}</span>
-              <small>{preview.assetPath || "SEM ARQUIVO"}</small>
-            </div>
-          ) : null}
-          {!preview ? <p>Selecione ou dispare um botão.</p> : null}
-          {renderStageOverlay ? <div className={styles.stageOverlay}>{renderStageOverlay()}</div> : null}
-        </div>
-
-        <section className={styles.cueGrid} aria-label="Botões de sample">
-          {cues.map((cue) => (
-            <div className={styles.cueItem} key={cue.id} style={{ "--cue-color": cue.color }}>
+          return (
+            <article
+              className={[styles.cueItem, playing ? styles.playingCueItem : ""].filter(Boolean).join(" ")}
+              key={cue.id}
+              style={{ "--cue-color": cue.color }}
+            >
               <button
-                className={cue.id === selectedCue?.id ? styles.selectedCue : styles.cue}
+                aria-label={`Tocar ${cue.label}`}
+                className={[
+                  cue.id === selectedCue?.id ? styles.selectedCue : styles.cue,
+                  playing ? styles.playingCue : ""
+                ].filter(Boolean).join(" ")}
+                disabled={!hasFile}
                 onClick={() => triggerCue(cue)}
                 type="button"
               >
-                <span>{cue.shortcut || "-"}</span>
+                <span>{cue.shortcut ? `TECLA ${cue.shortcut.toUpperCase()}` : "SEM ATALHO"}</span>
                 <strong>{cue.label}</strong>
+                <small>{hasFile ? (playing ? "TOCANDO" : "PLAY") : "SEM ARQUIVO"}</small>
               </button>
-              <button
-                aria-label={`Parar ${cue.label}`}
-                className={styles.cueStop}
-                onClick={() => stopCue(cue)}
-                type="button"
-              >
-                STOP
-              </button>
-            </div>
-          ))}
-        </section>
+              {cue.type === "audio" ? (
+                <div className={styles.cueRuntimeControls}>
+                  <button
+                    aria-pressed={Boolean(cue.loop)}
+                    className={cue.loop ? styles.loopActive : ""}
+                    onClick={() => updateAudioRuntime(cue, { loop: !cue.loop })}
+                    type="button"
+                  >
+                    LOOP {cue.loop ? "ON" : "OFF"}
+                  </button>
+                  <button
+                    aria-label={`Fade out ${cue.label}`}
+                    disabled={!playing}
+                    onClick={() => fadeOutCue(cue)}
+                    type="button"
+                  >
+                    FADE OUT
+                  </button>
+                  <button
+                    aria-label={`Parar ${cue.label}`}
+                    disabled={!playing}
+                    onClick={() => stopCue(cue)}
+                    type="button"
+                  >
+                    STOP
+                  </button>
+                  <label>
+                    <span>VOL {Math.round(Number(cue.volume ?? 1) * 100)}%</span>
+                    <input
+                      aria-label={`Volume ${cue.label}`}
+                      max="1"
+                      min="0"
+                      onChange={(event) => updateAudioRuntime(cue, { volume: Number(event.target.value) })}
+                      step="0.05"
+                      type="range"
+                      value={cue.volume ?? 1}
+                    />
+                  </label>
+                </div>
+              ) : (
+                <button
+                  aria-label={`Parar ${cue.label}`}
+                  className={styles.cueStop}
+                  onClick={() => stopCue(cue)}
+                  type="button"
+                >
+                  STOP
+                </button>
+              )}
+            </article>
+          );
+        })}
       </section>
+    );
+  }
 
-      <div
-        aria-label="Redimensionar palco e editor de samples"
-        aria-orientation="vertical"
-        className={styles.editorResizeHandle}
-        onKeyDown={resizeEditorByKeyboard}
-        onPointerDown={beginEditorResize}
-        role="separator"
-        tabIndex={0}
-      />
-
-      <aside className={styles.editor}>
+  function renderEditor() {
+    return (
+      <>
         <div className={styles.editorActions}>
           <button onClick={addCue} type="button">NOVO BOTÃO</button>
           <button disabled={!selectedCue} onClick={duplicateCue} type="button">DUPLICAR</button>
           <button disabled={!selectedCue || cues.length <= 1} onClick={removeCue} type="button">REMOVER</button>
+          {importDirectory ? (
+            <button disabled={saving} onClick={importFolderAssets} type="button">CRIAR BOTÕES DOS ARQUIVOS DA PASTA</button>
+          ) : null}
           <button className={styles.saveButton} disabled={saving} onClick={saveDefault} type="button">SALVAR PADRÃO</button>
         </div>
 
         {selectedCue ? (
           <section className={styles.form}>
             <label>
+              <span>Botão a editar</span>
+              <select value={selectedCue.id} onChange={(event) => setSelectedCueId(event.target.value)}>
+                {cues.map((cue) => <option key={cue.id} value={cue.id}>{cue.label}</option>)}
+              </select>
+            </label>
+            <label>
               <span>Nome do botão</span>
               <input value={selectedCue.label} onChange={(event) => updateCue(selectedCue.id, { label: event.target.value })} />
             </label>
             <label>
-              <span>Atalho</span>
-              <input value={selectedCue.shortcut} onChange={(event) => updateCue(selectedCue.id, { shortcut: event.target.value })} />
+              <span>Atalho — L reservado para loop</span>
+              <input
+                value={selectedCue.shortcut}
+                onChange={(event) => {
+                  const shortcut = event.target.value;
+                  if (shortcut.trim().toLowerCase() === "l") {
+                    setStatus("L RESERVADO PARA LOOP");
+                    return;
+                  }
+                  updateCue(selectedCue.id, { shortcut });
+                }}
+              />
             </label>
             <label>
               <span>Tipo</span>
@@ -510,7 +848,7 @@ export default function EditableCueController({ controllerId, renderStageOverlay
             </label>
             {selectedCue.type !== "text" ? (
               <label>
-                <span>Material</span>
+                <span>{selectedCue.type === "audio" ? "Arquivo de áudio" : "Material"}</span>
                 <select value={selectedCue.assetPath} onChange={(event) => updateCue(selectedCue.id, { assetPath: event.target.value })}>
                   <option value="">SEM MATERIAL</option>
                   {(availableAssets[selectedCue.type] || []).map((asset) => (
@@ -519,9 +857,9 @@ export default function EditableCueController({ controllerId, renderStageOverlay
                 </select>
               </label>
             ) : null}
-            {selectedCue.type === "text" ? (
+            {["audio", "text"].includes(selectedCue.type) ? (
               <label>
-                <span>Texto projetado</span>
+                <span>{selectedCue.type === "audio" ? "Texto estático projetado com o áudio" : "Texto projetado"}</span>
                 <textarea
                   onChange={(event) => updateCue(selectedCue.id, { text: event.target.value })}
                   rows="8"
@@ -556,11 +894,113 @@ export default function EditableCueController({ controllerId, renderStageOverlay
             </div>
             <label className={styles.upload}>
               <span>Adicionar arquivo</span>
-              <input onChange={uploadAsset} type="file" />
+              <input accept="audio/*,video/*,image/*" onChange={uploadAsset} type="file" />
             </label>
           </section>
         ) : null}
+      </>
+    );
+  }
+
+  if (!config) {
+    return (
+      <main className={embedded ? styles.embeddedSampler : styles.screen}>
+        <p className={styles.loading}>{status}</p>
+      </main>
+    );
+  }
+
+  if (embedded) {
+    return (
+      <section className={styles.embeddedSampler} aria-label={config.title}>
+        <header className={styles.embeddedHeader}>
+          <div>
+            <span>SAMPLER AO VIVO</span>
+            <h2>{config.title}</h2>
+            <p>{config.description}</p>
+          </div>
+          <strong>{status}</strong>
+        </header>
+        <button className={styles.stopAllButton} onClick={stopAllSamples} type="button">
+          SILÊNCIO / STOP ALL
+        </button>
+        {renderCueGrid()}
+        <details className={styles.embeddedEditor}>
+          <summary>CONFIGURAR SAMPLES / ATALHOS</summary>
+          <div className={styles.embeddedEditorBody}>{renderEditor()}</div>
+        </details>
+      </section>
+    );
+  }
+
+  return (
+    <main
+      className={styles.screen}
+      ref={screenRef}
+      style={{ "--cue-editor-width": `${editorWidth}px` }}
+    >
+      <section className={styles.preview}>
+        <header className={styles.header}>
+          <div>
+            <span>CONTROLLER EDITÁVEL</span>
+            <h1>{config.title}</h1>
+            <p>{config.description}</p>
+          </div>
+          <strong>{status}</strong>
+        </header>
+
+        <div className={styles.stage}>
+          {preview?.type === "video" && preview.src ? (
+            <video key={preview.sequence} autoPlay className={styles.media} ref={previewMediaRef} src={preview.src} />
+          ) : null}
+          {preview?.type === "image" && preview.src ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img alt="" className={styles.media} src={preview.src} />
+          ) : null}
+          {preview?.type === "audio" ? (
+            <div className={styles.audioPreview}>
+              <span style={{ color: preview.color }}>{preview.label}</span>
+              <small>{preview.assetPath || "SEM ARQUIVO"}</small>
+              {preview.text ? <p className={styles.audioPreviewText}>{preview.text}</p> : null}
+            </div>
+          ) : null}
+          {!preview ? <p>Selecione ou dispare um botão.</p> : null}
+          {renderStageOverlay ? <div className={styles.stageOverlay}>{renderStageOverlay()}</div> : null}
+        </div>
+
+        {showAudioEffects ? (
+          <SceneAudioEffectsControls
+            cueId={selectedCue?.type === "audio" ? selectedCue.id : ""}
+            cueLabel={selectedCue?.type === "audio" ? selectedCue.label : ""}
+            onChange={(cueId, settings) => updateCueAudioEffects(cueId, settings)}
+            onPersist={(cueId, settings) => updateCueAudioEffects(cueId, settings, { persist: true })}
+            settings={selectedCue?.type === "audio" ? selectedCue.audioEffects : undefined}
+          />
+        ) : null}
+
+        <button className={styles.stopAllButton} onClick={stopAllSamples} type="button">
+          SILÊNCIO / STOP ALL
+        </button>
+        {renderCueGrid()}
+      </section>
+
+      <div
+        aria-label="Redimensionar palco e editor de samples"
+        aria-orientation="vertical"
+        className={styles.editorResizeHandle}
+        onKeyDown={resizeEditorByKeyboard}
+        onPointerDown={beginEditorResize}
+        role="separator"
+        tabIndex={0}
+      />
+
+      <aside className={styles.editor}>
+        {renderEditor()}
       </aside>
     </main>
   );
-}
+});
+
+EditableCueController.displayName = "EditableCueController";
+
+export default EditableCueController;

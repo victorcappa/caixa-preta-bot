@@ -7,7 +7,9 @@ dist
 .env
 .env.local
 .env.*.local
+config/instagram-credentials.local.json
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .DS_Store
+/bot-old/

@@ -6,9 +6,15 @@ import { PROMPT_VERSION } from "@/prompts/buildSystemPrompt";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request) {
+  const snapshot = showState.snapshot();
+
+  if (new URL(request.url).searchParams.get("revision") === "1") {
+    return Response.json({ revision: snapshot.revision });
+  }
+
   return Response.json({
-    ...showState.snapshot(),
+    ...snapshot,
     context: {
       knowledge: getKnowledgeStatus(),
       modelOptions: OPENAI_MODEL_OPTIONS,

@@ -4,7 +4,7 @@ import { getModePrompt } from "./modes";
 import { caixaPretaPersonality } from "./personality";
 import { caixaPretaRules } from "./rules";
 
-export const PROMPT_VERSION = 23;
+export const PROMPT_VERSION = 30;
 
 function variablesBlock(variables = {}) {
   if (!variables || Object.keys(variables).length === 0) {
@@ -17,11 +17,13 @@ ${JSON.stringify(variables, null, 2)}
 `.trim();
 }
 
-export function buildSystemPrompt({ knowledge = "", variables = {} } = {}) {
+export function buildSystemPrompt({ knowledge = "", variables = {}, styleContext = "" } = {}) {
   return [
     `PROMPT VERSION: ${PROMPT_VERSION}`,
     "PERSONALIDADE:",
     caixaPretaPersonality,
+    styleContext ? "INTERNET VOICE - FORMA LINGUISTICA:" : "",
+    styleContext,
     "REGRAS:",
     caixaPretaRules,
     "BIBLIOTECA DE MECANICAS DO HOST:",
@@ -55,6 +57,11 @@ ORIENTACAO:
 Instrucao do operador enviada por /say.
 Ela indica intencao de fala, mas nao deve aparecer literalmente para o publico.
 Transforme a orientacao em uma frase final da CAIXA PRETA.
+
+STYLE CONTEXT:
+Camada dinamica de forma linguistica montada a partir do guia de voz, do
+contexto atual e das falas recentes. Ela orienta ritmo, registro, variacao,
+humor e cooldown, mas nao substitui fatos, memoria, estado nem regras.
 `.trim()
   ]
     .filter(Boolean)

@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PROJECTION_WINDOW_PARAM, projectionScreens } from "@/lib/projectionScreens";
+import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
+import InstagramBrowserPanel from "./InstagramBrowserPanel";
+import { setSharedInstagramPanelVisible } from "@/lib/instagram/panelClient";
+import RobotSoundControls from "./RobotSoundControls";
+import AudienceWarmupController from "./AudienceWarmupController";
 import Terminal from "./Terminal";
 import styles from "./OperatorConsole.module.css";
 
@@ -28,6 +33,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   const [selectedGlitchVideo, setSelectedGlitchVideo] = useState("painel-aeroporto.mp4");
   const [glitchVideoLoop, setGlitchVideoLoop] = useState(false);
   const [projectionMenu, setProjectionMenu] = useState(null);
+  const [instagramPanelClosed, setInstagramPanelClosed] = useState(false);
   const scrollRef = useRef(null);
   const projectionWindowRefs = useRef(new Map());
 
@@ -69,6 +75,29 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     scrollRef.current?.scrollIntoView({ block: "end" });
   }, [logs, state]);
 
+  useEffect(() => {
+    if (pending) robotSoundEngine.startThinking();
+    else robotSoundEngine.stopThinking();
+    return () => robotSoundEngine.stopThinking();
+  }, [pending]);
+
+  useEffect(() => {
+    if (["STARTING", "DISCONNECTED"].includes(state.instagram?.status)) {
+      setInstagramPanelClosed(false);
+    }
+  }, [state.instagram?.status]);
+
+  useEffect(() => {
+    if (state.instagram?.embeddedPanelSequence > 0) {
+      setInstagramPanelClosed(false);
+    }
+  }, [state.instagram?.embeddedPanelSequence]);
+
+  useEffect(() => {
+    if (state.instagram?.embeddedPanelVisible === false) setInstagramPanelClosed(true);
+    if (state.instagram?.embeddedPanelVisible === true) setInstagramPanelClosed(false);
+  }, [state.instagram?.embeddedPanelVisible]);
+
   const addLog = useCallback((line, kind = "line") => {
     setLogs((current) => [
       ...current,
@@ -80,6 +109,16 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       }
     ]);
   }, []);
+
+  const updateInstagramPanelVisibility = useCallback(async (visible) => {
+    setInstagramPanelClosed(!visible);
+    try {
+      await setSharedInstagramPanelVisible(visible);
+    } catch {
+      setInstagramPanelClosed(visible);
+      addLog("INSTAGRAM PANEL SYNC ERROR", "error");
+    }
+  }, [addLog]);
 
   const emitStopAllSignal = useCallback((raw) => {
     if (raw.trim().split(/\s+/)[0] === "/stopall") {
@@ -135,7 +174,9 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       "/game",
       "/activity",
       "/intensity",
+      "/autonomy",
       "/model",
+      "/style",
       "/instagram",
       "/glitch",
       "/blackout",
@@ -251,6 +292,14 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   const suitcase = state.suitcase || { active: false, phase: "IDLE" };
   const instagram = state.instagram || { status: "DISCONNECTED", logs: [] };
   const instagramLogs = (instagram.logs || []).slice(-5).reverse();
+  const research = state.research || {
+    researchEnabled: true,
+    autonomousInstagramEnabled: false,
+    performativeResearchEnabled: false,
+    budgetMode: "normal",
+    activity: []
+  };
+  const researchActivity = (research.activity || []).slice(-6).reverse();
   const glitch = state.glitch || { active: false, mode: "idle", video: {} };
   const projection = state.projection || { activeProjectionWindowId: null, windows: {} };
   const projectionWindows = projection.windows || {};
@@ -478,7 +527,9 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             <span>GAME: {game.active ? `${game.id} / ${game.startSource}`.toUpperCase() : `COOLDOWN ${game.cooldownTurnsRemaining || 0}`}</span>
             <span>SUITCASE: {suitcase.active ? `${suitcase.phase} / ${suitcase.activeExperience || "none"}` : suitcase.phase}</span>
             <span>INSTAGRAM: {instagram.status || "DISCONNECTED"}</span>
+            <span>RESEARCH: {research.researchEnabled ? research.budgetMode.toUpperCase() : "OFF"}</span>
             <span>GLITCH: {glitch.active ? `${glitch.mode || "active"} #${glitch.sequence || 0}`.toUpperCase() : "OFF"}</span>
+            <span>ROBOT SOUND: {state.robotSound?.enabled === false ? "OFF" : (state.robotSound?.preset || "normal").toUpperCase()}</span>
             <span>PARTICIPANTS: T{participantCounts.team} A{participantCounts.audience} S{participantCounts.session}</span>
             <span>ACTIVITIES: {activities.length}</span>
             <span>EVENTS: {state.performance?.events?.length || 0}</span>
@@ -500,6 +551,19 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             <span>VARIABLES: {variableCount}</span>
             <span>PROMPT VERSION: {state.context?.promptVersion || 1}</span>
           </div>
+
+          <AudienceWarmupController
+            disabled={pending}
+            onLog={addLog}
+            state={state.audienceWarmup}
+            unlock={state.sceneZero?.unlock}
+          />
+
+          {!embedded && instagram.embedded && instagram.status !== "DISCONNECTED" && instagram.embeddedPanelVisible !== false && !instagramPanelClosed ? (
+            <div className={styles.instagramBrowserPanel}>
+              <InstagramBrowserPanel instagram={instagram} onClose={() => updateInstagramPanelVisibility(false)} />
+            </div>
+          ) : null}
 
           <div className={styles.history}>
             {logs.length === 0 ? <p>SYSTEM READY</p> : null}
@@ -523,6 +587,63 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
           ))}
 
           <h2>PERFORMANCE</h2>
+          <RobotSoundControls settings={state.robotSound} onLog={addLog} relaySink={!embedded} />
+          <article className={styles.memory}>
+            <strong>AUTONOMIA</strong>
+            <p>
+              RESEARCH: {research.researchEnabled ? "ON" : "OFF"}
+              {"\n"}INSTAGRAM AUTÔNOMO: BLOQUEADO
+              {"\n"}PESQUISA PERFORMÁTICA: {research.performativeResearchEnabled ? "ON" : "OFF"}
+            </p>
+            <div className={styles.inlineControls}>
+              <button
+                className={styles.approveButton}
+                disabled={pending}
+                onClick={() => sendOperatorCommand(`/autonomy research ${research.researchEnabled ? "off" : "on"}`, "AUTONOMY ERROR")}
+                type="button"
+              >
+                RESEARCH {research.researchEnabled ? "OFF" : "ON"}
+              </button>
+              <button
+                className={styles.approveButton}
+                disabled
+                type="button"
+              >
+                INSTAGRAM SOMENTE MANUAL
+              </button>
+              <button
+                className={styles.approveButton}
+                disabled={pending}
+                onClick={() => sendOperatorCommand(`/autonomy performative ${research.performativeResearchEnabled ? "off" : "on"}`, "AUTONOMY ERROR")}
+                type="button"
+              >
+                PERFORMÁTICA {research.performativeResearchEnabled ? "OFF" : "ON"}
+              </button>
+            </div>
+            <label className={styles.glitchSelectField}>
+              RESEARCH BUDGET
+              <select
+                disabled={pending}
+                onChange={(event) => sendOperatorCommand(`/autonomy budget ${event.target.value}`, "AUTONOMY ERROR")}
+                value={research.budgetMode || "normal"}
+              >
+                <option value="low">LOW</option>
+                <option value="normal">NORMAL</option>
+                <option value="high">HIGH</option>
+              </select>
+            </label>
+          </article>
+          {researchActivity.length ? (
+            <article className={styles.memory}>
+              <strong>RESEARCH / ATIVIDADE RECENTE</strong>
+              <p>{researchActivity.map((entry) => [
+                new Date(entry.timestamp).toLocaleTimeString("pt-BR"),
+                (entry.channel || "-").toUpperCase(),
+                entry.query || entry.target || entry.action || "-",
+                (entry.status || "-").toUpperCase()
+              ].join("  ")).join("\n")}</p>
+            </article>
+          ) : null}
           <article className={styles.memory}>
             <strong>INSTAGRAM / {instagram.status || "DISCONNECTED"}</strong>
             <p>
@@ -558,6 +679,15 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
                 STOP ALL
               </button>
             </div>
+            {!embedded && instagram.embedded && instagram.status !== "DISCONNECTED" && instagramPanelClosed ? (
+              <button
+                className={styles.approveButton}
+                onClick={() => updateInstagramPanelVisibility(true)}
+                type="button"
+              >
+                MOSTRAR NAVEGADOR INTERATIVO
+              </button>
+            ) : null}
           </article>
           {instagramLogs.length ? (
             <article className={styles.memory}>
@@ -785,9 +915,9 @@ function VerdadeOuBoloControls({ game, pending, sendOperatorCommand }) {
       <div className={styles.vobControls}>
         <button disabled={pending} onClick={() => sendOperatorCommand("/game intro", "GAME CONTROL ERROR")} type="button">INICIAR INTRO</button>
         <button disabled={pending} onClick={() => sendOperatorCommand("/game round", "GAME CONTROL ERROR")} type="button">INICIAR RODADA</button>
-        <button disabled={pending} onClick={() => sendOperatorCommand("/game play", "GAME CONTROL ERROR")} type="button">PLAY VIDEO</button>
-        <button disabled={pending} onClick={() => sendOperatorCommand("/game pause", "GAME CONTROL ERROR")} type="button">PAUSE VIDEO</button>
-        <button disabled={pending} onClick={() => sendOperatorCommand("/game restart", "GAME CONTROL ERROR")} type="button">RESTART VIDEO</button>
+        <button disabled={pending || !["REVEAL", "ROUND_RESULT"].includes(data.state)} onClick={() => sendOperatorCommand("/game play", "GAME CONTROL ERROR")} type="button">PLAY VIDEO</button>
+        <button disabled={pending || !["REVEAL", "ROUND_RESULT"].includes(data.state)} onClick={() => sendOperatorCommand("/game pause", "GAME CONTROL ERROR")} type="button">PAUSE VIDEO</button>
+        <button disabled={pending || !["REVEAL", "ROUND_RESULT"].includes(data.state)} onClick={() => sendOperatorCommand("/game restart", "GAME CONTROL ERROR")} type="button">RESTART VIDEO</button>
         <button
           className={data.selectedAnswer === "verdade" ? styles.vobSelected : ""}
           disabled={pending || !["QUESTION", "ANSWER_LOCKED", "VOTING"].includes(data.state)}
@@ -806,7 +936,7 @@ function VerdadeOuBoloControls({ game, pending, sendOperatorCommand }) {
         </button>
         <button
           className={styles.vobRevealButton}
-          disabled={pending || !["QUESTION", "ANSWER_LOCKED", "REVEAL", "ROUND_RESULT"].includes(data.state)}
+          disabled={pending || !["QUESTION", "ANSWER_LOCKED", "VOTING", "REVEAL", "ROUND_RESULT"].includes(data.state)}
           onClick={() => sendOperatorCommand("/game reveal", "GAME CONTROL ERROR")}
           type="button"
         >

@@ -278,126 +278,137 @@ async function main() {
 
   started = director.startGame(state, { requestedGame: "verdade-ou-bolo", source: "operator" });
   assert.equal(started.gameState.id, "verdade_ou_bolo");
-  assert.equal(started.gameState.phase, "INTRO");
-  assert.equal(started.gameState.publicData.state, "INTRO");
-  assert.equal(started.gameState.publicData.totalRounds, 4);
+  assert.equal(started.gameState.phase, "QUESTION");
+  assert.equal(started.gameState.publicData.state, "QUESTION");
+  assert.equal(started.gameState.publicData.totalRounds, 3);
+  assert.equal(started.gameState.publicData.currentRound.number, 1);
+  assert.equal(started.gameState.publicData.currentRound.video.file, "bolo-lanterna.mp4");
+  assert.equal(started.gameState.publicData.operator.correctAnswer, "bolo");
+  assert.deepEqual(started.gameState.publicData.operator.discoveredVideos, [
+    "bolo-lanterna.mp4",
+    "bolo-papel-higienico.mp4",
+    "verdade-nutella.mp4"
+  ]);
+  assert.equal(started.gameState.publicData.voteCountdown, null);
 
   let boloState = started.gameState;
-  let controlled = director.controlStructuredGame({ ...state, game: boloState }, "next");
-  assert.equal(controlled.applied, true);
-  assert.equal(controlled.gameState.phase, "QUESTION");
+  const prematureComment = director.controlStructuredGame({ ...state, game: boloState }, "comment_complete");
+  assert.equal(prematureComment.applied, false);
+  assert.equal(prematureComment.result.type, "comment_complete_ignored");
+
+  let frameReady = director.controlStructuredGame({ ...state, game: boloState }, "video_ready");
+  assert.equal(frameReady.applied, true);
+  assert.equal(frameReady.gameState.phase, "VOTING");
+  assert.equal(frameReady.gameState.publicData.voteCountdown.durationSeconds, 10);
+  boloState = frameReady.gameState;
+
+  const duplicateFrameReady = director.controlStructuredGame({ ...state, game: boloState }, "video_ready");
+  assert.equal(duplicateFrameReady.applied, false);
+  assert.equal(duplicateFrameReady.result.type, "video_ready_ignored");
+  assert.equal(duplicateFrameReady.gameState.publicData.voteCountdown.endsAt, boloState.publicData.voteCountdown.endsAt);
+
+  let controlled = director.controlStructuredGame({ ...state, game: boloState }, "video_play");
+  assert.equal(controlled.applied, false);
+  assert.equal(controlled.result.reason, "answer_not_revealed");
   boloState = controlled.gameState;
 
-  controlled = director.controlStructuredGame({ ...state, game: boloState }, "select_answer", { answer: "verdade" });
+  controlled = director.controlStructuredGame({ ...state, game: boloState }, "select_answer", { answer: "bolo" });
   assert.equal(controlled.applied, true);
-  assert.equal(controlled.gameState.phase, "ANSWER_LOCKED");
-  assert.equal(controlled.gameState.publicData.selectedAnswer, "verdade");
-  boloState = controlled.gameState;
-
-  const revealNeedsVideoEnd = Boolean(boloState.publicData.currentRound?.video?.src);
-  controlled = director.controlStructuredGame({ ...state, game: boloState }, "reveal");
-  assert.equal(controlled.applied, true);
-
-  if (revealNeedsVideoEnd) {
-    assert.equal(controlled.gameState.phase, "REVEAL");
-    assert.equal(controlled.gameState.publicData.revealArmed, true);
-    assert.equal(controlled.gameState.publicData.roundResults.length, 0);
-    assert.equal(controlled.gameState.publicData.score, 0);
-    boloState = controlled.gameState;
-
-    controlled = director.controlStructuredGame({ ...state, game: boloState }, "reveal");
-    assert.equal(controlled.applied, true);
-    assert.equal(controlled.result.type, "reveal_video_already_playing");
-    assert.equal(controlled.gameState.phase, "REVEAL");
-    assert.equal(controlled.gameState.publicData.roundResults.length, 0);
-    assert.equal(controlled.gameState.publicData.score, 0);
-    boloState = controlled.gameState;
-
-    controlled = director.controlStructuredGame({ ...state, game: boloState }, "next");
-    assert.equal(controlled.applied, false);
-    assert.equal(controlled.result.reason, "reveal_video_playing");
-    boloState = controlled.gameState;
-
-    controlled = director.controlStructuredGame({ ...state, game: boloState }, "video_ended");
-    assert.equal(controlled.applied, true);
-    assert.equal(controlled.gameState.phase, "VOTING");
-    assert.equal(controlled.gameState.publicData.revealArmed, false);
-  } else {
-    assert.equal(controlled.gameState.phase, "VOTING");
-    assert.equal(controlled.gameState.publicData.revealArmed, false);
-  }
-
-  assert.equal(controlled.gameState.publicData.roundResults.length, 0);
-  assert.equal(controlled.gameState.publicData.score, 0);
-  assert.equal(controlled.gameState.publicData.voteCountdown.durationSeconds, 10);
+  assert.equal(controlled.result.type, "answer_locked_video_started");
+  assert.equal(controlled.gameState.phase, "REVEAL");
+  assert.equal(controlled.gameState.publicData.selectedAnswer, "bolo");
+  assert.equal(controlled.gameState.publicData.revealArmed, true);
+  assert.equal(controlled.gameState.publicData.voteCountdown, null);
+  assert.equal(controlled.gameState.publicData.videoCommand.action, "restart");
   boloState = controlled.gameState;
 
   controlled = director.controlStructuredGame({ ...state, game: boloState }, "next");
   assert.equal(controlled.applied, false);
-  assert.equal(controlled.result.reason, "vote_countdown_running");
+  assert.equal(controlled.result.reason, "reveal_video_playing");
   boloState = controlled.gameState;
 
-  controlled = director.controlStructuredGame({ ...state, game: boloState }, "vote_timeout");
+  controlled = director.controlStructuredGame({ ...state, game: boloState }, "video_ended");
   assert.equal(controlled.applied, true);
   assert.equal(controlled.gameState.phase, "REVEAL");
   assert.equal(controlled.gameState.publicData.roundResults.length, 1);
+  assert.equal(controlled.gameState.publicData.result.won, true);
+  assert.equal(controlled.gameState.publicData.result.noVote, false);
+  assert.equal(controlled.gameState.publicData.revealedAnswer, "bolo");
   assert.equal(controlled.gameState.publicData.score, 1);
+  assert.equal(controlled.gameState.publicData.voteCountdown, null);
   boloState = controlled.gameState;
 
-  controlled = director.controlStructuredGame({ ...state, game: boloState }, "next");
+  controlled = director.controlStructuredGame({ ...state, game: boloState }, "comment_complete");
   assert.equal(controlled.applied, true);
-  assert.equal(controlled.gameState.phase, "ROUND_RESULT");
-  boloState = controlled.gameState;
-
-  controlled = director.controlStructuredGame({ ...state, game: boloState }, "next");
-  assert.equal(controlled.applied, true);
+  assert.equal(controlled.result.type, "comment_complete_next_round");
   assert.equal(controlled.gameState.phase, "QUESTION");
   assert.equal(controlled.gameState.publicData.currentRound.number, 2);
+  assert.equal(controlled.gameState.publicData.currentRound.video.file, "bolo-papel-higienico.mp4");
+  assert.equal(controlled.gameState.publicData.operator.correctAnswer, "bolo");
+  assert.equal(controlled.gameState.publicData.voteCountdown, null);
+  boloState = controlled.gameState;
+
+  frameReady = director.controlStructuredGame({ ...state, game: boloState }, "video_ready");
+  assert.equal(frameReady.applied, true);
+  boloState = frameReady.gameState;
+
+  controlled = director.controlStructuredGame({ ...state, game: boloState }, "select_answer", { answer: "bolo" });
+  assert.equal(controlled.applied, true);
+  assert.equal(controlled.gameState.phase, "REVEAL");
+  assert.equal(controlled.gameState.publicData.revealArmed, true);
+  boloState = controlled.gameState;
+
+  controlled = director.controlStructuredGame({ ...state, game: boloState }, "reveal");
+  assert.equal(controlled.applied, true);
+  assert.equal(controlled.gameState.phase, "REVEAL");
+  assert.equal(controlled.gameState.publicData.roundResults.length, 2);
+  assert.equal(controlled.gameState.publicData.result.won, true);
+  assert.equal(controlled.gameState.publicData.revealedAnswer, "bolo");
+  assert.equal(controlled.gameState.publicData.voteCountdown, null);
+  assert.equal(controlled.gameState.publicData.score, 2);
   boloState = controlled.gameState;
 
   controlled = director.controlStructuredGame({ ...state, game: boloState }, "previous_round");
   assert.equal(controlled.applied, true);
   assert.equal(controlled.gameState.publicData.currentRound.number, 1);
-  assert.equal(controlled.gameState.publicData.score, 1);
-  assert.equal(controlled.gameState.publicData.roundResults.length, 1);
+  assert.equal(controlled.gameState.publicData.score, 2);
+  assert.equal(controlled.gameState.publicData.roundResults.length, 2);
   boloState = controlled.gameState;
 
   controlled = director.controlStructuredGame({ ...state, game: boloState }, "next_round");
   assert.equal(controlled.applied, true);
   assert.equal(controlled.gameState.publicData.currentRound.number, 2);
+  assert.equal(controlled.gameState.phase, "ROUND_RESULT");
+  boloState = controlled.gameState;
+
+  controlled = director.controlStructuredGame({ ...state, game: boloState }, "next");
+  assert.equal(controlled.applied, true);
+  assert.equal(controlled.gameState.publicData.currentRound.number, 3);
+  assert.equal(controlled.gameState.publicData.currentRound.video.file, "verdade-nutella.mp4");
+  assert.equal(controlled.gameState.publicData.operator.correctAnswer, "verdade");
   assert.equal(controlled.gameState.phase, "QUESTION");
   boloState = controlled.gameState;
 
-  const noVoteNeedsVideoEnd = Boolean(boloState.publicData.currentRound?.video?.src);
-  controlled = director.controlStructuredGame({ ...state, game: boloState }, "reveal");
-  assert.equal(controlled.applied, true);
-  boloState = controlled.gameState;
-
-  if (noVoteNeedsVideoEnd) {
-    assert.equal(boloState.phase, "REVEAL");
-    controlled = director.controlStructuredGame({ ...state, game: boloState }, "video_ended");
-    assert.equal(controlled.applied, true);
-    boloState = controlled.gameState;
-  }
-
+  frameReady = director.controlStructuredGame({ ...state, game: boloState }, "video_ready");
+  assert.equal(frameReady.applied, true);
+  boloState = frameReady.gameState;
   assert.equal(boloState.phase, "VOTING");
   assert.equal(boloState.publicData.selectedAnswer, null);
   assert.equal(boloState.publicData.voteCountdown.durationSeconds, 10);
 
   controlled = director.controlStructuredGame({ ...state, game: boloState }, "vote_timeout");
   assert.equal(controlled.applied, true);
-  assert.equal(controlled.gameState.phase, "ROUND_RESULT");
+  assert.equal(controlled.gameState.phase, "REVEAL");
   assert.equal(controlled.gameState.publicData.result.noVote, true);
   assert.equal(controlled.gameState.publicData.result.won, false);
   assert.equal(controlled.gameState.publicData.result.selected, null);
-  assert.equal(controlled.gameState.publicData.score, 1);
-  assert.equal(controlled.gameState.publicData.autoAdvanceCommand.action, "next");
+  assert.equal(controlled.gameState.publicData.score, 2);
+  assert.equal(controlled.gameState.publicData.autoAdvanceCommand, null);
   boloState = controlled.gameState;
 
   controlled = director.controlStructuredGame({ ...state, game: boloState }, "next");
   assert.equal(controlled.applied, true);
-  assert.equal(controlled.gameState.phase, "QUESTION");
-  assert.equal(controlled.gameState.publicData.currentRound.number, 3);
+  assert.equal(controlled.gameState.phase, "ROUND_RESULT");
 
   console.log("GAME DIRECTOR: PASS");
 }

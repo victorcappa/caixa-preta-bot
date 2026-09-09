@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import { PROJECTION_WINDOW_PARAM } from "@/lib/projectionScreens";
 
 const STORAGE_KEY = "caixa-preta.projectionWindowId";
@@ -73,9 +74,22 @@ export default function ProjectionWindowClient() {
     };
 
     postProjectionAction("register", projectionWindowId, currentProjectionPath())
-      .then((response) => response.json())
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "PROJECTION REGISTER ERROR");
+        }
+        return data;
+      })
       .then((data) => {
         const registeredId = data.projectionWindowId || data.state?.activeProjectionWindowId;
+
+        if (closed) {
+          if (registeredId) {
+            postProjectionAction("disconnect", registeredId, currentProjectionPath(), true).catch(() => {});
+          }
+          return;
+        }
 
         if (registeredId) {
           projectionWindowId = registeredId;
@@ -97,17 +111,15 @@ export default function ProjectionWindowClient() {
         .catch(() => {});
     }, HEARTBEAT_INTERVAL_MS);
 
-    const events = new EventSource("/api/events?client=projection-window");
-    events.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
-      const command = payload.command || payload.event?.command;
+    const unsubscribeRealtime = subscribePublicRealtime((payload) => {
+      const command = payload.command || payload.event?.command || payload.state?.projection?.lastCommand;
 
-      if (payload.event?.type !== "projection:navigate" || !command) {
+      if (!command || (payload.event?.type !== "projection:navigate" && payload.event?.type !== "snapshot")) {
         return;
       }
 
       applyCommand(command);
-    };
+    });
 
     function disconnect() {
       if (navigatingRef.current) {
@@ -116,6 +128,10 @@ export default function ProjectionWindowClient() {
 
       closed = true;
       window.clearInterval(heartbeat);
+
+      if (!projectionWindowId) {
+        return;
+      }
 
       const body = JSON.stringify({
         action: "disconnect",
@@ -140,7 +156,7 @@ export default function ProjectionWindowClient() {
 
     return () => {
       window.removeEventListener("pagehide", disconnect);
-      events.close();
+      unsubscribeRealtime();
       disconnect();
     };
   }, []);

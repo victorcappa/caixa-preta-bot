@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import EditableCueController from "@/components/EditableCueController";
+import SceneAudioEffectsControls from "@/components/SceneAudioEffectsControls";
 import {
   DEFAULT_FADE_MS,
   scriptLines,
@@ -31,6 +33,11 @@ function clampIndex(index, length) {
   return Math.min(Math.max(Number(index) || 0, 0), length - 1);
 }
 
+function isTypingTarget(target) {
+  const tagName = target?.tagName?.toLowerCase();
+  return ["input", "textarea", "select"].includes(tagName) || target?.isContentEditable;
+}
+
 async function postQuedaAviaoAction(action, payload = {}) {
   const response = await fetch("/api/queda-aviao", {
     method: "POST",
@@ -46,6 +53,9 @@ export default function QuedaAviaoController() {
   const [connection, setConnection] = useState("CONNECTING");
   const [pending, setPending] = useState(false);
   const [log, setLog] = useState("SYSTEM READY");
+  const [selectedSample, setSelectedSample] = useState(null);
+  const runActionRef = useRef(null);
+  const samplerRef = useRef(null);
 
   useEffect(() => {
     fetch("/api/queda-aviao")
@@ -99,6 +109,27 @@ export default function QuedaAviaoController() {
     }
   }
 
+  runActionRef.current = runAction;
+
+  useEffect(() => {
+    function handleKeydown(event) {
+      const navigation = {
+        ArrowLeft: { action: "previous", message: "ANTERIOR" },
+        ArrowRight: { action: "next", message: "PROXIMA" }
+      }[event.key];
+
+      if (!navigation || isTypingTarget(event.target)) {
+        return;
+      }
+
+      event.preventDefault();
+      void runActionRef.current?.(navigation.action, {}, navigation.message);
+    }
+
+    window.addEventListener("keydown", handleKeydown, { capture: true });
+    return () => window.removeEventListener("keydown", handleKeydown, { capture: true });
+  }, []);
+
   function updatePlayback(payload) {
     setPlayback((state) => ({ ...state, ...payload }));
     runAction("update", payload, "ATUALIZAR CONTROLE", { allowWhilePending: true });
@@ -107,19 +138,29 @@ export default function QuedaAviaoController() {
   return (
     <main className={styles.controllerScreen}>
       <section className={styles.preview} aria-live="polite">
-        {current ? (
-          <p
-            key={`${current.id}-${playback.playbackSequence || 0}`}
-            className={[
-              styles.line,
-              current.stage ? styles.stage : styles.dialogue,
-              styles[playback.phase]
-            ].join(" ")}
-            style={{ "--fade-ms": `${playback.fadeMs}ms` }}
-          >
-            {current.text}
-          </p>
-        ) : null}
+        <div className={styles.textStage}>
+          {current ? (
+            <p
+              key={`${current.id}-${playback.playbackSequence || 0}`}
+              className={[
+                styles.line,
+                current.stage ? styles.stage : styles.dialogue,
+                styles[playback.phase]
+              ].join(" ")}
+              style={{ "--fade-ms": `${playback.fadeMs}ms` }}
+            >
+              {current.text}
+            </p>
+          ) : null}
+        </div>
+        <SceneAudioEffectsControls
+          cueId={selectedSample?.id || ""}
+          cueLabel={selectedSample?.label || ""}
+          onChange={(cueId, settings) => samplerRef.current?.updateCueAudioEffects(cueId, settings)}
+          onPersist={(cueId, settings) => samplerRef.current?.updateCueAudioEffects(cueId, settings, { persist: true })}
+          prominentPitch
+          settings={selectedSample?.audioEffects}
+        />
       </section>
 
       <aside className={styles.panel}>
@@ -169,6 +210,15 @@ export default function QuedaAviaoController() {
             PRÓXIMA
           </button>
         </div>
+
+        <EditableCueController
+          controllerId="queda-aviao-sampler"
+          embedded
+          importDirectory="audios/queda-aviao"
+          importType="audio"
+          onSelectedCueChange={setSelectedSample}
+          ref={samplerRef}
+        />
 
         <label className={styles.field}>
           <span>FALA / SEGMENTO</span>

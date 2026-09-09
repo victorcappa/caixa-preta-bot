@@ -1,16 +1,25 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import {
+  attachSceneAudioEffects,
+  detachSceneAudioEffects,
+  fadeOutMedia,
+  updateSceneAudioEffects
+} from "@/lib/sceneAudioGraph";
 import DisplayBlackout from "./DisplayBlackout";
+import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import styles from "./PublicSceneStage.module.css";
 
 function assetSrc(assetPath = "") {
   return assetPath ? `/api/game-assets?file=${encodeURIComponent(assetPath)}` : "";
 }
 
-function PublicCueMedia({ cue }) {
+function PublicCueMedia({ cue, globalVolume = 1, onEnded = null }) {
   const mediaRef = useRef(null);
+  const onEndedRef = useRef(onEnded);
   const src = assetSrc(cue?.assetPath);
+  onEndedRef.current = onEnded;
 
   useEffect(() => {
     const media = mediaRef.current;
@@ -28,7 +37,32 @@ function PublicCueMedia({ cue }) {
       media.muted = true;
       media.play().catch(() => {});
     });
+
+    return () => {
+      media.pause();
+      detachSceneAudioEffects(media);
+    };
   }, [cue?.sequence, cue?.type, src]);
+
+  useEffect(() => {
+    const media = mediaRef.current;
+    if (!media || !["audio", "video"].includes(cue?.type)) return;
+    media.volume = Math.max(0, Math.min(1, Number(cue.volume ?? 1) * globalVolume));
+  }, [cue.volume, cue?.type, globalVolume]);
+
+  useEffect(() => {
+    const media = mediaRef.current;
+    if (!media || cue?.type !== "audio" || !cue.audioEffects) return;
+    if (!updateSceneAudioEffects(media, cue.audioEffects) && cue.audioEffects.enabled) {
+      void attachSceneAudioEffects(media, cue.audioEffects);
+    }
+  }, [cue.audioEffects, cue?.type]);
+
+  useEffect(() => {
+    const media = mediaRef.current;
+    if (!media || cue?.type !== "audio" || !cue.fadeOutSequence) return;
+    return fadeOutMedia(media, cue.fadeOutMs, () => onEndedRef.current?.());
+  }, [cue.fadeOutMs, cue.fadeOutSequence, cue?.type]);
 
   if (cue.type === "text") {
     return (
@@ -46,7 +80,7 @@ function PublicCueMedia({ cue }) {
   }
 
   if (cue.type === "video") {
-    return <video autoPlay className={styles.media} controls={false} playsInline ref={mediaRef} src={src} />;
+    return <video className={styles.media} controls={false} playsInline ref={mediaRef} src={src} />;
   }
 
   if (cue.type === "image") {
@@ -54,33 +88,74 @@ function PublicCueMedia({ cue }) {
     return <img alt="" className={styles.media} src={src} />;
   }
 
-  return <audio autoPlay ref={mediaRef} src={src} />;
+  return (
+    <audio
+      loop={Boolean(cue.loop)}
+      onEnded={onEnded || undefined}
+      ref={mediaRef}
+      src={src}
+      volume={Math.max(0, Math.min(1, Number(cue.volume ?? 1) * globalVolume))}
+    />
+  );
+}
+
+export function PublicSceneAudioOutput({ controllerId = "", globalVolume = 1, sceneCue = null }) {
+  const audioCues = (sceneCue?.audioCues || []).filter((cue) => (
+    cue.controllerId === controllerId && cue.type === "audio" && cue.assetPath
+  ));
+
+  function reportEnded(cue) {
+    fetch("/api/controller-cues/play", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        controllerId,
+        action: "stop-instance",
+        cueId: cue.id,
+        playbackId: cue.playbackId
+      })
+    }).catch(() => {});
+  }
+
+  return audioCues.map((cue) => (
+    <PublicCueMedia
+      cue={cue}
+      globalVolume={globalVolume}
+      key={cue.playbackId || `${cue.id}-${cue.sequence}`}
+      onEnded={() => reportEnded(cue)}
+    />
+  ));
+}
+
+function PublicAudioCueText({ controllerId = "", sceneCue = null }) {
+  const cue = (sceneCue?.audioCues || []).findLast((item) => (
+    item.controllerId === controllerId && item.type === "audio" && item.text
+  ));
+
+  if (!cue) {
+    return null;
+  }
+
+  return (
+    <div className={styles.staticText} style={{ "--cue-color": cue.color }}>
+      {cue.text}
+    </div>
+  );
 }
 
 export default function PublicSceneStage({ blackoutTarget = "cenas", controllerId = "" }) {
   const [displayBlackout, setDisplayBlackout] = useState(null);
   const [sceneCue, setSceneCue] = useState(null);
   const [forcaGShaders, setForcaGShaders] = useState(null);
+  const [globalVolume, setGlobalVolume] = useState(1);
 
   useEffect(() => {
-    fetch("/api/state")
-      .then((response) => response.json())
-      .then((data) => {
-        setDisplayBlackout(data.displayBlackout || null);
-        setSceneCue(data.sceneCue || null);
-        setForcaGShaders(data.forcaGShaders || null);
-      })
-      .catch(() => {});
-
-    const events = new EventSource("/api/events?client=public-scene-stage");
-    events.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
+    return subscribePublicRealtime((payload) => {
       setDisplayBlackout(payload.state?.displayBlackout || payload.displayBlackout || null);
       setSceneCue(payload.state?.sceneCue || payload.sceneCue || null);
       setForcaGShaders(payload.state?.forcaGShaders || payload.forcaGShaders || null);
-    };
-
-    return () => events.close();
+      setGlobalVolume(payload.state?.globalVolume ?? payload.globalVolume ?? 1);
+    });
   }, []);
 
   const cue = sceneCue?.controllerId === controllerId && sceneCue.cue
@@ -105,7 +180,9 @@ export default function PublicSceneStage({ blackoutTarget = "cenas", controllerI
 
   return (
     <main className={styles.stage} aria-label="Cena publica">
-      {cue ? <PublicCueMedia cue={cue} key={cue.sequence} /> : null}
+      {cue ? <PublicCueMedia cue={cue} globalVolume={globalVolume} key={cue.sequence} /> : null}
+      <PublicSceneAudioOutput controllerId={controllerId} globalVolume={globalVolume} sceneCue={sceneCue} />
+      <PublicAudioCueText controllerId={controllerId} sceneCue={sceneCue} />
       {shaderActive ? (
         <div
           aria-hidden="true"

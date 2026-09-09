@@ -3,10 +3,88 @@ const assert = require("node:assert/strict");
 async function main() {
   const controllerModule = await import("../lib/instagram/InstagramController.js");
   const commands = await import("../lib/instagram/commands.js");
+  const panelState = await import("../lib/instagram/panelState.js");
+
+  assert.equal(panelState.resolveEmbeddedPanelVisible({ embeddedPanelSequence: 2, embeddedPanelVisible: false }, { embeddedPanelSequence: 3 }), true);
+  assert.equal(panelState.resolveEmbeddedPanelVisible({ embeddedPanelSequence: 3, embeddedPanelVisible: true }, { embeddedPanelVisible: false }), false);
+  assert.equal(panelState.resolveEmbeddedPanelVisible({ embeddedPanelSequence: 3, embeddedPanelVisible: false }, { status: "READY" }), false);
 
   assert.equal(controllerModule.normalizeUsername("@cappavictor"), "cappavictor");
   assert.equal(controllerModule.normalizeUsername(" cappavictor "), "cappavictor");
   assert.equal(controllerModule.normalizeUsername("https://instagram.com/cappavictor"), "");
+  assert.equal(controllerModule.normalizeResearchPersonName("  Janaína\n  Leite  "), "Janaína Leite");
+  assert.equal(
+    controllerModule.normalizeGoogleGuidance("  buscar  sobre eleições\n de 2026  "),
+    "buscar sobre eleições de 2026"
+  );
+  assert.deepEqual(
+    controllerModule.parseGoogleGuidance("buscar sobre o candidato do pl para eleições de 2026 e escolher alguma notícia para ler por 15 segundos"),
+    {
+      guidance: "buscar sobre o candidato do pl para eleições de 2026 e escolher alguma notícia para ler por 15 segundos",
+      query: "o candidato do pl para eleições de 2026",
+      durationSeconds: 15,
+      openResult: true,
+      preferNews: true,
+      wantsComment: false,
+      resultCount: 2,
+      subject: "o candidato do pl para eleições de 2026",
+      wantsInstagram: false
+    }
+  );
+  assert.deepEqual(
+    controllerModule.parseGoogleGuidance("buscar noticias sobre nicolas ferreira e escolher uma noticia e comentar algo sarcastico sobre"),
+    {
+      guidance: "buscar noticias sobre nicolas ferreira e escolher uma noticia e comentar algo sarcastico sobre",
+      query: "noticias sobre nicolas ferreira",
+      durationSeconds: 0,
+      openResult: true,
+      preferNews: true,
+      wantsComment: true,
+      resultCount: 2,
+      subject: "nicolas ferreira",
+      wantsInstagram: true
+    }
+  );
+  const commentOnlyGuidance = controllerModule.parseGoogleGuidance("buscar inteligência artificial e comente o primeiro resultado");
+  assert.equal(commentOnlyGuidance.query, "inteligência artificial");
+  assert.equal(commentOnlyGuidance.openResult, true);
+  assert.equal(commentOnlyGuidance.wantsComment, true);
+  assert.equal(commentOnlyGuidance.resultCount, 1);
+  assert.equal(
+    controllerModule.parseGoogleGuidance("entre no Google e busque inteligência artificial e comente").query,
+    "inteligência artificial"
+  );
+  assert.equal(controllerModule.normalizePublicResearchUrl("http://127.0.0.1/admin"), null);
+  assert.equal(controllerModule.normalizePublicResearchUrl("https://www.jusbrasil.com.br/pessoa/teste"), null);
+  assert.equal(
+    controllerModule.normalizePublicResearchUrl("https://www.google.com/url?q=https%3A%2F%2Fwww.instagram.com%2Fjanainaleite%2F&sa=U"),
+    "https://www.instagram.com/janainaleite/"
+  );
+  assert.deepEqual(controllerModule.selectPersonResearchLinks([
+    "https://www.google.com/search?q=janaina",
+    "https://festival.example.org/artistas/janaina-leite",
+    "https://www.instagram.com/janainaleite/",
+    "https://www.instagram.com/p/post-id/"
+  ]), {
+    interesting: "https://festival.example.org/artistas/janaina-leite",
+    instagram: "https://www.instagram.com/janainaleite/"
+  });
+  assert.deepEqual(controllerModule.selectGuidedGoogleResult([
+    { url: "https://www.google.com/search?q=eleicoes", text: "Google" },
+    { url: "https://jornal.example.com/tudo-sobre/candidato", text: "Arquivo do candidato" },
+    { url: "https://example.org/arquivo", text: "Arquivo" },
+    { url: "https://jornal.example.com/politica/candidato", text: "Notícia sobre candidato" }
+  ], { preferNews: true }), {
+    url: "https://jornal.example.com/politica/candidato",
+    text: "Notícia sobre candidato"
+  });
+  assert.deepEqual(controllerModule.selectGuidedGoogleResult([
+    { url: "https://pt.wikipedia.org/wiki/Candidato", text: "Candidato — Wikipédia" },
+    { url: "https://jornal.example.com/politica/candidato", text: "Notícia sobre candidato" }
+  ], { preferNews: true }), {
+    url: "https://jornal.example.com/politica/candidato",
+    text: "Notícia sobre candidato"
+  });
 
   assert.deepEqual(commands.parseInstagramCommand("follow cappavictor"), {
     valid: true,
@@ -18,6 +96,12 @@ async function main() {
   assert.equal(commands.parseInstagramCommand("like cappavictor").valid, false);
   assert.equal(commands.parseInstagramCommand("follow cappavictor extra").valid, false);
   assert.equal(commands.parseInstagramCommand("follow https://instagram.com/cappavictor").valid, false);
+  assert.deepEqual(commands.parseInstagramCommand("abrir"), {
+    valid: true,
+    action: "open",
+    username: "",
+    error: null
+  });
   assert.deepEqual(commands.parseInstagramCommand("entrar no perfil @cappavictor e comentar na ultima foto 'biscoiteiro'"), {
     valid: true,
     action: "comment_latest",
@@ -147,6 +231,30 @@ async function main() {
 
   assert.equal(config.enabled, true);
   assert.equal(config.embedded, true);
+  const embeddedPanelController = new controllerModule.InstagramController({ config });
+  assert.equal(embeddedPanelController.getStatus().embeddedPanelSequence, 0);
+  assert.equal(embeddedPanelController.getStatus().sessionAuthenticated, false);
+  assert.equal(embeddedPanelController.requestEmbeddedPanel(), 1);
+  assert.equal(embeddedPanelController.requestEmbeddedPanel(), 2);
+  assert.equal(embeddedPanelController.getStatus().embeddedPanelSequence, 2);
+
+  const authenticatedController = new controllerModule.InstagramController({ config });
+  authenticatedController.dismissKnownModals = async () => {};
+  authenticatedController.hasManualInterventionSignal = async () => false;
+  authenticatedController.safeBodyText = async () => "";
+  authenticatedController.page = {
+    url: () => "https://www.instagram.com/",
+    locator: () => ({ count: async () => 0 }),
+    getByRole: (role, options = {}) => createFakeLocator({
+      visible: role === "link" && options.name?.test?.("Home")
+    })
+  };
+  assert.equal(await authenticatedController.getSessionState(), "authenticated");
+  authenticatedController.lastAction = "openProfile";
+  assert.equal(authenticatedController.getStatus().sessionAuthenticated, true);
+  authenticatedController.page.url = () => "https://www.instagram.com/accounts/login/";
+  assert.equal(await authenticatedController.getSessionState(), "login_required");
+  assert.equal(authenticatedController.getStatus().sessionAuthenticated, false);
   assert.equal(config.debug, true);
   assert.equal(config.theatricalDelayMs, 1500);
   assert.deepEqual(config.viewport, { width: 430, height: 760 });
@@ -155,6 +263,185 @@ async function main() {
   assert.deepEqual(config.allowedProfiles, ["cappavictor"]);
   assert(config.profileDir.endsWith(".runtime/instagram-profile"));
   assert(config.debugDir.endsWith(".runtime/instagram-debug"));
+  assert(config.credentialsPath.endsWith("config/instagram-credentials.local.json"));
+  assert.deepEqual(controllerModule.parseInstagramCredentials(JSON.stringify({
+    username: "@CaixaPretaBot",
+    password: "senha-teste"
+  })), {
+    username: "caixapretabot",
+    password: "senha-teste"
+  });
+  assert.equal(controllerModule.parseInstagramCredentials(JSON.stringify({
+    username: "caixapretabot",
+    password: "COLOQUE_A_SENHA_AQUI"
+  })), null);
+  assert.throws(() => controllerModule.parseInstagramCredentials("nao-json"), /INSTAGRAM_CREDENTIALS_INVALID_JSON/);
+
+  const loginEvents = [];
+  const loginValues = { username: "", password: "", submitted: false };
+  const loginController = new controllerModule.InstagramController({
+    config,
+    reporter: (event) => loginEvents.push(event),
+    credentialsLoader: async () => ({ username: "caixapretabot", password: "segredo-que-nao-pode-vazar" })
+  });
+  loginController.page = createLoginPage(loginValues);
+  loginController.getSessionState = async () => loginValues.submitted ? "authenticated" : "login_required";
+  loginController.dismissKnownModals = async () => {};
+  assert.deepEqual(await loginController.attemptAutomaticLogin(), {
+    status: "ready",
+    message: "INSTAGRAM: login automatico concluido"
+  });
+  assert.deepEqual(loginValues, {
+    username: "caixapretabot",
+    password: "segredo-que-nao-pode-vazar",
+    submitted: true
+  });
+  assert.equal(JSON.stringify(loginEvents).includes("segredo-que-nao-pode-vazar"), false);
+
+  const continueValues = {
+    username: "",
+    password: "",
+    submitted: false,
+    requiresContinue: true,
+    continueVisible: false,
+    continued: false
+  };
+  const continueController = new controllerModule.InstagramController({
+    config,
+    credentialsLoader: async () => ({ username: "caixapretabot", password: "senha-segura" })
+  });
+  continueController.page = createLoginPage(continueValues);
+  continueController.getSessionState = async () => continueValues.continued ? "authenticated" : "login_required";
+  continueController.hasManualInterventionSignal = async () => false;
+  continueController.dismissKnownModals = async () => {};
+  assert.deepEqual(await continueController.attemptAutomaticLogin(), {
+    status: "ready",
+    message: "INSTAGRAM: login automatico concluido"
+  });
+  assert.equal(continueValues.submitted, true);
+  assert.equal(continueValues.continued, true);
+
+  const rememberedAccountValues = {
+    username: "",
+    password: "",
+    submitted: false,
+    initialContinueVisible: true,
+    usernameVisible: false,
+    passwordVisible: false,
+    rememberedAccountContinued: false
+  };
+  const rememberedAccountController = new controllerModule.InstagramController({
+    config,
+    credentialsLoader: async () => ({ username: "caixapretabot", password: "senha-segura" })
+  });
+  rememberedAccountController.page = createLoginPage(rememberedAccountValues);
+  rememberedAccountController.getSessionState = async () => (
+    rememberedAccountValues.submitted ? "authenticated" : "login_required"
+  );
+  rememberedAccountController.hasManualInterventionSignal = async () => false;
+  rememberedAccountController.dismissKnownModals = async () => {};
+  assert.deepEqual(await rememberedAccountController.attemptAutomaticLogin(), {
+    status: "ready",
+    message: "INSTAGRAM: login automatico concluido"
+  });
+  assert.equal(rememberedAccountValues.rememberedAccountContinued, true);
+  assert.equal(rememberedAccountValues.username, "");
+  assert.equal(rememberedAccountValues.password, "senha-segura");
+  assert.equal(rememberedAccountValues.submitted, true);
+
+  const researchNavigation = [];
+  let researchLoginChecks = 0;
+  const researchController = new controllerModule.InstagramController({ config });
+  researchController.init = async () => researchController.getStatus();
+  researchController.configurePage = async () => {};
+  researchController.ensurePage = () => {};
+  researchController.searchPublicWeb = async () => "google";
+  researchController.collectCurrentPageLinks = async () => ({
+    interesting: null,
+    instagram: "https://www.instagram.com/robinson.rogerio/"
+  });
+  researchController.ensureInstagramSession = async (options) => {
+    researchLoginChecks += 1;
+    assert.deepEqual(options, { automatic: false });
+    return { status: "ready", message: "INSTAGRAM: sessao encontrada" };
+  };
+  researchController.dismissKnownModals = async () => {};
+  researchController.page = {
+    url: () => researchNavigation.at(-1) || "https://www.google.com/",
+    goto: async (url) => {
+      researchNavigation.push(url);
+    },
+    evaluate: async () => {},
+    waitForTimeout: async () => {}
+  };
+  assert.equal((await researchController.researchPerson("Robinson Rogério")).status, "ready");
+  assert.equal(researchLoginChecks, 1);
+  assert.equal(researchNavigation.at(-1), "https://www.instagram.com/robinson.rogerio/");
+
+  let automaticLoginAttempted = false;
+  const manualSessionController = new controllerModule.InstagramController({ config });
+  manualSessionController.init = async () => manualSessionController.getStatus();
+  manualSessionController.ensurePage = () => {};
+  manualSessionController.configurePage = async () => {};
+  manualSessionController.dismissKnownModals = async () => {};
+  manualSessionController.getSessionState = async () => "login_required";
+  manualSessionController.attemptAutomaticLogin = async () => {
+    automaticLoginAttempted = true;
+    return { status: "ready" };
+  };
+  manualSessionController.page = {
+    url: () => "https://www.instagram.com/",
+    viewportSize: () => config.viewport
+  };
+  assert.deepEqual(await manualSessionController.ensureInstagramSession({ automatic: false }), {
+    status: "login_required",
+    message: "INSTAGRAM: conclua o login manual antes de abrir o perfil"
+  });
+  assert.equal(automaticLoginAttempted, false);
+
+  const manualLoginNavigation = [];
+  const manualLoginController = new controllerModule.InstagramController({ config });
+  manualLoginController.init = async () => manualLoginController.getStatus();
+  manualLoginController.ensurePage = () => {};
+  manualLoginController.configurePage = async () => {};
+  manualLoginController.closeSecondaryPage = async () => {};
+  manualLoginController.dismissKnownModals = async () => {};
+  manualLoginController.getSessionState = async () => "login_required";
+  manualLoginController.page = {
+    url: () => manualLoginNavigation.at(-1) || "about:blank",
+    goto: async (url) => manualLoginNavigation.push(url),
+    viewportSize: () => config.viewport
+  };
+  assert.deepEqual(await manualLoginController.prepareManualLogin(), {
+    status: "login_required",
+    message: "INSTAGRAM: toque em Continue/Continuar e conclua o login no painel"
+  });
+  assert.equal(manualLoginNavigation.at(-1), "https://www.instagram.com/");
+  assert.equal(manualLoginController.browserMode, "instagram_manual_login");
+  assert.equal(manualLoginController.lastAction, "manualLogin");
+
+  let unsafeContinueClicked = false;
+  const securityContinueController = new controllerModule.InstagramController({ config });
+  securityContinueController.page = {
+    getByRole: () => createFakeLocator({
+      visible: true,
+      click: async () => {
+        unsafeContinueClicked = true;
+      }
+    })
+  };
+  securityContinueController.hasManualInterventionSignal = async () => true;
+  assert.equal(await securityContinueController.pressSafeLoginContinue(), false);
+  assert.equal(unsafeContinueClicked, false);
+
+  const missingCredentialsController = new controllerModule.InstagramController({
+    config,
+    credentialsLoader: async () => null
+  });
+  assert.deepEqual(await missingCredentialsController.attemptAutomaticLogin(), {
+    status: "login_required",
+    message: "INSTAGRAM: credenciais locais ausentes"
+  });
 
   const controller = new controllerModule.InstagramController({ config });
   assert.equal(controller.assertAllowedUsername("@cappavictor"), "cappavictor");
@@ -170,8 +457,139 @@ async function main() {
   assert.deepEqual(openConfig.allowedProfiles, []);
   assert.equal(openController.assertAllowedUsername("marcusgarcia"), "marcusgarcia");
 
+  const guidedController = new controllerModule.InstagramController({ config });
+  const guidedNavigations = [];
+  const guidedStatuses = [];
+  guidedController.init = async () => {};
+  guidedController.configurePage = async () => {};
+  guidedController.searchPublicWeb = async (query, options) => {
+    assert.equal(query, "eleições de 2026");
+    assert.deepEqual(options, { preferGoogle: true, news: true });
+    return "google";
+  };
+  guidedController.collectCurrentSearchResults = async () => [
+    { url: "https://jornal.example.com/politica/eleicoes", text: "Notícia eleitoral" }
+  ];
+  guidedController.updateStatus = (status, message) => {
+    guidedController.status = status;
+    guidedController.message = message;
+    guidedStatuses.push({ status, message });
+  };
+  guidedController.page = {
+    goto: async (url) => guidedNavigations.push(url),
+    waitForTimeout: async () => {},
+    evaluate: async () => ({
+      title: "Notícia eleitoral",
+      text: "Trecho factual suficientemente longo da notícia eleitoral escolhida para o teste, com contexto adicional visível e uma segunda informação concreta que ultrapassa o mínimo exigido para considerar a página realmente lida.",
+      url: "https://jornal.example.com/politica/eleicoes"
+    }),
+    url: () => guidedNavigations.at(-1) || "https://www.google.com/"
+  };
+  const guidedResult = await guidedController.followGoogleGuidance("buscar sobre eleições de 2026 e escolher uma notícia");
+  assert.equal(guidedResult.status, "ready");
+  assert.equal(guidedController.browserMode, "google_guidance");
+  assert.equal(guidedController.research.step, "research_ready");
+  assert.deepEqual(guidedNavigations, ["https://jornal.example.com/politica/eleicoes"]);
+  assert.equal(guidedResult.articles.length, 1);
+  assert.equal(guidedStatuses.at(-1).message, "GOOGLE: 1 NOTÍCIA(S) LIDA(S)");
+
+  const processingController = new controllerModule.InstagramController({ config });
+  const processingStatuses = [];
+  let completionCalled = false;
+  processingController.followGoogleGuidance = async () => ({
+    status: "ready",
+    articles: [{ title: "Notícia lida" }]
+  });
+  processingController.updateStatus = (status, message) => {
+    processingStatuses.push({ status, message });
+  };
+  const processingStarted = processingController.startGoogleGuidance({ guidance: "buscar notícias", query: "notícias" }, {
+    onComplete: async () => { completionCalled = true; }
+  });
+  assert.equal(processingStarted.status, "started");
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(completionCalled, true);
+  assert.deepEqual(processingStatuses.slice(-2), [
+    { status: "ACTING", message: "GOOGLE: PROCESSANDO INFORMAÇÕES LIDAS" },
+    { status: "READY", message: "GOOGLE: COMENTÁRIO CONCLUÍDO" }
+  ]);
+
+  const googleViewportController = new controllerModule.InstagramController({ config });
+  const googleViewportChanges = [];
+  const googleHeaders = [];
+  googleViewportController.browserMode = "google_guidance";
+  googleViewportController.page = {
+    viewportSize: () => ({ width: 1100, height: 760 }),
+    setViewportSize: async (viewport) => googleViewportChanges.push(viewport),
+    setExtraHTTPHeaders: async (headers) => googleHeaders.push(headers)
+  };
+  googleViewportController.applyAudioMuted = async () => {};
+  googleViewportController.updateStatus = () => {};
+  await googleViewportController.configurePage();
+  assert.deepEqual(googleViewportChanges, [{ width: 430, height: 760 }]);
+  assert.equal(googleHeaders[0]["Sec-CH-UA-Mobile"], "?1");
+  assert.match(googleHeaders[0]["User-Agent"], /iPhone/);
+
+  const challengeController = new controllerModule.InstagramController({ config });
+  const challengePage = {
+    url: () => "https://www.google.com/search?q=noticias",
+    title: async () => "Confirme que você não é um robô",
+    frames: () => [{ url: () => "https://www.google.com/recaptcha/api2/anchor" }],
+    locator: (selector) => selector === "body"
+      ? { innerText: async () => "Para continuar, confirme que você não é um robô" }
+      : { count: async () => 1 }
+  };
+  assert.equal(await challengeController.isGoogleChallengePage(challengePage), true);
+
+  const fallbackSearchController = new controllerModule.InstagramController({ config });
+  const fallbackSearchNavigations = [];
+  const fallbackSearchStatuses = [];
+  let fallbackSearchUrl = "about:blank";
+  fallbackSearchController.page = {
+    goto: async (url) => {
+      fallbackSearchUrl = url;
+      fallbackSearchNavigations.push(url);
+    },
+    url: () => fallbackSearchUrl,
+    waitForTimeout: async () => {}
+  };
+  fallbackSearchController.isGoogleChallengePage = async () => fallbackSearchUrl.includes("google.com");
+  fallbackSearchController.updateStatus = (status, message) => fallbackSearchStatuses.push({ status, message });
+  assert.equal(await fallbackSearchController.searchPublicWeb("eleições 2026", { preferGoogle: true, news: true }), "bing");
+  assert.match(fallbackSearchNavigations[0], /google\.com\/search\?.*tbm=nws/);
+  assert.match(fallbackSearchNavigations[1], /bing\.com\/news\/search/);
+  assert.equal(fallbackSearchController.googleChallengeDetected, true);
+  assert.match(fallbackSearchStatuses.at(-1).message, /USANDO BING NEWS/);
+
+  fallbackSearchNavigations.length = 0;
+  assert.equal(await fallbackSearchController.searchPublicWeb("tecnologia", { preferGoogle: true, news: true }), "bing");
+  assert.equal(fallbackSearchNavigations.some((url) => url.includes("google.com")), false);
+
+  const newGoogleWindowController = new controllerModule.InstagramController({ config });
+  const newGoogleWindowNavigations = [];
+  const secondaryGooglePage = {
+    setViewportSize: async () => {},
+    setExtraHTTPHeaders: async () => {},
+    goto: async (url) => newGoogleWindowNavigations.push(url),
+    waitForTimeout: async () => {},
+    url: () => newGoogleWindowNavigations.at(-1) || "about:blank",
+    locator: () => ({ innerText: async () => "Google" })
+  };
+  newGoogleWindowController.context = { newPage: async () => secondaryGooglePage };
+  newGoogleWindowController.init = async () => {};
+  newGoogleWindowController.updateStatus = (status, message) => {
+    newGoogleWindowController.status = status;
+    newGoogleWindowController.message = message;
+  };
+  const newGoogleWindowResult = await newGoogleWindowController.openGoogleAlongside("abra uma nova janela do Google");
+  assert.equal(newGoogleWindowResult.status, "ready");
+  assert.equal(newGoogleWindowController.browserMode, "browser_command");
+  assert.equal(newGoogleWindowController.secondaryBrowserLabel, "GOOGLE 2");
+  assert.equal(newGoogleWindowNavigations[0], "https://www.google.com/?hl=pt-BR");
+
   const dispatchedTouchEvents = [];
   const pressedKeys = [];
+  const insertedTexts = [];
   const fakeSession = {
     send: async (method, payload) => {
       dispatchedTouchEvents.push({ method, payload });
@@ -188,7 +606,8 @@ async function main() {
     keyboard: {
       press: async (key) => {
         pressedKeys.push(key);
-      }
+      },
+      insertText: async (text) => insertedTexts.push(text)
     }
   };
 
@@ -196,6 +615,8 @@ async function main() {
   assert.equal(dispatchedTouchEvents[0].payload.touchPoints[0].y > dispatchedTouchEvents.at(-2).payload.touchPoints[0].y, true);
   assert.equal(dispatchedTouchEvents.at(-1).payload.type, "touchEnd");
   assert.deepEqual(pressedKeys, ["ArrowDown"]);
+  assert.deepEqual(await controller.sendEmbeddedInput({ type: "text", text: "senha colada" }), { ok: true });
+  assert.deepEqual(insertedTexts, ["senha colada"]);
 
   const reelDelayController = new controllerModule.InstagramController({ config });
   reelDelayController.page = {
@@ -257,6 +678,30 @@ async function main() {
   assert.deepEqual(await clickController.sendEmbeddedInput({ type: "click", x: 0.5, y: 0.25 }), { ok: true });
   assert.deepEqual(tappedPoints, [{ x: 215, y: 190 }]);
   assert.deepEqual(mouseClicks, []);
+  assert.equal(clickController.embeddedInputInProgress, 0);
+
+  let releasePrioritizedTap;
+  const prioritizedTapGate = new Promise((resolve) => {
+    releasePrioritizedTap = resolve;
+  });
+  const prioritizedInputController = new controllerModule.InstagramController({ config });
+  prioritizedInputController.page = {
+    viewportSize: () => ({ width: 430, height: 760 }),
+    setExtraHTTPHeaders: async () => {},
+    bringToFront: async () => {},
+    touchscreen: { tap: async () => prioritizedTapGate },
+    mouse: { click: async () => {} }
+  };
+  const prioritizedInput = prioritizedInputController.sendEmbeddedInput({ type: "click", x: 0.2, y: 0.3 });
+  await Promise.resolve();
+  assert.equal(prioritizedInputController.embeddedInputInProgress, 1);
+  await assert.rejects(
+    () => prioritizedInputController.captureJpegFrame(),
+    /INSTAGRAM_ACTION_IN_PROGRESS/
+  );
+  releasePrioritizedTap();
+  assert.deepEqual(await prioritizedInput, { ok: true });
+  assert.equal(prioritizedInputController.embeddedInputInProgress, 0);
 
   const fallbackFollowController = new controllerModule.InstagramController({ config });
   let openedMediaFor = null;
@@ -504,16 +949,77 @@ function createTextFollowPage() {
   };
 }
 
+function createLoginPage(values) {
+  const body = createFakeLocator({
+    visible: true,
+    innerText: async () => "Log in"
+  });
+  const usernameInput = createFakeLocator({
+    visible: () => values.usernameVisible !== false && !values.initialContinueVisible,
+    fill: async (value) => {
+      values.username = value;
+    }
+  });
+  const passwordInput = createFakeLocator({
+    visible: () => values.passwordVisible !== false,
+    fill: async (value) => {
+      values.password = value;
+    }
+  });
+  const submit = createFakeLocator({
+    visible: true,
+    click: async () => {
+      values.submitted = true;
+      if (values.requiresContinue) values.continueVisible = true;
+    }
+  });
+  const continueButton = createFakeLocator({
+    visible: () => Boolean(values.initialContinueVisible || values.continueVisible),
+    click: async () => {
+      if (values.initialContinueVisible) {
+        values.initialContinueVisible = false;
+        values.passwordVisible = true;
+        values.rememberedAccountContinued = true;
+        return;
+      }
+      values.continued = true;
+      values.continueVisible = false;
+    }
+  });
+
+  return {
+    url: () => values.initialContinueVisible
+      ? "https://www.instagram.com/"
+      : "https://www.instagram.com/accounts/login/",
+    locator: (selector) => {
+      if (selector === "body") return body;
+      if (selector === "input[name='username']") return usernameInput;
+      if (selector === "input[name='password']") return passwordInput;
+      return submit;
+    },
+    getByRole: (role, options = {}) => {
+      if (role === "button" && (
+        options.name?.test?.("Continuar") || options.name?.test?.("Continue")
+      )) return continueButton;
+      return submit;
+    },
+    waitForTimeout: async () => {}
+  };
+}
+
 function createFakeLocator(overrides = {}) {
+  const visible = () => Boolean(
+    typeof overrides.visible === "function" ? overrides.visible() : overrides.visible
+  );
   const locator = {
     first: () => locator,
     filter: () => locator,
     locator: () => locator,
     getByRole: () => locator,
     getByText: () => locator,
-    isVisible: async () => Boolean(overrides.visible),
+    isVisible: async () => visible(),
     waitFor: async () => {
-      if (!overrides.visible) {
+      if (!visible()) {
         throw new Error("not visible");
       }
     },

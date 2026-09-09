@@ -1,4 +1,5 @@
-import SceneProjectionPage from "@/components/SceneProjectionPage";
+import ForcaGSamplerStage from "@/components/ForcaGSamplerStage";
+import ProjectionWindowClient from "@/components/ProjectionWindowClient";
 
 export const metadata = {
   title: "Forca G Samples",
@@ -6,5 +7,10 @@ export const metadata = {
 };
 
 export default function ForcaGSamplesPage() {
-  return <SceneProjectionPage controllerId="forca-g-samples" />;
+  return (
+    <>
+      <ProjectionWindowClient />
+      <ForcaGSamplerStage />
+    </>
+  );
 }

@@ -64,13 +64,23 @@ export default function GlitchOverlay({ children, glitch = DEFAULT_GLITCH, previ
         return;
       }
 
+      if (document.hidden) {
+        timer = setTimeout(pulse, 500);
+        return;
+      }
+
       const baseIntensity = clamp(Number(params.intensity ?? 0.5), 0, 1);
       const frequency = clamp(Number(params.frequency ?? 0.5), 0, 1);
       const jitter = clamp(Number(params.jitter ?? 0.4), 0, 1);
       const flashChance = clamp(Number(params.flashChance ?? 0.2), 0, 1);
       const modeBoost = glitch?.mode === "continuous" || glitch?.mode === "video" ? randomBetween(0.2, 1) : randomBetween(0.45, 1);
       const level = clamp(baseIntensity * modeBoost + randomBetween(0, jitter * 0.42), 0, 1);
-      const blockCount = Math.round(clamp(Number(params.blockCount ?? 8), 0, 32) * randomBetween(0.35, 1));
+      // Safari can stop processing navigation and STOP events when a strong
+      // preset rebuilds dozens of React nodes around 30 times per second.
+      // CSS keeps the motion between pulses, so a smaller DOM budget preserves
+      // the effect without monopolizing the main thread.
+      const maxBlockCount = preview ? 8 : 12;
+      const blockCount = Math.round(clamp(Number(params.blockCount ?? 8), 0, maxBlockCount) * randomBetween(0.35, 1));
 
       if (video?.takeover) {
         const transitionMs = Math.max(600, Number(video.transitionMs || 5200));
@@ -95,7 +105,8 @@ export default function GlitchOverlay({ children, glitch = DEFAULT_GLITCH, previ
 
       const interval = clamp(Number(params.intervalMs ?? 360), 40, 6000);
       const frequencyScale = 1 - frequency * 0.72;
-      timer = setTimeout(pulse, Math.max(35, interval * frequencyScale * randomBetween(0.35, 1.35)));
+      const minimumInterval = preview ? 180 : 100;
+      timer = setTimeout(pulse, Math.max(minimumInterval, interval * frequencyScale * randomBetween(0.35, 1.35)));
     }
 
     pulse();
@@ -103,7 +114,7 @@ export default function GlitchOverlay({ children, glitch = DEFAULT_GLITCH, previ
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [active, glitch?.mode, glitch?.sequence, params, video?.takeover, video?.transitionMs]);
+  }, [active, glitch?.mode, glitch?.sequence, params, preview, video?.takeover, video?.transitionMs]);
 
   useEffect(() => {
     const element = videoRef.current;
@@ -146,6 +157,7 @@ export default function GlitchOverlay({ children, glitch = DEFAULT_GLITCH, previ
 
   const wrapperClass = [
     styles.wrapper,
+    preview ? styles.preview : "",
     active ? styles.active : "",
     videoEstablished ? styles.videoEstablished : "",
     glitch?.mode === "continuous" ? styles.continuous : "",

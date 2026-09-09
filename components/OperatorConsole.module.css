@@ -15,6 +15,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 }
 
 .projectionBar {
@@ -135,6 +136,15 @@
   flex: 1 1 auto;
   overflow-y: auto;
   padding-top: 16px;
+}
+
+.instagramBrowserPanel {
+  flex: 0 0 850px;
+  height: 850px;
+  min-height: 850px;
+  margin-top: 14px;
+  border: 1px solid var(--green-soft);
+  overflow: hidden;
 }
 
 .history p,
@@ -359,6 +369,12 @@
     border-top: 1px solid var(--green-soft);
     padding-left: 0;
     padding-top: 14px;
+  }
+
+  .instagramBrowserPanel {
+    flex-basis: 850px;
+    height: 850px;
+    min-height: 850px;
   }
 
   .inlineControls {

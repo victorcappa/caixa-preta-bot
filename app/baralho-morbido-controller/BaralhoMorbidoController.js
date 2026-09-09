@@ -6,7 +6,7 @@ import styles from "./BaralhoMorbidoController.module.css";
 const INITIAL_STATE = {
   phase: "IDLE",
   drawSequence: 0,
-  totalCards: 10,
+  totalCards: 0,
   usedIds: [],
   remainingIds: [],
   currentCard: null,
@@ -49,7 +49,7 @@ export default function BaralhoMorbidoController() {
     let active = true;
     let refreshing = false;
 
-    async function refreshDeck() {
+    async function refreshDeck(refreshAssets = false) {
       if (refreshing) {
         return;
       }
@@ -57,7 +57,8 @@ export default function BaralhoMorbidoController() {
       refreshing = true;
 
       try {
-        const response = await fetch("/api/baralho-morbido", { cache: "no-store" });
+        const url = refreshAssets ? "/api/baralho-morbido?refresh=1" : "/api/baralho-morbido";
+        const response = await fetch(url, { cache: "no-store" });
         const data = await response.json();
 
         if (!active) {
@@ -66,6 +67,9 @@ export default function BaralhoMorbidoController() {
 
         setDeck(data || INITIAL_STATE);
         setConnection("CONNECTED");
+        if (refreshAssets) {
+          setLog(`${data?.totalCards || 0} VIDEOS CARREGADOS`);
+        }
       } catch {
         if (active) {
           setConnection("DISCONNECTED");
@@ -75,7 +79,7 @@ export default function BaralhoMorbidoController() {
       }
     }
 
-    refreshDeck();
+    refreshDeck(true);
     const timer = window.setInterval(refreshDeck, 500);
 
     return () => {
@@ -86,10 +90,11 @@ export default function BaralhoMorbidoController() {
 
   const statusLabel = STATUS_LABELS[deck.phase] || deck.phase || "AGUARDANDO";
   const usedCount = deck.usedIds?.length || 0;
-  const totalCards = deck.totalCards || 10;
-  const allRevealed = deck.phase === "FINISHED" || usedCount >= totalCards;
+  const totalCards = deck.totalCards ?? 0;
+  const hasCards = totalCards > 0;
+  const allRevealed = hasCards && (deck.phase === "FINISHED" || usedCount >= totalCards);
   const busy = BUSY_PHASES.has(deck.phase);
-  const drawDisabled = pending || busy || allRevealed;
+  const drawDisabled = pending || busy || allRevealed || !hasCards;
   const displayConnected = (deck.displayConnections || 0) > 0;
   const primaryLabel = usedCount > 0 ? "SORTEAR PROXIMA" : "EMBARALHAR / SORTEAR PROXIMA";
   const sortedCards = useMemo(() => {
@@ -130,7 +135,7 @@ export default function BaralhoMorbidoController() {
       return;
     }
 
-    const confirmed = window.confirm("Resetar o Baralho Morbido e devolver as 10 cartas ao pool?");
+    const confirmed = window.confirm(`Resetar o Baralho Morbido e devolver as ${totalCards} cartas ao pool?`);
 
     if (!confirmed) {
       return;
@@ -193,8 +198,12 @@ export default function BaralhoMorbidoController() {
           <div className={styles.finishedBanner}>TODAS AS CARTAS FORAM REVELADAS</div>
         ) : null}
 
+        {!hasCards ? (
+          <div className={styles.finishedBanner}>NENHUM VIDEO EM assets/videos/baralho-morbido</div>
+        ) : null}
+
         <button className={styles.primaryButton} disabled={drawDisabled} onClick={drawNext} type="button">
-          {busy ? "ANIMACAO EM ANDAMENTO" : primaryLabel}
+          {!hasCards ? "ADICIONE VIDEOS PARA COMPOR O BARALHO" : busy ? "ANIMACAO EM ANDAMENTO" : primaryLabel}
         </button>
 
         <section className={styles.usedPanel}>

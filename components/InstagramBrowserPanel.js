@@ -18,14 +18,28 @@ const MIN_FRAME_DELAY_MS = 34;
 const MAX_FRAME_DELAY_MS = 250;
 
 export default function InstagramBrowserPanel({ instagram, onClose }) {
+  const personResearch = instagram.browserMode === "person_research";
+  const googleGuidance = instagram.browserMode === "google_guidance";
+  const browserCommand = instagram.browserMode === "browser_command";
+  const manualLogin = instagram.browserMode === "instagram_manual_login";
+  const publicResearch = personResearch || googleGuidance || browserCommand;
+  const researchPerson = instagram.research?.person || "pessoa escolhida";
+  const researchLabel = googleGuidance || browserCommand
+    ? (instagram.research?.secondaryQuery || instagram.research?.query || instagram.research?.guidance || "orientação do operador")
+    : researchPerson;
+  const [activePane, setActivePane] = useState("primary");
   const [frameViewport, setFrameViewport] = useState(instagram.viewport || { width: 430, height: 760 });
   const [frameImage, setFrameImage] = useState("");
   const [frameError, setFrameError] = useState("");
+  const [inputStatus, setInputStatus] = useState("");
+  const [touchPulse, setTouchPulse] = useState(null);
   const viewportRef = useRef(null);
+  const frameImageRef = useRef(null);
   const hasFrameImageRef = useRef(false);
   const pointerRef = useRef(null);
-  const ignoreNextClickRef = useRef(false);
   const wheelRef = useRef({ deltaY: 0, sentAt: 0 });
+  const inputStatusTimerRef = useRef(null);
+  const touchPulseTimerRef = useRef(null);
 
   useEffect(() => {
     if (instagram.viewport?.width && instagram.viewport?.height) {
@@ -33,6 +47,12 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
     }
     setFrameError("");
   }, [instagram.status, instagram.updatedAt, instagram.viewport]);
+
+  useEffect(() => {
+    if (activePane === "secondary" && !instagram.secondaryBrowser?.active) setActivePane("primary");
+    setFrameImage("");
+    hasFrameImageRef.current = false;
+  }, [activePane, instagram.secondaryBrowser?.active]);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,7 +67,7 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
       const startedAt = Date.now();
 
       try {
-        const response = await fetch(`/api/instagram/frame?t=${Date.now()}`, { cache: "no-store" });
+        const response = await fetch(`/api/instagram/frame?pane=${activePane}&t=${Date.now()}`, { cache: "no-store" });
 
         if (!response.ok) {
           throw new Error("FRAME UNAVAILABLE");
@@ -79,45 +99,35 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [instagram.status, instagram.streamFps]);
+  }, [activePane, instagram.status, instagram.streamFps]);
+
+  useEffect(() => () => {
+    clearTimeout(inputStatusTimerRef.current);
+    clearTimeout(touchPulseTimerRef.current);
+  }, []);
 
   async function sendInput(payload) {
-    await fetch("/api/instagram/input", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    }).catch(() => null);
+    clearTimeout(inputStatusTimerRef.current);
+    setInputStatus("ENVIANDO CONTROLE...");
+    try {
+      const response = await fetch("/api/instagram/input", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...payload, pane: activePane })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.ok) throw new Error(data.error || "INSTAGRAM INPUT FAILED");
+      setInputStatus(payload.type === "click" ? "TOQUE ENVIADO" : payload.type === "swipe" ? "GESTO ENVIADO" : payload.type === "text" ? "TEXTO COLADO" : "TECLA ENVIADA");
+    } catch {
+      setInputStatus("CONTROLE NÃO ENVIADO");
+    } finally {
+      inputStatusTimerRef.current = setTimeout(() => setInputStatus(""), 1200);
+    }
   }
 
   function sendSwipe(direction, source = "pointer") {
     viewportRef.current?.focus();
     sendInput({ type: "swipe", direction, source });
-  }
-
-  function handleClick(event) {
-    if (ignoreNextClickRef.current) {
-      ignoreNextClickRef.current = false;
-      event.preventDefault();
-      return;
-    }
-
-    const point = normalizedPointInFrame(
-      viewportRef.current?.getBoundingClientRect(),
-      frameViewport,
-      event.clientX,
-      event.clientY
-    );
-
-    if (!point) {
-      return;
-    }
-
-    viewportRef.current.focus();
-    sendInput({
-      type: "click",
-      x: point.x,
-      y: point.y
-    });
   }
 
   function handleKeyDown(event) {
@@ -129,6 +139,13 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
       event.preventDefault();
       sendInput({ type: "key", key: event.key });
     }
+  }
+
+  function handlePaste(event) {
+    const pastedText = event.clipboardData?.getData("text/plain") || "";
+    if (!pastedText) return;
+    event.preventDefault();
+    sendInput({ type: "text", text: pastedText });
   }
 
   function handlePointerDown(event) {
@@ -171,15 +188,18 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
     const deltaX = event.clientX - pointer.x;
     const deltaY = event.clientY - pointer.y;
     if (Math.abs(deltaY) < 48 || Math.abs(deltaY) < Math.abs(deltaX) * 1.4) {
+      const frameRect = frameImageRef.current?.getBoundingClientRect() || viewportRef.current?.getBoundingClientRect();
       const point = normalizedPointInFrame(
-        viewportRef.current?.getBoundingClientRect(),
+        frameRect,
         frameViewport,
         event.clientX,
         event.clientY
       );
 
       if (point) {
-        ignoreNextClickRef.current = true;
+        setTouchPulse({ x: point.x, y: point.y, id: Date.now() });
+        clearTimeout(touchPulseTimerRef.current);
+        touchPulseTimerRef.current = setTimeout(() => setTouchPulse(null), 320);
         sendInput({
           type: "click",
           x: point.x,
@@ -189,7 +209,6 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
       return;
     }
 
-    ignoreNextClickRef.current = true;
     sendSwipe(deltaY < 0 ? "up" : "down");
   }
 
@@ -218,22 +237,36 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
   }
 
   return (
-    <aside className={styles.panel} aria-label="Instagram real embutido">
+    <aside className={styles.panel} aria-label={publicResearch ? "Pesquisa pública real embutida" : "Instagram real embutido"}>
       <header className={styles.header}>
         <div>
-          <span>INSTAGRAM REAL</span>
-          <strong>{instagram.targetProfile ? `@${instagram.targetProfile}` : `@${instagram.account || "caixapretabot"}`}</strong>
+          <span>{manualLogin ? "LOGIN MANUAL DO INSTAGRAM" : browserCommand ? "NAVEGADOR REAL" : publicResearch ? (googleGuidance ? "GOOGLE REAL" : "PESQUISA PÚBLICA REAL") : "INSTAGRAM REAL"}</span>
+          <strong>{publicResearch
+            ? researchLabel
+            : instagram.targetProfile ? `@${instagram.targetProfile}` : `@${instagram.account || "caixapretabot"}`}</strong>
         </div>
         <p>{instagram.message || instagram.status}</p>
-        <button aria-label="Fechar Instagram embutido" onClick={onClose} type="button">
+        {instagram.secondaryBrowser?.active ? (
+          <nav className={styles.tabs} aria-label="Abas da pesquisa">
+            <button className={activePane === "primary" ? styles.activeTab : ""} onClick={() => setActivePane("primary")} type="button">
+              {googleGuidance ? "GOOGLE" : personResearch ? "PESQUISA" : "PRINCIPAL"}
+            </button>
+            <button className={activePane === "secondary" ? styles.activeTab : ""} onClick={() => setActivePane("secondary")} type="button">
+              {instagram.secondaryBrowser.label || "SECUNDÁRIA"}
+            </button>
+          </nav>
+        ) : null}
+        <button aria-label={publicResearch ? "Fechar pesquisa embutida" : "Fechar Instagram embutido"} onClick={onClose} type="button">
           X
         </button>
       </header>
 
       <div
-        aria-label="Frame interativo do Instagram"
+        aria-label={publicResearch ? "Frame interativo da pesquisa pública" : "Frame interativo do Instagram"}
         className={styles.viewport}
+        onContextMenu={(event) => event.preventDefault()}
         onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
         onWheel={handleWheel}
         ref={viewportRef}
         role="application"
@@ -246,7 +279,7 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
         {frameImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            alt="Instagram real controlado pelo Playwright"
+            alt={publicResearch ? `Pesquisa pública real por ${researchLabel}` : "Instagram real controlado pelo Playwright"}
             draggable="false"
             onError={() => setFrameError("FRAME RECONECTANDO")}
             onLoad={(event) => {
@@ -255,13 +288,23 @@ export default function InstagramBrowserPanel({ instagram, onClose }) {
                 setFrameViewport({ width: naturalWidth, height: naturalHeight });
               }
             }}
+            ref={frameImageRef}
             src={frameImage}
           />
         ) : null}
+        {touchPulse ? (
+          <span
+            aria-hidden="true"
+            className={styles.touchPulse}
+            key={touchPulse.id}
+            style={{ left: `${touchPulse.x * 100}%`, top: `${touchPulse.y * 100}%` }}
+          />
+        ) : null}
+        <span className={styles.localControlLabel}>CONTROLE LOCAL · CURSOR NÃO PROJETADO</span>
+        {inputStatus ? <span aria-live="polite" className={styles.inputStatus}>{inputStatus}</span> : null}
         <div
           aria-hidden="true"
           className={styles.interactionLayer}
-          onClick={handleClick}
           onPointerCancel={handlePointerCancel}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}

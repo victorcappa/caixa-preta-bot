@@ -80,12 +80,6 @@ export async function GET(request) {
 
   const stream = new ReadableStream({
     start(controller) {
-      const initialState = showState.snapshot();
-      send(controller, encodeSse(withContext({
-        event: { type: "snapshot" },
-        state: stateForClient(initialState, client)
-      })));
-
       unsubscribe = showState.subscribe((payload) => {
         if (isBaralhoMorbidoClient(client) && !isRelevantForBaralhoMorbido(payload)) {
           return;
@@ -100,6 +94,15 @@ export async function GET(request) {
           state: stateForClient(payload.state, client)
         })));
       });
+
+      // Registra o listener antes do snapshot para não perder uma atualização
+      // que aconteça exatamente enquanto a aba pública está se conectando.
+      send(controller, "retry: 500\n\n");
+      const initialState = showState.snapshot();
+      send(controller, encodeSse(withContext({
+        event: { type: "snapshot" },
+        state: stateForClient(initialState, client)
+      })));
 
       keepAlive = setInterval(() => {
         send(controller, ": keepalive\n\n");
@@ -116,7 +119,8 @@ export async function GET(request) {
     headers: {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive"
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no"
     }
   });
 }

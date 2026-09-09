@@ -457,15 +457,18 @@ npm run dev</code></pre>
                 </article>
 
                 <article class="command">
-                  <strong>/instagram follow cappavictor</strong>
+                  <strong>/instagram abrir</strong>
                   <p>
                     Abre o Instagram real em Chromium controlado pelo Playwright e mostra um painel
-                    lateral embutido, mantendo o chat visivel ao lado. Na primeira execucao, se
-                    necessario, clique no espelho e faca login manualmente como
-                    <code>@caixapretabot</code>. O botao <code>X</code> fecha apenas o painel; a
-                    sessao fica em <code>.runtime/instagram-profile/</code>.
+                    lateral embutido, mantendo o chat visivel ao lado, sem analisar a tela nem
+                    executar acao social. Quando existe uma conta lembrada, pressiona
+                    <code>Continue</code>, aguarda o campo seguinte e preenche a senha do arquivo
+                    local. O formulario classico permanece como fallback; captcha, checkpoint e
+                    2FA continuam manuais. O botao <code>X</code> fecha apenas o painel; a sessao
+                    fica em <code>.runtime/instagram-profile/</code>.
                   </p>
-                  <pre><code>/instagram follow cappavictor</code></pre>
+                  <pre><code>/instagram abrir
+/instagram follow cappavictor</code></pre>
                 </article>
 
                 <article class="command">
@@ -485,9 +488,18 @@ npm run dev</code></pre>
 /game stop
 /game replace forca</code></pre>
                   <p>
-                    Em <code>Verdade ou Bolo?</code>, <code>REVELAR RESPOSTA</code> toca o video da
-                    rodada. Ao fim do video, a projecao abre 10 segundos de voto no canto da tela;
-                    sem voto, a rodada conta como erro e avanca automaticamente.
+                    Em <code>Verdade ou Bolo?</code>, chat e jogo ficam lado a lado. A rodada mostra
+                    primeiro o frame inicial pausado e so entao abre 10 segundos de voto.
+                    Ao chegar a zero, aparecem imediatamente resposta, acerto ou erro e placar;
+                    sem voto, aparece <code>SEM VOTO</code> e a rodada conta como erro.
+                    <code>REVELAR RESPOSTA</code> antecipa essa mesma resolucao durante a votacao.
+                    Ao escolher VERDADE ou BOLO, o video comeca do zero e revela o resultado ao terminar;
+                    REVELAR antecipa esse resultado. Depois que a Caixa
+                    termina de digitar o comentario da resposta, o jogo avanca automaticamente para
+                    a proxima rodada ou para o resultado final. O jogo usa apenas
+                    <code>bolo-lanterna.mp4</code>, <code>bolo-papel-higienico.mp4</code> e
+                    <code>verdade-nutella.mp4</code>; o prefixo do arquivo determina se a resposta
+                    correta e <code>BOLO</code> ou <code>VERDADE</code>.
                   </p>
                 </article>
 
@@ -536,46 +548,61 @@ npm run dev</code></pre>
 
               <div class="panels">
                 <article class="panel">
-                  <h3>MALA 1 / NOME</h3>
+                  <h3>MALA 1 / VERDADE OU BOLO</h3>
                   <p>
-                    Papel, bilhete, folha, cartao, algo escrito ou nome escrito ativa Maria
-                    Antonieta. Se ainda faltar confirmar que e nome de pessoa, a Caixa faz uma
-                    unica clarificacao e entra no jogo assim que houver confirmacao. Ela joga como
-                    20 Questions: ignora a conversa anterior como pista, comeca amplo, separa
-                    dominio/meio/papel publico, evita repetir pergunta e so chuta nome quando os
-                    fatos convergem. Palpite errado elimina o candidato e o jogo continua sem
-                    voltar para a escolha de mala; termina por acerto, revelacao explicita, pedido
-                    de parada ou transicao externa.
+                    Reutiliza o jogo estruturado <code>verdade_ou_bolo</code> do
+                    <code>GameDirector</code>. O jogo entra direto na primeira rodada e mostra
+                    o frame inicial pausado antes de iniciar os 10 segundos de decisao. O video
+                    pode ser tocado separadamente; tanto o fim do timer quanto <code>REVELAR</code>
+                    exibem imediatamente resposta, resultado e placar. O operador controla o
+                    timing e avanca diretamente com <code>PROXIMA RODADA</code>. A
+                    Caixa improvisa entrada, comentarios e provocacoes com o contexto atual, e
+                    essas falas aparecem no chat ao lado da tela do jogo.
                   </p>
                 </article>
 
                 <article class="panel">
-                  <h3>MALA 2 / INSTAGRAM</h3>
+                  <h3>MALA 2 / GINCANA</h3>
                   <p>
-                    Usa <code>data/instagram-participants.json</code>. Pessoas com
-                    <code>enabled: true</code> entram no sorteio. A projecao mostra vida escolhida,
-                    feed preparado e timer de 60 segundos; ao final aparece <code>ACESSO
-                    ENCERRADO</code>.
+                    Sorteia sem repeticao durante a sessao a partir de
+                    <code>data/scene-zero-gincanas.js</code>. Cada tarefa configura instrucao,
+                    dificuldade, observacoes e faixa de duracao limitada a 60–120 segundos. O
+                    sistema apresenta literalmente uma ordem fechada do banco, sem deixar objeto
+                    ou criterio para o participante escolher e sem permitir reformulacao pelo
+                    modelo. O timer aparece na projecao; somente <code>ACAO CONCLUIDA</code> ou
+                    <code>FALHOU / TEMPO ESGOTADO</code> pede ao modelo o comentario posterior.
                   </p>
                 </article>
 
                 <article class="panel">
-                  <h3>MALA 3 / JOGO</h3>
+                  <h3>MALA 3 / GLITCH + INSTAGRAM</h3>
                   <p>
-                    Escolhe um minigame extensivel: <code>hangman</code>,
-                    <code>drawing_guess</code>, <code>scrambled_word</code>, <code>riddle</code> ou
-                    <code>guess_the_rule</code>. Para adicionar outro, implemente estado, avanco e
-                    visual em <code>SuitcaseDirector</code>.
+                    O operador inicia a mala, dosa <code>NORMAL</code>, <code>GLITCH 1–4</code> e
+                    <code>COLAPSO</code>, e abre manualmente Robson ou Janaina. O mesmo navegador
+                    real inspeciona ate dez posts por perfil. Cada comentario gerado aparece em
+                    preview e so e publicado pelo botao explicito de envio; posts comentados nao
+                    podem receber um segundo envio na sessao. O <code>X</code> recolhe o painel no
+                    operator e na tela pública via estado compartilhado, sem encerrar o navegador
+                    ou invalidar o login; o encerramento real usa
+                    <code>FECHAR NAVEGADOR</code>. O botão <code>COPIAR SENHA DO INSTAGRAM</code>
+                    lê a credencial somente após o clique e o servidor local a grava direto na área
+                    de transferência do macOS, sem devolvê-la ao navegador nem registrá-la no estado,
+                    nos logs ou no prompt.
                   </p>
                 </article>
               </div>
 
+              <p>
+                Ao iniciar uma mala diferente, a mala anterior e interrompida: jogo ativo,
+                timer da gincana, rotina de Instagram e glitch associado nao continuam em paralelo.
+              </p>
+
               <pre><code>npm run test:suitcases</code></pre>
 
               <p class="note">
-                O operator mostra debug em tempo real: experiencia atual, jogo, estado, ultimo
-                input, intencao do bot, perguntas, timer, pessoa, palavra e resultado. Use
-                <code>/mala abort</code> ou <code>/mala reset</code> para recuperar a apresentacao.
+                A troca MALA 1 → MALA 2 → MALA 3 nunca e automatica. Os comandos
+                <code>/mala</code> continuam disponiveis para o <code>SuitcaseDirector</code> legado
+                e recuperacao; a dramaturgia atual e operada nos tres cartoes da Cena 0.
               </p>
             </section>
 
