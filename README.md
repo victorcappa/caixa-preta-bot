@@ -127,6 +127,24 @@ cancelar ou limpar a partitura. O avanço automático é opcional, configurável
 sempre cancelável. A projeção mostra somente a etapa corrente e uma indicação
 pequena da ação esperada.
 
+A abertura da Cena 0 começa em uma BIOS orientada a dados. Ela carrega teatro,
+técnica e elenco, detecta a plateia e trava no limite configurável (inicialmente
+`78%`) porque falta `AÇÃO COLETIVA`. A barra pertence a
+`showState.sceneZero.unlock`: continua visível sobre o chat durante o
+aquecimento e só sai da projeção depois da sequência `PEÇA DESBLOQUEADA`.
+Os estados semânticos são `BOOTING`, `WAITING_FOR_AUDIENCE`,
+`WARMING_AUDIENCE`, `UNLOCKING` e `UNLOCKED`; enquanto a peça está bloqueada,
+esse contexto também é enviado ao bot.
+
+Cada prompt recebe `progressValue` e, por padrão, pontua somente na primeira
+execução. `repeatableProgress: true` libera repetições e `progressValue: 0`
+mantém uma ação puramente dramatúrgica. O controller mostra percentual, limite
+da BIOS, falta, estado e última ação, além de pausa/avanço da BIOS, ajuste
+manual, `COMPLETAR BARRA` animado, `DESBLOQUEAR AGORA`, áudio e reinício. A
+configuração de conteúdo, duração, progresso, feedback e conclusão fica em
+`data/scene-zero-unlock.js`; `onPlayUnlocked` fica registrado no estado e no
+evento SSE para futuras integrações de luz, som, vídeo e mecanismos.
+
 Prompts com metadado `countdown` — como `countdown: 3` — sempre cumprem a
 contagem prometida, mesmo com o avanço automático geral desligado. Em frases
 manuais, o sistema reconhece limites diferentes em construções como `quando eu
@@ -345,7 +363,8 @@ sem apagar os valores preparados. Para validar o fluxo completo no navegador, us
 `/cena-0-controller` é a superfície privada dedicada à Cena 0. `/operator`
 continua disponível como console técnico e hub neutro; entrar nele não troca a
 projeção. O controller da Cena 0 organiza, sem timeline automática, os blocos
-`COLETA`, `PARTICIPANTE`, `JOGO DAS MALAS`, `CANTAR 15s` legado, `GLITCH`,
+`BIOS / DESBLOQUEIO`, `COLETA`, `PARTICIPANTE`, `JOGO DAS MALAS`,
+`CANTAR 15s` legado, `GLITCH`,
 `GOOGLE + INSTAGRAM` e `AEROPORTO / TEA FOR TWO`.
 Um índice fixo exclusivo dessa rota ocupa a lateral direita e navega com scroll
 suave entre topo, memória, personalidade, direção e cada bloco operacional. A seção

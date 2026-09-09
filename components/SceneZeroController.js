@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import InstagramBrowserPanel from "./InstagramBrowserPanel";
+import AudienceWarmupController from "./AudienceWarmupController";
 import { setSharedInstagramPanelVisible } from "@/lib/instagram/panelClient";
 import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
 import { SCENE_ZERO_GLITCH_LEVELS, SCENE_ZERO_PERSONALITY_DIRECTIONS, SCENE_ZERO_STAGES, sceneZeroStageLabel } from "@/lib/scene-zero/state";
@@ -31,6 +32,7 @@ const COLLECTION_RESULTS = [
 
 const SCENE_ZERO_INDEX = [
   ["scene-zero-top", "TOPO"],
+  ["scene-zero-unlock", "BIOS / DESBLOQUEIO"],
   ["scene-zero-memory", "MEMÓRIA"],
   ["scene-zero-personality", "PERSONALIDADE"],
   ["scene-zero-direction", "DIREÇÃO"],
@@ -51,7 +53,7 @@ function remainingTimer(timer, now, fallback = 15) {
 }
 
 export default function SceneZeroController() {
-  const [snapshot, setSnapshot] = useState({ sceneZero: null, instagram: null, game: null, suitcase: null, glitch: null, memories: [] });
+  const [snapshot, setSnapshot] = useState({ sceneZero: null, audienceWarmup: null, instagram: null, game: null, suitcase: null, glitch: null, memories: [] });
   const [pending, setPending] = useState("");
   const [detail, setDetail] = useState("");
   const [memoryText, setMemoryText] = useState("");
@@ -373,6 +375,15 @@ export default function SceneZeroController() {
           <div><dt>GLITCH</dt><dd>{(sceneZero.glitchLevel || "normal").toUpperCase()}</dd></div>
         </dl>
       </header>
+
+      <div id="scene-zero-unlock">
+        <AudienceWarmupController
+          disabled={Boolean(pending)}
+          onLog={(line) => setNotice(line)}
+          state={snapshot.audienceWarmup}
+          unlock={sceneZero.unlock}
+        />
+      </div>
 
       <section className={styles.memoryPanel} id="scene-zero-memory">
         <div className={styles.memoryHeading}>

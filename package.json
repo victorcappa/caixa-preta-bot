@@ -26,6 +26,7 @@
     "test:robot-sound:browser": "node --no-warnings scripts/robot-sound-browser-test.js",
     "test:audience-warmup": "node --no-warnings scripts/audience-warmup-test.js",
     "test:audience-warmup:browser": "node --no-warnings scripts/audience-warmup-browser-test.js",
+    "test:play-unlock:browser": "node --no-warnings scripts/play-unlock-browser-test.js",
     "generate:elderly-voice": "node scripts/generate-elderly-voice.js"
   },
   "dependencies": {

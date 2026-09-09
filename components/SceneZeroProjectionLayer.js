@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { PLAY_UNLOCK_CONFIG, PLAY_UNLOCK_STATES, playUnlockBootLines } from "@/data/scene-zero-unlock";
 import { shouldShowGincanaTimer } from "@/lib/scene-zero/suitcaseGame";
 import useCountdownSound from "./useCountdownSound";
 import styles from "./SceneZeroProjectionLayer.module.css";
@@ -18,6 +19,104 @@ function timerSeconds(timer, now) {
 
 function countdownSeconds(endsAt, now) {
   return endsAt ? Math.max(0, Math.ceil((Date.parse(endsAt) - now) / 1000)) : 10;
+}
+
+function UnlockProgressBar({ progress }) {
+  const value = Math.max(0, Math.min(100, Number(progress) || 0));
+  return (
+    <div className={styles.unlockBar}>
+      <div aria-hidden="true" className={styles.unlockTrack}><span style={{ width: `${value}%` }} /></div>
+      <strong>{value}%</strong>
+    </div>
+  );
+}
+
+function PlayUnlockProjection({ unlock, now }) {
+  const soundSequenceRef = useRef(null);
+  const status = unlock?.status;
+  const unlocked = !status || status === PLAY_UNLOCK_STATES.UNLOCKED;
+  const showStalledTerminal = status === PLAY_UNLOCK_STATES.WAITING_FOR_AUDIENCE
+    && Date.parse(unlock.handoffUntil || "") > now;
+
+  useEffect(() => {
+    if (unlocked || unlock.soundEnabled === false || soundSequenceRef.current === unlock.soundSequence) return;
+    soundSequenceRef.current = unlock.soundSequence;
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const context = AudioContext ? new AudioContext() : null;
+      if (!context) return;
+      const soundId = status === PLAY_UNLOCK_STATES.UNLOCKING
+        ? "unlock"
+        : status === PLAY_UNLOCK_STATES.WAITING_FOR_AUDIENCE
+          ? "warning"
+          : status === PLAY_UNLOCK_STATES.WARMING_AUDIENCE
+            ? "progress"
+            : PLAY_UNLOCK_CONFIG.bootSteps[unlock.bootStep]?.sound || "tick";
+      const sound = PLAY_UNLOCK_CONFIG.sounds[soundId];
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = sound.oscillator;
+      oscillator.frequency.value = sound.frequency;
+      gain.gain.setValueAtTime(0.0001, context.currentTime);
+      gain.gain.exponentialRampToValueAtTime(sound.volume, context.currentTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + sound.durationMs / 1000);
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start();
+      oscillator.stop(context.currentTime + sound.durationMs / 1000 + 0.01);
+      oscillator.addEventListener("ended", () => context.close().catch(() => {}), { once: true });
+    } catch {
+      // Browsers may block boot audio before a physical interaction.
+    }
+  }, [status, unlock?.bootStep, unlock?.soundEnabled, unlock?.soundSequence, unlocked]);
+
+  if (unlocked) return null;
+
+  if (status === PLAY_UNLOCK_STATES.BOOTING || showStalledTerminal) {
+    const lines = [
+      ...playUnlockBootLines(unlock.bootStep),
+      ...(showStalledTerminal ? PLAY_UNLOCK_CONFIG.stalledLines : [])
+    ];
+    return (
+      <section className={styles.biosOverlay} aria-label="BIOS da Cena 0" aria-live="polite">
+        <div className={styles.biosTerminal}>
+          <div className={styles.biosLines}>
+            {lines.map((line, index) => <p key={`${index}-${line}`}>{line || "\u00a0"}</p>)}
+          </div>
+          <UnlockProgressBar progress={unlock.progress} />
+          {unlock.bootPaused ? <p className={styles.biosPaused}>BIOS PAUSADA PELO OPERADOR</p> : null}
+        </div>
+      </section>
+    );
+  }
+
+  if (status === PLAY_UNLOCK_STATES.UNLOCKING) {
+    return (
+      <section className={`${styles.biosOverlay} ${styles.unlockingOverlay}`} aria-label="Sequência de desbloqueio da peça" aria-live="assertive">
+        <div className={styles.biosTerminal}>
+          <UnlockProgressBar progress={100} />
+          <div className={styles.unlockLines}>
+            {PLAY_UNLOCK_CONFIG.unlockLines
+              .slice(0, Number(unlock.unlockSequenceIndex ?? -1) + 1)
+              .map((line) => <p key={line}>{line}</p>)}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <aside className={styles.unlockHud} aria-label="Desbloquear a peça" aria-live="polite">
+      <div className={styles.unlockHudHeading}>
+        <span>DESBLOQUEAR A PEÇA</span>
+        <small>{status === PLAY_UNLOCK_STATES.WAITING_FOR_AUDIENCE ? "AGUARDANDO PARTICIPAÇÃO" : "AÇÃO COLETIVA EM CURSO"}</small>
+      </div>
+      <UnlockProgressBar progress={unlock.progress} />
+      {unlock.technicalFeedback && Date.parse(unlock.technicalFeedbackUntil || "") > now
+        ? <p key={unlock.feedbackSequence}>{unlock.technicalFeedback}</p>
+        : null}
+    </aside>
+  );
 }
 
 export default function SceneZeroProjectionLayer({ sceneZero }) {
@@ -81,6 +180,7 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
   return (
     <>
       <audio preload="auto" ref={audioRef} src={TEA_FOR_TWO_AUDIO} />
+      <PlayUnlockProjection now={now} unlock={sceneZero?.unlock} />
       {collapse ? (
         <div className={styles.airportContamination} aria-hidden="true">
           <video autoPlay loop muted playsInline src={AIRPORT_VIDEO} />

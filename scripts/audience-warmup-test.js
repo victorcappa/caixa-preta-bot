@@ -5,11 +5,21 @@ import { audienceWarmupRequiresCountdown, chooseAudienceWarmupPrompt, clampAudie
 import { assertBotCannotNavigateExternal, blockedAutonomousInstagramResult } from "../lib/externalNavigationGuard.js";
 import { createInitialResearchState, getResearchTools, updateResearchSettings } from "../lib/research/ResearchDirector.js";
 import { executeAutonomousInstagramTool } from "../lib/instagram/autonomousTools.js";
+import { PLAY_UNLOCK_CONFIG, PLAY_UNLOCK_STATES } from "../data/scene-zero-unlock.js";
+import {
+  advancePlayUnlockBoot,
+  completePlayUnlock,
+  createInitialPlayUnlockState,
+  scorePlayUnlockAction,
+  setPlayUnlockProgress,
+  stallPlayUnlockBoot
+} from "../lib/scene-zero/unlock.js";
 
 assert(AUDIENCE_WARMUP_PROMPTS.length >= 30, "a biblioteca deve ter ao menos 30 prompts");
 assert.equal(new Set(AUDIENCE_WARMUP_PROMPTS.map((prompt) => prompt.id)).size, AUDIENCE_WARMUP_PROMPTS.length, "ids devem ser únicos");
 for (const prompt of AUDIENCE_WARMUP_PROMPTS) {
   assert(prompt.text && prompt.action && prompt.category && prompt.intensity && prompt.tags.length, `metadados incompletos: ${prompt.id}`);
+  assert(Number.isFinite(prompt.progressValue), `progresso não configurado: ${prompt.id}`);
   assert.equal(prompt.countdown === 3, /\bquando eu disser três\b/iu.test(prompt.text), `contagem inconsistente: ${prompt.id}`);
 }
 for (const action of AUDIENCE_WARMUP_ACTIONS) {
@@ -37,6 +47,41 @@ assert(createAudienceWarmupSequence({ text: "Mãos.", action: "hand" }).steps.at
 assert(createAudienceWarmupSequence({ text: "Silêncio.", action: "silence" }).steps.length >= 3);
 assert.equal(clampAudienceWarmupInterval(10), 800);
 assert.equal(clampAudienceWarmupInterval(99999), 15000);
+
+let unlock = createInitialPlayUnlockState("2026-09-09T00:00:00.000Z");
+assert.equal(unlock.status, PLAY_UNLOCK_STATES.BOOTING);
+assert.equal(unlock.progress, 0);
+for (const expectedStep of PLAY_UNLOCK_CONFIG.bootSteps) {
+  const advanced = advancePlayUnlockBoot(unlock);
+  assert.equal(advanced.step.id, expectedStep.id);
+  unlock = advanced.state;
+}
+unlock = stallPlayUnlockBoot(unlock);
+assert.equal(unlock.status, PLAY_UNLOCK_STATES.WAITING_FOR_AUDIENCE);
+assert.equal(unlock.progress, PLAY_UNLOCK_CONFIG.bootLimit);
+
+const firstAction = scorePlayUnlockAction(unlock, { actionId: "palmas", label: "Palmas", progressValue: 4 });
+assert.equal(firstAction.applied, true);
+assert.equal(firstAction.state.progress, PLAY_UNLOCK_CONFIG.bootLimit + 4);
+assert.equal(firstAction.state.status, PLAY_UNLOCK_STATES.WARMING_AUDIENCE);
+const duplicateAction = scorePlayUnlockAction(firstAction.state, { actionId: "palmas", label: "Palmas", progressValue: 4 });
+assert.equal(duplicateAction.applied, false, "uma ação comum não pode pontuar duas vezes");
+assert.equal(duplicateAction.reason, "ALREADY_SCORED");
+const repeatedAction = scorePlayUnlockAction(firstAction.state, { actionId: "palmas", label: "Palmas", progressValue: 4, repeatableProgress: true });
+assert.equal(repeatedAction.applied, true, "repeatableProgress deve permitir nova pontuação");
+assert.equal(repeatedAction.state.progress, PLAY_UNLOCK_CONFIG.bootLimit + 8);
+const zeroAction = scorePlayUnlockAction(repeatedAction.state, { actionId: "pausa", progressValue: 0 });
+assert.equal(zeroAction.applied, false, "ação dramatúrgica com zero não deve alterar a barra");
+const almostThere = setPlayUnlockProgress(repeatedAction.state, 98);
+const naturalFinish = scorePlayUnlockAction(almostThere, { actionId: "coro", progressValue: 7 });
+assert.equal(naturalFinish.reached100, true);
+assert.equal(naturalFinish.state.status, PLAY_UNLOCK_STATES.UNLOCKING);
+const completed = completePlayUnlock(naturalFinish.state, { source: "test" });
+assert.equal(completed.status, PLAY_UNLOCK_STATES.UNLOCKED);
+assert.equal(completed.progress, 100);
+assert.equal(completed.onPlayUnlocked.name, "onPlayUnlocked");
+assert.equal(setPlayUnlockProgress(firstAction.state, 85).progress, 85, "ajuste manual deve aceitar percentuais intermediários");
+assert.equal(createInitialPlayUnlockState().scoredActionIds.length, 0, "reinício deve limpar ações contabilizadas");
 
 assert.throws(
   () => assertBotCannotNavigateExternal({ source: "agent", target: "https://instagram.com/test" }),

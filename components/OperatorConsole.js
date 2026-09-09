@@ -556,6 +556,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             disabled={pending}
             onLog={addLog}
             state={state.audienceWarmup}
+            unlock={state.sceneZero?.unlock}
           />
 
           {!embedded && instagram.embedded && instagram.status !== "DISCONNECTED" && instagram.embeddedPanelVisible !== false && !instagramPanelClosed ? (
