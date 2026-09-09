@@ -9,7 +9,7 @@
 .indexNav a b { color: #52665a; font-size: 9px; font-weight: 500; }
 .indexNav .activeIndexLink { color: #001c0c; background: #00ff66; border-left-color: #00ff66; font-weight: 800; }
 .indexNav .activeIndexLink b { color: #13592e; }
-.header { display: grid; grid-template-columns: minmax(220px, .65fr) 1.35fr; gap: 18px; align-items: end; padding-bottom: 14px; border-bottom: 1px solid #303030; }
+.header { display: grid; grid-template-columns: minmax(220px, .65fr) 1.35fr; gap: 18px; align-items: end; margin-top: 14px; padding-bottom: 14px; border-bottom: 1px solid #303030; }
 .header p, .header h1, .memoryPanel h2, .personalityPanel h2, .stagePanel h2, .block h2 { margin: 0; }
 .header p { color: #00ff66; letter-spacing: .18em; }
 .header h1 { margin-top: 4px; font-size: clamp(24px, 2.8vw, 38px); }
@@ -17,7 +17,7 @@
 .statusGrid div { min-height: 54px; padding: 9px 10px; background: #101010; border: 1px solid #303030; }
 .statusGrid dt { color: #8b8b8b; font-size: 11px; letter-spacing: .12em; }
 .statusGrid dd { margin: 6px 0 0; color: #00ff66; font-weight: 800; }
-.bootPanel { display: grid; grid-template-columns: minmax(220px, 1fr) auto minmax(160px, 220px); gap: 18px; align-items: center; margin-top: 14px; padding: 14px 18px; color: #fff; background: #0b160f; border: 1px solid #00ff66; }
+.bootPanel { display: grid; grid-template-columns: minmax(220px, 1fr) auto minmax(160px, 220px); gap: 18px; align-items: center; padding: 14px 18px; color: #fff; background: #0b160f; border: 1px solid #00ff66; }
 .bootHeading { display: flex; gap: 13px; align-items: center; }
 .bootHeading > span { color: #001c0c; background: #00ff66; padding: 7px 8px; font-size: 11px; font-weight: 900; }
 .bootHeading h2, .bootHeading p { margin: 0; }

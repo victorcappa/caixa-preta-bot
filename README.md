@@ -384,8 +384,9 @@ sem apagar os valores preparados. Para validar o fluxo completo no navegador, us
 
 `/cena-0-controller` é a superfície privada dedicada à Cena 0. `/operator`
 continua disponível como console técnico e hub neutro; entrar nele não troca a
-projeção. O controller da Cena 0 prioriza apenas três operações sempre visíveis:
-`BOOT`, `AQUECIMENTO DA PLATEIA` e `JOGO DAS MALAS`. O aquecimento começa
+projeção. O controller da Cena 0 começa pelo `BOOT`, no topo de toda a área, e
+prioriza apenas três operações sempre visíveis: `BOOT`, `AQUECIMENTO DA
+PLATEIA` e `JOGO DAS MALAS`. O aquecimento começa
 comprimido. Memória, personalidade, direção, coleta, participante, canto,
 glitch, navegador e aeroporto/áudio permanecem preservados dentro de `OUTROS
 CONTROLES`, fechado por padrão.

@@ -31,8 +31,8 @@ const COLLECTION_RESULTS = [
 ];
 
 const SCENE_ZERO_INDEX = [
-  ["scene-zero-top", "RESUMO"],
   ["scene-zero-boot", "BOOT"],
+  ["scene-zero-top", "RESUMO"],
   ["scene-zero-unlock", "AQUECIMENTO"],
   ["scene-zero-suitcases", "MALAS"],
   ["scene-zero-extras", "OUTROS"]
@@ -62,7 +62,7 @@ export default function SceneZeroController() {
   const [glitchVideoFile, setGlitchVideoFile] = useState("");
   const [glitchVideoLoop, setGlitchVideoLoop] = useState(false);
   const [glitchVideoTransitionSeconds, setGlitchVideoTransitionSeconds] = useState(5.2);
-  const [activeIndexSection, setActiveIndexSection] = useState("scene-zero-top");
+  const [activeIndexSection, setActiveIndexSection] = useState("scene-zero-boot");
   const [warmupOpen, setWarmupOpen] = useState(false);
   const [extrasOpen, setExtrasOpen] = useState(false);
   const [openSuitcaseControls, setOpenSuitcaseControls] = useState(null);
@@ -394,18 +394,6 @@ export default function SceneZeroController() {
         </nav>
       </aside>
 
-      <header className={styles.header} id="scene-zero-top">
-        <div>
-          <p>CENA 0</p>
-          <h1>OPERAÇÃO ESSENCIAL</h1>
-        </div>
-        <dl className={styles.statusGrid}>
-          <div><dt>ETAPA ATUAL</dt><dd>{sceneZeroStageLabel(sceneZero.stage)}</dd></div>
-          <div><dt>PARTICIPANTE</dt><dd>{sceneZero.currentParticipant?.name || "—"}</dd></div>
-          <div><dt>DESBLOQUEIO</dt><dd>{sceneZero.unlock?.progress || 0}%</dd></div>
-        </dl>
-      </header>
-
       <section aria-label="Boot da Cena 0" className={styles.bootPanel} id="scene-zero-boot">
         <div className={styles.bootHeading}>
           <span>01</span>
@@ -425,6 +413,18 @@ export default function SceneZeroController() {
           type="button"
         >BOOT</button>
       </section>
+
+      <header className={styles.header} id="scene-zero-top">
+        <div>
+          <p>CENA 0</p>
+          <h1>OPERAÇÃO ESSENCIAL</h1>
+        </div>
+        <dl className={styles.statusGrid}>
+          <div><dt>ETAPA ATUAL</dt><dd>{sceneZeroStageLabel(sceneZero.stage)}</dd></div>
+          <div><dt>PARTICIPANTE</dt><dd>{sceneZero.currentParticipant?.name || "—"}</dd></div>
+          <div><dt>DESBLOQUEIO</dt><dd>{sceneZero.unlock?.progress || 0}%</dd></div>
+        </dl>
+      </header>
 
       <section className={styles.warmupDisclosure} data-ready={Boolean(snapshot.sceneZero)} id="scene-zero-unlock">
         <button

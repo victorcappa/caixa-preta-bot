@@ -51,6 +51,7 @@ try {
   const bootPanel = operator.getByRole("region", { name: "Boot da Cena 0" });
   const bootButton = bootPanel.getByRole("button", { name: "BOOT", exact: true });
   await bootButton.waitFor();
+  assert.equal(await bootPanel.evaluate((element) => element.nextElementSibling?.id), "scene-zero-top", "BOOT deve ser o primeiro bloco da Cena 0");
   const warmupDisclosure = operator.locator("#scene-zero-unlock");
   await operator.waitForFunction(() => document.querySelector("#scene-zero-unlock")?.dataset.ready === "true");
   const warmupToggle = warmupDisclosure.getByRole("button", { name: /AQUECIMENTO DA PLATEIA/ });
