@@ -120,10 +120,12 @@ Uma nova fala substitui visualmente a anterior; `LIMPAR TELA` remove somente
 No `/operator`, `ESQUENTAR PÚBLICO` oferece oito ações físicas, intensidades
 `LEVE`, `MÉDIO` e `ESTRANHO`, 34 prompts em
 `data/audience-warmup-prompts.js`, frase manual, preview e `SURPREENDA-ME`.
-Depois de `ENVIAR PARA O BOT`, o operador pode avançar, repetir, cancelar ou
-limpar a partitura. O avanço automático é opcional, configurável e sempre
-cancelável. A projeção mostra somente a etapa corrente e uma indicação pequena
-da ação esperada.
+`GERAR PERGUNTA` e `SURPREENDA-ME` geram e enviam a primeira etapa imediatamente,
+sem confirmação intermediária. Na frase manual, `Enter` envia e `Shift+Enter`
+insere uma quebra de linha. Depois do envio, o operador pode avançar, repetir,
+cancelar ou limpar a partitura. O avanço automático é opcional, configurável e
+sempre cancelável. A projeção mostra somente a etapa corrente e uma indicação
+pequena da ação esperada.
 
 Instagram nunca é aberto pelo bot, por tools autônomas ou ao entrar em uma
 etapa. A integração existente só navega após clique/comando explícito do

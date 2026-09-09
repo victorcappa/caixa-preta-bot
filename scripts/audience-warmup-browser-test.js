@@ -37,7 +37,10 @@ try {
     wordAction.click()
   ]);
   await operator.getByRole("button", { name: "MÉDIO" }).click();
-  await operator.getByRole("button", { name: "GERAR PERGUNTA" }).click();
+  await Promise.all([
+    operator.waitForResponse((response) => response.url().endsWith("/api/audience-warmup") && response.request().postDataJSON()?.action === "generate"),
+    operator.getByRole("button", { name: "GERAR PERGUNTA" }).click()
+  ]);
   const preview = operator.getByLabel("Preview do esquentar público");
   await operator.waitForFunction(() => {
     const text = document.querySelector('[aria-label="Preview do esquentar público"] p')?.textContent || "";
@@ -45,7 +48,6 @@ try {
   });
   const generatedText = (await preview.locator("p").textContent()).trim();
   assert(generatedText.length > 10 && !generatedText.includes("Escolha uma ação"));
-  await operator.getByRole("button", { name: "ENVIAR PARA O BOT" }).click();
   await display.getByText(generatedText, { exact: true }).waitFor();
   await display.screenshot({ path: "/private/tmp/caixa-preta-warmup-medium.png" });
 
@@ -55,7 +57,10 @@ try {
 
   const manualText = "Quem veio acompanhado levanta a mão.";
   await operator.getByLabel("FRASE MANUAL").fill(manualText);
-  await operator.getByRole("button", { name: "ENVIAR PARA O BOT" }).click();
+  await Promise.all([
+    operator.waitForResponse((response) => response.url().endsWith("/api/audience-warmup") && response.request().postDataJSON()?.action === "send"),
+    operator.getByLabel("FRASE MANUAL").press("Enter")
+  ]);
   await display.getByText(manualText, { exact: true }).waitFor();
   await display.screenshot({ path: "/private/tmp/caixa-preta-warmup-short.png" });
   assert.equal(await display.getByText(generatedText, { exact: true }).count(), 0, "a fala anterior não deve ocupar a projeção");
@@ -63,9 +68,13 @@ try {
   assert.equal(snapshot.conversation.length, 2, "histórico interno deve preservar A e B");
 
   const beforeSurprise = snapshot.conversation.length;
-  await operator.getByRole("button", { name: "SURPREENDA-ME" }).click();
+  await Promise.all([
+    operator.waitForResponse((response) => response.url().endsWith("/api/audience-warmup") && response.request().postDataJSON()?.action === "surprise"),
+    operator.getByRole("button", { name: "SURPREENDA-ME" }).click()
+  ]);
   snapshot = await (await context.request.get(`${BASE_URL}/api/state`)).json();
-  assert.equal(snapshot.conversation.length, beforeSurprise, "surpresa deve ficar em preview");
+  assert.equal(snapshot.conversation.length, beforeSurprise + 1, "surpresa deve ser enviada imediatamente");
+  assert.equal(snapshot.publicMessage.content, snapshot.audienceWarmup.preview);
 
   await warmup(context.request, "select-action", { selectedAction: "word" });
   await warmup(context.request, "send", { text: "Quando eu disser três, digam uma cor." });

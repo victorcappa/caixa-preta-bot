@@ -8,15 +8,13 @@
 .fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 .fieldset legend, .manualField { color: var(--green-dim); font-size: .78rem; font-weight: 700; letter-spacing: .08em; }
 .actionGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 8px; }
-.intensityGrid, .generateRow, .sendRow, .transport { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+.intensityGrid, .generateRow, .transport { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
 .generateRow { grid-template-columns: 1fr 1fr; }
-.sendRow { grid-template-columns: 1fr; }
 .panel button { min-height: 44px; padding: 8px; border: 1px solid var(--green-soft); background: #020402; color: var(--green); cursor: pointer; font: inherit; }
 .panel button:hover, .panel button:focus-visible { border-color: var(--green); outline: 2px solid rgba(0,255,102,.22); outline-offset: 1px; }
 .panel button:disabled { cursor: default; opacity: .38; }
 .panel button.selected { border-color: var(--green); background: var(--green); color: #000; font-weight: 700; }
 .panel button.surprise { border-color: #d7ff41; color: #d7ff41; }
-.panel button.send { min-height: 54px; border-color: var(--green); background: var(--green); color: #000; font-weight: 800; }
 .panel button.cancel { border-color: var(--danger); color: var(--danger); }
 .panel button.clear { color: #fff; }
 .manualField { display: grid; gap: 7px; }

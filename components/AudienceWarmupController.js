@@ -36,7 +36,12 @@ export default function AudienceWarmupController({ state, disabled = false, onLo
   const sequence = warmup.sequence;
   const current = sequence?.steps?.[warmup.currentStep] || null;
   const next = sequence?.steps?.[warmup.currentStep + 1] || null;
-  const canSend = Boolean((manual.trim() || warmup.preview || "").trim());
+
+  function sendManual() {
+    const text = manual.trim();
+    if (!text || busy) return;
+    void act("send", { text }).then((result) => result && setManual(""));
+  }
 
   return (
     <section aria-busy={!hydrated || requestPending} className={styles.panel} aria-labelledby="audience-warmup-title">
@@ -92,23 +97,20 @@ export default function AudienceWarmupController({ state, disabled = false, onLo
         <textarea
           maxLength={500}
           onChange={(event) => setManual(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter" || event.shiftKey) return;
+            event.preventDefault();
+            sendManual();
+          }}
           placeholder="Quem nasceu em São Paulo levanta a mão."
           value={manual}
         />
+        <small>ENTER ENVIA · SHIFT+ENTER QUEBRA A LINHA</small>
       </label>
 
       <div className={styles.preview} aria-label="Preview do esquentar público" aria-live="polite">
-        <small>PREVIEW — NÃO ENVIADO</small>
+        <small>{manual.trim() ? "FRASE MANUAL — ENTER ENVIA" : "ÚLTIMA FRASE GERADA E ENVIADA"}</small>
         <p>{manual.trim() || warmup.preview || "Escolha uma ação e gere uma pergunta."}</p>
-      </div>
-
-      <div className={styles.sendRow}>
-        <button
-          className={styles.send}
-          disabled={busy || !canSend}
-          onClick={() => act("send", { text: manual.trim() || warmup.preview }).then((result) => result && setManual(""))}
-          type="button"
-        >ENVIAR PARA O BOT</button>
       </div>
 
       <div className={styles.timing}>
