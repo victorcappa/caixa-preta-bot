@@ -127,6 +127,12 @@ cancelar ou limpar a partitura. O avanço automático é opcional, configurável
 sempre cancelável. A projeção mostra somente a etapa corrente e uma indicação
 pequena da ação esperada.
 
+Prompts marcados com `countdown: true` — como os que dizem `Quando eu disser
+três` — sempre avançam automaticamente da instrução para `Um`, `Dois` e `Três`,
+mesmo com o avanço automático geral desligado. A instrução permanece até sua
+digitação terminar antes da contagem começar. Prompts sem essa marca não recebem
+contagem; frases manuais reconhecem a construção `Quando eu disser três/3`.
+
 Instagram nunca é aberto pelo bot, por tools autônomas ou ao entrar em uma
 etapa. A integração existente só navega após clique/comando explícito do
 operador. A proteção central em `lib/externalNavigationGuard.js` também rejeita

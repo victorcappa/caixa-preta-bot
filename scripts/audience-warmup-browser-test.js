@@ -77,12 +77,17 @@ try {
   assert.equal(snapshot.publicMessage.content, snapshot.audienceWarmup.preview);
 
   await warmup(context.request, "select-action", { selectedAction: "word" });
+  await warmup(context.request, "set-interval", { intervalMs: 800 });
   await warmup(context.request, "send", { text: "Quando eu disser três, digam uma cor." });
-  await warmup(context.request, "next");
-  await display.getByText("Um.", { exact: true }).waitFor();
-  await warmup(context.request, "next");
-  await warmup(context.request, "next");
-  await display.getByText("Três.", { exact: true }).waitFor();
+  await display.getByText("Três.", { exact: true }).waitFor({ timeout: 8000 });
+  snapshot = await (await context.request.get(`${BASE_URL}/api/state`)).json();
+  assert.deepEqual(snapshot.audienceWarmup.history.slice(-4).map((entry) => entry.text), [
+    "Quando eu disser três, digam uma cor.",
+    "Um.",
+    "Dois.",
+    "Três."
+  ], "uma instrução que promete três deve cumprir a contagem automaticamente");
+  assert.equal(snapshot.audienceWarmup.awaitingOperator, true, "depois do três, a reação volta a aguardar o operador");
   const beforeRepeat = (await (await context.request.get(`${BASE_URL}/api/state`)).json()).conversation.length;
   await warmup(context.request, "repeat");
   snapshot = await (await context.request.get(`${BASE_URL}/api/state`)).json();
@@ -92,8 +97,16 @@ try {
   snapshot = await (await context.request.get(`${BASE_URL}/api/state`)).json();
   assert.equal(snapshot.audienceWarmup.active, false);
 
+  const directWordText = "Diga uma palavra que descreve seu trabalho.";
+  const beforeDirectWord = snapshot.conversation.length;
+  await warmup(context.request, "send", { text: directWordText });
+  await new Promise((resolve) => setTimeout(resolve, 1200));
+  snapshot = await (await context.request.get(`${BASE_URL}/api/state`)).json();
+  assert.equal(snapshot.conversation.length, beforeDirectWord + 1, "uma fala sem promessa de contagem não deve iniciar Um, Dois, Três");
+  assert.equal(snapshot.publicMessage.content, directWordText);
+  await warmup(context.request, "cancel");
+
   await warmup(context.request, "select-action", { selectedAction: "clap" });
-  await warmup(context.request, "set-interval", { intervalMs: 800 });
   await warmup(context.request, "set-automatic", { automatic: true });
   await warmup(context.request, "send", { text: "Quem chegou cedo bate palmas." });
   const beforeAutomaticCancel = (await (await context.request.get(`${BASE_URL}/api/state`)).json()).conversation.length;
