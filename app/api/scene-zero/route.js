@@ -8,6 +8,7 @@ import { SHOW_MODES } from "@/prompts/modes";
 import { findInstagramParticipantByName } from "@/lib/suitcases/SuitcaseDirector";
 import {
   buildGincanaPresentation,
+  buildSuitcaseSelectionCue,
   nextSceneZeroSuitcase,
   SCENE_ZERO_FIRST_CHALLENGE,
   SCENE_ZERO_INSTAGRAM_TARGETS
@@ -307,6 +308,12 @@ async function activateSuitcase(suitcaseNumber, detail = "") {
     3: "suitcase_three_start"
   }[suitcaseNumber];
   const turn = await speak(direction, detail);
+  const selectionCueTurn = {
+    text: buildSuitcaseSelectionCue(suitcaseNumber),
+    events: [],
+    salience: []
+  };
+  applyGeneratedTurn(selectionCueTurn);
   if (suitcaseNumber === 2) {
     const challengeTurn = {
       text: buildGincanaPresentation(SCENE_ZERO_FIRST_CHALLENGE, 20),

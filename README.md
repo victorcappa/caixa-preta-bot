@@ -155,11 +155,14 @@ Os estados semânticos são `STANDBY`, `BOOTING`, `BOOT_FAILED`,
 esse contexto também é enviado ao bot.
 
 Cada item da lista mostra texto, categoria, `progressValue`, estado de pontuação
-e `repeatableProgress`. `DISPARAR` envia a ação e aplica seu progresso;
+e `repeatableProgress`. Na projeção, a faixa compacta de aquecimento mostra
+somente a barra gráfica, sem título, subtítulo, feedback ou percentual visível.
+`DISPARAR` envia a ação e aplica seu progresso;
 `DISPARAR SEM PROGRESSO` preserva a barra. Por padrão, um mesmo ID pontua uma
 vez; itens repetíveis podem pontuar novamente e itens com `progressValue: 0`
-servem como perguntas sem avanço. O feedback técnico aparece antes da mudança
-de percentual, gira por uma sequência controlada e nunca se acumula na tela.
+servem como perguntas sem avanço. O feedback técnico continua registrado no
+estado antes da mudança de percentual, gira por uma sequência controlada e não
+é mais escrito na faixa pública da barra.
 
 O controller também mantém `+ PARTICIPAÇÃO`, `− PARTICIPAÇÃO`, definição exata
 de progresso, `COMPLETAR BARRA`, `DESBLOQUEAR AGORA`, áudio, pausa/avanço da
@@ -504,6 +507,8 @@ na etapa, o robô apresenta a escolha como aleatória, enquanto o software prote
 a ordem fixa `MALA 2 → MALA 3 → MALA 1`. A primeira escolha acontece na entrada;
 as duas seguintes dependem do botão `ROBÔ ESCOLHER PRÓXIMA MALA`, preservando o
 timing do operador. A ordem completa nunca entra na fala pública.
+Cada escolha também cria uma fala persistente e um aviso central de dez segundos
+na projeção: `VÁ ATÉ A MALA INDICADA`, o número da mala e `A LUZ VAI INDICAR`.
 
 `MALA 1 — VERDADE OU BOLO` é a terceira e última escolha e inicia o jogo `verdade_ou_bolo` já
 registrado no `GameDirector`. Rodada, resposta, vídeo, votação, revelação e
@@ -519,7 +524,7 @@ publicada literalmente pelo sistema e não pode ser reformulada pelo modelo.
 
 O operador inicia a contagem somente quando começar a música. O timer usa
 `endsAt` no servidor, mostra 20 segundos na projeção e, ao chegar a zero, o
-controller pede automaticamente ao robô um comentário curto e sarcástico sobre
+controller mantém `0 / CONCLUÍDA` por dois segundos e pede automaticamente ao robô um comentário curto e sarcástico sobre
 as habilidades de canto. O prompt permite o julgamento como bit teatral, mas
 proíbe inventar notas, afinação ou reações não informadas. Pausar, continuar,
 reiniciar, cancelar e registrar manualmente o resultado continuam disponíveis.

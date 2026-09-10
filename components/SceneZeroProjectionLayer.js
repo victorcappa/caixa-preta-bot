@@ -22,12 +22,19 @@ function countdownSeconds(endsAt, now) {
   return endsAt ? Math.max(0, Math.ceil((Date.parse(endsAt) - now) / 1000)) : 10;
 }
 
-function UnlockProgressBar({ progress }) {
+function UnlockProgressBar({ progress, showValue = true }) {
   const value = Math.max(0, Math.min(100, Number(progress) || 0));
   return (
     <div className={styles.unlockBar}>
-      <div aria-hidden="true" className={styles.unlockTrack}><span style={{ width: `${value}%` }} /></div>
-      <strong>{value}%</strong>
+      <div
+        aria-label={`Progresso: ${value}%`}
+        aria-valuemax={100}
+        aria-valuemin={0}
+        aria-valuenow={value}
+        className={styles.unlockTrack}
+        role="progressbar"
+      ><span style={{ width: `${value}%` }} /></div>
+      {showValue ? <strong>{value}%</strong> : null}
     </div>
   );
 }
@@ -128,15 +135,8 @@ function PlayUnlockProjection({ unlock, now }) {
   }
 
   return (
-    <aside className={styles.unlockHud} aria-label="Desbloquear a peça" aria-live="polite">
-      <div className={styles.unlockHudHeading}>
-        <span>DESBLOQUEAR A PEÇA</span>
-        <small>{status === PLAY_UNLOCK_STATES.WAITING_FOR_AUDIENCE ? "AGUARDANDO PRIMEIRA RESPOSTA" : "VERIFICAÇÃO HUMANA EM ANDAMENTO"}</small>
-      </div>
-      <UnlockProgressBar progress={unlock.progress} />
-      {unlock.technicalFeedback && Date.parse(unlock.technicalFeedbackUntil || "") > now
-        ? <p key={unlock.feedbackSequence}>{unlock.technicalFeedback}</p>
-        : null}
+    <aside className={styles.unlockHud} aria-label="Progresso" aria-live="polite">
+      <UnlockProgressBar progress={unlock.progress} showValue={false} />
     </aside>
   );
 }
@@ -170,7 +170,10 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
     audio.play().catch(() => {});
   }, [tea?.sequence, tea?.status]);
 
-  const visibleTimer = sceneZero?.suitcaseGame?.currentSuitcase === 2 && shouldShowGincanaTimer(gincanaTimer)
+  const gincanaCompletionAge = now - Date.parse(gincanaTimer?.completedAt || "");
+  const gincanaTimerVisible = shouldShowGincanaTimer(gincanaTimer)
+    && (gincanaTimer?.status !== "completed" || (gincanaCompletionAge >= 0 && gincanaCompletionAge < 2000));
+  const visibleTimer = sceneZero?.suitcaseGame?.currentSuitcase === 2 && gincanaTimerVisible
     ? gincanaTimer
     : sceneZero?.stage === "collection" && ["running", "complete"].includes(collectionTimer?.status)
       ? collectionTimer
@@ -189,6 +192,13 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
   const participantSeconds = participantSelection.status === "countdown"
     ? countdownSeconds(participantSelection.countdownEndsAt, now)
     : null;
+  const suitcaseSelectionAge = now - Date.parse(sceneZero?.suitcaseGame?.suitcaseSelectedAt || "");
+  const showSuitcaseSelection = Boolean(
+    sceneZero?.suitcaseGame?.currentSuitcase
+    && suitcaseSelectionAge >= 0
+    && suitcaseSelectionAge < 10000
+    && !showTimer
+  );
 
   useCountdownSound(seconds, {
     active: Boolean(showTimer && ["running", "complete"].includes(visibleTimer?.status)),
@@ -219,6 +229,13 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
           {visibleTimer === gincanaTimer ? <small>EVIDÊNCIAS · O PÚBLICO PODE AJUDAR</small> : null}
           <strong>{seconds}</strong>
           {["complete", "completed", "failed"].includes(visibleTimer.status) ? <span>{visibleTimer.status === "completed" ? "CONCLUÍDA" : visibleTimer.status === "failed" ? "FALHOU" : "FIM"}</span> : null}
+        </div>
+      ) : null}
+      {showSuitcaseSelection ? (
+        <div className={styles.suitcaseCueOverlay} key={sceneZero.suitcaseGame.suitcaseSelectionSequence} aria-live="assertive">
+          <span>VÁ ATÉ A MALA INDICADA</span>
+          <strong>{sceneZero.suitcaseGame.currentSuitcase}</strong>
+          <small>A LUZ VAI INDICAR</small>
         </div>
       ) : null}
       {showParticipantSelection ? (

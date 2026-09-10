@@ -46,7 +46,7 @@ async function readLayout(page) {
     const chatElement = document.querySelector('[aria-label="Chat publico"]');
     const stageElement = document.querySelector('[aria-label="Fala atual da Caixa Preta"]');
     const gameElement = document.querySelector('[aria-label="Verdade ou Bolo"]');
-    const unlockElement = document.querySelector('[aria-label="Desbloquear a peça"]');
+    const unlockElement = document.querySelector('[aria-label="Progresso"]');
     const messageElement = [...stageElement.querySelectorAll("p")].find((element) => element.textContent.includes("rápido"));
     const frameElement = messageElement.closest("div");
     const style = getComputedStyle(messageElement);

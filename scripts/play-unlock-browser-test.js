@@ -145,7 +145,10 @@ try {
   assert.equal(snapshot.sceneZero.unlock.verificationTitleSequence, 1);
   assert.equal(snapshot.publicMessage.content, "Quem veio de transporte público bate palmas.");
   await verificationTitle.waitFor({ state: "detached" });
-  await display.getByLabel("Desbloquear a peça").waitFor();
+  const compactProgress = display.getByLabel("Progresso");
+  await compactProgress.waitFor();
+  assert.equal(await compactProgress.getByText("DESBLOQUEAR A PEÇA", { exact: true }).count(), 0);
+  assert.equal(await compactProgress.getByText("VERIFICAÇÃO HUMANA EM ANDAMENTO", { exact: true }).count(), 0);
   await display.getByText(snapshot.publicMessage.content, { exact: true }).waitFor();
 
   await unlockPanel.getByRole("button", { name: "CONFIRMAR AÇÃO +4%", exact: true }).click();
@@ -185,7 +188,7 @@ try {
   snapshot = await waitForUnlock(context.request, (value) => value.status === "UNLOCKED");
   assert.equal(snapshot.sceneZero.unlock.onPlayUnlocked.name, "onPlayUnlocked");
   assert.equal(snapshot.sceneZero.unlock.onPlayUnlocked.source, "operator-complete");
-  await display.getByLabel("Desbloquear a peça").waitFor({ state: "detached" });
+  await display.getByLabel("Progresso").waitFor({ state: "detached" });
 
   await operator.getByRole("button", { name: "REINICIAR DESBLOQUEIO" }).click();
   snapshot = await waitForUnlock(context.request, (value) => value.status === "STANDBY");

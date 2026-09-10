@@ -15,6 +15,8 @@ async function main() {
   assert.equal(initial.glitchLevel, "normal");
   assert.equal(initial.suitcaseGame.currentSuitcase, null);
   assert.deepEqual(initial.suitcaseGame.openedSuitcases, []);
+  assert.equal(initial.suitcaseGame.suitcaseSelectedAt, null);
+  assert.equal(initial.suitcaseGame.suitcaseSelectionSequence, 0);
   assert.equal(initial.suitcaseGame.gincana.timer.status, "idle");
   assert.equal(initial.suitcaseGame.instagram.maxPosts, 10);
   assert.equal(initial.collection.obedience.anticipated, 0);
@@ -228,9 +230,11 @@ async function main() {
   assert.equal(suitcaseGame.nextSceneZeroSuitcase({ currentSuitcase: 2 }), 3);
   assert.equal(suitcaseGame.nextSceneZeroSuitcase({ currentSuitcase: 3 }), 1);
   assert.equal(suitcaseGame.nextSceneZeroSuitcase({ openedSuitcases: [2, 3, 1] }), null);
+  assert.equal(suitcaseGame.buildSuitcaseSelectionCue(2), "Vá até a mala indicada: 2. A luz vai indicar.");
+  assert.equal(suitcaseGame.buildSuitcaseSelectionCue(4), "");
   assert.equal(suitcaseGame.shouldShowGincanaTimer({ status: "running" }), true);
   assert.equal(suitcaseGame.shouldShowGincanaTimer({ status: "complete" }), true);
-  assert.equal(suitcaseGame.shouldShowGincanaTimer({ status: "completed" }), false);
+  assert.equal(suitcaseGame.shouldShowGincanaTimer({ status: "completed" }), true);
   assert.equal(
     gincanaBank.SCENE_ZERO_GINCANAS.find((task) => task.id === "colecao_improvavel").instruction,
     "Traga exatamente uma chave, uma moeda e uma caneta. Os três objetos devem caber juntos em uma das suas mãos."
