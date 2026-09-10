@@ -66,7 +66,7 @@ try {
   await participantBlock.getByRole("heading", { name: "ESCOLHER PARTICIPANTE" }).waitFor();
   assert.equal(await participantBlock.evaluate((element) => element.nextElementSibling?.id), "scene-zero-suitcases");
   await operator.getByRole("heading", { name: "JOGO DAS MALAS" }).waitFor();
-  const suitcaseOne = operator.getByRole("heading", { name: "MALA 1 — NOVA BIOS MOREL" }).locator("..");
+  const suitcaseOne = operator.getByRole("heading", { name: "MALA 1 — NOVA BIOS" }).locator("..");
   const reloadMorelBios = suitcaseOne.getByRole("button", { name: "RECARREGAR GLITCH + BIOS", exact: true });
   assert.equal(await reloadMorelBios.isVisible(), false, "detalhes das malas devem iniciar comprimidos");
   await suitcaseOne.getByRole("button", { name: "CONTROLES", exact: true }).click();

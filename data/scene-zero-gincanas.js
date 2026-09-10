@@ -1,13 +1,13 @@
 // Desafio fixo da primeira mala escolhida pelo robô (Mala 2).
 export const SCENE_ZERO_EVIDENCIAS_CHALLENGE = {
-  id: "evidencias_lanterna",
-  description: "Descrever a lanterna e transformá-la em microfone para cantar Evidências.",
-  instruction: "Primeiro, descreva o objeto à sua frente: a lanterna. Agora use a lanterna como microfone e cante Evidências, de Chitãozinho & Xororó. O público pode ajudar.",
-  presentation: "Primeiro: descreva o objeto à sua frente — a lanterna. Agora use a lanterna como microfone e cante Evidências, de Chitãozinho & Xororó. O público pode ajudar. Para a música, você tem 20 segundos. Começar.",
+  id: "evidencias_objeto_microfone",
+  description: "Descrever o objeto e transformá-lo em microfone para cantar Evidências.",
+  instruction: "Primeiro, descreva o objeto à sua frente. Agora use o objeto como microfone e cante Evidências, de Chitãozinho & Xororó. O público pode ajudar.",
+  presentation: "Primeiro: descreva o objeto à sua frente. Agora use o objeto como microfone e cante Evidências, de Chitãozinho & Xororó. O público pode ajudar. Para a música, você tem 20 segundos. Começar.",
   durationMin: 20,
   durationMax: 20,
   difficulty: "coragem vocal",
-  notes: "A contagem de 20 segundos vale somente para a música. A lanterna é um microfone cênico; não deve ser acesa diretamente no rosto de ninguém."
+  notes: "A contagem de 20 segundos vale somente para a música. A identidade do objeto não entra na fala pública."
 };
 
 // Desafio fixo da segunda mala escolhida pelo robô (Mala 3).

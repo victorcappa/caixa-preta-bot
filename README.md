@@ -509,14 +509,14 @@ na etapa, o robô apresenta a escolha como aleatória, enquanto o software prote
 a ordem fixa `MALA 2 → MALA 3 → MALA 1`. A primeira escolha acontece na entrada;
 as duas seguintes dependem do botão `ROBÔ ESCOLHER PRÓXIMA MALA`, preservando o
 timing do operador. A ordem completa nunca entra na fala pública.
-Cada escolha também cria um aviso central de dez segundos na projeção:
-`VÁ ATÉ A MALA INDICADA`, o número da mala e `A LUZ VAI INDICAR`. Enquanto esse
-aviso está na frente, nenhuma fala da escolha ou do desafio entra na fila pública;
+Cada escolha também mostra durante dez segundos somente o número da mala, grande
+e centralizado na projeção. Enquanto esse aviso está na frente, nenhuma fala da
+escolha ou do desafio entra na fila pública;
 o chatbot só começa a escrever depois que os dez segundos terminam.
 
 `MALA 2 — EVIDÊNCIAS` é sempre a primeira escolha. O desafio fixo está em
 `SCENE_ZERO_EVIDENCIAS_CHALLENGE`, dentro de `data/scene-zero-gincanas.js`: a
-pessoa descreve a lanterna à sua frente, usa a lanterna como microfone e canta
+pessoa descreve o objeto à sua frente, usa o objeto como microfone e canta
 “Evidências”, de Chitãozinho & Xororó; o público pode ajudar. A instrução é
 publicada literalmente pelo sistema e não pode ser reformulada pelo modelo.
 
@@ -534,12 +534,14 @@ nomeado, e a configuração proíbe cheirar substâncias desconhecidas, irritant
 ou potencialmente perigosas. O mesmo timer oferece iniciar, pausar, continuar,
 reiniciar, cancelar e registrar o resultado.
 
-`MALA 1 — NOVA BIOS MOREL` é a terceira e última escolha. Ela não inicia mais
+`MALA 1 — NOVA BIOS` é a terceira e última escolha. Ela não inicia mais
 `verdade_ou_bolo` nem outro jogo estruturado. Depois dos dez segundos que mostram
-o número da mala, a projeção sofre um glitch curto e carrega durante 30 segundos
-uma nova BIOS com um trecho breve de <em>A invenção de Morel</em> e fragmentos
-dramatúrgicos sobre cópia, repetição, imagem e presença presa no dispositivo.
-O operator pode recarregar ou interromper essa BIOS pelos controles da Mala 1.
+o número da mala, a projeção carrega trechos corrompidos do texto-base misturados
+com falas do piloto. O glitch aumenta de intensidade durante 30 segundos e termina
+em uma tela totalmente preta, que permanece até o operador interromper a BIOS,
+finalizar a etapa ou reiniciar o fluxo. Título e autor da referência literária não
+aparecem na projeção. O operador pode recarregar ou interromper essa sequência
+pelos controles da Mala 1.
 
 Nos controles gerais de Instagram, o botão de Robson resolve a entrada `Robinson Rogério` de
 `data/instagram-participants.json` (`@rogerio.robinson`); Janaína resolve

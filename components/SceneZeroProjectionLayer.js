@@ -206,9 +206,14 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
     sceneZero?.suitcaseGame?.currentSuitcase === 1
     && morelBios?.status === "running"
     && morelBiosAge >= 0
-    && morelBiosAge < SCENE_ZERO_MOREL_BIOS_DURATION_MS
   );
-  const visibleMorelLines = showMorelBios
+  const morelBiosProgress = showMorelBios
+    ? Math.max(0, Math.min(1, morelBiosAge / SCENE_ZERO_MOREL_BIOS_DURATION_MS))
+    : 0;
+  const morelCorruptionLevel = Math.min(4, Math.floor(morelBiosProgress * 5));
+  const morelCorruptionClass = morelCorruptionLevel ? styles[`morelCorruption${morelCorruptionLevel}`] : "";
+  const morelBlackout = showMorelBios && morelBiosAge >= SCENE_ZERO_MOREL_BIOS_DURATION_MS;
+  const visibleMorelLines = showMorelBios && !morelBlackout
     ? SCENE_ZERO_MOREL_BIOS_LINES.slice(0, Math.min(
       SCENE_ZERO_MOREL_BIOS_LINES.length,
       Math.floor(morelBiosAge / SCENE_ZERO_MOREL_BIOS_LINE_INTERVAL_MS) + 1
@@ -247,23 +252,34 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
         </div>
       ) : null}
       {showSuitcaseSelection ? (
-        <div className={styles.suitcaseCueOverlay} key={sceneZero.suitcaseGame.suitcaseSelectionSequence} aria-live="assertive">
-          <span>VÁ ATÉ A MALA INDICADA</span>
+        <div className={styles.suitcaseCueOverlay} key={sceneZero.suitcaseGame.suitcaseSelectionSequence} aria-label={`Mala indicada: ${sceneZero.suitcaseGame.currentSuitcase}`} aria-live="assertive">
           <strong>{sceneZero.suitcaseGame.currentSuitcase}</strong>
-          <small>A LUZ VAI INDICAR</small>
         </div>
       ) : null}
       {showMorelBios ? (
-        <section className={styles.morelBiosOverlay} key={morelBios.sequence} aria-label="Nova BIOS Morel" aria-live="assertive">
-          <div className={styles.morelBiosNoise} aria-hidden="true" />
-          <div className={styles.morelBiosTerminal}>
-            {visibleMorelLines.map((line, index) => (
-              <p className={index === 3 ? styles.morelExcerpt : index === SCENE_ZERO_MOREL_BIOS_LINES.length - 1 ? styles.morelLoaded : ""} key={line}>
-                <span aria-hidden="true">{String(index).padStart(2, "0")}</span>{line}
-              </p>
-            ))}
-            <i aria-hidden="true" />
-          </div>
+        <section
+          className={`${styles.morelBiosOverlay} ${morelCorruptionClass} ${morelBlackout ? styles.morelBlackout : ""}`}
+          key={morelBios.sequence}
+          aria-label={morelBlackout ? "Blackout final" : "Nova BIOS corrompida"}
+          aria-live="assertive"
+          style={{
+            "--bios-noise-opacity": 0.12 + (morelBiosProgress * 0.58),
+            "--bios-noise-speed": `${Math.max(0.1, 0.32 - (morelBiosProgress * 0.22))}s`,
+            "--bios-shift": `${Math.round(morelBiosProgress * 18)}px`,
+            "--bios-shift-negative": `${Math.round(morelBiosProgress * -18)}px`
+          }}
+        >
+          {!morelBlackout ? <>
+            <div className={styles.morelBiosNoise} aria-hidden="true" />
+            <div className={styles.morelBiosTerminal}>
+              {visibleMorelLines.map((line, index) => (
+                <p key={line}>
+                  <span aria-hidden="true">{String(index).padStart(2, "0")}</span>{line}
+                </p>
+              ))}
+              <i aria-hidden="true" />
+            </div>
+          </> : null}
         </section>
       ) : null}
       {showParticipantSelection ? (

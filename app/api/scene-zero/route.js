@@ -14,6 +14,7 @@ import {
   sceneZeroSuitcaseChallenge
 } from "@/lib/scene-zero/suitcaseGame";
 import { buildDataCollectionSystemPrompt } from "@/prompts/dataCollection";
+import { SCENE_ZERO_MOREL_BIOS_DURATION_MS } from "@/data/scene-zero-morel";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -246,16 +247,50 @@ function scheduleMorelBios(selectionSequence, selectedAt) {
   setTimeout(() => {
     const current = showState.snapshot().sceneZero.suitcaseGame;
     if (current?.suitcaseSelectionSequence !== selectionSequence || current.currentSuitcase !== 1) return;
-    showState.controlSceneZero("set-glitch", { level: "glitch-4" }, { source: "scene-zero-operator" });
-    applyGlitchLevel("glitch-4");
-
-    setTimeout(() => {
-      const latest = showState.snapshot().sceneZero.suitcaseGame;
-      if (latest?.suitcaseSelectionSequence !== selectionSequence || latest.currentSuitcase !== 1) return;
-      showState.controlSceneZero("set-glitch", { level: "normal" }, { source: "scene-zero-operator" });
-      showState.controlSceneZero("morel-bios-start", {}, { source: "system" });
-    }, 1800);
+    beginMorelBiosSequence(selectionSequence, "system");
   }, delayMs);
+}
+
+function beginMorelBiosSequence(selectionSequence, source = "operator") {
+  const started = showState.controlSceneZero("morel-bios-start", {}, { source });
+  const biosSequence = started.state.suitcaseGame.morelBios.sequence;
+  const pulses = [
+    [0, "glitch-1"],
+    [6000, "glitch-2"],
+    [12000, "glitch-3"],
+    [18000, "glitch-4"],
+    [24000, "glitch-4"]
+  ];
+
+  for (const [offsetMs, level] of pulses) {
+    setTimeout(() => {
+      const sceneZero = showState.snapshot().sceneZero;
+      const suitcaseGame = sceneZero.suitcaseGame;
+      if (
+        suitcaseGame?.currentSuitcase !== 1
+        || suitcaseGame.suitcaseSelectionSequence !== selectionSequence
+        || suitcaseGame.morelBios?.status !== "running"
+        || suitcaseGame.morelBios.sequence !== biosSequence
+      ) return;
+      showState.controlSceneZero("set-glitch", { level }, { source });
+      applyGlitchLevel(level);
+    }, offsetMs);
+  }
+
+  setTimeout(() => {
+    const sceneZero = showState.snapshot().sceneZero;
+    const suitcaseGame = sceneZero.suitcaseGame;
+    if (
+      suitcaseGame?.currentSuitcase !== 1
+      || suitcaseGame.suitcaseSelectionSequence !== selectionSequence
+      || suitcaseGame.morelBios?.status !== "running"
+      || suitcaseGame.morelBios.sequence !== biosSequence
+    ) return;
+    showState.controlSceneZero("set-glitch", { level: "normal" }, { source });
+    applyGlitchLevel("normal");
+  }, SCENE_ZERO_MOREL_BIOS_DURATION_MS);
+
+  return started;
 }
 
 async function interruptPreviousSuitcase(nextSuitcaseNumber) {
@@ -690,11 +725,20 @@ export async function POST(request) {
 
     if (action === "morel-bios-start" || action === "morel-bios-stop") {
       if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase !== 1) {
-        return Response.json({ error: "INICIE A MALA 1 ANTES DA BIOS MOREL", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
+        return Response.json({ error: "INICIE A MALA 1 ANTES DA BIOS FINAL", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
       }
-      if (action === "morel-bios-start") applyGlitchLevel("glitch-4");
-      const result = showState.controlSceneZero(action, body, { source: "operator" });
-      return Response.json({ message: action === "morel-bios-start" ? "BIOS MOREL RECARREGADA" : "BIOS MOREL INTERROMPIDA", sceneZero: result.state });
+      const suitcaseGame = showState.snapshot().sceneZero.suitcaseGame;
+      const result = action === "morel-bios-start"
+        ? beginMorelBiosSequence(suitcaseGame.suitcaseSelectionSequence)
+        : showState.controlSceneZero(action, body, { source: "operator" });
+      if (action === "morel-bios-stop") {
+        showState.controlSceneZero("set-glitch", { level: "normal" }, { source: "operator" });
+        applyGlitchLevel("normal");
+      }
+      return Response.json({
+        message: action === "morel-bios-start" ? "BIOS FINAL RECARREGADA" : "BIOS FINAL INTERROMPIDA",
+        sceneZero: action === "morel-bios-stop" ? showState.snapshot().sceneZero : result.state
+      });
     }
 
     if (action === "gincana-complete" || action === "gincana-failed") {

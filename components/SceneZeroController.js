@@ -355,7 +355,8 @@ export default function SceneZeroController() {
   const gincanaSeconds = remainingTimer(gincanaTimer, now, null);
   const nextSuitcase = nextSceneZeroSuitcase(suitcaseGame);
   const morelBios = suitcaseGame.morelBios || {};
-  const morelBiosActive = morelBios.status === "running" && Date.parse(morelBios.endsAt || "") > now;
+  const morelBiosRunning = morelBios.status === "running";
+  const morelBiosBlackout = morelBiosRunning && Date.parse(morelBios.endsAt || "") <= now;
   const globalGlitch = snapshot.glitch || {};
   const participantSelection = sceneZero.participantSelection || {};
   const participantSelectionBusy = ["preparing", "awaiting_invite", "countdown", "roulette"].includes(participantSelection.status);
@@ -369,7 +370,7 @@ export default function SceneZeroController() {
     const sequence = gincanaTimer.sequence;
     if (
       pending
-      || gincana.currentTask?.id !== "evidencias_lanterna"
+      || gincana.currentTask?.id !== "evidencias_objeto_microfone"
       || gincanaTimer.status !== "complete"
       || gincana.result
       || gincanaAutoCommentRef.current === sequence
@@ -558,13 +559,13 @@ export default function SceneZeroController() {
           </section>
 
           <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 1 ? styles.activeSuitcase : ""}`}>
-            <h3>3ª ESCOLHA — MALA 1 / NOVA BIOS MOREL</h3>
+            <h3>3ª ESCOLHA — MALA 1 / NOVA BIOS</h3>
             <Button onClick={() => setOpenSuitcaseControls((current) => current === 1 ? null : 1)} pressed={openSuitcaseControls === 1}>{openSuitcaseControls === 1 ? "COMPRIMIR" : "CONTROLES"}</Button>
             <div className={styles.suitcaseDetails} hidden={openSuitcaseControls !== 1}>
-              <Readout label="SEQUÊNCIA" value="GLITCH NO ROBÔ → CARREGAMENTO DA BIOS MOREL → FRAGMENTOS NA PROJEÇÃO" />
-              <Readout label="STATUS" value={morelBiosActive ? "BIOS MOREL NA PROJEÇÃO" : morelBios.status === "stopped" ? "INTERROMPIDA" : "AGUARDANDO / CONCLUÍDA"} />
+              <Readout label="SEQUÊNCIA" value="GLITCH CRESCENTE → BIOS CORROMPIDA → BLACKOUT" />
+              <Readout label="STATUS" value={morelBiosBlackout ? "BLACKOUT FINAL" : morelBiosRunning ? "BIOS CORROMPIDA NA PROJEÇÃO" : morelBios.status === "stopped" ? "INTERROMPIDA" : "AGUARDANDO"} />
               <Button primary onClick={() => sceneAction("morel-bios-start")} pending={pending || suitcaseGame.currentSuitcase !== 1}>RECARREGAR GLITCH + BIOS</Button>
-              <Button danger onClick={() => sceneAction("morel-bios-stop")} pending={pending || !morelBiosActive}>INTERROMPER BIOS</Button>
+              <Button danger onClick={() => sceneAction("morel-bios-stop")} pending={pending || !morelBiosRunning}>INTERROMPER BIOS / BLACKOUT</Button>
               <Readout label="FIM DO JOGO" value={suitcaseGame.status === "finished" ? `FINALIZADO · ${suitcaseGame.endedAt ? new Date(suitcaseGame.endedAt).toLocaleTimeString("pt-BR") : "REGISTRADO"}` : "A BARRA PERMANECE TRAVADA ATÉ FINALIZAR"} />
             </div>
           </section>

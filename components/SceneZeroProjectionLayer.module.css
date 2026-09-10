@@ -27,18 +27,19 @@
 .timerOverlay strong { font-family: var(--font-mono, monospace); font-size: min(46vw, 46vh); line-height: .8; }
 .timerOverlay small { max-width: min(1100px, 88vw); color: #00ff66; font-family: var(--font-mono, monospace); font-size: clamp(16px, 2vw, 30px); font-weight: 900; letter-spacing: .08em; text-align: center; text-wrap: balance; }
 .timerOverlay span { color: #ff3155; font-family: var(--font-mono, monospace); font-size: clamp(36px, 8vw, 110px); font-weight: 900; letter-spacing: .16em; }
-.suitcaseCueOverlay { z-index: 114; display: grid; place-content: center; justify-items: center; gap: clamp(10px, 2vh, 24px); color: #fff; background: #030303; font-family: var(--font-mono, monospace); text-align: center; }
-.suitcaseCueOverlay span, .suitcaseCueOverlay small { color: #00ff66; font-size: clamp(18px, 2.6vw, 40px); font-weight: 900; letter-spacing: .12em; }
+.suitcaseCueOverlay { z-index: 114; display: grid; place-content: center; justify-items: center; color: #fff; background: #030303; font-family: var(--font-mono, monospace); text-align: center; }
 .suitcaseCueOverlay strong { color: #fff; font-size: min(52vw, 52vh); line-height: .78; text-shadow: 6px 6px 0 #00ff66; }
-.suitcaseCueOverlay small { color: #fff; font-size: clamp(15px, 1.8vw, 28px); }
 .morelBiosOverlay { z-index: 130; display: grid; place-items: center; overflow: hidden; padding: clamp(24px, 4vw, 72px); color: #00ff66; background: #000; font-family: var(--font-mono, monospace); animation: morelBootIn 1.5s steps(6) both; }
-.morelBiosNoise { position: absolute; inset: -12%; opacity: .2; background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(0,255,102,.22) 3px 4px); mix-blend-mode: screen; animation: morelNoise .16s steps(2) 10; }
+.morelBiosNoise { position: absolute; inset: -12%; opacity: var(--bios-noise-opacity); background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(0,255,102,.28) 3px 4px); mix-blend-mode: screen; animation: morelNoise var(--bios-noise-speed) steps(2) infinite; }
 .morelBiosTerminal { position: relative; width: min(1180px, 92vw); display: grid; gap: clamp(7px, 1.2vh, 15px); }
-.morelBiosTerminal p { display: grid; grid-template-columns: 3ch minmax(0, 1fr); gap: clamp(10px, 1.5vw, 24px); margin: 0; font-size: clamp(15px, 2vw, 31px); line-height: 1.15; letter-spacing: .035em; text-shadow: 0 0 14px rgba(0,255,102,.28); animation: terminalLineIn 180ms steps(2) both; }
+.morelBiosTerminal p { display: grid; grid-template-columns: 3ch minmax(0, 1fr); gap: clamp(10px, 1.5vw, 24px); margin: 0; font-size: clamp(15px, 2vw, 31px); line-height: 1.15; letter-spacing: .035em; text-shadow: var(--bios-shift-negative) 0 rgba(255,0,76,.7), var(--bios-shift) 0 rgba(0,170,255,.7), 0 0 14px rgba(0,255,102,.28); animation: terminalLineIn 180ms steps(2) both; }
 .morelBiosTerminal p > span { color: #356f4b; }
-.morelExcerpt { margin-block: clamp(10px, 2vh, 24px) !important; color: #fff; font-size: clamp(24px, 3.5vw, 58px) !important; font-weight: 800; }
-.morelLoaded { color: #fff; font-weight: 950; }
 .morelBiosTerminal i { width: 1.1ch; height: 1.3em; background: #00ff66; animation: morelCursor .7s steps(1) infinite; }
+.morelCorruption1 .morelBiosTerminal { animation: morelDrift 1.8s steps(2) infinite; }
+.morelCorruption2 .morelBiosTerminal { animation: morelDrift .9s steps(3) infinite; filter: contrast(1.35); }
+.morelCorruption3 .morelBiosTerminal { animation: morelCollapse .48s steps(3) infinite; filter: contrast(1.8) saturate(1.8); }
+.morelCorruption4 .morelBiosTerminal { animation: morelCollapse .18s steps(2) infinite; filter: contrast(3) invert(.16); }
+.morelBlackout { padding: 0; background: #000; animation: none; }
 .complete { animation: endFlash .5s steps(2) infinite; }
 @keyframes terminalLineIn { from { opacity: 0; transform: translateY(3px); } }
 @keyframes verificationTitleIn { 0% { opacity: 0; filter: blur(8px); } 40% { opacity: 1; filter: blur(0); } 48% { opacity: .25; } 56%, 100% { opacity: 1; } }
@@ -72,6 +73,8 @@
 @keyframes morelBootIn { 0% { opacity: 0; transform: scale(1.08) skewX(8deg); filter: invert(1); } 18% { opacity: 1; transform: translateX(-3%); } 36% { transform: translateX(2%) skewX(-3deg); filter: contrast(2.5); } 55%, 100% { transform: none; filter: none; } }
 @keyframes morelNoise { 0% { transform: translateY(-4%); } 100% { transform: translateY(4%); } }
 @keyframes morelCursor { 50% { opacity: 0; } }
+@keyframes morelDrift { 0%, 84%, 100% { transform: none; } 88% { transform: translateX(var(--bios-shift-negative)); } 92% { transform: translateX(var(--bios-shift)); } }
+@keyframes morelCollapse { 0% { transform: translate(0); } 25% { transform: translate(var(--bios-shift-negative), 5px) skewX(-2deg); } 50% { transform: translate(var(--bios-shift), -4px) skewX(3deg); } 75% { transform: translate(var(--bios-shift-negative), -7px); } }
 
 @media (prefers-reduced-motion: reduce) {
   .verificationTitle > strong { animation: none; }

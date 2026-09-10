@@ -232,7 +232,7 @@ async function main() {
   assert.equal(suitcaseGame.nextSceneZeroSuitcase({ currentSuitcase: 2 }), 3);
   assert.equal(suitcaseGame.nextSceneZeroSuitcase({ currentSuitcase: 3 }), 1);
   assert.equal(suitcaseGame.nextSceneZeroSuitcase({ openedSuitcases: [2, 3, 1] }), null);
-  assert.equal(suitcaseGame.buildSuitcaseSelectionCue(2), "Vá até a mala indicada: 2. A luz vai indicar.");
+  assert.equal(suitcaseGame.buildSuitcaseSelectionCue(2), "2");
   assert.equal(suitcaseGame.buildSuitcaseSelectionCue(4), "");
   assert.equal(suitcaseGame.SCENE_ZERO_SUITCASE_CUE_DURATION_MS, 10000);
   assert.equal(suitcaseGame.shouldShowGincanaTimer({ status: "running" }), true);
@@ -249,14 +249,15 @@ async function main() {
     ),
     "Gincana. Você tem 105 segundos. Traga exatamente uma chave, uma moeda e uma caneta. Os três objetos devem caber juntos em uma das suas mãos. Começar."
   );
-  assert.equal(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE.id, "evidencias_lanterna");
+  assert.equal(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE.id, "evidencias_objeto_microfone");
   assert.equal(suitcaseGame.chooseGincanaDuration(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE), 20);
-  assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 20), /lanterna como microfone/);
+  assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 20), /objeto como microfone/);
+  assert.doesNotMatch(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 20), /lanterna/i);
   assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 20), /Evidências/);
   assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 20), /20 segundos/);
   assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 20), /público pode ajudar/i);
   assert.equal(suitcaseGame.SCENE_ZERO_SECOND_CHALLENGE.id, "objeto_pelo_cheiro");
-  assert.equal(suitcaseGame.sceneZeroSuitcaseChallenge(2).id, "evidencias_lanterna");
+  assert.equal(suitcaseGame.sceneZeroSuitcaseChallenge(2).id, "evidencias_objeto_microfone");
   assert.equal(suitcaseGame.sceneZeroSuitcaseChallenge(3).id, "objeto_pelo_cheiro");
   assert.equal(suitcaseGame.sceneZeroSuitcaseChallenge(1), null);
   assert.equal(suitcaseGame.chooseGincanaDuration(suitcaseGame.SCENE_ZERO_SECOND_CHALLENGE), 20);
@@ -265,7 +266,10 @@ async function main() {
   assert.equal(suitcaseGame.SCENE_ZERO_SUITCASES[1].game, "morel_bios");
   assert.equal(suitcaseGame.SCENE_ZERO_SUITCASES[3].game, "gincana");
   assert.equal(morelBios.SCENE_ZERO_MOREL_BIOS_DURATION_MS, 30000);
-  assert.match(morelBios.SCENE_ZERO_MOREL_BIOS_LINES.join(" "), /nesta ilha, aconteceu um milagre/i);
+  assert.match(morelBios.SCENE_ZERO_MOREL_BIOS_LINES.join(" "), /girando, girando/i);
+  assert.match(morelBios.SCENE_ZERO_MOREL_BIOS_LINES.join(" "), /STALL/);
+  assert.match(morelBios.SCENE_ZERO_MOREL_BIOS_LINES.join(" "), /ouvir c0r3s/i);
+  assert.doesNotMatch(morelBios.SCENE_ZERO_MOREL_BIOS_LINES.join(" "), /Morel|Bioy Casares|A invenção/i);
   assert.equal(suitcaseGame.SCENE_ZERO_INSTAGRAM_TARGETS.robson.participantName, "Robinson Rogério");
 
   const activeGincana = {
