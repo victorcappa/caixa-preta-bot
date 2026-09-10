@@ -514,12 +514,6 @@ Cada escolha também cria um aviso central de dez segundos na projeção:
 aviso está na frente, nenhuma fala da escolha ou do desafio entra na fila pública;
 o chatbot só começa a escrever depois que os dez segundos terminam.
 
-`MALA 1 — VERDADE OU BOLO` é a terceira e última escolha e inicia o jogo `verdade_ou_bolo` já
-registrado no `GameDirector`. Rodada, resposta, vídeo, votação, revelação e
-placar continuam determinísticos. Entrada, comentário e provocação são gerados
-pelo modelo com a personalidade, memória, participante e contexto atuais; não
-há lista fixa de piadas.
-
 `MALA 2 — EVIDÊNCIAS` é sempre a primeira escolha. O desafio fixo está em
 `SCENE_ZERO_EVIDENCIAS_CHALLENGE`, dentro de `data/scene-zero-gincanas.js`: a
 pessoa descreve a lanterna à sua frente, usa a lanterna como microfone e canta
@@ -533,16 +527,21 @@ as habilidades de canto. O prompt permite o julgamento como bit teatral, mas
 proíbe inventar notas, afinação ou reações não informadas. Pausar, continuar,
 reiniciar, cancelar e registrar manualmente o resultado continuam disponíveis.
 
-`MALA 3 — INSTAGRAM / GLITCH` é a segunda escolha e começa em `GLITCH 1` somente quando o estado
-estava normal e não abre perfil sozinho. O operador controla manualmente
-`NORMAL`, `GLITCH 1–4`, `COLAPSO`, Robson, Janaína, próximo post, pausa,
-continuação e parada. O nível entra no prompt como degradação progressiva:
-pequena estranheza, repetição/associação deslocada, inadequação compreensível,
-mistura de contexto e, por fim, fragmentação com memória cruzada. Mesmo em
-colapso, a instrução proíbe caracteres aleatórios e exige algum vínculo com o
-post real.
+`MALA 3 — OBJETO PELO CHEIRO` é sempre a segunda escolha. A pessoa pega o objeto
+sem revelá-lo, cheira e tem 20 segundos para ajudar o público a adivinhar o que
+é usando somente descrições do cheiro. O objeto não deve ser mostrado nem
+nomeado, e a configuração proíbe cheirar substâncias desconhecidas, irritantes
+ou potencialmente perigosas. O mesmo timer oferece iniciar, pausar, continuar,
+reiniciar, cancelar e registrar o resultado.
 
-O botão de Robson resolve a entrada `Robinson Rogério` de
+`MALA 1 — NOVA BIOS MOREL` é a terceira e última escolha. Ela não inicia mais
+`verdade_ou_bolo` nem outro jogo estruturado. Depois dos dez segundos que mostram
+o número da mala, a projeção sofre um glitch curto e carrega durante 30 segundos
+uma nova BIOS com um trecho breve de <em>A invenção de Morel</em> e fragmentos
+dramatúrgicos sobre cópia, repetição, imagem e presença presa no dispositivo.
+O operator pode recarregar ou interromper essa BIOS pelos controles da Mala 1.
+
+Nos controles gerais de Instagram, o botão de Robson resolve a entrada `Robinson Rogério` de
 `data/instagram-participants.json` (`@rogerio.robinson`); Janaína resolve
 `Janaína Leite` (`@janainafontesleite`). A rotina reutiliza o mesmo
 `InstagramController`, perfil persistente, login, iframe, whitelist e guardas

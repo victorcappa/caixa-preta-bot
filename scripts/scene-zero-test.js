@@ -6,6 +6,7 @@ async function main() {
   const browserCommand = await import("../lib/scene-zero/browserCommand.js");
   const gincanaBank = await import("../data/scene-zero-gincanas.js");
   const suitcaseGame = await import("../lib/scene-zero/suitcaseGame.js");
+  const morelBios = await import("../data/scene-zero-morel.js");
   const messageTiming = await import("../lib/messageTiming.js");
   const dataCollectionPrompt = await import("../prompts/dataCollection.js");
   const initial = sceneZero.createInitialSceneZeroState();
@@ -18,6 +19,7 @@ async function main() {
   assert.equal(initial.suitcaseGame.suitcaseSelectedAt, null);
   assert.equal(initial.suitcaseGame.suitcaseSelectionSequence, 0);
   assert.equal(initial.suitcaseGame.gincana.timer.status, "idle");
+  assert.equal(initial.suitcaseGame.morelBios.status, "idle");
   assert.equal(initial.suitcaseGame.instagram.maxPosts, 10);
   assert.equal(initial.collection.obedience.anticipated, 0);
   assert.equal(initial.personalityGuidance.text, "");
@@ -253,6 +255,17 @@ async function main() {
   assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 20), /Evidências/);
   assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 20), /20 segundos/);
   assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 20), /público pode ajudar/i);
+  assert.equal(suitcaseGame.SCENE_ZERO_SECOND_CHALLENGE.id, "objeto_pelo_cheiro");
+  assert.equal(suitcaseGame.sceneZeroSuitcaseChallenge(2).id, "evidencias_lanterna");
+  assert.equal(suitcaseGame.sceneZeroSuitcaseChallenge(3).id, "objeto_pelo_cheiro");
+  assert.equal(suitcaseGame.sceneZeroSuitcaseChallenge(1), null);
+  assert.equal(suitcaseGame.chooseGincanaDuration(suitcaseGame.SCENE_ZERO_SECOND_CHALLENGE), 20);
+  assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_SECOND_CHALLENGE, 20), /não revele para o público/i);
+  assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_SECOND_CHALLENGE, 20), /apenas o cheiro/i);
+  assert.equal(suitcaseGame.SCENE_ZERO_SUITCASES[1].game, "morel_bios");
+  assert.equal(suitcaseGame.SCENE_ZERO_SUITCASES[3].game, "gincana");
+  assert.equal(morelBios.SCENE_ZERO_MOREL_BIOS_DURATION_MS, 30000);
+  assert.match(morelBios.SCENE_ZERO_MOREL_BIOS_LINES.join(" "), /nesta ilha, aconteceu um milagre/i);
   assert.equal(suitcaseGame.SCENE_ZERO_INSTAGRAM_TARGETS.robson.participantName, "Robinson Rogério");
 
   const activeGincana = {
@@ -283,6 +296,7 @@ async function main() {
 
   const legacySnapshot = sceneZero.publicSceneZeroSnapshot({ ...initial, suitcaseGame: undefined });
   assert.equal(legacySnapshot.suitcaseGame.instagram.maxPosts, 10);
+  assert.equal(legacySnapshot.suitcaseGame.morelBios.status, "idle");
 
   const messageSchedule = messageTiming.sequentialMessageSchedule(["12345", "1234567890"]);
   assert.equal(messageSchedule.offsets[0], 650);

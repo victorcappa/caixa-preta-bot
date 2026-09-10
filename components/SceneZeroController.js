@@ -6,7 +6,7 @@ import AudienceWarmupController from "./AudienceWarmupController";
 import { setSharedInstagramPanelVisible } from "@/lib/instagram/panelClient";
 import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
 import { SCENE_ZERO_GLITCH_LEVELS, SCENE_ZERO_PERSONALITY_DIRECTIONS, SCENE_ZERO_STAGES, sceneZeroStageLabel } from "@/lib/scene-zero/state";
-import { nextSceneZeroSuitcase } from "@/lib/scene-zero/suitcaseGame";
+import { nextSceneZeroSuitcase, SCENE_ZERO_FIRST_CHALLENGE, SCENE_ZERO_SECOND_CHALLENGE } from "@/lib/scene-zero/suitcaseGame";
 import styles from "./SceneZeroController.module.css";
 
 const PRIMARY_STAGES = [
@@ -348,14 +348,14 @@ export default function SceneZeroController() {
   const seconds = remainingTimer(timer, now);
   const instagram = snapshot.instagram || {};
   const instagramLoginVerified = instagram.sessionAuthenticated === true;
-  const game = snapshot.game || {};
   const suitcase = snapshot.suitcase || {};
   const suitcaseGame = sceneZero.suitcaseGame || {};
   const gincana = suitcaseGame.gincana || {};
   const gincanaTimer = gincana.timer || {};
   const gincanaSeconds = remainingTimer(gincanaTimer, now, null);
   const nextSuitcase = nextSceneZeroSuitcase(suitcaseGame);
-  const suitcaseInstagram = suitcaseGame.instagram || {};
+  const morelBios = suitcaseGame.morelBios || {};
+  const morelBiosActive = morelBios.status === "running" && Date.parse(morelBios.endsAt || "") > now;
   const globalGlitch = snapshot.glitch || {};
   const participantSelection = sceneZero.participantSelection || {};
   const participantSelectionBusy = ["preparing", "awaiting_invite", "countdown", "roulette"].includes(participantSelection.status);
@@ -395,6 +395,37 @@ export default function SceneZeroController() {
       .catch((error) => setNotice(error.message))
       .finally(() => setPending(""));
   }, [gincana.currentTask?.id, gincana.result, gincanaTimer.sequence, gincanaTimer.status, pending]);
+
+  function challengeControls(challenge, startLabel) {
+    const active = gincana.currentTask?.id === challenge.id;
+    return (
+      <>
+        <Readout label="DESAFIO FIXO" value={challenge.instruction} />
+        <Readout label="DIFICULDADE / OBSERVAÇÕES" value={`${challenge.difficulty} · ${challenge.notes}`} />
+        <div className={`${styles.timer} ${active && gincanaTimer.status === "complete" ? styles.timerComplete : ""}`}>{active ? gincanaSeconds ?? "—" : "—"}</div>
+        <strong className={styles.timerStatus}>TEMPO: 20s<br />{active ? (gincanaTimer.status || "idle").toUpperCase() : "AGUARDANDO A MALA"}</strong>
+        <Button primary onClick={() => sceneAction("gincana-timer-start")} pending={pending || !active}>{startLabel}</Button>
+        <Button onClick={() => sceneAction("gincana-timer-pause")} pending={pending || !active || gincanaTimer.status !== "running"}>PAUSAR</Button>
+        <Button onClick={() => sceneAction("gincana-timer-resume")} pending={pending || !active || gincanaTimer.status !== "paused"}>CONTINUAR</Button>
+        <Button onClick={() => sceneAction("gincana-timer-restart")} pending={pending || !active}>REINICIAR</Button>
+        <Button danger onClick={() => sceneAction("gincana-timer-cancel")} pending={pending || !active}>CANCELAR</Button>
+        <label className={styles.observationField}>
+          O QUE ACONTECEU / REAÇÃO
+          <input value={gincanaObservation} onChange={(event) => setGincanaObservation(event.target.value)} placeholder="Ex.: conseguiu; o público acertou; descrição difícil" />
+        </label>
+        <Button onClick={async () => {
+          const result = await sceneAction("gincana-complete", { detail: gincanaObservation });
+          if (result) setGincanaObservation("");
+        }} pending={pending || !active}>AÇÃO CONCLUÍDA</Button>
+        <Button danger onClick={async () => {
+          const result = await sceneAction("gincana-failed", { detail: gincanaObservation });
+          if (result) setGincanaObservation("");
+        }} pending={pending || !active}>FALHOU / TEMPO ESGOTADO</Button>
+        <Readout label="RESULTADO" value={active && gincana.result ? `${gincana.result.toUpperCase()} · ${gincana.elapsedSeconds ?? 0}s decorridos` : "AGUARDANDO"} />
+        <Readout label="ÚLTIMO COMENTÁRIO DO BOT" value={active ? gincana.lastComment : null} />
+      </>
+    );
+  }
 
   function navigateToSection(event, id) {
     event.preventDefault();
@@ -510,87 +541,31 @@ export default function SceneZeroController() {
           <Button onClick={() => sceneAction("suitcase-finish")} pending={pending || Boolean(nextSuitcase) || suitcaseGame.status === "finished"}>FINALIZAR JOGO DAS MALAS / PREENCHER BARRA</Button>
         </div>
         <div className={styles.suitcaseGrid}>
-          <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 1 ? styles.activeSuitcase : ""}`}>
-            <h3>3ª ESCOLHA — MALA 1 / VERDADE OU BOLO</h3>
-            <Button onClick={() => setOpenSuitcaseControls((current) => current === 1 ? null : 1)} pressed={openSuitcaseControls === 1}>{openSuitcaseControls === 1 ? "COMPRIMIR" : "CONTROLES"}</Button>
-            <div className={styles.suitcaseDetails} hidden={openSuitcaseControls !== 1}>
-            <Readout label="JOGO EXISTENTE" value={game.id === "verdade_ou_bolo" ? `${game.phase || "ATIVO"}` : "INATIVO"} />
-            <Button onClick={() => sceneAction("cake-comment")} pending={pending}>COMENTAR</Button>
-            <Button onClick={() => sceneAction("cake-provoke")} pending={pending}>NOVA PROVOCAÇÃO</Button>
-            <Button onClick={() => operatorCommand("/game nextround")} pending={pending}>PRÓXIMA RODADA</Button>
-            <Button onClick={() => operatorCommand("/game verdade")} pending={pending}>VERDADE</Button>
-            <Button onClick={() => operatorCommand("/game bolo")} pending={pending}>BOLO</Button>
-            <Button onClick={() => operatorCommand("/game reveal")} pending={pending}>REVELAR</Button>
-            <Button danger onClick={() => sceneAction("cake-end")} pending={pending}>ENCERRAR</Button>
-            </div>
-          </section>
-
           <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 2 ? styles.activeSuitcase : ""}`}>
             <h3>1ª ESCOLHA — MALA 2 / EVIDÊNCIAS</h3>
             <Button onClick={() => setOpenSuitcaseControls((current) => current === 2 ? null : 2)} pressed={openSuitcaseControls === 2}>{openSuitcaseControls === 2 ? "COMPRIMIR" : "CONTROLES"}</Button>
             <div className={styles.suitcaseDetails} hidden={openSuitcaseControls !== 2}>
-            <Readout label="DESAFIO FIXO" value={gincana.currentTask?.instruction} />
-            <Readout label="DIFICULDADE / OBSERVAÇÕES" value={gincana.currentTask ? `${gincana.currentTask.difficulty} · ${gincana.currentTask.notes || "sem observações"}` : "—"} />
-            <div className={`${styles.timer} ${gincanaTimer.status === "complete" ? styles.timerComplete : ""}`}>{gincanaSeconds ?? "—"}</div>
-            <strong className={styles.timerStatus}>TEMPO: {gincana.durationSeconds ? `${gincana.durationSeconds}s` : "—"}<br />{(gincanaTimer.status || "idle").toUpperCase()}</strong>
-            <Button primary onClick={() => sceneAction("gincana-timer-start")} pending={pending || !gincana.currentTask}>INICIAR EVIDÊNCIAS / 20s</Button>
-            <Button onClick={() => sceneAction("gincana-timer-pause")} pending={pending || gincanaTimer.status !== "running"}>PAUSAR</Button>
-            <Button onClick={() => sceneAction("gincana-timer-resume")} pending={pending || gincanaTimer.status !== "paused"}>CONTINUAR</Button>
-            <Button onClick={() => sceneAction("gincana-timer-restart")} pending={pending || !gincana.currentTask}>REINICIAR</Button>
-            <Button danger onClick={() => sceneAction("gincana-timer-cancel")} pending={pending || !gincana.currentTask}>CANCELAR</Button>
-            <label className={styles.observationField}>
-              O QUE ACONTECEU / OBJETOS / REAÇÃO
-              <input value={gincanaObservation} onChange={(event) => setGincanaObservation(event.target.value)} placeholder="Ex.: conseguiu; trouxe uma garrafa e dois tecidos; plateia riu" />
-            </label>
-            <Button onClick={async () => {
-              const result = await sceneAction("gincana-complete", { detail: gincanaObservation });
-              if (result) setGincanaObservation("");
-            }} pending={pending || !gincana.currentTask}>AÇÃO CONCLUÍDA</Button>
-            <Button danger onClick={async () => {
-              const result = await sceneAction("gincana-failed", { detail: gincanaObservation });
-              if (result) setGincanaObservation("");
-            }} pending={pending || !gincana.currentTask}>FALHOU / TEMPO ESGOTADO</Button>
-            <Readout label="RESULTADO" value={gincana.result ? `${gincana.result.toUpperCase()} · ${gincana.elapsedSeconds ?? 0}s decorridos` : "AGUARDANDO"} />
-            <Readout label="ÚLTIMO COMENTÁRIO DO BOT" value={gincana.lastComment} />
+            {challengeControls(SCENE_ZERO_FIRST_CHALLENGE, "INICIAR EVIDÊNCIAS / 20s")}
             </div>
           </section>
 
           <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 3 ? styles.activeSuitcase : ""}`}>
-            <h3>2ª ESCOLHA — MALA 3 / INSTAGRAM + GLITCH</h3>
+            <h3>2ª ESCOLHA — MALA 3 / OBJETO PELO CHEIRO</h3>
             <Button onClick={() => setOpenSuitcaseControls((current) => current === 3 ? null : 3)} pressed={openSuitcaseControls === 3}>{openSuitcaseControls === 3 ? "COMPRIMIR" : "CONTROLES"}</Button>
             <div className={styles.suitcaseDetails} hidden={openSuitcaseControls !== 3}>
-            <div className={styles.levels}>
-              {SCENE_ZERO_GLITCH_LEVELS.map((level) => (
-                <Button primary={sceneZero.glitchLevel === level} key={`mala-${level}`} onClick={() => sceneAction("set-glitch", { level })} pending={pending}>
-                  {level === "normal" ? "NORMAL" : level.replace("glitch-", "GLITCH ").toUpperCase()}
-                </Button>
-              ))}
+            {challengeControls(SCENE_ZERO_SECOND_CHALLENGE, "INICIAR ADIVINHAÇÃO / 20s")}
             </div>
-            <Button onClick={() => sceneAction("step-glitch", { delta: 1 })} pending={pending}>GLITCH +</Button>
-            <Button onClick={() => sceneAction("step-glitch", { delta: -1 })} pending={pending}>GLITCH -</Button>
-            <Button primary onClick={() => sceneAction("instagram-manual-login")} pending={pending}>ABRIR / VERIFICAR LOGIN MANUAL</Button>
-            <Button onClick={copyInstagramPassword} pending={pending}>COPIAR SENHA DO INSTAGRAM</Button>
-            <Readout label="ORDEM OBRIGATÓRIA" value="1. ABRA O LOGIN MANUAL · 2. TOQUE EM CONTINUE/CONTINUAR NO PAINEL · 3. CONCLUA O LOGIN · 4. VERIFIQUE O LOGIN · 5. ABRA O PERFIL" />
-            <Button onClick={() => sceneAction("suitcase-instagram-start", { target: "robson" })} pending={pending || suitcaseGame.currentSuitcase !== 3 || !instagramLoginVerified}>INSTAGRAM — ROBSON</Button>
-            <Button onClick={() => sceneAction("suitcase-instagram-start", { target: "janaina" })} pending={pending || suitcaseGame.currentSuitcase !== 3 || !instagramLoginVerified}>INSTAGRAM — JANAÍNA</Button>
-            <Readout label="PERFIL ATUAL" value={suitcaseInstagram.currentProfile ? `${suitcaseInstagram.currentProfile.label} / @${suitcaseInstagram.currentProfile.username}` : "INATIVO"} />
-            <Readout label="POST ATUAL" value={suitcaseInstagram.currentProfile ? `${suitcaseInstagram.currentPostIndex || 0} / ${suitcaseInstagram.maxPosts || 10}` : "—"} />
-            <Readout label="CONTEÚDO ANALISADO" value={suitcaseInstagram.currentPost?.visualAnalysis || suitcaseInstagram.currentPost?.digest} />
-            <Readout label="PREVIEW — AINDA NÃO ENVIADO" value={suitcaseInstagram.pendingComment} />
-            <Readout label="STATUS DO ENVIO" value={`${(suitcaseInstagram.status || "idle").toUpperCase()}${suitcaseInstagram.lastError ? ` · ${suitcaseInstagram.lastError}` : ""}`} />
-            <Button primary onClick={() => sceneAction("suitcase-instagram-send")} pending={pending || !suitcaseInstagram.pendingComment}>ENVIAR COMENTÁRIO</Button>
-            <Button onClick={() => sceneAction("suitcase-instagram-next")} pending={pending || !suitcaseInstagram.currentProfile || suitcaseInstagram.paused || suitcaseInstagram.currentPostIndex >= 10}>PRÓXIMO POST</Button>
-            <Button onClick={() => sceneAction("suitcase-instagram-pause")} pending={pending || !suitcaseInstagram.currentProfile || suitcaseInstagram.paused}>PAUSAR</Button>
-            <Button onClick={() => sceneAction("suitcase-instagram-resume")} pending={pending || !suitcaseInstagram.paused}>CONTINUAR</Button>
-            <Button danger onClick={() => sceneAction("suitcase-instagram-stop")} pending={pending || !suitcaseInstagram.currentProfile}>PARAR</Button>
-            <Readout label="POSTS PROCESSADOS / COMENTADOS" value={`${suitcaseInstagram.processedPostKeys?.length || 0} / ${suitcaseInstagram.commentedPostKeys?.length || 0}`} />
-            <Readout label="COMENTÁRIOS RECENTES" value={(suitcaseInstagram.recentComments || []).slice(-5).map((entry) => `${entry.profile} · POST ${entry.postIndex}: ${entry.comment} [${entry.status}]`).join("\n")} />
-            <Readout label="FIM DO JOGO" value={suitcaseGame.status === "finished" ? `FINALIZADO · ${suitcaseGame.endedAt ? new Date(suitcaseGame.endedAt).toLocaleTimeString("pt-BR") : "REGISTRADO"}` : "A BARRA PERMANECE TRAVADA ATÉ ESTE COMANDO"} />
-            {instagram.embedded && instagram.status !== "DISCONNECTED" && instagram.embeddedPanelVisible !== false && !instagramPanelClosed ? (
-              <div className={styles.instagramPanel}>
-                <InstagramBrowserPanel instagram={instagram} onClose={() => updateInstagramPanelVisibility(false)} />
-              </div>
-            ) : null}
+          </section>
+
+          <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 1 ? styles.activeSuitcase : ""}`}>
+            <h3>3ª ESCOLHA — MALA 1 / NOVA BIOS MOREL</h3>
+            <Button onClick={() => setOpenSuitcaseControls((current) => current === 1 ? null : 1)} pressed={openSuitcaseControls === 1}>{openSuitcaseControls === 1 ? "COMPRIMIR" : "CONTROLES"}</Button>
+            <div className={styles.suitcaseDetails} hidden={openSuitcaseControls !== 1}>
+              <Readout label="SEQUÊNCIA" value="GLITCH NO ROBÔ → CARREGAMENTO DA BIOS MOREL → FRAGMENTOS NA PROJEÇÃO" />
+              <Readout label="STATUS" value={morelBiosActive ? "BIOS MOREL NA PROJEÇÃO" : morelBios.status === "stopped" ? "INTERROMPIDA" : "AGUARDANDO / CONCLUÍDA"} />
+              <Button primary onClick={() => sceneAction("morel-bios-start")} pending={pending || suitcaseGame.currentSuitcase !== 1}>RECARREGAR GLITCH + BIOS</Button>
+              <Button danger onClick={() => sceneAction("morel-bios-stop")} pending={pending || !morelBiosActive}>INTERROMPER BIOS</Button>
+              <Readout label="FIM DO JOGO" value={suitcaseGame.status === "finished" ? `FINALIZADO · ${suitcaseGame.endedAt ? new Date(suitcaseGame.endedAt).toLocaleTimeString("pt-BR") : "REGISTRADO"}` : "A BARRA PERMANECE TRAVADA ATÉ FINALIZAR"} />
             </div>
           </section>
         </div>

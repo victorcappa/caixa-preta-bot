@@ -10,6 +10,18 @@ export const SCENE_ZERO_EVIDENCIAS_CHALLENGE = {
   notes: "A contagem de 20 segundos vale somente para a música. A lanterna é um microfone cênico; não deve ser acesa diretamente no rosto de ninguém."
 };
 
+// Desafio fixo da segunda mala escolhida pelo robô (Mala 3).
+export const SCENE_ZERO_SMELL_CHALLENGE = {
+  id: "objeto_pelo_cheiro",
+  description: "Ajudar o público a adivinhar um objeto descrevendo somente o cheiro.",
+  instruction: "Pegue o objeto, mas não revele para o público. Cheire o objeto. Ajude o público a adivinhar qual é o objeto descrevendo apenas o cheiro.",
+  presentation: "Pegue o objeto, mas não revele para o público. Cheire o objeto. Você tem 20 segundos para ajudar o público a adivinhar qual é o objeto descrevendo apenas o cheiro. Começar.",
+  durationMin: 20,
+  durationMax: 20,
+  difficulty: "descrição olfativa",
+  notes: "Não mostrar nem nomear o objeto. Não cheirar substâncias desconhecidas, irritantes ou potencialmente perigosas."
+};
+
 // Banco editável legado da Mala 2, preservado para recuperação e ensaio.
 export const SCENE_ZERO_GINCANAS = [
   {

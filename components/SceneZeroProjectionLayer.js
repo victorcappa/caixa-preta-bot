@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { PLAY_UNLOCK_CONFIG, PLAY_UNLOCK_STATES, playUnlockBootLines } from "@/data/scene-zero-unlock";
+import { SCENE_ZERO_MOREL_BIOS_DURATION_MS, SCENE_ZERO_MOREL_BIOS_LINES, SCENE_ZERO_MOREL_BIOS_LINE_INTERVAL_MS } from "@/data/scene-zero-morel";
 import { SCENE_ZERO_SUITCASE_CUE_DURATION_MS, shouldShowGincanaTimer } from "@/lib/scene-zero/suitcaseGame";
 import BlinkingCursor from "./BlinkingCursor";
 import useCountdownSound from "./useCountdownSound";
@@ -149,6 +150,7 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
   const collectionTimer = sceneZero?.collection?.activeCountdown;
   const gincana = sceneZero?.suitcaseGame?.gincana;
   const gincanaTimer = gincana?.timer;
+  const morelBios = sceneZero?.suitcaseGame?.morelBios;
   const participantSelection = sceneZero?.participantSelection || {};
 
   useEffect(() => {
@@ -172,8 +174,8 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
 
   const gincanaCompletionAge = now - Date.parse(gincanaTimer?.completedAt || "");
   const gincanaTimerVisible = shouldShowGincanaTimer(gincanaTimer)
-    && (gincanaTimer?.status !== "completed" || (gincanaCompletionAge >= 0 && gincanaCompletionAge < 2000));
-  const visibleTimer = sceneZero?.suitcaseGame?.currentSuitcase === 2 && gincanaTimerVisible
+    && (!["complete", "completed"].includes(gincanaTimer?.status) || (gincanaCompletionAge >= 0 && gincanaCompletionAge < 2000));
+  const visibleTimer = [2, 3].includes(sceneZero?.suitcaseGame?.currentSuitcase) && gincanaTimerVisible
     ? gincanaTimer
     : sceneZero?.stage === "collection" && ["running", "complete"].includes(collectionTimer?.status)
       ? collectionTimer
@@ -199,6 +201,19 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
     && suitcaseSelectionAge < SCENE_ZERO_SUITCASE_CUE_DURATION_MS
     && !showTimer
   );
+  const morelBiosAge = now - Date.parse(morelBios?.startedAt || "");
+  const showMorelBios = Boolean(
+    sceneZero?.suitcaseGame?.currentSuitcase === 1
+    && morelBios?.status === "running"
+    && morelBiosAge >= 0
+    && morelBiosAge < SCENE_ZERO_MOREL_BIOS_DURATION_MS
+  );
+  const visibleMorelLines = showMorelBios
+    ? SCENE_ZERO_MOREL_BIOS_LINES.slice(0, Math.min(
+      SCENE_ZERO_MOREL_BIOS_LINES.length,
+      Math.floor(morelBiosAge / SCENE_ZERO_MOREL_BIOS_LINE_INTERVAL_MS) + 1
+    ))
+    : [];
 
   useCountdownSound(seconds, {
     active: Boolean(showTimer && ["running", "complete"].includes(visibleTimer?.status)),
@@ -226,7 +241,7 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
       {showTimer ? (
         <div className={`${styles.timerOverlay} ${visibleTimer.status === "complete" ? styles.complete : ""}`} aria-live="assertive">
           {visibleTimer === collectionTimer ? <small>COLETA EM CURSO</small> : null}
-          {visibleTimer === gincanaTimer ? <small>EVIDÊNCIAS · O PÚBLICO PODE AJUDAR</small> : null}
+          {visibleTimer === gincanaTimer ? <small>{gincana?.currentTask?.id === "objeto_pelo_cheiro" ? "ADIVINHE O OBJETO · APENAS PELO CHEIRO" : "EVIDÊNCIAS · O PÚBLICO PODE AJUDAR"}</small> : null}
           <strong>{seconds}</strong>
           {["complete", "completed", "failed"].includes(visibleTimer.status) ? <span>{visibleTimer.status === "completed" ? "CONCLUÍDA" : visibleTimer.status === "failed" ? "FALHOU" : "FIM"}</span> : null}
         </div>
@@ -237,6 +252,19 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
           <strong>{sceneZero.suitcaseGame.currentSuitcase}</strong>
           <small>A LUZ VAI INDICAR</small>
         </div>
+      ) : null}
+      {showMorelBios ? (
+        <section className={styles.morelBiosOverlay} key={morelBios.sequence} aria-label="Nova BIOS Morel" aria-live="assertive">
+          <div className={styles.morelBiosNoise} aria-hidden="true" />
+          <div className={styles.morelBiosTerminal}>
+            {visibleMorelLines.map((line, index) => (
+              <p className={index === 3 ? styles.morelExcerpt : index === SCENE_ZERO_MOREL_BIOS_LINES.length - 1 ? styles.morelLoaded : ""} key={line}>
+                <span aria-hidden="true">{String(index).padStart(2, "0")}</span>{line}
+              </p>
+            ))}
+            <i aria-hidden="true" />
+          </div>
+        </section>
       ) : null}
       {showParticipantSelection ? (
         <div className={styles.selectionOverlay} aria-live="assertive">

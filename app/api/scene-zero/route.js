@@ -8,11 +8,10 @@ import { SHOW_MODES } from "@/prompts/modes";
 import { findInstagramParticipantByName } from "@/lib/suitcases/SuitcaseDirector";
 import {
   buildGincanaPresentation,
-  buildSuitcaseSelectionCue,
   nextSceneZeroSuitcase,
-  SCENE_ZERO_FIRST_CHALLENGE,
   SCENE_ZERO_INSTAGRAM_TARGETS,
-  SCENE_ZERO_SUITCASE_CUE_DURATION_MS
+  SCENE_ZERO_SUITCASE_CUE_DURATION_MS,
+  sceneZeroSuitcaseChallenge
 } from "@/lib/scene-zero/suitcaseGame";
 import { buildDataCollectionSystemPrompt } from "@/prompts/dataCollection";
 
@@ -218,13 +217,12 @@ async function startParticipantFlow({ chooseAnother = false, detail = "" } = {})
 }
 
 async function speak(directionAction, detail = "", options = {}) {
-  const { deferred = false, ...applyOptions } = options;
   const state = showState.privateSnapshot();
   const turn = await generateCaixaPretaTurn({
     state,
     operatorInstruction: buildSceneZeroDirection(state.sceneZero, directionAction, detail)
   });
-  if (!deferred) applyGeneratedTurn(turn, applyOptions);
+  applyGeneratedTurn(turn, options);
   return turn;
 }
 
@@ -237,6 +235,26 @@ function scheduleSuitcaseDialogue(selectionSequence, selectedAt, turns) {
     const current = showState.snapshot().sceneZero.suitcaseGame;
     if (current?.suitcaseSelectionSequence !== selectionSequence) return;
     for (const turn of turns) applyGeneratedTurn(turn);
+  }, delayMs);
+}
+
+function scheduleMorelBios(selectionSequence, selectedAt) {
+  const selectedAtMs = Date.parse(selectedAt || "");
+  const elapsedMs = Number.isFinite(selectedAtMs) ? Math.max(0, Date.now() - selectedAtMs) : 0;
+  const delayMs = Math.max(0, SCENE_ZERO_SUITCASE_CUE_DURATION_MS - elapsedMs);
+
+  setTimeout(() => {
+    const current = showState.snapshot().sceneZero.suitcaseGame;
+    if (current?.suitcaseSelectionSequence !== selectionSequence || current.currentSuitcase !== 1) return;
+    showState.controlSceneZero("set-glitch", { level: "glitch-4" }, { source: "scene-zero-operator" });
+    applyGlitchLevel("glitch-4");
+
+    setTimeout(() => {
+      const latest = showState.snapshot().sceneZero.suitcaseGame;
+      if (latest?.suitcaseSelectionSequence !== selectionSequence || latest.currentSuitcase !== 1) return;
+      showState.controlSceneZero("set-glitch", { level: "normal" }, { source: "scene-zero-operator" });
+      showState.controlSceneZero("morel-bios-start", {}, { source: "system" });
+    }, 1800);
   }, delayMs);
 }
 
@@ -264,7 +282,11 @@ async function interruptPreviousSuitcase(nextSuitcaseNumber) {
     showState.controlSceneZero("instagram-session-stop", {}, { source: "scene-zero-operator" });
   }
 
-  if (previousSuitcase === 3 && snapshot.sceneZero.glitchLevel !== "normal") {
+  if (previousSuitcase === 1) {
+    showState.controlSceneZero("morel-bios-stop", {}, { source: "scene-zero-operator" });
+  }
+
+  if (previousSuitcase === 1 && snapshot.sceneZero.glitchLevel !== "normal") {
     showState.controlSceneZero("set-glitch", { level: "normal" }, { source: "scene-zero-operator" });
     applyGlitchLevel("normal");
   }
@@ -293,55 +315,37 @@ async function activateSuitcase(suitcaseNumber, detail = "") {
   const selected = showState.controlSceneZero("suitcase-select", { suitcase: suitcaseNumber, detail }, { source: "operator" });
   if (!selected.applied) return selected;
 
-  if (suitcaseNumber === 2) {
+  const challengeTask = sceneZeroSuitcaseChallenge(suitcaseNumber);
+  if (challengeTask) {
     const challenge = showState.controlSceneZero("gincana-draw", {
-      task: SCENE_ZERO_FIRST_CHALLENGE,
+      task: challengeTask,
       durationSeconds: 20
     }, { source: "system" });
     if (!challenge.applied) return challenge;
   }
 
   if (suitcaseNumber === 1) {
-    const game = showState.snapshot().game;
-    if (!game?.active || game.id !== "verdade_ou_bolo") {
-      showState.startGame({ requestedGame: "verdade-ou-bolo", source: "operator", replace: Boolean(game?.active) });
+    const activeGame = showState.snapshot().game;
+    if (activeGame?.active && activeGame.id === "verdade_ou_bolo") {
+      showState.stopGame({ status: "removed_from_suitcase_flow", source: "scene-zero-operator" });
     }
+    const suitcaseGame = showState.snapshot().sceneZero.suitcaseGame;
+    scheduleMorelBios(suitcaseGame.suitcaseSelectionSequence, suitcaseGame.suitcaseSelectedAt);
+    return { applied: true, state: showState.snapshot().sceneZero, turn: null };
   }
 
-  if (suitcaseNumber === 3) {
-    const level = showState.snapshot().sceneZero.glitchLevel === "normal" ? "glitch-1" : showState.snapshot().sceneZero.glitchLevel;
-    if (level !== showState.snapshot().sceneZero.glitchLevel) {
-      showState.controlSceneZero("set-glitch", { level }, { source: "operator" });
-    }
-    applyGlitchLevel(level);
-  }
-
-  const direction = {
-    1: "suitcase_one_start",
-    2: "suitcase_two_start",
-    3: "suitcase_three_start"
-  }[suitcaseNumber];
-  const turn = await speak(direction, detail, { deferred: true });
-  const selectionCueTurn = {
-    text: buildSuitcaseSelectionCue(suitcaseNumber),
-    events: [],
-    salience: []
-  };
-  const delayedTurns = [turn, selectionCueTurn];
-  if (suitcaseNumber === 2) {
+  if (challengeTask) {
     const challengeTurn = {
-      text: buildGincanaPresentation(SCENE_ZERO_FIRST_CHALLENGE, 20),
+      text: buildGincanaPresentation(challengeTask, 20),
       events: [],
       salience: []
     };
-    delayedTurns.push(challengeTurn);
     const suitcaseGame = showState.snapshot().sceneZero.suitcaseGame;
-    scheduleSuitcaseDialogue(suitcaseGame.suitcaseSelectionSequence, suitcaseGame.suitcaseSelectedAt, delayedTurns);
+    scheduleSuitcaseDialogue(suitcaseGame.suitcaseSelectionSequence, suitcaseGame.suitcaseSelectedAt, [challengeTurn]);
     return { applied: true, state: showState.snapshot().sceneZero, turn: challengeTurn };
   }
-  const suitcaseGame = showState.snapshot().sceneZero.suitcaseGame;
-  scheduleSuitcaseDialogue(suitcaseGame.suitcaseSelectionSequence, suitcaseGame.suitcaseSelectedAt, delayedTurns);
-  return { applied: true, state: showState.snapshot().sceneZero, turn };
+
+  return { applied: true, state: showState.snapshot().sceneZero, turn: null };
 }
 
 async function activateNextSuitcase(detail = "") {
@@ -368,7 +372,8 @@ async function finishSceneZeroSuitcaseGame() {
 
 async function drawGincana() {
   const state = showState.privateSnapshot();
-  const task = SCENE_ZERO_FIRST_CHALLENGE;
+  const task = sceneZeroSuitcaseChallenge(state.sceneZero.suitcaseGame?.currentSuitcase);
+  if (!task) return { applied: false, error: "ESTA MALA NÃO POSSUI DESAFIO CRONOMETRADO", state: showState.snapshot().sceneZero };
   const durationSeconds = 20;
   const selected = showState.controlSceneZero("gincana-draw", { task, durationSeconds }, { source: "operator" });
   if (!selected.applied) return selected;
@@ -669,8 +674,8 @@ export async function POST(request) {
     }
 
     if (action === "gincana-draw") {
-      if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase !== 2) {
-        return Response.json({ error: "INICIE A MALA 2 ANTES DO SORTEIO", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
+      if (!sceneZeroSuitcaseChallenge(showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase)) {
+        return Response.json({ error: "INICIE A MALA 2 OU A MALA 3 ANTES DO DESAFIO", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
       }
       const result = await drawGincana();
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
@@ -681,6 +686,15 @@ export async function POST(request) {
       const result = showState.controlSceneZero(action, body, { source: "operator" });
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
       return Response.json({ message: `GINCANA — ${(result.state.suitcaseGame?.gincana?.timer?.status || "idle").toUpperCase()}`, sceneZero: result.state });
+    }
+
+    if (action === "morel-bios-start" || action === "morel-bios-stop") {
+      if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase !== 1) {
+        return Response.json({ error: "INICIE A MALA 1 ANTES DA BIOS MOREL", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
+      }
+      if (action === "morel-bios-start") applyGlitchLevel("glitch-4");
+      const result = showState.controlSceneZero(action, body, { source: "operator" });
+      return Response.json({ message: action === "morel-bios-start" ? "BIOS MOREL RECARREGADA" : "BIOS MOREL INTERROMPIDA", sceneZero: result.state });
     }
 
     if (action === "gincana-complete" || action === "gincana-failed") {

@@ -66,11 +66,11 @@ try {
   await participantBlock.getByRole("heading", { name: "ESCOLHER PARTICIPANTE" }).waitFor();
   assert.equal(await participantBlock.evaluate((element) => element.nextElementSibling?.id), "scene-zero-suitcases");
   await operator.getByRole("heading", { name: "JOGO DAS MALAS" }).waitFor();
-  const suitcaseOne = operator.getByRole("heading", { name: "MALA 1 — VERDADE OU BOLO" }).locator("..");
-  const suitcaseComment = suitcaseOne.getByRole("button", { name: "COMENTAR", exact: true });
-  assert.equal(await suitcaseComment.isVisible(), false, "detalhes das malas devem iniciar comprimidos");
+  const suitcaseOne = operator.getByRole("heading", { name: "MALA 1 — NOVA BIOS MOREL" }).locator("..");
+  const reloadMorelBios = suitcaseOne.getByRole("button", { name: "RECARREGAR GLITCH + BIOS", exact: true });
+  assert.equal(await reloadMorelBios.isVisible(), false, "detalhes das malas devem iniciar comprimidos");
   await suitcaseOne.getByRole("button", { name: "CONTROLES", exact: true }).click();
-  await suitcaseComment.waitFor();
+  await reloadMorelBios.waitFor();
   await suitcaseOne.getByRole("button", { name: "COMPRIMIR", exact: true }).click();
   const extrasToggle = operator.locator("#scene-zero-extras").getByRole("button", { name: /OUTROS CONTROLES/ });
   assert.equal(await extrasToggle.getAttribute("aria-expanded"), "false", "controles secundários devem iniciar ocultos");

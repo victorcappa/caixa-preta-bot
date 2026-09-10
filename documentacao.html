@@ -548,20 +548,6 @@ npm run dev</code></pre>
 
               <div class="panels">
                 <article class="panel">
-                  <h3>3a ESCOLHA / MALA 1 / VERDADE OU BOLO</h3>
-                  <p>
-                    Reutiliza o jogo estruturado <code>verdade_ou_bolo</code> do
-                    <code>GameDirector</code>. O jogo entra direto na primeira rodada e mostra
-                    o frame inicial pausado antes de iniciar os 10 segundos de decisao. O video
-                    pode ser tocado separadamente; tanto o fim do timer quanto <code>REVELAR</code>
-                    exibem imediatamente resposta, resultado e placar. O operador controla o
-                    timing e avanca diretamente com <code>PROXIMA RODADA</code>. A
-                    Caixa improvisa entrada, comentarios e provocacoes com o contexto atual, e
-                    essas falas aparecem no chat ao lado da tela do jogo.
-                  </p>
-                </article>
-
-                <article class="panel">
                   <h3>1a ESCOLHA / MALA 2 / EVIDENCIAS</h3>
                   <p>
                     O desafio fixo pede que a pessoa descreva a lanterna a sua frente, use-a como
@@ -573,29 +559,34 @@ npm run dev</code></pre>
                 </article>
 
                 <article class="panel">
-                  <h3>2a ESCOLHA / MALA 3 / GLITCH + INSTAGRAM</h3>
+                  <h3>2a ESCOLHA / MALA 3 / OBJETO PELO CHEIRO</h3>
                   <p>
-                    O operador inicia a mala, dosa <code>NORMAL</code>, <code>GLITCH 1–4</code> e
-                    <code>COLAPSO</code>, e abre manualmente Robson ou Janaina. O mesmo navegador
-                    real inspeciona ate dez posts por perfil. Cada comentario gerado aparece em
-                    preview e so e publicado pelo botao explicito de envio; posts comentados nao
-                    podem receber um segundo envio na sessao. O <code>X</code> recolhe o painel no
-                    operator e na tela pública via estado compartilhado, sem encerrar o navegador
-                    ou invalidar o login; o encerramento real usa
-                    <code>FECHAR NAVEGADOR</code>. O botão <code>COPIAR SENHA DO INSTAGRAM</code>
-                    lê a credencial somente após o clique e o servidor local a grava direto na área
-                    de transferência do macOS, sem devolvê-la ao navegador nem registrá-la no estado,
-                    nos logs ou no prompt.
+                    A pessoa pega o objeto sem revela-lo, cheira e tem 20 segundos para ajudar o
+                    publico a adivinhar qual e o objeto descrevendo apenas o cheiro. O objeto nao
+                    pode ser mostrado nem nomeado. O mesmo timer oferece inicio, pausa, continuacao,
+                    reinicio, cancelamento e registro do resultado.
+                  </p>
+                </article>
+
+                <article class="panel">
+                  <h3>3a ESCOLHA / MALA 1 / NOVA BIOS MOREL</h3>
+                  <p>
+                    Nao inicia <code>verdade_ou_bolo</code> nem Instagram. Depois do aviso com o
+                    numero da mala, o robo sofre um glitch curto e a projecao carrega uma nova BIOS
+                    por 30 segundos. A tela mostra um trecho breve de <em>A invencao de Morel</em>
+                    e fragmentos dramaturgicos sobre copia, repeticao, imagem e presenca presa no
+                    dispositivo. O operador pode recarregar ou interromper a BIOS.
                   </p>
                 </article>
               </div>
 
               <p>
                 Ao iniciar uma mala diferente, a mala anterior e interrompida: jogo ativo,
-                timer da gincana, rotina de Instagram e glitch associado nao continuam em paralelo.
+                timer do desafio, BIOS Morel e glitch associado nao continuam em paralelo.
                 Cada escolha mostra por dez segundos <code>VA ATE A MALA INDICADA</code>, o numero
-                selecionado e <code>A LUZ VAI INDICAR</code>. A fala da escolha e o desafio so
-                entram na fila do chatbot depois que esse aviso sai da frente.
+                selecionado e <code>A LUZ VAI INDICAR</code>. Nas duas primeiras malas, o desafio
+                so entra na fila do chatbot depois que esse aviso sai da frente. Na ultima, o
+                aviso da lugar ao glitch e ao carregamento da nova BIOS.
               </p>
 
               <pre><code>npm run test:suitcases</code></pre>
