@@ -548,7 +548,7 @@ npm run dev</code></pre>
 
               <div class="panels">
                 <article class="panel">
-                  <h3>MALA 1 / VERDADE OU BOLO</h3>
+                  <h3>3a ESCOLHA / MALA 1 / VERDADE OU BOLO</h3>
                   <p>
                     Reutiliza o jogo estruturado <code>verdade_ou_bolo</code> do
                     <code>GameDirector</code>. O jogo entra direto na primeira rodada e mostra
@@ -562,20 +562,18 @@ npm run dev</code></pre>
                 </article>
 
                 <article class="panel">
-                  <h3>MALA 2 / GINCANA</h3>
+                  <h3>1a ESCOLHA / MALA 2 / EVIDENCIAS</h3>
                   <p>
-                    Sorteia sem repeticao durante a sessao a partir de
-                    <code>data/scene-zero-gincanas.js</code>. Cada tarefa configura instrucao,
-                    dificuldade, observacoes e faixa de duracao limitada a 60–120 segundos. O
-                    sistema apresenta literalmente uma ordem fechada do banco, sem deixar objeto
-                    ou criterio para o participante escolher e sem permitir reformulacao pelo
-                    modelo. O timer aparece na projecao; somente <code>ACAO CONCLUIDA</code> ou
-                    <code>FALHOU / TEMPO ESGOTADO</code> pede ao modelo o comentario posterior.
+                    O desafio fixo pede que a pessoa descreva a lanterna a sua frente, use-a como
+                    microfone e cante <em>Evidencias</em>, de Chitaozinho &amp; Xororo; o publico
+                    pode ajudar. A contagem de 20 segundos vale somente para a musica. Ao chegar a
+                    zero, o controller pede automaticamente um comentario curto e sarcastico sobre
+                    as habilidades de canto, sem inventar detalhes concretos da performance.
                   </p>
                 </article>
 
                 <article class="panel">
-                  <h3>MALA 3 / GLITCH + INSTAGRAM</h3>
+                  <h3>2a ESCOLHA / MALA 3 / GLITCH + INSTAGRAM</h3>
                   <p>
                     O operador inicia a mala, dosa <code>NORMAL</code>, <code>GLITCH 1–4</code> e
                     <code>COLAPSO</code>, e abre manualmente Robson ou Janaina. O mesmo navegador
@@ -600,9 +598,11 @@ npm run dev</code></pre>
               <pre><code>npm run test:suitcases</code></pre>
 
               <p class="note">
-                A troca MALA 1 → MALA 2 → MALA 3 nunca e automatica. Os comandos
-                <code>/mala</code> continuam disponiveis para o <code>SuitcaseDirector</code> legado
-                e recuperacao; a dramaturgia atual e operada nos tres cartoes da Cena 0.
+                A escolha parece aleatoria em cena, mas o software sempre protege a sequencia
+                MALA 2 → MALA 3 → MALA 1. A primeira mala e escolhida ao entrar na etapa; o
+                operador libera as seguintes no proprio ritmo pelo botao de proxima mala. Os
+                comandos <code>/mala</code> continuam disponiveis para recuperacao do
+                <code>SuitcaseDirector</code> legado.
               </p>
             </section>
 

@@ -6,7 +6,12 @@ import { buildSceneZeroDirection, sceneZeroGlitchCommand } from "@/lib/scene-zer
 import { showState } from "@/lib/showState";
 import { SHOW_MODES } from "@/prompts/modes";
 import { findInstagramParticipantByName } from "@/lib/suitcases/SuitcaseDirector";
-import { buildGincanaPresentation, chooseGincana, chooseGincanaDuration, SCENE_ZERO_INSTAGRAM_TARGETS } from "@/lib/scene-zero/suitcaseGame";
+import {
+  buildGincanaPresentation,
+  nextSceneZeroSuitcase,
+  SCENE_ZERO_FIRST_CHALLENGE,
+  SCENE_ZERO_INSTAGRAM_TARGETS
+} from "@/lib/scene-zero/suitcaseGame";
 import { buildDataCollectionSystemPrompt } from "@/prompts/dataCollection";
 
 export const dynamic = "force-dynamic";
@@ -251,6 +256,17 @@ async function interruptPreviousSuitcase(nextSuitcaseNumber) {
 }
 
 async function activateSuitcase(suitcaseNumber, detail = "") {
+  const before = showState.snapshot().sceneZero.suitcaseGame;
+  const expectedSuitcase = nextSceneZeroSuitcase(before);
+  if (before?.currentSuitcase !== suitcaseNumber && expectedSuitcase !== suitcaseNumber) {
+    return {
+      applied: false,
+      error: expectedSuitcase
+        ? `A PRÓXIMA ESCOLHA DO ROBÔ É A MALA ${expectedSuitcase}`
+        : "TODAS AS MALAS JÁ FORAM ESCOLHIDAS",
+      state: showState.snapshot().sceneZero
+    };
+  }
   await interruptPreviousSuitcase(suitcaseNumber);
   const current = showState.snapshot();
   if (current.sceneZero.stage !== "suitcases") {
@@ -261,6 +277,14 @@ async function activateSuitcase(suitcaseNumber, detail = "") {
 
   const selected = showState.controlSceneZero("suitcase-select", { suitcase: suitcaseNumber, detail }, { source: "operator" });
   if (!selected.applied) return selected;
+
+  if (suitcaseNumber === 2) {
+    const challenge = showState.controlSceneZero("gincana-draw", {
+      task: SCENE_ZERO_FIRST_CHALLENGE,
+      durationSeconds: 20
+    }, { source: "system" });
+    if (!challenge.applied) return challenge;
+  }
 
   if (suitcaseNumber === 1) {
     const game = showState.snapshot().game;
@@ -283,13 +307,30 @@ async function activateSuitcase(suitcaseNumber, detail = "") {
     3: "suitcase_three_start"
   }[suitcaseNumber];
   const turn = await speak(direction, detail);
+  if (suitcaseNumber === 2) {
+    const challengeTurn = {
+      text: buildGincanaPresentation(SCENE_ZERO_FIRST_CHALLENGE, 20),
+      events: [],
+      salience: []
+    };
+    applyGeneratedTurn(challengeTurn);
+    return { applied: true, state: showState.snapshot().sceneZero, turn: challengeTurn };
+  }
   return { applied: true, state: showState.snapshot().sceneZero, turn };
+}
+
+async function activateNextSuitcase(detail = "") {
+  const nextSuitcase = nextSceneZeroSuitcase(showState.snapshot().sceneZero.suitcaseGame);
+  if (!nextSuitcase) {
+    return { applied: false, error: "TODAS AS MALAS JÁ FORAM ESCOLHIDAS", state: showState.snapshot().sceneZero };
+  }
+  return activateSuitcase(nextSuitcase, detail);
 }
 
 async function finishSceneZeroSuitcaseGame() {
   const sceneZero = showState.snapshot().sceneZero;
-  if (sceneZero.suitcaseGame?.currentSuitcase !== 3) {
-    return { applied: false, error: "INICIE A MALA 3 ANTES DE FINALIZAR O JOGO", state: sceneZero };
+  if (nextSceneZeroSuitcase(sceneZero.suitcaseGame)) {
+    return { applied: false, error: "ESCOLHA AS TRÊS MALAS ANTES DE FINALIZAR O JOGO", state: sceneZero };
   }
   if (sceneZero.suitcaseGame?.status === "finished") {
     return { applied: false, error: "JOGO DAS MALAS JÁ FINALIZADO", state: sceneZero };
@@ -302,10 +343,8 @@ async function finishSceneZeroSuitcaseGame() {
 
 async function drawGincana() {
   const state = showState.privateSnapshot();
-  const usedTaskIds = state.sceneZero.suitcaseGame?.gincana?.usedTaskIds || [];
-  const task = chooseGincana(undefined, usedTaskIds);
-  if (!task) return { applied: false, error: "SCENE ZERO GINCANA BANK EMPTY", state: state.sceneZero };
-  const durationSeconds = chooseGincanaDuration(task);
+  const task = SCENE_ZERO_FIRST_CHALLENGE;
+  const durationSeconds = 20;
   const selected = showState.controlSceneZero("gincana-draw", { task, durationSeconds }, { source: "operator" });
   if (!selected.applied) return selected;
   const turn = {
@@ -458,6 +497,11 @@ async function enterStage(stage, detail) {
   if (stage === "suitcases") {
     showState.setMode(SHOW_MODES.malas);
     if (!showState.snapshot().suitcase?.active) showState.startSuitcases({ source: "scene-zero-operator" });
+    const currentSuitcase = showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase;
+    if (!currentSuitcase) {
+      const selected = await activateNextSuitcase(detail);
+      return { ...selected, research: null, state: showState.snapshot().sceneZero };
+    }
     const turn = await speak(STAGE_DIRECTIONS[stage], detail);
     return { ...changed, turn, research: null, state: showState.snapshot().sceneZero };
   }
@@ -585,6 +629,12 @@ export async function POST(request) {
       const result = await activateSuitcase(suitcaseNumber, detail);
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
       return Response.json({ message: `MALA ${suitcaseNumber} ATIVA — PROGRESSÃO MANUAL`, sceneZero: result.state, text: result.turn?.text });
+    }
+
+    if (action === "suitcase-next") {
+      const result = await activateNextSuitcase(detail);
+      if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 409 });
+      return Response.json({ message: `ROBÔ ESCOLHEU A MALA ${result.state.suitcaseGame.currentSuitcase}`, sceneZero: result.state, text: result.turn?.text });
     }
 
     if (action === "suitcase-finish") {

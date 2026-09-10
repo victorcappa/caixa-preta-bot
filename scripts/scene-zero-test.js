@@ -14,6 +14,7 @@ async function main() {
   assert.equal(initial.timer.remainingSeconds, 15);
   assert.equal(initial.glitchLevel, "normal");
   assert.equal(initial.suitcaseGame.currentSuitcase, null);
+  assert.deepEqual(initial.suitcaseGame.openedSuitcases, []);
   assert.equal(initial.suitcaseGame.gincana.timer.status, "idle");
   assert.equal(initial.suitcaseGame.instagram.maxPosts, 10);
   assert.equal(initial.collection.obedience.anticipated, 0);
@@ -219,8 +220,14 @@ async function main() {
   assert.equal(suitcaseGame.chooseGincana([firstTask], [firstTask.id], () => 0), null);
   assert.equal(suitcaseGame.chooseGincanaDuration({ durationMin: 60, durationMax: 120 }, () => 0), 60);
   assert.equal(suitcaseGame.chooseGincanaDuration({ durationMin: 60, durationMax: 120 }, () => 0.999), 120);
+  assert.equal(suitcaseGame.clampGincanaDuration(5), 60);
   assert.equal(suitcaseGame.clampGincanaDuration(30), 60);
   assert.equal(suitcaseGame.clampGincanaDuration(200), 120);
+  assert.deepEqual(suitcaseGame.SCENE_ZERO_SUITCASE_ORDER, [2, 3, 1]);
+  assert.equal(suitcaseGame.nextSceneZeroSuitcase(initial.suitcaseGame), 2);
+  assert.equal(suitcaseGame.nextSceneZeroSuitcase({ currentSuitcase: 2 }), 3);
+  assert.equal(suitcaseGame.nextSceneZeroSuitcase({ currentSuitcase: 3 }), 1);
+  assert.equal(suitcaseGame.nextSceneZeroSuitcase({ openedSuitcases: [2, 3, 1] }), null);
   assert.equal(suitcaseGame.shouldShowGincanaTimer({ status: "running" }), true);
   assert.equal(suitcaseGame.shouldShowGincanaTimer({ status: "complete" }), true);
   assert.equal(suitcaseGame.shouldShowGincanaTimer({ status: "completed" }), false);
@@ -235,6 +242,12 @@ async function main() {
     ),
     "Gincana. Você tem 105 segundos. Traga exatamente uma chave, uma moeda e uma caneta. Os três objetos devem caber juntos em uma das suas mãos. Começar."
   );
+  assert.equal(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE.id, "evidencias_lanterna");
+  assert.equal(suitcaseGame.chooseGincanaDuration(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE), 20);
+  assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 20), /lanterna como microfone/);
+  assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 20), /Evidências/);
+  assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 20), /20 segundos/);
+  assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 20), /público pode ajudar/i);
   assert.equal(suitcaseGame.SCENE_ZERO_INSTAGRAM_TARGETS.robson.participantName, "Robinson Rogério");
 
   const activeGincana = {
@@ -257,6 +270,7 @@ async function main() {
   assert.match(gincanaContext, /tempo 90s/);
   const gincanaDirection = sceneZero.buildSceneZeroDirection(activeGincana, "gincana_complete", "trouxe três objetos");
   assert.match(gincanaDirection, /comentário sobre o resultado real/);
+  assert.match(gincanaDirection, /comentário curto e sarcástico sobre as habilidades de canto/);
   assert.match(gincanaDirection, /trouxe três objetos/);
   const gincanaPresentation = sceneZero.buildSceneZeroDirection(activeGincana, "gincana_present");
   assert.match(gincanaPresentation, /ordem fechada/);

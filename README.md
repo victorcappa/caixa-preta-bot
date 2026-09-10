@@ -499,36 +499,32 @@ PESSOA` exclui o nome atual quando há alternativa. Mudar para outra etapa
 interrompe imediatamente countdown, roleta e comentários pendentes.
 
 O bloco `JOGO DAS MALAS` mantém o `SuitcaseDirector` existente para recuperação
-e compatibilidade, mas organiza a dramaturgia atual em três cartões. A troca
-entre eles só acontece quando o operador pressiona o botão da mala; nenhum fim
-de jogo, timer ou rotina de Instagram avança para a mala seguinte.
+e compatibilidade, mas organiza a dramaturgia atual em três cartões. Ao entrar
+na etapa, o robô apresenta a escolha como aleatória, enquanto o software protege
+a ordem fixa `MALA 2 → MALA 3 → MALA 1`. A primeira escolha acontece na entrada;
+as duas seguintes dependem do botão `ROBÔ ESCOLHER PRÓXIMA MALA`, preservando o
+timing do operador. A ordem completa nunca entra na fala pública.
 
-`MALA 1 — VERDADE OU BOLO` inicia e controla o jogo `verdade_ou_bolo` já
+`MALA 1 — VERDADE OU BOLO` é a terceira e última escolha e inicia o jogo `verdade_ou_bolo` já
 registrado no `GameDirector`. Rodada, resposta, vídeo, votação, revelação e
 placar continuam determinísticos. Entrada, comentário e provocação são gerados
 pelo modelo com a personalidade, memória, participante e contexto atuais; não
 há lista fixa de piadas.
 
-`MALA 2 — GINCANA` usa o banco editável
-`data/scene-zero-gincanas.js`. Cada item define `id`, `description`,
-`instruction`, `durationMin`, `durationMax`, `difficulty` e `notes`. O sorteio
-escolhe somente tarefas ainda não usadas na sessão enquanto houver alternativas.
-Para acrescentar uma tarefa, adicione outro objeto exportado nesse arquivo.
-As durações configuradas são limitadas pelo sistema a 60–120 segundos e um
-valor inteiro é sorteado inclusivamente entre o mínimo e o máximo da tarefa.
+`MALA 2 — EVIDÊNCIAS` é sempre a primeira escolha. O desafio fixo está em
+`SCENE_ZERO_EVIDENCIAS_CHALLENGE`, dentro de `data/scene-zero-gincanas.js`: a
+pessoa descreve a lanterna à sua frente, usa a lanterna como microfone e canta
+“Evidências”, de Chitãozinho & Xororó; o público pode ajudar. A instrução é
+publicada literalmente pelo sistema e não pode ser reformulada pelo modelo.
 
-Depois do sorteio, o sistema anuncia literalmente a instrução do banco com a
-duração sorteada. A fala é uma ordem fechada: nunca devolve ao participante a
-escolha de objeto ou característica e não oferece exemplos ou alternativas. O
-modelo não pode reformular essa ordem. O timer da gincana tem iniciar, pausar, continuar,
-reiniciar e cancelar, usa `endsAt` no servidor e mostra a contagem na projeção até zero.
-`AÇÃO CONCLUÍDA` e `FALHOU / TEMPO ESGOTADO` encerram o timer, registram tempo
-decorrido e a observação livre do operador, e só então pedem ao modelo um
-comentário. O comentário recebe tarefa, resultado, tempo, objetos e reações
-realmente informados; não existe comentário durante toda a busca nem avanço de
-mala ao chegar a zero.
+O operador inicia a contagem somente quando começar a música. O timer usa
+`endsAt` no servidor, mostra 20 segundos na projeção e, ao chegar a zero, o
+controller pede automaticamente ao robô um comentário curto e sarcástico sobre
+as habilidades de canto. O prompt permite o julgamento como bit teatral, mas
+proíbe inventar notas, afinação ou reações não informadas. Pausar, continuar,
+reiniciar, cancelar e registrar manualmente o resultado continuam disponíveis.
 
-`MALA 3 — INSTAGRAM / GLITCH` começa em `GLITCH 1` somente quando o estado
+`MALA 3 — INSTAGRAM / GLITCH` é a segunda escolha e começa em `GLITCH 1` somente quando o estado
 estava normal e não abre perfil sozinho. O operador controla manualmente
 `NORMAL`, `GLITCH 1–4`, `COLAPSO`, Robson, Janaína, próximo post, pausa,
 continuação e parada. O nível entra no prompt como degradação progressiva:

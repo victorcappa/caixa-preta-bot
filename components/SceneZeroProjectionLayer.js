@@ -216,7 +216,7 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
       {showTimer ? (
         <div className={`${styles.timerOverlay} ${visibleTimer.status === "complete" ? styles.complete : ""}`} aria-live="assertive">
           {visibleTimer === collectionTimer ? <small>COLETA EM CURSO</small> : null}
-          {visibleTimer === gincanaTimer ? <small>GINCANA · {gincana?.currentTask?.instruction}</small> : null}
+          {visibleTimer === gincanaTimer ? <small>EVIDÊNCIAS · O PÚBLICO PODE AJUDAR</small> : null}
           <strong>{seconds}</strong>
           {["complete", "completed", "failed"].includes(visibleTimer.status) ? <span>{visibleTimer.status === "completed" ? "CONCLUÍDA" : visibleTimer.status === "failed" ? "FALHOU" : "FIM"}</span> : null}
         </div>
