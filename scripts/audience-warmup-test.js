@@ -35,17 +35,20 @@ for (const action of AUDIENCE_WARMUP_ACTIONS) {
 assert(AUDIENCE_WARMUP_PROMPTS.some((prompt) => prompt.progressValue === 0), "deve existir ação configurável sem progresso");
 assert(AUDIENCE_WARMUP_PROMPTS.some((prompt) => prompt.repeatableProgress), "deve existir ação com progresso repetível");
 assert(AUDIENCE_WARMUP_PROMPTS.filter((prompt) => prompt.tags.includes("São Paulo")).length >= 6, "deve haver repertório paulistano mesmo sem internet");
-assert.deepEqual([1, 2, 3, 4, 5, 7].map((count) => audienceWarmupSurpriseProfile(count)), [
-  { count: 1, intensity: "light", surpriseLevel: 0 },
-  { count: 2, intensity: "medium", surpriseLevel: 0 },
-  { count: 3, intensity: "strange", surpriseLevel: 1 },
-  { count: 4, intensity: "strange", surpriseLevel: 2 },
-  { count: 5, intensity: "strange", surpriseLevel: 3 },
-  { count: 7, intensity: "strange", surpriseLevel: 5 }
+assert.deepEqual([1, 2, 3, 4, 5, 6, 7, 8, 13].map((count) => audienceWarmupSurpriseProfile(count)), [
+  { count: 1, pairIndex: 0, intensity: "light", surpriseLevel: 0 },
+  { count: 2, pairIndex: 0, intensity: "light", surpriseLevel: 0 },
+  { count: 3, pairIndex: 1, intensity: "medium", surpriseLevel: 0 },
+  { count: 4, pairIndex: 1, intensity: "medium", surpriseLevel: 0 },
+  { count: 5, pairIndex: 2, intensity: "strange", surpriseLevel: 1 },
+  { count: 6, pairIndex: 2, intensity: "strange", surpriseLevel: 1 },
+  { count: 7, pairIndex: 3, intensity: "strange", surpriseLevel: 2 },
+  { count: 8, pairIndex: 3, intensity: "strange", surpriseLevel: 2 },
+  { count: 13, pairIndex: 6, intensity: "strange", surpriseLevel: 5 }
 ]);
-for (let count = 3; count <= 7; count += 1) {
+for (let count = 5; count <= 14; count += 1) {
   const prompt = chooseAudienceWarmupSurprisePrompt({ count, random: () => 0 });
-  assert.equal(prompt.surpriseLevel, Math.min(5, count - 2), `surpresa ${count} deve subir de nível`);
+  assert.equal(prompt.surpriseLevel, Math.min(5, Math.floor((count - 1) / 2) - 1), `surpresa ${count} deve subir a cada duas perguntas`);
 }
 
 const wordSequence = createAudienceWarmupSequence({ text: "Quando eu disser três, digam o bairro.", action: "word", countdown: 3 });

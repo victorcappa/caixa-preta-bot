@@ -124,7 +124,8 @@ No `/operator`, `AQUECIMENTO DA PLATEIA` oferece ações físicas, intensidades
 `data/audience-warmup-prompts.js`, frase manual, preview e `SURPREENDA-ME`. O
 boot atualiza fatos de São Paulo e algumas atualidades do Brasil e do mundo;
 chamadas sucessivas de `SURPREENDA-ME` usam esse contexto e aumentam a
-estranheza numa escala explícita de cinco níveis. O fallback para a biblioteca
+estranheza a cada duas perguntas, numa escala explícita de cinco níveis depois
+dos pares leve e médio. O fallback para a biblioteca
 estática preserva essa progressão e inclui perguntas específicas sobre Metrô,
 Tietê, Pinheiros, trânsito e clima paulistano.
 O módulo começa comprimido e alterna entre `EXPANDIR` e `COMPRIMIR` ao tocar no
