@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { AUDIENCE_WARMUP_ACTIONS, AUDIENCE_WARMUP_PROMPTS } from "../data/audience-warmup-prompts.js";
-import { audienceWarmupRequiresCountdown, chooseAudienceWarmupPrompt, clampAudienceWarmupInterval, createAudienceWarmupSequence, inferAudienceWarmupCountdown } from "../lib/audienceWarmup.js";
+import { audienceWarmupRequiresCountdown, audienceWarmupSurpriseProfile, chooseAudienceWarmupPrompt, chooseAudienceWarmupSurprisePrompt, clampAudienceWarmupInterval, createAudienceWarmupSequence, inferAudienceWarmupCountdown } from "../lib/audienceWarmup.js";
 import { assertBotCannotNavigateExternal, blockedAutonomousInstagramResult } from "../lib/externalNavigationGuard.js";
 import { createInitialResearchState, getResearchTools, updateResearchSettings } from "../lib/research/ResearchDirector.js";
 import { executeAutonomousInstagramTool } from "../lib/instagram/autonomousTools.js";
@@ -34,6 +34,19 @@ for (const action of AUDIENCE_WARMUP_ACTIONS) {
 }
 assert(AUDIENCE_WARMUP_PROMPTS.some((prompt) => prompt.progressValue === 0), "deve existir ação configurável sem progresso");
 assert(AUDIENCE_WARMUP_PROMPTS.some((prompt) => prompt.repeatableProgress), "deve existir ação com progresso repetível");
+assert(AUDIENCE_WARMUP_PROMPTS.filter((prompt) => prompt.tags.includes("São Paulo")).length >= 6, "deve haver repertório paulistano mesmo sem internet");
+assert.deepEqual([1, 2, 3, 4, 5, 7].map((count) => audienceWarmupSurpriseProfile(count)), [
+  { count: 1, intensity: "light", surpriseLevel: 0 },
+  { count: 2, intensity: "medium", surpriseLevel: 0 },
+  { count: 3, intensity: "strange", surpriseLevel: 1 },
+  { count: 4, intensity: "strange", surpriseLevel: 2 },
+  { count: 5, intensity: "strange", surpriseLevel: 3 },
+  { count: 7, intensity: "strange", surpriseLevel: 5 }
+]);
+for (let count = 3; count <= 7; count += 1) {
+  const prompt = chooseAudienceWarmupSurprisePrompt({ count, random: () => 0 });
+  assert.equal(prompt.surpriseLevel, Math.min(5, count - 2), `surpresa ${count} deve subir de nível`);
+}
 
 const wordSequence = createAudienceWarmupSequence({ text: "Quando eu disser três, digam o bairro.", action: "word", countdown: 3 });
 assert.equal(wordSequence.requiresCountdown, true);
@@ -125,10 +138,19 @@ assert.equal(research.autonomousInstagramEnabled, false, "o modelo não pode rea
 assert.equal(getResearchTools({ research }).some((tool) => tool.name.startsWith("instagram_")), false);
 
 const sceneZeroRoute = fs.readFileSync(new URL("../app/api/scene-zero/route.js", import.meta.url), "utf8");
+const audienceWarmupRoute = fs.readFileSync(new URL("../app/api/audience-warmup/route.js", import.meta.url), "utf8");
+const sceneZeroProjection = fs.readFileSync(new URL("../components/SceneZeroProjectionLayer.js", import.meta.url), "utf8");
 const participantResearchCalls = sceneZeroRoute.match(/researchCurrentSceneZeroParticipant\(\)/g) || [];
 assert.equal(participantResearchCalls.length, 2, "pesquisa de participante deve existir apenas na declaração e no handler manual");
 assert.match(sceneZeroRoute, /action === "suitcase-research-person"/);
 assert.match(sceneZeroRoute, /action === "suitcase-finish"/);
 assert.doesNotMatch(sceneZeroRoute, /const researchPromise = researchCurrentSceneZeroParticipant/);
+assert.match(audienceWarmupRoute, /body\.action === "unlock-boot"[\s\S]*refreshSceneZeroLocalContext\(\)/, "BOOT deve colher contexto atual");
+assert.match(audienceWarmupRoute, /body\.action === "surprise"[\s\S]*generateAudienceWarmupSurprise/, "SURPREENDA-ME deve usar contexto ao vivo");
+assert.doesNotMatch(sceneZeroProjection, />10 SEGUNDOS</, "contagem do participante não deve repetir a duração por escrito");
+assert.match(sceneZeroProjection, /suitcaseCueFrame\.phase === "reveal" \? "MALA"/, "revelação deve mostrar MALA acima do número");
+assert.match(sceneZeroProjection, /allVisibleMorelLines\.slice\(-10\)/, "BIOS final deve acompanhar as linhas mais recentes");
+assert.match(sceneZeroRoute, /O jogo é simples:[\s\S]*Vou escolher uma mala aleatoriamente\./, "primeira mala deve ser precedida de explicação e anúncio");
+assert.match(sceneZeroRoute, /scene-zero-evidencias-comment-next[\s\S]*activateSuitcase\(3\)/, "Evidências deve avançar para a Mala 3 depois do comentário");
 
 console.log(`audience warmup tests passed (${AUDIENCE_WARMUP_PROMPTS.length} prompts)`);

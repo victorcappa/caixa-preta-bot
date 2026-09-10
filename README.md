@@ -120,14 +120,16 @@ linha permanece fixo e os caracteres avançam para a direita, sem recentralizar
 ou rebalancear o texto a cada atualização.
 
 No `/operator`, `AQUECIMENTO DA PLATEIA` oferece ações físicas, intensidades
-`LEVE`, `MÉDIO` e `ESTRANHO`, 43 prompts em
+`LEVE`, `MÉDIO` e `ESTRANHO`, 49 prompts em
 `data/audience-warmup-prompts.js`, frase manual, preview e `SURPREENDA-ME`. O
 boot atualiza fatos de São Paulo e algumas atualidades do Brasil e do mundo;
 chamadas sucessivas de `SURPREENDA-ME` usam esse contexto e aumentam a
-estranheza, com fallback para a biblioteca estática.
+estranheza numa escala explícita de cinco níveis. O fallback para a biblioteca
+estática preserva essa progressão e inclui perguntas específicas sobre Metrô,
+Tietê, Pinheiros, trânsito e clima paulistano.
 O módulo começa comprimido e alterna entre `EXPANDIR` e `COMPRIMIR` ao tocar no
 cabeçalho; `JOGO DAS MALAS` fica imediatamente abaixo, sempre visível no fluxo
-do operator. A lista completa das 43 falas também começa comprimida dentro do
+do operator. A lista completa das 49 falas também começa comprimida dentro do
 aquecimento e pode ser aberta quando necessária.
 Escolher um tipo de ação e uma intensidade já gera e envia a primeira etapa,
 sem botão intermediário. A ordem dos dois cliques é livre: a segunda escolha
