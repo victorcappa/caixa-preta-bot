@@ -11,6 +11,7 @@ import {
 } from "@/data/scene-zero-gincanas";
 import { SCENE_ZERO_MOREL_BIOS_DURATION_MS, SCENE_ZERO_MOREL_BIOS_LINES, SCENE_ZERO_MOREL_BIOS_LINE_INTERVAL_MS } from "@/data/scene-zero-morel";
 import { SCENE_ZERO_SUITCASE_CUE_DURATION_MS, sceneZeroSuitcaseCueFrameAt } from "@/lib/scene-zero/suitcaseGame";
+import { AUDIENCE_WARMUP_MINIGAMES, getAudienceWarmupMinigame } from "@/data/audience-warmup-minigames";
 import BlinkingCursor from "./BlinkingCursor";
 import useCountdownSound from "./useCountdownSound";
 import styles from "./SceneZeroProjectionLayer.module.css";
@@ -200,7 +201,70 @@ function PlayUnlockProjection({ unlock, now }) {
   );
 }
 
-export default function SceneZeroProjectionLayer({ sceneZero }) {
+function AudienceWarmupMinigameProjection({ warmup, now }) {
+  const minigame = warmup?.minigame || {};
+  const game = getAudienceWarmupMinigame(minigame.selectedId);
+  const drawing = minigame.status === "drawing";
+  const drawElapsed = Math.max(0, now - Date.parse(minigame.drawStartedAt || now));
+  const drawIndex = Math.floor(drawElapsed / Math.max(70, 230 - Math.min(155, drawElapsed / 25))) % AUDIENCE_WARMUP_MINIGAMES.length;
+  const drawName = AUDIENCE_WARMUP_MINIGAMES[drawIndex]?.name || "—";
+  const seconds = timerSeconds(minigame.timer, now);
+  const timerVisible = ["countdown", "running", "paused", "exchange"].includes(minigame.status);
+  const selectedVisible = minigame.status === "selected";
+  const secondRoundReady = minigame.status === "ready_round_two";
+
+  useCountdownSound(seconds, {
+    active: Boolean(timerVisible && minigame.timer?.status === "running"),
+    countdownKey: `audience-warmup:${minigame.selectedId || "draw"}:${minigame.timer?.sequence || 0}`
+  });
+
+  if (!drawing && !selectedVisible && !timerVisible && !secondRoundReady) return null;
+
+  return (
+    <section className={styles.warmupMinigameOverlay} aria-label="Minigame do aquecimento" aria-live="assertive">
+      {drawing ? (
+        <div className={styles.warmupGameDraw}>
+          <span>SORTEANDO TESTE</span>
+          <div className={styles.rouletteWindow} key={`warmup-${drawIndex}`}>{drawName}</div>
+          <div className={styles.candidateTicker}>
+            {AUDIENCE_WARMUP_MINIGAMES.map((candidate) => <span key={candidate.id}>{candidate.name}</span>)}
+          </div>
+        </div>
+      ) : selectedVisible ? (
+        <div className={styles.warmupGameSelected}>
+          <span>JOGO SELECIONADO</span>
+          <strong>{game?.name || "—"}</strong>
+        </div>
+      ) : secondRoundReady ? (
+        <div className={styles.warmupGameSelected}>
+          <span>TAPÃO</span>
+          <strong>SEGUNDO TURNO</strong>
+          <small>AGUARDANDO OPERADOR</small>
+        </div>
+      ) : (
+        <div className={styles.warmupGameTimer} data-paused={minigame.status === "paused"}>
+          <header><span>{game?.name || "TESTE"}</span><b>{minigame.timer?.phase === "round_two" ? "TURNO 2" : minigame.timer?.phase === "exchange" ? "TROQUEM" : minigame.timer?.phase === "countdown" ? "COMEÇANDO" : "TURNO 1"}</b></header>
+          <strong>{seconds}</strong>
+          <small>{minigame.status === "paused" ? "PAUSADO" : minigame.timer?.phase === "exchange" ? "INVERTAM OS PAPÉIS" : "NÃO COMPLIQUEM"}</small>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function AudienceWarmupActionTimer({ warmup, now }) {
+  const timer = warmup?.actionTimer;
+  const seconds = timerSeconds(timer, now);
+  const visible = warmup?.phase === "questions" && timer?.status === "running";
+  useCountdownSound(seconds, {
+    active: visible,
+    countdownKey: `audience-warmup-action:${warmup?.sequence?.id || "none"}:${warmup?.currentStep ?? -1}`
+  });
+  if (!visible) return null;
+  return <aside className={styles.warmupActionTimer} aria-label={`Tempo da ação: ${seconds} segundos`}><span>TEMPO</span><strong>{seconds}</strong></aside>;
+}
+
+export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) {
   const [now, setNow] = useState(Date.now());
   const teaAudioRef = useRef(null);
   const evidenciasAudioRef = useRef(null);
@@ -336,6 +400,8 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
       <audio preload="auto" ref={teaAudioRef} src={TEA_FOR_TWO_AUDIO} />
       <audio preload="auto" ref={evidenciasAudioRef} src={EVIDENCIAS_KARAOKE_AUDIO} />
       <PlayUnlockProjection now={now} unlock={sceneZero?.unlock} />
+      <AudienceWarmupMinigameProjection now={now} warmup={audienceWarmup} />
+      <AudienceWarmupActionTimer now={now} warmup={audienceWarmup} />
       {collapse ? (
         <div className={styles.airportContamination} aria-hidden="true">
           <video autoPlay loop muted playsInline src={AIRPORT_VIDEO} />

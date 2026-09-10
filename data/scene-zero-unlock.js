@@ -148,12 +148,12 @@ export const PLAY_UNLOCK_CONFIG = {
     "VERIFICAÇÃO HUMANA ............ EM ANDAMENTO"
   ],
   unlockLines: [
-    "VERIFICAÇÃO HUMANA ............ CONCLUÍDA",
+    "HUMANIDADE SUFICIENTE.",
     "PARTICIPAÇÃO DA PLATEIA ........ OK",
     "TODAS AS DEPENDÊNCIAS .......... SATISFEITAS",
     "desbloqueando...",
     "...",
-    "CAIXA PRETA .................... PRONTA"
+    "PEÇA DESBLOQUEADA."
   ],
   tutorialCompleteLines: ["FIM DO TUTORIAL"],
   tutorialCompleteLeadMs: 550,

@@ -1,5 +1,5 @@
 import { showState } from "@/lib/showState";
-import { generateAudienceWarmupSurprise, refreshSceneZeroLocalContext } from "@/lib/openai";
+import { refreshSceneZeroLocalContext } from "@/lib/openai";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -24,17 +24,6 @@ export async function POST(request) {
         }
       }
       return Response.json({ message: result.message, unlock: showState.snapshot().sceneZero.unlock });
-    }
-    if (body.action === "surprise") {
-      const state = showState.privateSnapshot();
-      try {
-        body.prompt = await generateAudienceWarmupSurprise({
-          state,
-          surpriseCount: Number(state.audienceWarmup?.surpriseCount || 0) + 1
-        });
-      } catch {
-        // The static repertoire remains available if live generation is unavailable.
-      }
     }
     const result = showState.controlAudienceWarmup(body.action, body, { source: "operator" });
     if (!result.ok) return Response.json({ error: result.error }, { status: 400 });

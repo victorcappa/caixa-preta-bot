@@ -33,6 +33,19 @@ function storedNumber(key, fallback) {
   return Number.isFinite(value) ? value : fallback;
 }
 
+function AudienceWarmupTimer({ endsAt }) {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (!endsAt) return undefined;
+    const timer = window.setInterval(() => setNow(Date.now()), 200);
+    return () => window.clearInterval(timer);
+  }, [endsAt]);
+
+  if (!endsAt) return null;
+  return <strong className={styles.actionTimer}>{Math.max(0, Math.ceil((Date.parse(endsAt) - now) / 1000))}</strong>;
+}
+
 export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [publicMessage, setPublicMessage] = useState(null);
@@ -820,7 +833,7 @@ export default function Chat() {
         ref={chatPaneRef}
       >
         <DisplayBlackout blackout={displayBlackout} target="chatbot" />
-        <SceneZeroProjectionLayer sceneZero={sceneZero} />
+        <SceneZeroProjectionLayer audienceWarmup={audienceWarmup} sceneZero={sceneZero} />
         <PerformanceLayer
           activities={performanceActivities}
           events={visiblePerformanceEvents}
@@ -859,6 +872,7 @@ export default function Chat() {
                 {audienceWarmup?.display?.messageId === publicMessage.id ? (
                   <div className={styles.actionCue}>
                     <small>{audienceWarmup.display.actionLabel}</small>
+                    <AudienceWarmupTimer endsAt={audienceWarmup.display.endsAt} />
                   </div>
                 ) : null}
                 <p className={`${styles.machine} ${publicMessage.content.length > 180 ? styles.machineLong : publicMessage.content.length > 95 ? styles.machineMedium : ""}`}>

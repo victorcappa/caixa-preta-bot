@@ -119,30 +119,29 @@ Uma nova fala substitui visualmente a anterior; `LIMPAR TELA` remove somente
 linha permanece fixo e os caracteres avançam para a direita, sem recentralizar
 ou rebalancear o texto a cada atualização.
 
-No `/operator`, `AQUECIMENTO DA PLATEIA` oferece ações físicas, quatro degraus
-(`COTIDIANO`, `DINHEIRO / POLÍTICA`, `SEXO / DROGAS` e `SEGREDO / CULPA`), 46
-prompts em `data/audience-warmup-prompts.js`, frase manual, preview e
-`SURPREENDA-ME`. Chamadas sucessivas de `SURPREENDA-ME` sobem um degrau a cada
-duas perguntas e permanecem no último: `cotidiano → dinheiro/política →
-sexo/drogas → segredo/culpa e exposição entre pessoas`. As falas são ordens
-curtas, secas e ligadas a marcadores concretos da vida da plateia; toda pergunta
-exige uma resposta corporal visível. A biblioteca evita completar por padrão a
-resposta de quem não se manifestou, de modo que os corpos imóveis também
-signifiquem. Algumas entradas são partituras de duas a quatro falas e permitem
-ao operador construir consequências a partir da resposta anterior.
+No `/operator`, `AQUECIMENTO DA PLATEIA` oferece 100 prompts em
+`data/audience-warmup-prompts.js`, distribuídos igualmente entre cinco degraus:
+`PLAY`, `PERSONAL`, `EXPOSED`, `PROVOCATIVE` e `SOCIAL PRESSURE`. A biblioteca é
+a fonte de verdade: sorteio, preview, sequência e projeção usam literalmente o
+texto e os `steps` registrados, sem geração ou paráfrase pelo modelo. Os prompts
+combinam comandos corporais, ritmo, mímica, coro, objetos, movimento, confissão,
+divisão da sala e microcompetições. A seleção mantém memória curta de ID, ação,
+categoria, `interactionType`, tags e abertura textual para evitar repetições
+recentes, enquanto a progressão avança um nível a cada seis sorteios.
+O modo não usa situações imaginárias nem fórmulas educadas: as instruções são
+imperativas e tratam de ações ou fatos reais.
 O módulo começa comprimido e alterna entre `EXPANDIR` e `COMPRIMIR` ao tocar no
 cabeçalho; `JOGO DAS MALAS` fica imediatamente abaixo, sempre visível no fluxo
-do operator. A lista completa das 46 falas também começa comprimida dentro do
+do operator. A lista completa das 100 falas também começa comprimida dentro do
 aquecimento e pode ser aberta quando necessária.
-Escolher um tipo de ação e uma intensidade já gera e envia a primeira etapa,
-sem botão intermediário. A ordem dos dois cliques é livre: a segunda escolha
-completa o par e dispara a fala. `SURPREENDA-ME` cria a combinação
-inteira imediatamente. Na frase manual, `Enter` envia e `Shift+Enter`
-insere uma quebra de linha. Depois do envio, o operador pode avançar, repetir,
-cancelar ou limpar a partitura. O avanço automático é opcional, configurável e
-sempre cancelável. Ordens com duração como `por cinco segundos` recebem uma
-contagem regressiva automática em ritmo real de um segundo. A projeção mostra
-somente a etapa corrente e uma indicação pequena da ação esperada.
+`SORTEAR` prepara a próxima ação sem alterar a projeção; `DISPARAR` publica o
+texto exato. O controller mostra categoria, intensidade, `interactionType`,
+duração e todos os `steps`, permite navegar e disparar qualquer item da
+biblioteca e oferece `PULAR`, `REPETIR`, `PRÓXIMO`, `+5s` e `ENCERRAR AÇÃO`.
+O avanço automático continua opcional e cancelável. Ações temporizadas exibem
+uma contagem pequena na projeção e podem ser avançadas antes do fim. O endpoint
+rejeita frases manuais que não correspondam exatamente a uma entrada da
+biblioteca.
 
 A abertura da Cena 0 começa em `STANDBY`: ao abrir ou executar `/reset`, a
 projeção fica totalmente preta, sem cursor, texto, campo público ou animação.
@@ -153,10 +152,24 @@ aquecimento e sai da projeção quando a verificação termina.
 Ao travar, a BIOS mostra o erro e a dependência `AÇÃO COLETIVA`; depois, limpa a
 tela e mantém somente um cursor piscando. O estado permanece parado aí por tempo
 indeterminado. O operador precisa abrir `AQUECIMENTO DA PLATEIA` e acionar
-`INICIAR AQUECIMENTO`. Só então `... PROVE QUE VOCÊ É HUMANO` aparece sozinha
-uma única vez, antes da primeira pergunta física. O título nunca volta durante
-a rodada. Não há imagens nem CAPTCHA visual nesse protocolo, nem a mensagem
-`PEÇA DESBLOQUEADA` na conclusão.
+`INICIAR AQUECIMENTO`. Só então `... PROVE QUE VOCÊ É HUMANO` aparece uma vez.
+O chatbot dá um briefing curto, pede duplas e libera o sorteio de exatamente um
+entre `TAPÃO`, `PISCADA` e `SERINHO`. O sorteio reutiliza a linguagem visual da
+janela rotativa das malas, revela apenas o jogo escolhido e apresenta suas
+regras em etapas. O operador também pode substituir o resultado antes do
+início.
+
+`TAPÃO` executa dois turnos de 10 segundos separados por `TROQUEM`; `PISCADA` e
+`SERINHO` usam 60 segundos por padrão e aceitam outra duração. O operator dispõe
+de iniciar, pausar, continuar, reiniciar, encerrar, ajustar cinco segundos,
+antecipar a troca do TAPÃO e pular o minigame. Não há câmera nem detecção
+automática de piscada, riso ou vencedor. Depois de `FIM.`, o estado passa
+definitivamente para perguntas e não admite novo sorteio. A conclusão do jogo
+soma pouco progresso, sem completar a barra.
+
+Não há imagens nem CAPTCHA visual nesse protocolo. Ao chegar a `100%`, a
+projeção mostra `HUMANIDADE SUFICIENTE.` e `PEÇA DESBLOQUEADA.` antes de seguir
+para o fluxo existente.
 Ao lado de `BOOT`, `REINICIAR` executa o reset global: sinaliza parada para as
 requisições em curso, encerra rotinas externas e internas, limpa jogos, timers,
 glitch, navegador e aquecimento e devolve a projeção ao preto de `STANDBY`.

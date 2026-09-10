@@ -1,23 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { AUDIENCE_WARMUP_ACTIONS, AUDIENCE_WARMUP_INTENSITIES, AUDIENCE_WARMUP_PROMPTS } from "@/data/audience-warmup-prompts";
 import { PLAY_UNLOCK_CONFIG } from "@/data/scene-zero-unlock";
+import { AUDIENCE_WARMUP_MINIGAMES } from "@/data/audience-warmup-minigames";
 import styles from "./AudienceWarmupController.module.css";
 
 export default function AudienceWarmupController({ state, unlock, disabled = false, onLog = () => {}, showBootButton = true }) {
   const warmup = state || {};
   const playUnlock = unlock || {};
-  const [manual, setManual] = useState("");
-  const [manualProgress, setManualProgress] = useState(0);
   const [progressDraft, setProgressDraft] = useState(0);
+  const [now, setNow] = useState(Date.now());
   const [requestPending, setRequestPending] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [promptLibraryOpen, setPromptLibraryOpen] = useState(false);
-  const pendingChoiceRef = useRef({ action: null, intensity: null });
 
   useEffect(() => setHydrated(true), []);
   useEffect(() => setProgressDraft(Math.max(0, Math.min(100, Number(playUnlock.progress) || 0))), [playUnlock.progress]);
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 250);
+    return () => window.clearInterval(timer);
+  }, []);
 
   async function act(action, payload = {}) {
     setRequestPending(true);
@@ -43,55 +46,33 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
   const sequence = warmup.sequence;
   const current = sequence?.steps?.[warmup.currentStep] || null;
   const next = sequence?.steps?.[warmup.currentStep + 1] || null;
+  const previewPrompt = AUDIENCE_WARMUP_PROMPTS.find((prompt) => prompt.id === warmup.previewPromptId) || null;
+  const previewDuration = previewPrompt?.durationSeconds
+    || previewPrompt?.steps?.find((promptStep) => promptStep.durationSeconds)?.durationSeconds
+    || null;
+  const actionSeconds = warmup.actionTimer?.endsAt
+    ? Math.max(0, Math.ceil((Date.parse(warmup.actionTimer.endsAt) - now) / 1000))
+    : 0;
   const progress = Math.max(0, Math.min(100, Number(playUnlock.progress) || 0));
   const remaining = Math.max(0, 100 - progress);
   const standby = playUnlock.status === "STANDBY";
   const booting = playUnlock.status === "BOOTING";
   const bootFailed = playUnlock.status === "BOOT_FAILED";
   const warming = ["WAITING_FOR_AUDIENCE", "WARMING_AUDIENCE"].includes(playUnlock.status);
-  const warmupDisabled = busy || !warming || Boolean(playUnlock.pendingProgress);
+  const questionsReady = warmup.phase === "questions";
+  const warmupDisabled = busy || !warming || !questionsReady || Boolean(playUnlock.pendingProgress);
+  const minigame = warmup.minigame || {};
+  const minigameStarted = ["countdown", "running", "paused", "exchange", "ready_round_two"].includes(minigame.status);
+  const minigameLocked = minigame.status === "completed" || questionsReady;
   const currentProgressValue = Math.max(0, Number(sequence?.progressValue) || 0);
   const actionEvaluated = Boolean(sequence?.progressId && playUnlock.scoredActionIds?.includes(sequence.progressId) && !sequence.repeatableProgress);
 
-  useEffect(() => {
-    if (!warming) pendingChoiceRef.current = { action: null, intensity: null };
-  }, [warming]);
-
-  function clearPendingChoice() {
-    pendingChoiceRef.current = { action: null, intensity: null };
-  }
-
-  function sendManual() {
-    const text = manual.trim();
-    if (!text || busy) return;
-    clearPendingChoice();
-    void act("send", { text, progressValue: manualProgress }).then((result) => result && setManual(""));
-  }
-
   async function chooseAction(action) {
-    setManual("");
-    pendingChoiceRef.current.action = action;
-    const intensity = pendingChoiceRef.current.intensity;
-    if (!intensity) {
-      await act("select-action", { selectedAction: action });
-      return;
-    }
-
-    const result = await act("configure-and-generate", { selectedAction: action, intensity });
-    if (result) clearPendingChoice();
+    await act("select-action", { selectedAction: action });
   }
 
   async function chooseIntensity(intensity) {
-    setManual("");
-    pendingChoiceRef.current.intensity = intensity;
-    const action = pendingChoiceRef.current.action;
-    if (!action) {
-      await act("set-intensity", { intensity });
-      return;
-    }
-
-    const result = await act("configure-and-generate", { selectedAction: action, intensity });
-    if (result) clearPendingChoice();
+    await act("set-intensity", { intensity });
   }
 
   return (
@@ -101,7 +82,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
           <small>PARTITURAS DE PLATEIA</small>
           <h2 id="audience-warmup-title">ESQUENTAR PÚBLICO</h2>
         </div>
-        <span className={warmup.active ? styles.live : styles.ready}>{warmup.active ? "EM CURSO" : "PRONTO"}</span>
+        <span className={warmup.active ? styles.live : styles.ready}>{(warmup.phase || "idle").replaceAll("_", " ").toUpperCase()}</span>
       </header>
 
       <section className={styles.unlockPanel} aria-label="Desbloqueio da peça">
@@ -175,6 +156,54 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
         </div>
       </section>
 
+      <section className={styles.minigamePanel} aria-label="Minigame em dupla">
+        <header>
+          <div><small>PRIMEIRO TESTE · UMA VEZ</small><h3>MINIGAME EM DUPLA</h3></div>
+          <strong>{minigame.selectedId ? AUDIENCE_WARMUP_MINIGAMES.find((game) => game.id === minigame.selectedId)?.name : "—"}</strong>
+        </header>
+        <p className={styles.minigameStatus}>ESTADO: {(minigame.status || "idle").replaceAll("_", " ").toUpperCase()} · {minigame.selectionMode ? `SELEÇÃO ${minigame.selectionMode.toUpperCase()}` : "SEM SELEÇÃO"}</p>
+        <div className={styles.gameSelection}>
+          <button className={styles.drawGame} disabled={busy || !warming || minigame.status !== "ready_for_draw"} onClick={() => act("minigame-draw")} type="button">SORTEAR JOGO</button>
+          {AUDIENCE_WARMUP_MINIGAMES.map((game) => (
+            <button
+              className={minigame.selectedId === game.id ? styles.selected : ""}
+              disabled={busy || !warming || minigameStarted || minigameLocked || minigame.status === "briefing"}
+              key={game.id}
+              onClick={() => act("minigame-select", { gameId: game.id })}
+              type="button"
+            >{game.name}</button>
+          ))}
+        </div>
+        <div className={styles.durationGrid}>
+          {AUDIENCE_WARMUP_MINIGAMES.filter((game) => game.id !== "tapao").map((game) => (
+            <label key={game.id}>
+              {game.name} · SEGUNDOS
+              <input
+                disabled={busy || minigameLocked}
+                max="300"
+                min="5"
+                onChange={(event) => act("minigame-set-duration", { gameId: game.id, seconds: Number(event.target.value) })}
+                type="number"
+                value={minigame.durations?.[game.id] ?? game.defaultDurationSeconds}
+              />
+            </label>
+          ))}
+        </div>
+        <div className={styles.minigameTransport}>
+          <button disabled={busy || !["ready", "ready_round_two"].includes(minigame.status)} onClick={() => act("minigame-start")} type="button">{minigame.status === "ready_round_two" ? "INICIAR SEGUNDO TURNO" : "INICIAR"}</button>
+          <button disabled={busy || minigame.status !== "running"} onClick={() => act("minigame-pause")} type="button">PAUSAR</button>
+          <button disabled={busy || minigame.status !== "paused"} onClick={() => act("minigame-resume")} type="button">CONTINUAR</button>
+          <button disabled={busy || !minigame.selectedId || minigameLocked} onClick={() => act("minigame-restart")} type="button">REINICIAR</button>
+          <button disabled={busy || !["running", "paused"].includes(minigame.status)} onClick={() => act("minigame-adjust-time", { deltaSeconds: 5 })} type="button">+5 SEGUNDOS</button>
+          <button disabled={busy || !["running", "paused"].includes(minigame.status)} onClick={() => act("minigame-adjust-time", { deltaSeconds: -5 })} type="button">−5 SEGUNDOS</button>
+          {minigame.selectedId === "tapao" ? <button disabled={busy || minigame.round === 2 || !["countdown", "running", "paused"].includes(minigame.status)} onClick={() => act("minigame-tapao-swap")} type="button">TROQUEM AGORA</button> : null}
+          <button className={styles.endGame} disabled={busy || !minigame.selectedId || minigameLocked} onClick={() => act("minigame-end")} type="button">ENCERRAR</button>
+          <button className={styles.skipGame} disabled={busy || !warming || minigameLocked} onClick={() => act("minigame-skip")} type="button">PULAR MINIGAME</button>
+        </div>
+      </section>
+
+      {!questionsReady ? <p className={styles.questionsLocked}>PERGUNTAS BLOQUEADAS · CONCLUA OU PULE O MINIGAME</p> : null}
+
       <section className={styles.promptLibraryDisclosure} aria-label="Ações configuradas da verificação humana">
         <button aria-expanded={promptLibraryOpen} onClick={() => setPromptLibraryOpen((currentValue) => !currentValue)} type="button">
           <span><strong>AÇÕES CONFIGURADAS</strong><small>{AUDIENCE_WARMUP_PROMPTS.length} FALAS DISPONÍVEIS</small></span>
@@ -191,13 +220,13 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
             return (
               <article className={styles.promptItem} key={prompt.id}>
                 <div>
-                  <small>{prompt.category} · {prompt.id}</small>
+                  <small>{prompt.category} · {prompt.intensity} · {prompt.interactionType} · {prompt.id}</small>
                   <p>{prompt.steps?.length ? prompt.steps.map((step) => typeof step === "string" ? step : step.text).join(" → ") : prompt.text}</p>
                   <strong>{prompt.progressValue > 0 ? `+${prompt.progressValue}%` : "0% · SEM PROGRESSO"} · {prompt.repeatableProgress ? "REPETÍVEL" : scored ? "JÁ PONTUOU" : "AINDA NÃO PONTUOU"}</strong>
                 </div>
                 <div>
-                  <button disabled={warmupDisabled} onClick={() => { clearPendingChoice(); act("trigger-prompt", { promptId: prompt.id, withProgress: true }); }} type="button">DISPARAR{prompt.progressValue > 0 ? ` +${prompt.progressValue}%` : ""}</button>
-                  <button disabled={warmupDisabled} onClick={() => { clearPendingChoice(); act("trigger-prompt", { promptId: prompt.id, withProgress: false }); }} type="button">DISPARAR SEM PROGRESSO</button>
+                  <button disabled={warmupDisabled} onClick={() => act("trigger-prompt", { promptId: prompt.id, withProgress: true })} type="button">DISPARAR{prompt.progressValue > 0 ? ` +${prompt.progressValue}%` : ""}</button>
+                  <button disabled={warmupDisabled} onClick={() => act("trigger-prompt", { promptId: prompt.id, withProgress: false })} type="button">DISPARAR SEM PROGRESSO</button>
                 </div>
               </article>
             );
@@ -240,37 +269,28 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
         </div>
       </fieldset>
 
-      <div className={styles.generateRow}>
-        <button className={styles.surprise} disabled={warmupDisabled} onClick={() => { clearPendingChoice(); setManual(""); act("surprise"); }} type="button">SURPREENDA-ME</button>
+      <div className={styles.preview} aria-label="Preview do esquentar público" aria-live="polite">
+        <small>PRÓXIMA AÇÃO SORTEADA · TEXTO LITERAL DA BIBLIOTECA</small>
+        <p>{warmup.preview || "PRESSIONE SORTEAR."}</p>
+        <dl className={styles.previewMeta}>
+          <div><dt>CATEGORIA</dt><dd>{previewPrompt?.category || "—"}</dd></div>
+          <div><dt>INTENSIDADE</dt><dd>{previewPrompt?.intensity || "—"}</dd></div>
+          <div><dt>INTERAÇÃO</dt><dd>{previewPrompt?.interactionType || "—"}</dd></div>
+          <div><dt>DURAÇÃO</dt><dd>{previewDuration ? `${previewDuration}s` : "LIVRE"}</dd></div>
+        </dl>
+        <ol className={styles.previewSteps}>
+          {(previewPrompt?.steps || []).map((promptStep, index) => <li key={`${previewPrompt.id}-${index}`}>{promptStep.text}{promptStep.durationSeconds ? ` · ${promptStep.durationSeconds}s` : ""}</li>)}
+        </ol>
       </div>
 
-      <label className={styles.manualField}>
-        FRASE MANUAL
-        <textarea
-          maxLength={500}
-          disabled={warmupDisabled}
-          onChange={(event) => setManual(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key !== "Enter" || event.shiftKey) return;
-            event.preventDefault();
-            sendManual();
-          }}
-          placeholder="Quem nasceu em São Paulo levanta a mão."
-          value={manual}
-        />
-        <small>ENTER ENVIA · SHIFT+ENTER QUEBRA A LINHA</small>
-      </label>
-      <label className={styles.manualProgress}>
-        PROGRESSO DA FRASE MANUAL
-        <input max="100" min="0" onChange={(event) => setManualProgress(Number(event.target.value))} type="number" value={manualProgress} />
-      </label>
-
-      <div className={styles.preview} aria-label="Preview do esquentar público" aria-live="polite">
-        <small>{manual.trim() ? "FRASE MANUAL — ENTER ENVIA" : "ÚLTIMA FRASE GERADA E ENVIADA"}</small>
-        <p>{manual.trim() || warmup.preview || "Escolha uma ação e uma intensidade."}</p>
-        <strong>
-          A BARRA CONTINUA DA BIOS · FEEDBACK TÉCNICO ANTES DE CADA AUMENTO
-        </strong>
+      <div className={styles.cueControls}>
+        <button className={styles.surprise} disabled={warmupDisabled} onClick={() => act("surprise")} type="button">SORTEAR</button>
+        <button disabled={warmupDisabled || !previewPrompt} onClick={() => act("trigger-preview", { withProgress: false })} type="button">DISPARAR</button>
+        <button disabled={warmupDisabled || !previewPrompt} onClick={() => act("skip")} type="button">PULAR</button>
+        <button disabled={warmupDisabled || !current} onClick={() => act("repeat")} type="button">REPETIR</button>
+        <button disabled={warmupDisabled || !sequence || !next} onClick={() => act("next")} type="button">PRÓXIMO</button>
+        <button disabled={warmupDisabled || !warmup.actionTimer?.endsAt} onClick={() => act("add-time", { seconds: 5 })} type="button">+5s</button>
+        <button className={styles.cancel} disabled={busy || !warmup.active} onClick={() => act("end-action")} type="button">ENCERRAR AÇÃO</button>
       </div>
 
       <div className={styles.timing}>
@@ -302,14 +322,13 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
         <strong>{sequence ? sequence.label.toUpperCase() : "SEM SEQUÊNCIA"}</strong>
         <p>ATUAL: {current?.text || "—"}</p>
         <p>PRÓXIMO: {next?.text || "—"}</p>
+        <p>TIMER: {warmup.actionTimer?.endsAt ? `${actionSeconds}s` : "—"}</p>
         <p>{warmup.awaitingOperator ? "AGUARDANDO OPERADOR" : warmup.active ? "AUTOMÁTICO EM CURSO" : "PARADO"}</p>
       </div>
 
       <div className={styles.transport}>
-        <button disabled={warmupDisabled || !sequence || !next} onClick={() => act("next")} type="button">PRÓXIMO</button>
-        <button disabled={warmupDisabled || !current} onClick={() => act("repeat")} type="button">REPETIR</button>
-        <button className={styles.cancel} disabled={busy || !warmup.active} onClick={() => { clearPendingChoice(); act("cancel"); }} type="button">CANCELAR</button>
-        <button className={styles.clear} disabled={busy} onClick={() => { clearPendingChoice(); act("clear"); }} type="button">LIMPAR TELA</button>
+        <button className={styles.cancel} disabled={busy || !warmup.active} onClick={() => act("cancel")} type="button">CANCELAR</button>
+        <button className={styles.clear} disabled={busy} onClick={() => act("clear")} type="button">LIMPAR TELA</button>
       </div>
     </section>
   );
