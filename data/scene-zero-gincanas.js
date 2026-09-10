@@ -1,4 +1,5 @@
 export const SCENE_ZERO_EVIDENCIAS_INTRO_SECONDS = 5;
+export const SCENE_ZERO_EVIDENCIAS_PLAYBACK_RATE = 0.96;
 export const SCENE_ZERO_EVIDENCIAS_AUDIO_FILE = "audios/Evidências - Chitãozinho e Xororó - Karaokê - Karaokê Show Oficial (youtube).mp3";
 export const SCENE_ZERO_EVIDENCIAS_LYRICS = [
   { text: "E nessa loucura", durationSeconds: 2 },
@@ -9,11 +10,17 @@ export const SCENE_ZERO_EVIDENCIAS_LYRICS = [
   { text: "Se eu não posso enganar meu coração?", durationSeconds: 4 },
   { text: "Eu sei que te amo!", durationSeconds: 4 }
 ];
-export const SCENE_ZERO_EVIDENCIAS_DURATION_SECONDS = SCENE_ZERO_EVIDENCIAS_INTRO_SECONDS
+export const SCENE_ZERO_EVIDENCIAS_SOURCE_DURATION_SECONDS = SCENE_ZERO_EVIDENCIAS_INTRO_SECONDS
   + SCENE_ZERO_EVIDENCIAS_LYRICS.reduce((total, line) => total + line.durationSeconds, 0);
+export const SCENE_ZERO_EVIDENCIAS_DURATION_SECONDS = Math.ceil(
+  SCENE_ZERO_EVIDENCIAS_SOURCE_DURATION_SECONDS / SCENE_ZERO_EVIDENCIAS_PLAYBACK_RATE
+);
 
 export function sceneZeroEvidenciasFrameAt(elapsedSeconds) {
-  const elapsed = Math.max(0, Math.min(SCENE_ZERO_EVIDENCIAS_DURATION_SECONDS, Number(elapsedSeconds) || 0));
+  const elapsed = Math.max(0, Math.min(
+    SCENE_ZERO_EVIDENCIAS_SOURCE_DURATION_SECONDS,
+    (Number(elapsedSeconds) || 0) * SCENE_ZERO_EVIDENCIAS_PLAYBACK_RATE
+  ));
   if (elapsed < SCENE_ZERO_EVIDENCIAS_INTRO_SECONDS) {
     return {
       phase: "intro",
@@ -43,11 +50,11 @@ export const SCENE_ZERO_EVIDENCIAS_CHALLENGE = {
   id: "evidencias_objeto_microfone",
   description: "Descrever o objeto e transformá-lo em microfone para cantar Evidências.",
   instruction: "Primeiro, descreva o objeto à sua frente. Agora use o objeto como microfone e cante Evidências, de Chitãozinho & Xororó. O público pode ajudar.",
-  presentation: "Primeiro: descreva o objeto à sua frente. Agora use o objeto como microfone e cante Evidências, de Chitãozinho & Xororó. O público pode ajudar. A faixa começa com 5 segundos de introdução; depois, acompanhe a letra na tela. São 23 segundos no total. Começar.",
+  presentation: "Primeiro: descreva o objeto à sua frente. Agora use o objeto como microfone e cante Evidências, de Chitãozinho & Xororó. O público pode ajudar. A faixa começa com cerca de 5 segundos de introdução; depois, acompanhe a letra na tela. São 24 segundos no total. Começar.",
   durationMin: SCENE_ZERO_EVIDENCIAS_DURATION_SECONDS,
   durationMax: SCENE_ZERO_EVIDENCIAS_DURATION_SECONDS,
   difficulty: "coragem vocal",
-  notes: "O timer começa junto com o áudio: 5 segundos de introdução e 18 segundos de canto. A identidade do objeto não entra na fala pública."
+  notes: "O timer começa junto com o áudio, reproduzido a 96% da velocidade original: cerca de 5 segundos de introdução e 19 segundos de canto. A identidade do objeto não entra na fala pública."
 };
 
 // Desafio fixo da segunda mala escolhida pelo robô (Mala 3).

@@ -154,8 +154,17 @@ export const PLAY_UNLOCK_CONFIG = {
     "desbloqueando...",
     "...",
     "CAIXA PRETA .................... PRONTA"
-  ]
+  ],
+  tutorialCompleteLines: ["FIM DO TUTORIAL"],
+  tutorialCompleteLeadMs: 550,
+  tutorialCompleteDurationMs: 2600
 };
+
+export function playUnlockSequenceLines(source = "progress") {
+  return source === "suitcases-finished"
+    ? PLAY_UNLOCK_CONFIG.tutorialCompleteLines
+    : PLAY_UNLOCK_CONFIG.unlockLines;
+}
 
 export function playUnlockBootLines(bootStep = -1) {
   return PLAY_UNLOCK_CONFIG.bootSteps

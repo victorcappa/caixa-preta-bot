@@ -552,7 +552,7 @@ npm run dev</code></pre>
                   <p>
                     O desafio fixo pede que a pessoa descreva o objeto a sua frente, use-o como
                     microfone e cante <em>Evidencias</em>, de Chitaozinho &amp; Xororo; o publico
-                    pode ajudar. O botao de inicio dispara junto o audio e o timer de 23 segundos.
+                    pode ajudar. O botao de inicio dispara junto o audio e o timer de 24 segundos, com a faixa levemente desacelerada.
                     Nos primeiros cinco segundos, a projecao acrescenta um ponto por segundo; em
                     seguida, revela os sete versos como sing-along nos tempos 2s, 2s, 2s, 2s, 2s,
                     4s e 4s. Ao chegar a zero, o controller pede automaticamente um comentario
@@ -578,7 +578,8 @@ npm run dev</code></pre>
                     numero da mala, o robo sofre um glitch crescente e a projecao carrega uma BIOS
                     com fragmentos corrompidos do texto-base misturados a falas do piloto. Titulo e
                     autor nao aparecem. Aos 30 segundos, tudo fica preto e permanece assim ate o
-                    operador interromper, finalizar ou reiniciar o fluxo.
+                    operador finalizar ou reiniciar o fluxo. Ao finalizar essa terceira mala, a
+                    barra chega primeiro a 100% e so depois aparece <code>FIM DO TUTORIAL</code>.
                   </p>
                 </article>
               </div>
@@ -586,7 +587,8 @@ npm run dev</code></pre>
               <p>
                 Ao iniciar uma mala diferente, a mala anterior e interrompida: jogo ativo,
                 timer do desafio, BIOS final e glitch associado nao continuam em paralelo.
-                Cada escolha mostra por dez segundos somente o numero selecionado. Nas duas
+                Cada escolha gira os numeros como uma maquina de caca-niquel e entao mostra
+                <code>MALA</code> acima do numero selecionado. Nas duas
                 primeiras malas, o desafio so entra na fila do chatbot depois que o numero sai da
                 frente. Na ultima, ele da lugar ao glitch e ao carregamento da nova BIOS.
               </p>
@@ -595,8 +597,9 @@ npm run dev</code></pre>
 
               <p class="note">
                 A escolha parece aleatoria em cena, mas o software sempre protege a sequencia
-                MALA 2 → MALA 3 → MALA 1. A primeira mala e escolhida ao entrar na etapa; o
-                operador libera as seguintes no proprio ritmo pelo botao de proxima mala. Os
+                MALA 2 → MALA 3 → MALA 1. A primeira mala e escolhida ao entrar na etapa; depois
+                do comentario de Evidencias, a Mala 3 e escolhida automaticamente. O operador
+                libera a ultima pelo botao de proxima mala. Os
                 comandos <code>/mala</code> continuam disponiveis para recuperacao do
                 <code>SuitcaseDirector</code> legado.
               </p>

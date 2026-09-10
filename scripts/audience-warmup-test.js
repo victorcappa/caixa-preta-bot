@@ -5,7 +5,7 @@ import { audienceWarmupRequiresCountdown, chooseAudienceWarmupPrompt, clampAudie
 import { assertBotCannotNavigateExternal, blockedAutonomousInstagramResult } from "../lib/externalNavigationGuard.js";
 import { createInitialResearchState, getResearchTools, updateResearchSettings } from "../lib/research/ResearchDirector.js";
 import { executeAutonomousInstagramTool } from "../lib/instagram/autonomousTools.js";
-import { PLAY_UNLOCK_CONFIG, PLAY_UNLOCK_STATES } from "../data/scene-zero-unlock.js";
+import { PLAY_UNLOCK_CONFIG, PLAY_UNLOCK_STATES, playUnlockSequenceLines } from "../data/scene-zero-unlock.js";
 import {
   adjustPlayUnlockProgress,
   advancePlayUnlockBoot,
@@ -71,6 +71,8 @@ assert.equal(unlock.status, PLAY_UNLOCK_STATES.BOOT_FAILED);
 assert.equal(unlock.progress, 78);
 assert.equal(PLAY_UNLOCK_CONFIG.verificationTitle, "... PROVE QUE VOCÊ É HUMANO");
 assert.equal(PLAY_UNLOCK_CONFIG.unlockLines.includes("PEÇA DESBLOQUEADA"), false);
+assert.deepEqual(playUnlockSequenceLines("suitcases-finished"), ["FIM DO TUTORIAL"]);
+assert.equal(playUnlockSequenceLines("progress").includes("FIM DO TUTORIAL"), false);
 unlock = beginPlayUnlockHumanVerification(unlock, "2026-09-09T00:00:20.000Z");
 assert.equal(unlock.status, PLAY_UNLOCK_STATES.HUMAN_VERIFICATION);
 assert.equal(unlock.verificationTitleSequence, 1);

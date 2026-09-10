@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { PLAY_UNLOCK_CONFIG, PLAY_UNLOCK_STATES, playUnlockBootLines } from "@/data/scene-zero-unlock";
+import { PLAY_UNLOCK_CONFIG, PLAY_UNLOCK_STATES, playUnlockBootLines, playUnlockSequenceLines } from "@/data/scene-zero-unlock";
 import {
   SCENE_ZERO_EVIDENCIAS_AUDIO_FILE,
   SCENE_ZERO_EVIDENCIAS_INTRO_SECONDS,
   SCENE_ZERO_EVIDENCIAS_LYRICS,
+  SCENE_ZERO_EVIDENCIAS_PLAYBACK_RATE,
   sceneZeroEvidenciasFrameAt
 } from "@/data/scene-zero-gincanas";
 import { SCENE_ZERO_MOREL_BIOS_DURATION_MS, SCENE_ZERO_MOREL_BIOS_LINES, SCENE_ZERO_MOREL_BIOS_LINE_INTERVAL_MS } from "@/data/scene-zero-morel";
-import { SCENE_ZERO_SUITCASE_CUE_DURATION_MS, shouldShowGincanaTimer } from "@/lib/scene-zero/suitcaseGame";
+import { SCENE_ZERO_SUITCASE_CUE_DURATION_MS, sceneZeroSuitcaseCueFrameAt, shouldShowGincanaTimer } from "@/lib/scene-zero/suitcaseGame";
 import BlinkingCursor from "./BlinkingCursor";
 import useCountdownSound from "./useCountdownSound";
 import styles from "./SceneZeroProjectionLayer.module.css";
@@ -181,7 +182,7 @@ function PlayUnlockProjection({ unlock, now }) {
         <div className={styles.biosTerminal}>
           <UnlockProgressBar progress={100} />
           <div className={styles.unlockLines}>
-            {PLAY_UNLOCK_CONFIG.unlockLines
+            {playUnlockSequenceLines(unlock.unlockSequenceSource)
               .slice(0, Number(unlock.unlockSequenceIndex ?? -1) + 1)
               .map((line) => <p key={line}>{line}</p>)}
           </div>
@@ -239,7 +240,8 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
       return;
     }
 
-    const targetTime = timerElapsedSeconds(gincanaTimer, Date.now());
+    audio.playbackRate = SCENE_ZERO_EVIDENCIAS_PLAYBACK_RATE;
+    const targetTime = timerElapsedSeconds(gincanaTimer, Date.now()) * SCENE_ZERO_EVIDENCIAS_PLAYBACK_RATE;
     if (Math.abs(audio.currentTime - targetTime) > 0.35) audio.currentTime = targetTime;
 
     if (gincanaTimer.status === "paused") {
@@ -276,6 +278,7 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
     ? countdownSeconds(participantSelection.countdownEndsAt, now)
     : null;
   const suitcaseSelectionAge = now - Date.parse(sceneZero?.suitcaseGame?.suitcaseSelectedAt || "");
+  const suitcaseCueFrame = sceneZeroSuitcaseCueFrameAt(suitcaseSelectionAge, sceneZero?.suitcaseGame?.currentSuitcase);
   const showSuitcaseSelection = Boolean(
     sceneZero?.suitcaseGame?.currentSuitcase
     && suitcaseSelectionAge >= 0
@@ -294,12 +297,14 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
   const morelCorruptionLevel = Math.min(4, Math.floor(morelBiosProgress * 5));
   const morelCorruptionClass = morelCorruptionLevel ? styles[`morelCorruption${morelCorruptionLevel}`] : "";
   const morelBlackout = showMorelBios && morelBiosAge >= SCENE_ZERO_MOREL_BIOS_DURATION_MS;
-  const visibleMorelLines = showMorelBios && !morelBlackout
+  const allVisibleMorelLines = showMorelBios && !morelBlackout
     ? SCENE_ZERO_MOREL_BIOS_LINES.slice(0, Math.min(
       SCENE_ZERO_MOREL_BIOS_LINES.length,
       Math.floor(morelBiosAge / SCENE_ZERO_MOREL_BIOS_LINE_INTERVAL_MS) + 1
     ))
     : [];
+  const visibleMorelLines = allVisibleMorelLines.slice(-10);
+  const visibleMorelStartIndex = Math.max(0, allVisibleMorelLines.length - visibleMorelLines.length);
 
   useCountdownSound(seconds, {
     active: Boolean(showTimer && !showEvidenciasKaraoke && ["running", "complete"].includes(visibleTimer?.status)),
@@ -337,7 +342,8 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
       ) : null}
       {showSuitcaseSelection ? (
         <div className={styles.suitcaseCueOverlay} key={sceneZero.suitcaseGame.suitcaseSelectionSequence} aria-label={`Mala indicada: ${sceneZero.suitcaseGame.currentSuitcase}`} aria-live="assertive">
-          <strong>{sceneZero.suitcaseGame.currentSuitcase}</strong>
+          <span>{suitcaseCueFrame.phase === "reveal" ? "MALA" : ""}</span>
+          <strong key={`${suitcaseCueFrame.phase}-${suitcaseCueFrame.number}`}>{suitcaseCueFrame.number}</strong>
         </div>
       ) : null}
       {showMorelBios ? (
@@ -358,7 +364,7 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
             <div className={styles.morelBiosTerminal}>
               {visibleMorelLines.map((line, index) => (
                 <p key={line}>
-                  <span aria-hidden="true">{String(index).padStart(2, "0")}</span>{line}
+                  <span aria-hidden="true">{String(visibleMorelStartIndex + index).padStart(2, "0")}</span>{line}
                 </p>
               ))}
               <i aria-hidden="true" />
@@ -372,7 +378,6 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
             <div className={styles.volunteerCountdown}>
               <p>{participantSelection.invite}</p>
               <strong>{participantSeconds}</strong>
-              <small>10 SEGUNDOS</small>
             </div>
           ) : null}
           {participantSelection.status === "roulette" ? (

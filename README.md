@@ -121,14 +121,17 @@ ou rebalancear o texto a cada atualização.
 
 No `/operator`, `AQUECIMENTO DA PLATEIA` oferece ações físicas, intensidades
 `LEVE`, `MÉDIO` e `ESTRANHO`, 43 prompts em
-`data/audience-warmup-prompts.js`, frase manual, preview e `SURPREENDA-ME`.
+`data/audience-warmup-prompts.js`, frase manual, preview e `SURPREENDA-ME`. O
+boot atualiza fatos de São Paulo e algumas atualidades do Brasil e do mundo;
+chamadas sucessivas de `SURPREENDA-ME` usam esse contexto e aumentam a
+estranheza, com fallback para a biblioteca estática.
 O módulo começa comprimido e alterna entre `EXPANDIR` e `COMPRIMIR` ao tocar no
 cabeçalho; `JOGO DAS MALAS` fica imediatamente abaixo, sempre visível no fluxo
 do operator. A lista completa das 43 falas também começa comprimida dentro do
 aquecimento e pode ser aberta quando necessária.
 Escolher um tipo de ação e uma intensidade já gera e envia a primeira etapa,
 sem botão intermediário. A ordem dos dois cliques é livre: a segunda escolha
-completa o par e dispara a fala. `SURPREENDA-ME` continua sorteando a combinação
+completa o par e dispara a fala. `SURPREENDA-ME` cria a combinação
 inteira imediatamente. Na frase manual, `Enter` envia e `Shift+Enter`
 insere uma quebra de linha. Depois do envio, o operador pode avançar, repetir,
 cancelar ou limpar a partitura. O avanço automático é opcional, configurável e
@@ -505,13 +508,14 @@ interrompe imediatamente countdown, roleta e comentários pendentes.
 
 O bloco `JOGO DAS MALAS` mantém o `SuitcaseDirector` existente para recuperação
 e compatibilidade, mas organiza a dramaturgia atual em três cartões. Ao entrar
-na etapa, o robô apresenta a escolha como aleatória, enquanto o software protege
-a ordem fixa `MALA 2 → MALA 3 → MALA 1`. A primeira escolha acontece na entrada;
-as duas seguintes dependem do botão `ROBÔ ESCOLHER PRÓXIMA MALA`, preservando o
-timing do operador. A ordem completa nunca entra na fala pública.
-Cada escolha também mostra durante dez segundos somente o número da mala, grande
-e centralizado na projeção. Enquanto esse aviso está na frente, nenhuma fala da
-escolha ou do desafio entra na fila pública;
+na etapa, o robô explica rapidamente o jogo, anuncia que escolherá uma mala
+aleatoriamente e só então inicia a roleta, enquanto o software protege a ordem
+fixa `MALA 2 → MALA 3 → MALA 1`. Depois do comentário de Evidências, a Mala 3
+é sorteada automaticamente; a passagem seguinte continua disponível no botão
+`ROBÔ ESCOLHER PRÓXIMA MALA`. A ordem completa nunca entra na fala pública.
+Cada escolha gira os números como caça-níquel e depois mostra `MALA` acima do
+número sorteado. Enquanto esse aviso está na frente, nenhuma fala da escolha ou
+do desafio entra na fila pública;
 o chatbot só começa a escrever depois que os dez segundos terminam.
 
 `MALA 2 — EVIDÊNCIAS` é sempre a primeira escolha. O desafio fixo está em
@@ -521,8 +525,9 @@ pessoa descreve o objeto à sua frente, usa o objeto como microfone e canta
 publicada literalmente pelo sistema e não pode ser reformulada pelo modelo.
 
 O operador inicia a faixa e a contagem pelo mesmo botão, somente quando a pessoa
-estiver pronta para cantar. O timer usa `endsAt` no servidor e dura 23 segundos:
-nos primeiros cinco, a projeção mostra um ponto novo por segundo durante a
+estiver pronta para cantar. O timer usa `endsAt` no servidor e dura 24 segundos;
+a faixa toca a 96% da velocidade original. Nos primeiros cerca de cinco segundos,
+a projeção mostra um ponto novo por segundo durante a
 introdução; depois revela os sete versos como sing-along nos tempos
 `2s, 2s, 2s, 2s, 2s, 4s, 4s`. A faixa local está em
 `assets/audios/Evidências - Chitãozinho e Xororó - Karaokê - Karaokê Show Oficial (youtube).mp3`.
@@ -548,6 +553,9 @@ em uma tela totalmente preta, que permanece até o operador interromper a BIOS,
 finalizar a etapa ou reiniciar o fluxo. Título e autor da referência literária não
 aparecem na projeção. O operador pode recarregar ou interromper essa sequência
 pelos controles da Mala 1.
+Ao finalizar essa terceira mala, a barra completa primeiro; somente depois de
+atingir 100% a projeção mostra `FIM DO TUTORIAL`. Essa frase não é exibida antes
+nem durante o glitch.
 
 Nos controles gerais de Instagram, o botão de Robson resolve a entrada `Robinson Rogério` de
 `data/instagram-participants.json` (`@rogerio.robinson`); Janaína resolve

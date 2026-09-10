@@ -66,7 +66,7 @@ try {
   await participantBlock.getByRole("heading", { name: "ESCOLHER PARTICIPANTE" }).waitFor();
   assert.equal(await participantBlock.evaluate((element) => element.nextElementSibling?.id), "scene-zero-suitcases");
   await operator.getByRole("heading", { name: "JOGO DAS MALAS" }).waitFor();
-  const suitcaseOne = operator.getByRole("heading", { name: "MALA 1 — NOVA BIOS" }).locator("..");
+  const suitcaseOne = operator.getByRole("heading", { name: "3ª ESCOLHA — MALA 1 / NOVA BIOS" }).locator("..");
   const reloadMorelBios = suitcaseOne.getByRole("button", { name: "RECARREGAR GLITCH + BIOS", exact: true });
   assert.equal(await reloadMorelBios.isVisible(), false, "detalhes das malas devem iniciar comprimidos");
   await suitcaseOne.getByRole("button", { name: "CONTROLES", exact: true }).click();
@@ -145,7 +145,7 @@ try {
   assert.equal(snapshot.sceneZero.unlock.verificationTitleSequence, 1);
   assert.equal(snapshot.publicMessage.content, "Quem veio de transporte público bate palmas.");
   await verificationTitle.waitFor({ state: "detached" });
-  const compactProgress = display.getByLabel("Progresso");
+  const compactProgress = display.getByRole("complementary", { name: "Progresso" });
   await compactProgress.waitFor();
   assert.equal(await compactProgress.getByText("DESBLOQUEAR A PEÇA", { exact: true }).count(), 0);
   assert.equal(await compactProgress.getByText("VERIFICAÇÃO HUMANA EM ANDAMENTO", { exact: true }).count(), 0);
@@ -188,7 +188,7 @@ try {
   snapshot = await waitForUnlock(context.request, (value) => value.status === "UNLOCKED");
   assert.equal(snapshot.sceneZero.unlock.onPlayUnlocked.name, "onPlayUnlocked");
   assert.equal(snapshot.sceneZero.unlock.onPlayUnlocked.source, "operator-complete");
-  await display.getByLabel("Progresso").waitFor({ state: "detached" });
+  await display.getByRole("complementary", { name: "Progresso" }).waitFor({ state: "detached" });
 
   await operator.getByRole("button", { name: "REINICIAR DESBLOQUEIO" }).click();
   snapshot = await waitForUnlock(context.request, (value) => value.status === "STANDBY");

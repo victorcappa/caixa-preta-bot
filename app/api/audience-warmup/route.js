@@ -1,4 +1,5 @@
 import { showState } from "@/lib/showState";
+import { generateAudienceWarmupSurprise, refreshSceneZeroLocalContext } from "@/lib/openai";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -13,7 +14,27 @@ export async function POST(request) {
     if (`${body.action || ""}`.startsWith("unlock-")) {
       const result = showState.controlPlayUnlock(body.action.slice("unlock-".length), body, { source: "operator" });
       if (!result.ok) return Response.json({ error: result.error }, { status: 400 });
-      return Response.json({ message: result.message, unlock: result.state });
+      if (body.action === "unlock-boot") {
+        showState.controlSceneZero("collection-local-context-loading", {}, { source: "system" });
+        try {
+          const localContext = await refreshSceneZeroLocalContext();
+          showState.controlSceneZero("collection-local-context-ready", localContext, { source: "system" });
+        } catch (error) {
+          showState.controlSceneZero("collection-local-context-error", { error: error.message }, { source: "system" });
+        }
+      }
+      return Response.json({ message: result.message, unlock: showState.snapshot().sceneZero.unlock });
+    }
+    if (body.action === "surprise") {
+      const state = showState.privateSnapshot();
+      try {
+        body.prompt = await generateAudienceWarmupSurprise({
+          state,
+          surpriseCount: Number(state.audienceWarmup?.surpriseCount || 0) + 1
+        });
+      } catch {
+        // The static repertoire remains available if live generation is unavailable.
+      }
     }
     const result = showState.controlAudienceWarmup(body.action, body, { source: "operator" });
     if (!result.ok) return Response.json({ error: result.error }, { status: 400 });

@@ -15,6 +15,7 @@ import {
 } from "@/lib/scene-zero/suitcaseGame";
 import { buildDataCollectionSystemPrompt } from "@/prompts/dataCollection";
 import { SCENE_ZERO_MOREL_BIOS_DURATION_MS } from "@/data/scene-zero-morel";
+import { PUBLIC_TYPE_INTERVAL_MS } from "@/lib/messageTiming";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -131,6 +132,7 @@ async function generateCollectionIntervention(directionAction, detail = "", { re
 }
 
 function applyGeneratedTurn(turn, { messageSource = "scene-zero-operator" } = {}) {
+  const messages = [];
   if (turn.salience?.length) showState.addSalience(turn.salience, "agent");
   if (turn.game?.gameMove && showState.snapshot().game?.active) {
     showState.applyGameMove(turn.game, { source: "agent" });
@@ -144,10 +146,11 @@ function applyGeneratedTurn(turn, { messageSource = "scene-zero-operator" } = {}
       ? turn.text.split(/\n\s*\n/).map((fragment) => fragment.trim()).filter(Boolean).slice(0, 4)
       : [turn.text];
     for (const fragment of fragments) {
-      showState.addMessage("assistant", fragment, messageSource);
+      messages.push(showState.addMessage("assistant", fragment, messageSource));
     }
   }
   if (turn.events?.length) showState.queuePerformanceEvents(turn.events, "agent");
+  return messages;
 }
 
 function parseParticipantSequence(text = "") {
@@ -223,8 +226,41 @@ async function speak(directionAction, detail = "", options = {}) {
     state,
     operatorInstruction: buildSceneZeroDirection(state.sceneZero, directionAction, detail)
   });
-  applyGeneratedTurn(turn, options);
-  return turn;
+  const messages = applyGeneratedTurn(turn, options);
+  return { ...turn, messages };
+}
+
+function suitcaseSpeechDelay(text = "") {
+  return Math.max(800, (`${text}`.length * PUBLIC_TYPE_INTERVAL_MS) + 500);
+}
+
+async function startAnnouncedSuitcase(messageId) {
+  const choice = showState.snapshot().sceneZero.suitcaseGame?.choice;
+  if (choice?.status !== "announcing" || choice.messageId !== messageId) {
+    return { applied: false, error: "ESCOLHA DE MALA NÃO ESTÁ MAIS PENDENTE", state: showState.snapshot().sceneZero };
+  }
+  return activateSuitcase(choice.targetSuitcase);
+}
+
+function announceNextSuitcase({ includeRules = false } = {}) {
+  const sceneZero = showState.snapshot().sceneZero;
+  const nextSuitcase = nextSceneZeroSuitcase(sceneZero.suitcaseGame);
+  if (!nextSuitcase) return { applied: false, error: "TODAS AS MALAS JÁ FORAM ESCOLHIDAS", state: sceneZero };
+  if (sceneZero.suitcaseGame?.choice?.status === "announcing") {
+    return { applied: false, error: "ESCOLHA DE MALA JÁ EM ANDAMENTO", state: sceneZero };
+  }
+  const text = includeRules
+    ? "O jogo é simples: eu escolho uma mala, você vai até ela e cumpre o desafio. Vou escolher uma mala aleatoriamente."
+    : "Vou escolher uma mala aleatoriamente.";
+  const message = showState.addMessage("assistant", text, "scene-zero-suitcase-choice");
+  const announced = showState.controlSceneZero("suitcase-choice-announce", {
+    targetSuitcase: nextSuitcase,
+    messageId: message.id
+  }, { source: "system" });
+  setTimeout(() => {
+    startAnnouncedSuitcase(message.id).catch((error) => console.error("SCENE ZERO SUITCASE CHOICE ERROR", error));
+  }, suitcaseSpeechDelay(text));
+  return { ...announced, text, messageId: message.id };
 }
 
 function scheduleSuitcaseDialogue(selectionSequence, selectedAt, turns) {
@@ -383,14 +419,6 @@ async function activateSuitcase(suitcaseNumber, detail = "") {
   return { applied: true, state: showState.snapshot().sceneZero, turn: null };
 }
 
-async function activateNextSuitcase(detail = "") {
-  const nextSuitcase = nextSceneZeroSuitcase(showState.snapshot().sceneZero.suitcaseGame);
-  if (!nextSuitcase) {
-    return { applied: false, error: "TODAS AS MALAS JÁ FORAM ESCOLHIDAS", state: showState.snapshot().sceneZero };
-  }
-  return activateSuitcase(nextSuitcase, detail);
-}
-
 async function finishSceneZeroSuitcaseGame() {
   const sceneZero = showState.snapshot().sceneZero;
   if (nextSceneZeroSuitcase(sceneZero.suitcaseGame)) {
@@ -409,7 +437,7 @@ async function drawGincana() {
   const state = showState.privateSnapshot();
   const task = sceneZeroSuitcaseChallenge(state.sceneZero.suitcaseGame?.currentSuitcase);
   if (!task) return { applied: false, error: "ESTA MALA NÃO POSSUI DESAFIO CRONOMETRADO", state: showState.snapshot().sceneZero };
-  const durationSeconds = 20;
+  const durationSeconds = task.durationMin;
   const selected = showState.controlSceneZero("gincana-draw", { task, durationSeconds }, { source: "operator" });
   if (!selected.applied) return selected;
   const turn = {
@@ -425,13 +453,26 @@ async function finishGincana(outcome, detail = "") {
   const result = showState.controlSceneZero("gincana-finish", { outcome, detail }, { source: "operator" });
   if (!result.applied) return result;
   const gincana = showState.privateSnapshot().sceneZero.suitcaseGame.gincana;
+  const isEvidence = gincana.currentTask?.id === "evidencias_objeto_microfone";
   const turn = await speak(outcome === "completed" ? "gincana_complete" : "gincana_failed", [
     detail,
     `Resultado registrado: ${outcome}.`,
     `Tempo decorrido registrado: ${gincana.elapsedSeconds} segundos.`,
     `Tarefa: ${gincana.currentTask?.instruction || "não informada"}.`
-  ].filter(Boolean).join(" "));
+  ].filter(Boolean).join(" "), {
+    messageSource: isEvidence && outcome === "completed"
+      ? "scene-zero-evidencias-comment-next"
+      : "scene-zero-operator"
+  });
   showState.controlSceneZero("suitcase-comment", { kind: "gincana", text: turn.text }, { source: "agent" });
+  const message = turn.messages?.at(-1);
+  if (isEvidence && outcome === "completed" && message) {
+    setTimeout(() => {
+      const sceneZero = showState.snapshot().sceneZero;
+      if (sceneZero.suitcaseGame?.currentSuitcase !== 2 || nextSceneZeroSuitcase(sceneZero.suitcaseGame) !== 3) return;
+      activateSuitcase(3).catch((error) => console.error("SCENE ZERO AUTO NEXT ERROR", error));
+    }, suitcaseSpeechDelay(message.content));
+  }
   return { applied: true, state: showState.snapshot().sceneZero, turn };
 }
 
@@ -564,7 +605,7 @@ async function enterStage(stage, detail) {
     if (!showState.snapshot().suitcase?.active) showState.startSuitcases({ source: "scene-zero-operator" });
     const currentSuitcase = showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase;
     if (!currentSuitcase) {
-      const selected = await activateNextSuitcase(detail);
+      const selected = announceNextSuitcase({ includeRules: true });
       return { ...selected, research: null, state: showState.snapshot().sceneZero };
     }
     const turn = await speak(STAGE_DIRECTIONS[stage], detail);
@@ -643,6 +684,27 @@ export async function POST(request) {
       const message = snapshot.conversation.find((candidate) => candidate.id === body.messageId);
       const game = snapshot.game;
 
+      if (message?.source === "scene-zero-suitcase-choice") {
+        const selected = await startAnnouncedSuitcase(message.id);
+        return Response.json({
+          message: selected.applied ? `MALA ${selected.state.suitcaseGame.currentSuitcase} SORTEADA` : "SORTEIO JÁ INICIADO",
+          result: selected,
+          sceneZero: showState.snapshot().sceneZero
+        });
+      }
+
+      if (message?.source === "scene-zero-evidencias-comment-next") {
+        const sceneZero = showState.snapshot().sceneZero;
+        const selected = sceneZero.suitcaseGame?.currentSuitcase === 2 && nextSceneZeroSuitcase(sceneZero.suitcaseGame) === 3
+          ? await activateSuitcase(3)
+          : { applied: false };
+        return Response.json({
+          message: selected.applied ? "COMENTÁRIO CONCLUÍDO · MALA 3 SORTEADA" : "COMENTÁRIO JÁ PROCESSADO",
+          result: selected,
+          sceneZero: showState.snapshot().sceneZero
+        });
+      }
+
       if (
         message?.source === "scene-zero-cake-comment" &&
         game?.active &&
@@ -697,9 +759,9 @@ export async function POST(request) {
     }
 
     if (action === "suitcase-next") {
-      const result = await activateNextSuitcase(detail);
+      const result = announceNextSuitcase();
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 409 });
-      return Response.json({ message: `ROBÔ ESCOLHEU A MALA ${result.state.suitcaseGame.currentSuitcase}`, sceneZero: result.state, text: result.turn?.text });
+      return Response.json({ message: "ROBÔ ANUNCIOU O SORTEIO DA PRÓXIMA MALA", sceneZero: result.state, text: result.text });
     }
 
     if (action === "suitcase-finish") {

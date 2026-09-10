@@ -41,11 +41,12 @@
 .karaokeProgress { width: min(900px, 78vw); height: clamp(8px, 1.2vh, 15px); overflow: hidden; border: 1px solid #00ff66; background: #102318; }
 .karaokeProgress span { display: block; height: 100%; background: #00ff66; box-shadow: 0 0 20px rgba(0,255,102,.55); }
 .karaokeFinished { color: #ff3155; font-size: clamp(72px, 16vw, 230px); letter-spacing: .12em; animation: endFlash .5s steps(2) infinite; }
-.suitcaseCueOverlay { z-index: 114; display: grid; place-content: center; justify-items: center; color: #fff; background: #030303; font-family: var(--font-mono, monospace); text-align: center; }
+.suitcaseCueOverlay { z-index: 114; display: grid; place-content: center; justify-items: center; gap: clamp(18px, 3vh, 42px); color: #fff; background: #030303; font-family: var(--font-mono, monospace); text-align: center; }
+.suitcaseCueOverlay > span { min-height: 1em; color: #fff; font-size: clamp(28px, 5vw, 76px); font-weight: 900; letter-spacing: .18em; }
 .suitcaseCueOverlay strong { color: #fff; font-size: min(52vw, 52vh); line-height: .78; text-shadow: 6px 6px 0 #00ff66; }
 .morelBiosOverlay { z-index: 130; display: grid; place-items: center; overflow: hidden; padding: clamp(24px, 4vw, 72px); color: #00ff66; background: #000; font-family: var(--font-mono, monospace); animation: morelBootIn 1.5s steps(6) both; }
 .morelBiosNoise { position: absolute; inset: -12%; opacity: var(--bios-noise-opacity); background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(0,255,102,.28) 3px 4px); mix-blend-mode: screen; animation: morelNoise var(--bios-noise-speed) steps(2) infinite; }
-.morelBiosTerminal { position: relative; width: min(1180px, 92vw); display: grid; gap: clamp(7px, 1.2vh, 15px); }
+.morelBiosTerminal { position: relative; width: min(1180px, 92vw); max-height: 86vh; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: clamp(7px, 1.2vh, 15px); }
 .morelBiosTerminal p { display: grid; grid-template-columns: 3ch minmax(0, 1fr); gap: clamp(10px, 1.5vw, 24px); margin: 0; font-size: clamp(15px, 2vw, 31px); line-height: 1.15; letter-spacing: .035em; text-shadow: var(--bios-shift-negative) 0 rgba(255,0,76,.7), var(--bios-shift) 0 rgba(0,170,255,.7), 0 0 14px rgba(0,255,102,.28); animation: terminalLineIn 180ms steps(2) both; }
 .morelBiosTerminal p > span { color: #356f4b; }
 .morelBiosTerminal i { width: 1.1ch; height: 1.3em; background: #00ff66; animation: morelCursor .7s steps(1) infinite; }
@@ -59,6 +60,7 @@
 @keyframes verificationTitleIn { 0% { opacity: 0; filter: blur(8px); } 40% { opacity: 1; filter: blur(0); } 48% { opacity: .25; } 56%, 100% { opacity: 1; } }
 .selectionOverlay { position: absolute; inset: 0; z-index: 115; display: grid; place-items: center; pointer-events: none; color: #fff; background: #030303; font-family: var(--font-mono, monospace); }
 .volunteerCountdown, .roulette, .selectedParticipant { width: min(1100px, 90vw); display: grid; justify-items: center; gap: 20px; text-align: center; }
+.volunteerCountdown { transform: translateY(clamp(22px, 5vh, 64px)); }
 .volunteerCountdown p { max-width: 1050px; margin: 0; color: #fff; font-size: clamp(24px, 4vw, 58px); font-weight: 850; }
 .roulette > span, .selectedParticipant span { color: #00ff66; font-size: clamp(18px, 2.6vw, 38px); font-weight: 900; letter-spacing: .1em; }
 .volunteerCountdown strong { font-size: min(48vw, 48vh); line-height: .78; }

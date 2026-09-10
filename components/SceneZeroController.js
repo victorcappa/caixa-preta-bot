@@ -384,7 +384,7 @@ export default function SceneZeroController() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "gincana-complete",
-        detail: "A faixa de 23 segundos de Evidências chegou ao fim. Faça agora o comentário sarcástico sobre a cantoria."
+        detail: "A faixa de 24 segundos de Evidências chegou ao fim. Faça agora o comentário sarcástico sobre a cantoria."
       })
     })
       .then(async (response) => {
@@ -546,7 +546,7 @@ export default function SceneZeroController() {
             <h3>1ª ESCOLHA — MALA 2 / EVIDÊNCIAS</h3>
             <Button onClick={() => setOpenSuitcaseControls((current) => current === 2 ? null : 2)} pressed={openSuitcaseControls === 2}>{openSuitcaseControls === 2 ? "COMPRIMIR" : "CONTROLES"}</Button>
             <div className={styles.suitcaseDetails} hidden={openSuitcaseControls !== 2}>
-            {challengeControls(SCENE_ZERO_FIRST_CHALLENGE, "INICIAR EVIDÊNCIAS / 23s")}
+            {challengeControls(SCENE_ZERO_FIRST_CHALLENGE, "INICIAR EVIDÊNCIAS / 24s")}
             </div>
           </section>
 
