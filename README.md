@@ -139,8 +139,9 @@ completa o par e dispara a fala. `SURPREENDA-ME` cria a combinação
 inteira imediatamente. Na frase manual, `Enter` envia e `Shift+Enter`
 insere uma quebra de linha. Depois do envio, o operador pode avançar, repetir,
 cancelar ou limpar a partitura. O avanço automático é opcional, configurável e
-sempre cancelável. A projeção mostra somente a etapa corrente e uma indicação
-pequena da ação esperada.
+sempre cancelável. Ordens com duração como `por cinco segundos` recebem uma
+contagem regressiva automática em ritmo real de um segundo. A projeção mostra
+somente a etapa corrente e uma indicação pequena da ação esperada.
 
 A abertura da Cena 0 começa em `STANDBY`: ao abrir ou executar `/reset`, a
 projeção fica totalmente preta, sem cursor, texto, campo público ou animação.

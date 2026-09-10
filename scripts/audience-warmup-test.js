@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { AUDIENCE_WARMUP_ACTIONS, AUDIENCE_WARMUP_PROMPTS } from "../data/audience-warmup-prompts.js";
-import { audienceWarmupRequiresCountdown, audienceWarmupSurpriseProfile, chooseAudienceWarmupPrompt, chooseAudienceWarmupSurprisePrompt, clampAudienceWarmupInterval, createAudienceWarmupSequence, inferAudienceWarmupCountdown } from "../lib/audienceWarmup.js";
+import { audienceWarmupAutoAdvanceDelay, audienceWarmupRequiresCountdown, audienceWarmupSurpriseProfile, chooseAudienceWarmupPrompt, chooseAudienceWarmupSurprisePrompt, clampAudienceWarmupInterval, createAudienceWarmupSequence, inferAudienceWarmupCountdown } from "../lib/audienceWarmup.js";
 import { assertBotCannotNavigateExternal, blockedAutonomousInstagramResult } from "../lib/externalNavigationGuard.js";
 import { createInitialResearchState, getResearchTools, updateResearchSettings } from "../lib/research/ResearchDirector.js";
 import { executeAutonomousInstagramTool } from "../lib/instagram/autonomousTools.js";
@@ -66,6 +66,15 @@ assert.deepEqual(createAudienceWarmupSequence({ text: "Quando eu disser cinco, r
 assert.deepEqual(createAudienceWarmupSequence({ text: "Vou fazer uma contagem regressiva de 4.", action: "sound" }).steps.slice(1, 5).map((step) => step.text), ["Quatro.", "Três.", "Dois.", "Um."]);
 assert.deepEqual(inferAudienceWarmupCountdown("Vou contar de dois até seis.").values, [2, 3, 4, 5, 6]);
 assert.deepEqual(inferAudienceWarmupCountdown("Na minha contagem, levantem as mãos.").values, [1, 2, 3]);
+const timedContactSequence = createAudienceWarmupSequence({
+  text: "Virem-se de lado devagar e encostem a cabeça no ombro da pessoa à direita por cinco segundos.",
+  action: "touch"
+});
+assert.deepEqual(timedContactSequence.steps.slice(1, 6).map((step) => step.text), ["Cinco.", "Quatro.", "Três.", "Dois.", "Um."]);
+assert.equal(timedContactSequence.steps[6].kind, "reaction");
+assert.equal(audienceWarmupAutoAdvanceDelay({ sequence: timedContactSequence, stepIndex: 1, intervalMs: 2500 }), 1000);
+assert.deepEqual(inferAudienceWarmupCountdown("Mantenham a posição durante 10 segundos.").values, [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
+assert.deepEqual(inferAudienceWarmupCountdown("Façam isso em 3 segundos.").values, [3, 2, 1]);
 const directWordSequence = createAudienceWarmupSequence({ text: "Digam o bairro.", action: "word" });
 assert.equal(directWordSequence.requiresCountdown, false);
 assert.equal(directWordSequence.steps.some((step) => step.kind === "count"), false, "fala direta não deve ganhar contagem");
@@ -149,6 +158,8 @@ assert.equal(getResearchTools({ research }).some((tool) => tool.name.startsWith(
 
 const sceneZeroRoute = fs.readFileSync(new URL("../app/api/scene-zero/route.js", import.meta.url), "utf8");
 const audienceWarmupRoute = fs.readFileSync(new URL("../app/api/audience-warmup/route.js", import.meta.url), "utf8");
+const openaiSource = fs.readFileSync(new URL("../lib/openai.js", import.meta.url), "utf8");
+const showStateSource = fs.readFileSync(new URL("../lib/showState.js", import.meta.url), "utf8");
 const sceneZeroProjection = fs.readFileSync(new URL("../components/SceneZeroProjectionLayer.js", import.meta.url), "utf8");
 const participantResearchCalls = sceneZeroRoute.match(/researchCurrentSceneZeroParticipant\(\)/g) || [];
 assert.equal(participantResearchCalls.length, 2, "pesquisa de participante deve existir apenas na declaração e no handler manual");
@@ -157,6 +168,8 @@ assert.match(sceneZeroRoute, /action === "suitcase-finish"/);
 assert.doesNotMatch(sceneZeroRoute, /const researchPromise = researchCurrentSceneZeroParticipant/);
 assert.match(audienceWarmupRoute, /body\.action === "unlock-boot"[\s\S]*refreshSceneZeroLocalContext\(\)/, "BOOT deve colher contexto atual");
 assert.match(audienceWarmupRoute, /body\.action === "surprise"[\s\S]*generateAudienceWarmupSurprise/, "SURPREENDA-ME deve usar contexto ao vivo");
+assert.match(openaiSource, /inferAudienceWarmupCountdown\(parsed\.text\)/, "SURPREENDA-ME deve respeitar duração escrita pelo modelo");
+assert.match(showStateSource, /step\.kind === "count" && nextStep\?\.kind === "reaction"/, "último segundo deve avançar automaticamente para a reação");
 assert.doesNotMatch(sceneZeroProjection, />10 SEGUNDOS</, "contagem do participante não deve repetir a duração por escrito");
 assert.match(sceneZeroProjection, /suitcaseCueFrame\.phase === "reveal" \? "MALA"/, "revelação deve mostrar MALA acima do número");
 assert.match(sceneZeroProjection, /allVisibleMorelLines\.slice\(-10\)/, "BIOS final deve acompanhar as linhas mais recentes");
