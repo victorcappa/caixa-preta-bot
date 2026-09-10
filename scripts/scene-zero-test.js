@@ -232,6 +232,7 @@ async function main() {
   assert.equal(suitcaseGame.nextSceneZeroSuitcase({ openedSuitcases: [2, 3, 1] }), null);
   assert.equal(suitcaseGame.buildSuitcaseSelectionCue(2), "Vá até a mala indicada: 2. A luz vai indicar.");
   assert.equal(suitcaseGame.buildSuitcaseSelectionCue(4), "");
+  assert.equal(suitcaseGame.SCENE_ZERO_SUITCASE_CUE_DURATION_MS, 10000);
   assert.equal(suitcaseGame.shouldShowGincanaTimer({ status: "running" }), true);
   assert.equal(suitcaseGame.shouldShowGincanaTimer({ status: "complete" }), true);
   assert.equal(suitcaseGame.shouldShowGincanaTimer({ status: "completed" }), true);

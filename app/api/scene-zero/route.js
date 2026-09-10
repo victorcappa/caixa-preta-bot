@@ -11,7 +11,8 @@ import {
   buildSuitcaseSelectionCue,
   nextSceneZeroSuitcase,
   SCENE_ZERO_FIRST_CHALLENGE,
-  SCENE_ZERO_INSTAGRAM_TARGETS
+  SCENE_ZERO_INSTAGRAM_TARGETS,
+  SCENE_ZERO_SUITCASE_CUE_DURATION_MS
 } from "@/lib/scene-zero/suitcaseGame";
 import { buildDataCollectionSystemPrompt } from "@/prompts/dataCollection";
 
@@ -217,13 +218,26 @@ async function startParticipantFlow({ chooseAnother = false, detail = "" } = {})
 }
 
 async function speak(directionAction, detail = "", options = {}) {
+  const { deferred = false, ...applyOptions } = options;
   const state = showState.privateSnapshot();
   const turn = await generateCaixaPretaTurn({
     state,
     operatorInstruction: buildSceneZeroDirection(state.sceneZero, directionAction, detail)
   });
-  applyGeneratedTurn(turn, options);
+  if (!deferred) applyGeneratedTurn(turn, applyOptions);
   return turn;
+}
+
+function scheduleSuitcaseDialogue(selectionSequence, selectedAt, turns) {
+  const selectedAtMs = Date.parse(selectedAt || "");
+  const elapsedMs = Number.isFinite(selectedAtMs) ? Math.max(0, Date.now() - selectedAtMs) : 0;
+  const delayMs = Math.max(0, SCENE_ZERO_SUITCASE_CUE_DURATION_MS - elapsedMs);
+
+  setTimeout(() => {
+    const current = showState.snapshot().sceneZero.suitcaseGame;
+    if (current?.suitcaseSelectionSequence !== selectionSequence) return;
+    for (const turn of turns) applyGeneratedTurn(turn);
+  }, delayMs);
 }
 
 async function interruptPreviousSuitcase(nextSuitcaseNumber) {
@@ -307,22 +321,26 @@ async function activateSuitcase(suitcaseNumber, detail = "") {
     2: "suitcase_two_start",
     3: "suitcase_three_start"
   }[suitcaseNumber];
-  const turn = await speak(direction, detail);
+  const turn = await speak(direction, detail, { deferred: true });
   const selectionCueTurn = {
     text: buildSuitcaseSelectionCue(suitcaseNumber),
     events: [],
     salience: []
   };
-  applyGeneratedTurn(selectionCueTurn);
+  const delayedTurns = [turn, selectionCueTurn];
   if (suitcaseNumber === 2) {
     const challengeTurn = {
       text: buildGincanaPresentation(SCENE_ZERO_FIRST_CHALLENGE, 20),
       events: [],
       salience: []
     };
-    applyGeneratedTurn(challengeTurn);
+    delayedTurns.push(challengeTurn);
+    const suitcaseGame = showState.snapshot().sceneZero.suitcaseGame;
+    scheduleSuitcaseDialogue(suitcaseGame.suitcaseSelectionSequence, suitcaseGame.suitcaseSelectedAt, delayedTurns);
     return { applied: true, state: showState.snapshot().sceneZero, turn: challengeTurn };
   }
+  const suitcaseGame = showState.snapshot().sceneZero.suitcaseGame;
+  scheduleSuitcaseDialogue(suitcaseGame.suitcaseSelectionSequence, suitcaseGame.suitcaseSelectedAt, delayedTurns);
   return { applied: true, state: showState.snapshot().sceneZero, turn };
 }
 

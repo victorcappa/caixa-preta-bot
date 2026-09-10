@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AUDIENCE_WARMUP_ACTIONS, AUDIENCE_WARMUP_INTENSITIES, AUDIENCE_WARMUP_PROMPTS } from "@/data/audience-warmup-prompts";
 import { PLAY_UNLOCK_CONFIG } from "@/data/scene-zero-unlock";
 import styles from "./AudienceWarmupController.module.css";
@@ -14,6 +14,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
   const [requestPending, setRequestPending] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [promptLibraryOpen, setPromptLibraryOpen] = useState(false);
+  const pendingChoiceRef = useRef({ action: null, intensity: null });
 
   useEffect(() => setHydrated(true), []);
   useEffect(() => setProgressDraft(Math.max(0, Math.min(100, Number(playUnlock.progress) || 0))), [playUnlock.progress]);
@@ -52,10 +53,45 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
   const currentProgressValue = Math.max(0, Number(sequence?.progressValue) || 0);
   const actionEvaluated = Boolean(sequence?.progressId && playUnlock.scoredActionIds?.includes(sequence.progressId) && !sequence.repeatableProgress);
 
+  useEffect(() => {
+    if (!warming) pendingChoiceRef.current = { action: null, intensity: null };
+  }, [warming]);
+
+  function clearPendingChoice() {
+    pendingChoiceRef.current = { action: null, intensity: null };
+  }
+
   function sendManual() {
     const text = manual.trim();
     if (!text || busy) return;
+    clearPendingChoice();
     void act("send", { text, progressValue: manualProgress }).then((result) => result && setManual(""));
+  }
+
+  async function chooseAction(action) {
+    setManual("");
+    pendingChoiceRef.current.action = action;
+    const intensity = pendingChoiceRef.current.intensity;
+    if (!intensity) {
+      await act("select-action", { selectedAction: action });
+      return;
+    }
+
+    const result = await act("configure-and-generate", { selectedAction: action, intensity });
+    if (result) clearPendingChoice();
+  }
+
+  async function chooseIntensity(intensity) {
+    setManual("");
+    pendingChoiceRef.current.intensity = intensity;
+    const action = pendingChoiceRef.current.action;
+    if (!action) {
+      await act("set-intensity", { intensity });
+      return;
+    }
+
+    const result = await act("configure-and-generate", { selectedAction: action, intensity });
+    if (result) clearPendingChoice();
   }
 
   return (
@@ -160,8 +196,8 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
                   <strong>{prompt.progressValue > 0 ? `+${prompt.progressValue}%` : "0% · SEM PROGRESSO"} · {prompt.repeatableProgress ? "REPETÍVEL" : scored ? "JÁ PONTUOU" : "AINDA NÃO PONTUOU"}</strong>
                 </div>
                 <div>
-                  <button disabled={warmupDisabled} onClick={() => act("trigger-prompt", { promptId: prompt.id, withProgress: true })} type="button">DISPARAR{prompt.progressValue > 0 ? ` +${prompt.progressValue}%` : ""}</button>
-                  <button disabled={warmupDisabled} onClick={() => act("trigger-prompt", { promptId: prompt.id, withProgress: false })} type="button">DISPARAR SEM PROGRESSO</button>
+                  <button disabled={warmupDisabled} onClick={() => { clearPendingChoice(); act("trigger-prompt", { promptId: prompt.id, withProgress: true }); }} type="button">DISPARAR{prompt.progressValue > 0 ? ` +${prompt.progressValue}%` : ""}</button>
+                  <button disabled={warmupDisabled} onClick={() => { clearPendingChoice(); act("trigger-prompt", { promptId: prompt.id, withProgress: false }); }} type="button">DISPARAR SEM PROGRESSO</button>
                 </div>
               </article>
             );
@@ -177,9 +213,9 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
             <button
               aria-pressed={warmup.selectedAction === action.id}
               className={warmup.selectedAction === action.id ? styles.selected : ""}
-              disabled={busy}
+              disabled={warmupDisabled}
               key={action.id}
-              onClick={() => act("select-action", { selectedAction: action.id })}
+              onClick={() => chooseAction(action.id)}
               type="button"
             >
               <span aria-hidden="true">{action.icon}</span> {action.label}
@@ -195,9 +231,9 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
             <button
               aria-pressed={warmup.intensity === intensity.id}
               className={warmup.intensity === intensity.id ? styles.selected : ""}
-              disabled={busy}
+              disabled={warmupDisabled}
               key={intensity.id}
-              onClick={() => act("set-intensity", { intensity: intensity.id })}
+              onClick={() => chooseIntensity(intensity.id)}
               type="button"
             >{intensity.label}</button>
           ))}
@@ -205,8 +241,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
       </fieldset>
 
       <div className={styles.generateRow}>
-        <button disabled={warmupDisabled} onClick={() => { setManual(""); act("generate"); }} type="button">GERAR PERGUNTA</button>
-        <button className={styles.surprise} disabled={warmupDisabled} onClick={() => { setManual(""); act("surprise"); }} type="button">SURPREENDA-ME</button>
+        <button className={styles.surprise} disabled={warmupDisabled} onClick={() => { clearPendingChoice(); setManual(""); act("surprise"); }} type="button">SURPREENDA-ME</button>
       </div>
 
       <label className={styles.manualField}>
@@ -232,7 +267,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
 
       <div className={styles.preview} aria-label="Preview do esquentar público" aria-live="polite">
         <small>{manual.trim() ? "FRASE MANUAL — ENTER ENVIA" : "ÚLTIMA FRASE GERADA E ENVIADA"}</small>
-        <p>{manual.trim() || warmup.preview || "Escolha uma ação e gere uma pergunta."}</p>
+        <p>{manual.trim() || warmup.preview || "Escolha uma ação e uma intensidade."}</p>
         <strong>
           A BARRA CONTINUA DA BIOS · FEEDBACK TÉCNICO ANTES DE CADA AUMENTO
         </strong>
@@ -273,8 +308,8 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
       <div className={styles.transport}>
         <button disabled={warmupDisabled || !sequence || !next} onClick={() => act("next")} type="button">PRÓXIMO</button>
         <button disabled={warmupDisabled || !current} onClick={() => act("repeat")} type="button">REPETIR</button>
-        <button className={styles.cancel} disabled={busy || !warmup.active} onClick={() => act("cancel")} type="button">CANCELAR</button>
-        <button className={styles.clear} disabled={busy} onClick={() => act("clear")} type="button">LIMPAR TELA</button>
+        <button className={styles.cancel} disabled={busy || !warmup.active} onClick={() => { clearPendingChoice(); act("cancel"); }} type="button">CANCELAR</button>
+        <button className={styles.clear} disabled={busy} onClick={() => { clearPendingChoice(); act("clear"); }} type="button">LIMPAR TELA</button>
       </div>
     </section>
   );

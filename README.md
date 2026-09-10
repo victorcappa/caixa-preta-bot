@@ -126,8 +126,10 @@ O módulo começa comprimido e alterna entre `EXPANDIR` e `COMPRIMIR` ao tocar n
 cabeçalho; `JOGO DAS MALAS` fica imediatamente abaixo, sempre visível no fluxo
 do operator. A lista completa das 43 falas também começa comprimida dentro do
 aquecimento e pode ser aberta quando necessária.
-`GERAR PERGUNTA` e `SURPREENDA-ME` geram e enviam a primeira etapa imediatamente,
-sem confirmação intermediária. Na frase manual, `Enter` envia e `Shift+Enter`
+Escolher um tipo de ação e uma intensidade já gera e envia a primeira etapa,
+sem botão intermediário. A ordem dos dois cliques é livre: a segunda escolha
+completa o par e dispara a fala. `SURPREENDA-ME` continua sorteando a combinação
+inteira imediatamente. Na frase manual, `Enter` envia e `Shift+Enter`
 insere uma quebra de linha. Depois do envio, o operador pode avançar, repetir,
 cancelar ou limpar a partitura. O avanço automático é opcional, configurável e
 sempre cancelável. A projeção mostra somente a etapa corrente e uma indicação
@@ -507,8 +509,10 @@ na etapa, o robô apresenta a escolha como aleatória, enquanto o software prote
 a ordem fixa `MALA 2 → MALA 3 → MALA 1`. A primeira escolha acontece na entrada;
 as duas seguintes dependem do botão `ROBÔ ESCOLHER PRÓXIMA MALA`, preservando o
 timing do operador. A ordem completa nunca entra na fala pública.
-Cada escolha também cria uma fala persistente e um aviso central de dez segundos
-na projeção: `VÁ ATÉ A MALA INDICADA`, o número da mala e `A LUZ VAI INDICAR`.
+Cada escolha também cria um aviso central de dez segundos na projeção:
+`VÁ ATÉ A MALA INDICADA`, o número da mala e `A LUZ VAI INDICAR`. Enquanto esse
+aviso está na frente, nenhuma fala da escolha ou do desafio entra na fila pública;
+o chatbot só começa a escrever depois que os dez segundos terminam.
 
 `MALA 1 — VERDADE OU BOLO` é a terceira e última escolha e inicia o jogo `verdade_ou_bolo` já
 registrado no `GameDirector`. Rodada, resposta, vídeo, votação, revelação e

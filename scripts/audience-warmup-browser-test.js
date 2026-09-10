@@ -81,11 +81,11 @@ try {
     operator.waitForResponse((response) => response.url().endsWith("/api/audience-warmup") && response.request().postDataJSON()?.action === "select-action"),
     wordAction.click()
   ]);
-  await operator.getByRole("button", { name: "MÉDIO" }).click();
   await Promise.all([
-    operator.waitForResponse((response) => response.url().endsWith("/api/audience-warmup") && response.request().postDataJSON()?.action === "generate"),
-    operator.getByRole("button", { name: "GERAR PERGUNTA" }).click()
+    operator.waitForResponse((response) => response.url().endsWith("/api/audience-warmup") && response.request().postDataJSON()?.action === "configure-and-generate"),
+    operator.getByRole("button", { name: "MÉDIO" }).click()
   ]);
+  assert.equal(await operator.getByRole("button", { name: "GERAR PERGUNTA" }).count(), 0);
   const preview = operator.getByLabel("Preview do esquentar público");
   await operator.waitForFunction(() => {
     const text = document.querySelector('[aria-label="Preview do esquentar público"] p')?.textContent || "";

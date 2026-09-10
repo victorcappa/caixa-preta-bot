@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { PLAY_UNLOCK_CONFIG, PLAY_UNLOCK_STATES, playUnlockBootLines } from "@/data/scene-zero-unlock";
-import { shouldShowGincanaTimer } from "@/lib/scene-zero/suitcaseGame";
+import { SCENE_ZERO_SUITCASE_CUE_DURATION_MS, shouldShowGincanaTimer } from "@/lib/scene-zero/suitcaseGame";
 import BlinkingCursor from "./BlinkingCursor";
 import useCountdownSound from "./useCountdownSound";
 import styles from "./SceneZeroProjectionLayer.module.css";
@@ -196,7 +196,7 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
   const showSuitcaseSelection = Boolean(
     sceneZero?.suitcaseGame?.currentSuitcase
     && suitcaseSelectionAge >= 0
-    && suitcaseSelectionAge < 10000
+    && suitcaseSelectionAge < SCENE_ZERO_SUITCASE_CUE_DURATION_MS
     && !showTimer
   );
 

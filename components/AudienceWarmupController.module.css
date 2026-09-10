@@ -50,7 +50,7 @@
 .actionGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 8px; }
 .actionGrid button small { display: inline-block; margin-left: 4px; color: #fff; font-size: .66rem; }
 .intensityGrid, .generateRow, .transport { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
-.generateRow { grid-template-columns: 1fr 1fr; }
+.generateRow { grid-template-columns: 1fr; }
 .panel button { min-height: 44px; padding: 8px; border: 1px solid var(--green-soft); background: #020402; color: var(--green); cursor: pointer; font: inherit; }
 .panel button:hover, .panel button:focus-visible { border-color: var(--green); outline: 2px solid rgba(0,255,102,.22); outline-offset: 1px; }
 .panel button:disabled { cursor: default; opacity: .38; }
