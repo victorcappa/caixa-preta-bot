@@ -516,49 +516,36 @@ O bloco `JOGO DAS MALAS` mantém o `SuitcaseDirector` existente para recuperaç�
 e compatibilidade, mas organiza a dramaturgia atual em três cartões. Ao entrar
 na etapa, o robô explica rapidamente o jogo, anuncia que escolherá uma mala
 aleatoriamente e só então inicia a roleta, enquanto o software protege a ordem
-fixa `MALA 2 → MALA 3 → MALA 1`. Depois do comentário de Evidências, a Mala 3
-é sorteada automaticamente; a passagem seguinte continua disponível no botão
-`ROBÔ ESCOLHER PRÓXIMA MALA`. A ordem completa nunca entra na fala pública.
+temporária `MALA 1 → MALA 2 → MALA 3`. A passagem seguinte fica disponível no
+botão `ROBÔ ESCOLHER PRÓXIMA MALA`. A ordem completa nunca entra na fala pública.
 Cada escolha gira os números como caça-níquel e depois mostra `MALA` acima do
 número sorteado. Enquanto esse aviso está na frente, nenhuma fala da escolha ou
 do desafio entra na fila pública;
 o chatbot só começa a escrever depois que os dez segundos terminam.
 
-`MALA 2 — EVIDÊNCIAS` é sempre a primeira escolha. O desafio fixo está em
-`SCENE_ZERO_EVIDENCIAS_CHALLENGE`, dentro de `data/scene-zero-gincanas.js`: a
-pessoa descreve o objeto à sua frente, usa o objeto como microfone e canta
-“Evidências”, de Chitãozinho & Xororó; o público pode ajudar. A instrução é
-publicada literalmente pelo sistema e não pode ser reformulada pelo modelo.
+`MALA 1 — DESAFIO FÍSICO` usa a biblioteca declarativa de 12 testes em
+`data/scene-zero-physical-challenges.js`. A projeção destaca ordem, alvo e
+cronômetro; os últimos três segundos piscam de forma agressiva e o zero encerra
+automaticamente. O operador seleciona ou pula para outro desafio, inicia, pausa,
+continua, reinicia, acrescenta cinco segundos e marca sucesso ou falha.
 
-O operador inicia a faixa e a contagem pelo mesmo botão, somente quando a pessoa
-estiver pronta para cantar. O timer usa `endsAt` no servidor e dura 24 segundos;
-a faixa toca a 96% da velocidade original. Nos primeiros cerca de cinco segundos,
-a projeção mostra um ponto novo por segundo durante a
-introdução; depois revela os sete versos como sing-along nos tempos
-`2s, 2s, 2s, 2s, 2s, 4s, 4s`. A faixa local está em
-`assets/audios/Evidências - Chitãozinho e Xororó - Karaokê - Karaokê Show Oficial (youtube).mp3`.
-Ao chegar a zero, o
-controller mantém `0 / CONCLUÍDA` por dois segundos e pede automaticamente ao robô um comentário curto e sarcástico sobre
-as habilidades de canto. O prompt permite o julgamento como bit teatral, mas
-proíbe inventar notas, afinação ou reações não informadas. Pausar, continuar,
-reiniciar e cancelar também pausam, retomam, reiniciam e encerram o áudio.
-Registrar manualmente o resultado continua disponível.
+`MALA 2 — FORCA / QUEDA` reutiliza o motor de forca de `lib/activities.js`, agora
+adaptado a palavras e expressões do espetáculo. A biblioteca fica em
+`data/scene-zero-hangman-words.js`. Quatro erros percorrem `ESTÁVEL`, `ALERTA`,
+`PERDA DE ALTITUDE`, `FALHA` e `IMPACTO`; ruído, deslocamento e degradação visual
+aumentam a cada erro. Vitória mostra `REGISTRO RECUPERADO`; derrota revela a
+palavra e termina em `IMPACTO`.
 
-`MALA 3 — OBJETO PELO CHEIRO` é sempre a segunda escolha. A pessoa pega o objeto
-sem revelá-lo, cheira e tem 20 segundos para ajudar o público a adivinhar o que
-é usando somente descrições do cheiro. O objeto não deve ser mostrado nem
-nomeado, e a configuração proíbe cheirar substâncias desconhecidas, irritantes
-ou potencialmente perigosas. O mesmo timer oferece iniciar, pausar, continuar,
-reiniciar, cancelar e registrar o resultado.
+`MALA 3 — NOVA BIOS` mantém o glitch crescente, os trechos corrompidos, sons,
+timings e blackout anteriores. Depois dos dez segundos que mostram o número da
+mala, a sequência existente começa automaticamente e termina em preto.
 
-`MALA 1 — NOVA BIOS` é a terceira e última escolha. Ela não inicia mais
-`verdade_ou_bolo` nem outro jogo estruturado. Depois dos dez segundos que mostram
-o número da mala, a projeção carrega trechos corrompidos do texto-base misturados
-com falas do piloto. O glitch aumenta de intensidade durante 30 segundos e termina
-em uma tela totalmente preta, que permanece até o operador interromper a BIOS,
-finalizar a etapa ou reiniciar o fluxo. Título e autor da referência literária não
-aparecem na projeção. O operador pode recarregar ou interromper essa sequência
-pelos controles da Mala 1.
+A configuração anterior `MALA 2 → MALA 3 → MALA 1`, com Evidências e objeto
+pelo cheiro, não foi apagada. Ela está documentada e exportada por
+`data/archive/scene-zero-suitcases-legacy.js`; as falas permanecem em
+`data/scene-zero-gincanas.js` e os assets continuam em seus locais originais.
+O percurso temporário completo pode ser validado com
+`npm run test:scene-zero:suitcases:browser`, com o servidor local ativo.
 Ao finalizar essa terceira mala, a barra completa primeiro; somente depois de
 atingir 100% a projeção mostra `FIM DO TUTORIAL`. Essa frase não é exibida antes
 nem durante o glitch.

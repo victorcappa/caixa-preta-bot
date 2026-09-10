@@ -97,6 +97,11 @@
 .suitcaseCard > button { flex: 1 1 130px; }
 .suitcaseDetails { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 8px; padding-top: 10px; border-top: 1px solid #292929; }
 .suitcaseDetails[hidden] { display: none; }
+.suitcaseSelect, .hangmanGuessField { flex: 1 1 100%; display: grid; gap: 6px; color: #969696; font-size: 10px; font-weight: 800; letter-spacing: .09em; }
+.suitcaseSelect select, .hangmanGuessField input { box-sizing: border-box; width: 100%; min-height: 44px; padding: 0 10px; color: #fff; background: #050505; border: 1px solid #3b4d40; font: inherit; }
+.hangmanLetters { flex: 1 1 100%; display: grid; grid-template-columns: repeat(9, minmax(28px, 1fr)); gap: 5px; }
+.hangmanLetters button { min-height: 38px; padding: 4px; color: #00ff66; background: #07110b; border: 1px solid #245e39; font: inherit; font-weight: 900; cursor: pointer; }
+.hangmanLetters button:disabled { color: #425248; border-color: #242b26; opacity: .5; cursor: default; }
 .participantDetails { flex: 1 1 100%; padding: 10px; color: #858585; border: 1px dashed #333; }
 .participantDetails summary { cursor: pointer; font-size: 10px; font-weight: 800; letter-spacing: .08em; }
 .participantDetails[open] { display: flex; flex-wrap: wrap; gap: 8px; }

@@ -10,7 +10,7 @@ import {
   sceneZeroEvidenciasFrameAt
 } from "@/data/scene-zero-gincanas";
 import { SCENE_ZERO_MOREL_BIOS_DURATION_MS, SCENE_ZERO_MOREL_BIOS_LINES, SCENE_ZERO_MOREL_BIOS_LINE_INTERVAL_MS } from "@/data/scene-zero-morel";
-import { SCENE_ZERO_SUITCASE_CUE_DURATION_MS, sceneZeroSuitcaseCueFrameAt, shouldShowGincanaTimer } from "@/lib/scene-zero/suitcaseGame";
+import { SCENE_ZERO_SUITCASE_CUE_DURATION_MS, sceneZeroSuitcaseCueFrameAt } from "@/lib/scene-zero/suitcaseGame";
 import BlinkingCursor from "./BlinkingCursor";
 import useCountdownSound from "./useCountdownSound";
 import styles from "./SceneZeroProjectionLayer.module.css";
@@ -21,7 +21,9 @@ const EVIDENCIAS_KARAOKE_AUDIO = `/api/game-assets?file=${encodeURIComponent(SCE
 
 function timerSeconds(timer, now) {
   if (timer?.status === "running" && timer.endsAt) {
-    return Math.max(0, Math.ceil((Date.parse(timer.endsAt) - now) / 1000));
+    const calculated = Math.max(0, Math.ceil((Date.parse(timer.endsAt) - now) / 1000));
+    const configured = Number(timer.remainingSeconds ?? timer.durationSeconds);
+    return Number.isFinite(configured) ? Math.min(configured, calculated) : calculated;
   }
   if (timer?.status === "complete") return 0;
   return timer?.remainingSeconds ?? timer?.durationSeconds ?? 15;
@@ -207,6 +209,8 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
   const collectionTimer = sceneZero?.collection?.activeCountdown;
   const gincana = sceneZero?.suitcaseGame?.gincana;
   const gincanaTimer = gincana?.timer;
+  const hangman = sceneZero?.suitcaseGame?.hangman || {};
+  const hangmanPublic = hangman.activity?.publicState || {};
   const morelBios = sceneZero?.suitcaseGame?.morelBios;
   const participantSelection = sceneZero?.participantSelection || {};
 
@@ -252,12 +256,7 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
     audio.play().catch(() => {});
   }, [gincana?.currentTask?.id, gincanaTimer]);
 
-  const gincanaCompletionAge = now - Date.parse(gincanaTimer?.completedAt || "");
-  const gincanaTimerVisible = shouldShowGincanaTimer(gincanaTimer)
-    && (!["complete", "completed"].includes(gincanaTimer?.status) || (gincanaCompletionAge >= 0 && gincanaCompletionAge < 2000));
-  const visibleTimer = [2, 3].includes(sceneZero?.suitcaseGame?.currentSuitcase) && gincanaTimerVisible
-    ? gincanaTimer
-    : sceneZero?.stage === "collection" && ["running", "complete"].includes(collectionTimer?.status)
+  const visibleTimer = sceneZero?.stage === "collection" && ["running", "complete"].includes(collectionTimer?.status)
       ? collectionTimer
       : sceneZero?.stage === "singing" ? timer : null;
   const showTimer = ["running", "paused", "complete", "completed", "failed"].includes(visibleTimer?.status);
@@ -285,9 +284,22 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
     && suitcaseSelectionAge < SCENE_ZERO_SUITCASE_CUE_DURATION_MS
     && !showTimer
   );
+  const showPhysicalChallenge = Boolean(
+    sceneZero?.suitcaseGame?.currentSuitcase === 1
+    && gincana?.currentTask
+    && suitcaseSelectionAge >= SCENE_ZERO_SUITCASE_CUE_DURATION_MS
+  );
+  const physicalSeconds = timerSeconds(gincanaTimer, now);
+  const physicalUrgent = gincanaTimer?.status === "running" && physicalSeconds <= 3;
+  const showHangman = Boolean(
+    sceneZero?.suitcaseGame?.currentSuitcase === 2
+    && hangman?.activity
+    && hangman.status !== "ready"
+    && suitcaseSelectionAge >= SCENE_ZERO_SUITCASE_CUE_DURATION_MS
+  );
   const morelBiosAge = now - Date.parse(morelBios?.startedAt || "");
   const showMorelBios = Boolean(
-    sceneZero?.suitcaseGame?.currentSuitcase === 1
+    sceneZero?.suitcaseGame?.currentSuitcase === 3
     && morelBios?.status === "running"
     && morelBiosAge >= 0
   );
@@ -313,6 +325,10 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
   useCountdownSound(participantSeconds, {
     active: participantSelection.status === "countdown",
     countdownKey: `scene-zero:participant:${participantSelection.sequence || 0}`
+  });
+  useCountdownSound(physicalSeconds, {
+    active: Boolean(showPhysicalChallenge && ["running", "complete"].includes(gincanaTimer?.status)),
+    countdownKey: `scene-zero:physical:${gincanaTimer?.sequence || 0}`
   });
 
   return (
@@ -345,6 +361,64 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
           <span>{suitcaseCueFrame.phase === "reveal" ? "MALA" : ""}</span>
           <strong key={`${suitcaseCueFrame.phase}-${suitcaseCueFrame.number}`}>{suitcaseCueFrame.number}</strong>
         </div>
+      ) : null}
+      {showPhysicalChallenge ? (
+        <section className={`${styles.physicalChallengeOverlay} ${physicalUrgent ? styles.physicalChallengeUrgent : ""}`} aria-label="Desafio físico da Mala 1" aria-live="assertive">
+          <header><span>MALA 1</span><b>TESTE FÍSICO</b></header>
+          <p>{gincana.currentTask.text || gincana.currentTask.instruction}</p>
+          <div className={styles.physicalChallengeReadout}>
+            <span>ALVO<strong>{gincana.currentTask.target}</strong></span>
+            <time>{physicalSeconds}</time>
+          </div>
+          {gincana.result === "completed" ? (
+            <div className={styles.physicalChallengeResult} data-success="true">
+              <strong>{gincana.currentTask.target}/{gincana.currentTask.target}</strong>
+              <span>{gincana.currentTask.successMessage}</span>
+              <small>PRÓXIMO TESTE.</small>
+            </div>
+          ) : gincana.result === "failed" ? (
+            <div className={styles.physicalChallengeResult}>
+              <strong>FALHA</strong>
+              <span>{gincana.currentTask.failureMessage}</span>
+              <small>PRÓXIMO TESTE.</small>
+            </div>
+          ) : gincanaTimer?.status === "complete" ? (
+            <div className={styles.physicalChallengeResult}>
+              <strong>0</strong>
+              <span>TEMPO ESGOTADO.</span>
+            </div>
+          ) : (
+            <small className={styles.physicalChallengeStatus}>{gincanaTimer?.status === "paused" ? "PAUSADO" : gincanaTimer?.status === "running" ? "EM CURSO" : "AGUARDANDO INÍCIO"}</small>
+          )}
+        </section>
+      ) : null}
+      {showHangman ? (
+        <section
+          className={`${styles.suitcaseHangmanOverlay} ${styles[`hangmanErrors${Math.min(4, Number(hangman.errorCount) || 0)}`] || ""}`}
+          aria-label="Forca da Mala 2"
+          aria-live="assertive"
+          style={{
+            "--descent": `${Math.min(100, (Number(hangman.errorCount) || 0) * 25)}%`,
+            "--descent-angle": `${Math.min(36, (Number(hangman.errorCount) || 0) * 9)}deg`
+          }}
+        >
+          <div className={styles.hangmanInterference} aria-hidden="true" />
+          <header><span>MALA 2 / FORCA</span><strong>{hangman.flightState || "ESTÁVEL"}</strong></header>
+          <p className={styles.hangmanWord}>{hangmanPublic.progress || "_ _ _"}</p>
+          <div className={styles.hangmanFlight} aria-hidden="true">
+            <span>✈</span><i />
+          </div>
+          <div className={styles.hangmanTelemetry}>
+            <span>ERROS <b>{hangman.errorCount || 0}/4</b></span>
+            <span>USADAS <b>{(hangmanPublic.usedGuesses || []).join(" · ").toUpperCase() || "—"}</b></span>
+          </div>
+          {hangman.resultMessage ? (
+            <div className={styles.hangmanResult}>
+              <strong>{hangman.resultMessage}</strong>
+              {hangman.revealedWord ? <span>{hangman.revealedWord}</span> : null}
+            </div>
+          ) : null}
+        </section>
       ) : null}
       {showMorelBios ? (
         <section

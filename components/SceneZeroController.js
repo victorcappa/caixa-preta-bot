@@ -6,7 +6,9 @@ import AudienceWarmupController from "./AudienceWarmupController";
 import { setSharedInstagramPanelVisible } from "@/lib/instagram/panelClient";
 import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
 import { SCENE_ZERO_GLITCH_LEVELS, SCENE_ZERO_PERSONALITY_DIRECTIONS, SCENE_ZERO_STAGES, sceneZeroStageLabel } from "@/lib/scene-zero/state";
-import { nextSceneZeroSuitcase, SCENE_ZERO_FIRST_CHALLENGE, SCENE_ZERO_SECOND_CHALLENGE } from "@/lib/scene-zero/suitcaseGame";
+import { nextSceneZeroSuitcase } from "@/lib/scene-zero/suitcaseGame";
+import { SCENE_ZERO_PHYSICAL_CHALLENGES } from "@/data/scene-zero-physical-challenges";
+import { SCENE_ZERO_HANGMAN_WORDS } from "@/data/scene-zero-hangman-words";
 import styles from "./SceneZeroController.module.css";
 
 const PRIMARY_STAGES = [
@@ -52,7 +54,9 @@ export default function SceneZeroController() {
   const [detail, setDetail] = useState("");
   const [memoryText, setMemoryText] = useState("");
   const [collectionObservation, setCollectionObservation] = useState("");
-  const [gincanaObservation, setGincanaObservation] = useState("");
+  const [selectedChallengeId, setSelectedChallengeId] = useState(SCENE_ZERO_PHYSICAL_CHALLENGES[0]?.id || "");
+  const [selectedHangmanWordId, setSelectedHangmanWordId] = useState(SCENE_ZERO_HANGMAN_WORDS[0]?.id || "");
+  const [hangmanGuess, setHangmanGuess] = useState("");
   const [personalityGuidance, setPersonalityGuidance] = useState("");
   const [personalityGuidanceDirty, setPersonalityGuidanceDirty] = useState(false);
   const [browserCommand, setBrowserCommand] = useState("");
@@ -70,7 +74,6 @@ export default function SceneZeroController() {
   const [notice, setNotice] = useState("SISTEMA PRONTO");
   const [now, setNow] = useState(Date.now());
   const teaAudioRef = useRef(null);
-  const gincanaAutoCommentRef = useRef(null);
 
   useEffect(() => {
     fetch("/api/state").then((response) => response.json()).then(setSnapshot).catch(() => setNotice("SEM CONEXÃO"));
@@ -106,6 +109,16 @@ export default function SceneZeroController() {
     const activeSuitcase = snapshot.sceneZero?.suitcaseGame?.currentSuitcase;
     setOpenSuitcaseControls([1, 2, 3].includes(activeSuitcase) ? activeSuitcase : null);
   }, [snapshot.sceneZero?.suitcaseGame?.currentSuitcase]);
+
+  useEffect(() => {
+    const currentTaskId = snapshot.sceneZero?.suitcaseGame?.gincana?.currentTask?.id;
+    if (currentTaskId) setSelectedChallengeId(currentTaskId);
+  }, [snapshot.sceneZero?.suitcaseGame?.gincana?.currentTask?.id]);
+
+  useEffect(() => {
+    const currentWordId = snapshot.sceneZero?.suitcaseGame?.hangman?.wordId;
+    if (currentWordId) setSelectedHangmanWordId(currentWordId);
+  }, [snapshot.sceneZero?.suitcaseGame?.hangman?.wordId]);
 
   useEffect(() => {
     if (snapshot.instagram?.embeddedPanelSequence > 0) {
@@ -353,6 +366,10 @@ export default function SceneZeroController() {
   const gincana = suitcaseGame.gincana || {};
   const gincanaTimer = gincana.timer || {};
   const gincanaSeconds = remainingTimer(gincanaTimer, now, null);
+  const hangman = suitcaseGame.hangman || {};
+  const hangmanPublic = hangman.activity?.publicState || {};
+  const hangmanUsed = new Set((hangmanPublic.usedGuesses || []).map((guess) => `${guess}`.toUpperCase()));
+  const hangmanActive = hangman.status === "active";
   const nextSuitcase = nextSceneZeroSuitcase(suitcaseGame);
   const morelBios = suitcaseGame.morelBios || {};
   const morelBiosRunning = morelBios.status === "running";
@@ -365,68 +382,6 @@ export default function SceneZeroController() {
     : null;
   const questions = useMemo(() => [...(collection.questions || [])].reverse(), [collection.questions]);
   const latestMemories = useMemo(() => [...(snapshot.memories || [])].slice(-5).reverse(), [snapshot.memories]);
-
-  useEffect(() => {
-    const sequence = gincanaTimer.sequence;
-    if (
-      pending
-      || gincana.currentTask?.id !== "evidencias_objeto_microfone"
-      || gincanaTimer.status !== "complete"
-      || gincana.result
-      || gincanaAutoCommentRef.current === sequence
-    ) return;
-
-    gincanaAutoCommentRef.current = sequence;
-    setPending("gincana-auto-comment");
-    setNotice("GERANDO COMENTÁRIO SOBRE A CANTORIA...");
-    void fetch("/api/scene-zero", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "gincana-complete",
-        detail: "A faixa de 24 segundos de Evidências chegou ao fim. Faça agora o comentário sarcástico sobre a cantoria."
-      })
-    })
-      .then(async (response) => {
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "ERRO AO GERAR COMENTÁRIO");
-        if (data.sceneZero) setSnapshot((current) => ({ ...current, sceneZero: data.sceneZero }));
-        setNotice(data.message || "COMENTÁRIO GERADO");
-      })
-      .catch((error) => setNotice(error.message))
-      .finally(() => setPending(""));
-  }, [gincana.currentTask?.id, gincana.result, gincanaTimer.sequence, gincanaTimer.status, pending]);
-
-  function challengeControls(challenge, startLabel) {
-    const active = gincana.currentTask?.id === challenge.id;
-    return (
-      <>
-        <Readout label="DESAFIO FIXO" value={challenge.instruction} />
-        <Readout label="DIFICULDADE / OBSERVAÇÕES" value={`${challenge.difficulty} · ${challenge.notes}`} />
-        <div className={`${styles.timer} ${active && gincanaTimer.status === "complete" ? styles.timerComplete : ""}`}>{active ? gincanaSeconds ?? "—" : "—"}</div>
-        <strong className={styles.timerStatus}>TEMPO: {challenge.durationMin}s<br />{active ? (gincanaTimer.status || "idle").toUpperCase() : "AGUARDANDO A MALA"}</strong>
-        <Button primary onClick={() => sceneAction("gincana-timer-start")} pending={pending || !active}>{startLabel}</Button>
-        <Button onClick={() => sceneAction("gincana-timer-pause")} pending={pending || !active || gincanaTimer.status !== "running"}>PAUSAR</Button>
-        <Button onClick={() => sceneAction("gincana-timer-resume")} pending={pending || !active || gincanaTimer.status !== "paused"}>CONTINUAR</Button>
-        <Button onClick={() => sceneAction("gincana-timer-restart")} pending={pending || !active}>REINICIAR</Button>
-        <Button danger onClick={() => sceneAction("gincana-timer-cancel")} pending={pending || !active}>CANCELAR</Button>
-        <label className={styles.observationField}>
-          O QUE ACONTECEU / REAÇÃO
-          <input value={gincanaObservation} onChange={(event) => setGincanaObservation(event.target.value)} placeholder="Ex.: conseguiu; o público acertou; descrição difícil" />
-        </label>
-        <Button onClick={async () => {
-          const result = await sceneAction("gincana-complete", { detail: gincanaObservation });
-          if (result) setGincanaObservation("");
-        }} pending={pending || !active}>AÇÃO CONCLUÍDA</Button>
-        <Button danger onClick={async () => {
-          const result = await sceneAction("gincana-failed", { detail: gincanaObservation });
-          if (result) setGincanaObservation("");
-        }} pending={pending || !active}>FALHOU / TEMPO ESGOTADO</Button>
-        <Readout label="RESULTADO" value={active && gincana.result ? `${gincana.result.toUpperCase()} · ${gincana.elapsedSeconds ?? 0}s decorridos` : "AGUARDANDO"} />
-        <Readout label="ÚLTIMO COMENTÁRIO DO BOT" value={active ? gincana.lastComment : null} />
-      </>
-    );
-  }
 
   function navigateToSection(event, id) {
     event.preventDefault();
@@ -542,29 +497,93 @@ export default function SceneZeroController() {
           <Button onClick={() => sceneAction("suitcase-finish")} pending={pending || Boolean(nextSuitcase) || suitcaseGame.status === "finished"}>FINALIZAR JOGO DAS MALAS / PREENCHER BARRA</Button>
         </div>
         <div className={styles.suitcaseGrid}>
+          <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 1 ? styles.activeSuitcase : ""}`}>
+            <h3>MALA 1 / DESAFIO FÍSICO</h3>
+            <Button onClick={() => setOpenSuitcaseControls((current) => current === 1 ? null : 1)} pressed={openSuitcaseControls === 1}>{openSuitcaseControls === 1 ? "COMPRIMIR" : "CONTROLES"}</Button>
+            <div className={styles.suitcaseDetails} hidden={openSuitcaseControls !== 1}>
+              <label className={styles.suitcaseSelect}>
+                DESAFIO
+                <select value={selectedChallengeId} onChange={(event) => setSelectedChallengeId(event.target.value)}>
+                  {SCENE_ZERO_PHYSICAL_CHALLENGES.map((challenge) => (
+                    <option key={challenge.id} value={challenge.id}>{challenge.text}</option>
+                  ))}
+                </select>
+              </label>
+              <Button onClick={() => sceneAction("gincana-draw", { challengeId: selectedChallengeId })} pending={pending || suitcaseGame.currentSuitcase !== 1}>SELECIONAR</Button>
+              <Button onClick={() => sceneAction("gincana-draw")} pending={pending || suitcaseGame.currentSuitcase !== 1}>PULAR / PRÓXIMO</Button>
+              <Readout label="DESAFIO ATIVO" value={gincana.currentTask?.text || "AGUARDANDO MALA 1"} />
+              <Readout label="ALVO" value={gincana.currentTask ? `${gincana.currentTask.target} · ${gincana.currentTask.category} · ${gincana.currentTask.intensity}` : "—"} />
+              <div className={`${styles.timer} ${["complete", "failed"].includes(gincanaTimer.status) ? styles.timerComplete : ""}`}>{gincanaSeconds ?? "—"}</div>
+              <strong className={styles.timerStatus}>{(gincanaTimer.status || "idle").toUpperCase()}</strong>
+              <Button primary onClick={() => sceneAction("gincana-timer-start")} pending={pending || suitcaseGame.currentSuitcase !== 1 || !gincana.currentTask}>INICIAR</Button>
+              <Button onClick={() => sceneAction("gincana-timer-pause")} pending={pending || gincanaTimer.status !== "running"}>PAUSAR</Button>
+              <Button onClick={() => sceneAction("gincana-timer-resume")} pending={pending || gincanaTimer.status !== "paused"}>CONTINUAR</Button>
+              <Button onClick={() => sceneAction("gincana-timer-restart")} pending={pending || !gincana.currentTask}>REINICIAR</Button>
+              <Button onClick={() => sceneAction("gincana-timer-add", { seconds: 5 })} pending={pending || !["idle", "running", "paused"].includes(gincanaTimer.status)}>+ 5 SEGUNDOS</Button>
+              <Button primary onClick={() => sceneAction("gincana-complete")} pending={pending || !gincana.currentTask || Boolean(gincana.result)}>SUCESSO</Button>
+              <Button danger onClick={() => sceneAction("gincana-failed")} pending={pending || !gincana.currentTask || Boolean(gincana.result)}>FALHA</Button>
+              <Readout label="RESULTADO" value={gincana.result ? `${gincana.result.toUpperCase()} · ${gincana.elapsedSeconds ?? 0}s` : gincanaTimer.status === "complete" ? "TEMPO ESGOTADO" : "AGUARDANDO"} />
+            </div>
+          </section>
+
           <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 2 ? styles.activeSuitcase : ""}`}>
-            <h3>1ª ESCOLHA — MALA 2 / EVIDÊNCIAS</h3>
+            <h3>MALA 2 / FORCA — QUEDA</h3>
             <Button onClick={() => setOpenSuitcaseControls((current) => current === 2 ? null : 2)} pressed={openSuitcaseControls === 2}>{openSuitcaseControls === 2 ? "COMPRIMIR" : "CONTROLES"}</Button>
             <div className={styles.suitcaseDetails} hidden={openSuitcaseControls !== 2}>
-            {challengeControls(SCENE_ZERO_FIRST_CHALLENGE, "INICIAR EVIDÊNCIAS / 24s")}
+              <label className={styles.suitcaseSelect}>
+                PALAVRA / EXPRESSÃO
+                <select value={selectedHangmanWordId} onChange={(event) => setSelectedHangmanWordId(event.target.value)}>
+                  {SCENE_ZERO_HANGMAN_WORDS.map((entry) => (
+                    <option key={entry.id} value={entry.id}>{entry.text} · {entry.category}</option>
+                  ))}
+                </select>
+              </label>
+              <Button onClick={() => sceneAction("hangman-configure", { wordId: selectedHangmanWordId })} pending={pending || suitcaseGame.currentSuitcase !== 2}>ESCOLHER PALAVRA</Button>
+              <Button onClick={() => sceneAction("hangman-new")} pending={pending || suitcaseGame.currentSuitcase !== 2}>SORTEAR NOVA</Button>
+              <Button primary onClick={() => sceneAction("hangman-start")} pending={pending || suitcaseGame.currentSuitcase !== 2 || hangman.status !== "ready"}>INICIAR</Button>
+              <Readout label="PALAVRA OCULTA" value={hangmanPublic.progress || "—"} />
+              <Readout label="ESTADO DE VOO" value={`${hangman.flightState || "ESTÁVEL"} · ${hangman.errorCount || 0}/4 ERROS`} />
+              <div className={styles.hangmanLetters} aria-label="Letras da forca">
+                {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letter) => (
+                  <button
+                    disabled={Boolean(pending) || !hangmanActive || hangmanUsed.has(letter)}
+                    key={letter}
+                    onClick={() => sceneAction("hangman-guess", { guess: letter })}
+                    type="button"
+                  >{letter}</button>
+                ))}
+              </div>
+              <label className={styles.hangmanGuessField}>
+                PALPITE COMPLETO
+                <input
+                  onChange={(event) => setHangmanGuess(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && hangmanGuess.trim()) {
+                      event.preventDefault();
+                      void sceneAction("hangman-guess", { guess: hangmanGuess }).then((result) => result && setHangmanGuess(""));
+                    }
+                  }}
+                  value={hangmanGuess}
+                />
+              </label>
+              <Button onClick={() => sceneAction("hangman-guess", { guess: hangmanGuess }).then((result) => result && setHangmanGuess(""))} pending={pending || !hangmanActive || !hangmanGuess.trim()}>ENVIAR PALPITE</Button>
+              <Button danger onClick={() => sceneAction("hangman-error")} pending={pending || !hangmanActive}>MARCAR ERRO</Button>
+              <Button onClick={() => sceneAction("hangman-reveal")} pending={pending || !hangman.activity}>REVELAR PALAVRA</Button>
+              <Button primary onClick={() => sceneAction("hangman-win")} pending={pending || !hangman.activity}>VITÓRIA</Button>
+              <Button danger onClick={() => sceneAction("hangman-lose")} pending={pending || !hangman.activity}>DERROTA</Button>
+              <Button onClick={() => sceneAction("hangman-restart")} pending={pending || !hangman.activity}>REINICIAR</Button>
+              <Readout label="LETRAS / PALPITES USADOS" value={(hangmanPublic.usedGuesses || []).join(" · ").toUpperCase() || "—"} />
+              <Readout label="RESULTADO" value={hangman.resultMessage || (hangman.status || "idle").toUpperCase()} />
             </div>
           </section>
 
           <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 3 ? styles.activeSuitcase : ""}`}>
-            <h3>2ª ESCOLHA — MALA 3 / OBJETO PELO CHEIRO</h3>
+            <h3>MALA 3 / BUG + BIOS CORROMPIDA</h3>
             <Button onClick={() => setOpenSuitcaseControls((current) => current === 3 ? null : 3)} pressed={openSuitcaseControls === 3}>{openSuitcaseControls === 3 ? "COMPRIMIR" : "CONTROLES"}</Button>
             <div className={styles.suitcaseDetails} hidden={openSuitcaseControls !== 3}>
-            {challengeControls(SCENE_ZERO_SECOND_CHALLENGE, "INICIAR ADIVINHAÇÃO / 20s")}
-            </div>
-          </section>
-
-          <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 1 ? styles.activeSuitcase : ""}`}>
-            <h3>3ª ESCOLHA — MALA 1 / NOVA BIOS</h3>
-            <Button onClick={() => setOpenSuitcaseControls((current) => current === 1 ? null : 1)} pressed={openSuitcaseControls === 1}>{openSuitcaseControls === 1 ? "COMPRIMIR" : "CONTROLES"}</Button>
-            <div className={styles.suitcaseDetails} hidden={openSuitcaseControls !== 1}>
               <Readout label="SEQUÊNCIA" value="GLITCH CRESCENTE → BIOS CORROMPIDA → BLACKOUT" />
               <Readout label="STATUS" value={morelBiosBlackout ? "BLACKOUT FINAL" : morelBiosRunning ? "BIOS CORROMPIDA NA PROJEÇÃO" : morelBios.status === "stopped" ? "INTERROMPIDA" : "AGUARDANDO"} />
-              <Button primary onClick={() => sceneAction("morel-bios-start")} pending={pending || suitcaseGame.currentSuitcase !== 1}>RECARREGAR GLITCH + BIOS</Button>
+              <Button primary onClick={() => sceneAction("morel-bios-start")} pending={pending || suitcaseGame.currentSuitcase !== 3}>RECARREGAR GLITCH + BIOS</Button>
               <Button danger onClick={() => sceneAction("morel-bios-stop")} pending={pending || !morelBiosRunning}>INTERROMPER BIOS / BLACKOUT</Button>
               <Readout label="FIM DO JOGO" value={suitcaseGame.status === "finished" ? `FINALIZADO · ${suitcaseGame.endedAt ? new Date(suitcaseGame.endedAt).toLocaleTimeString("pt-BR") : "REGISTRADO"}` : "A BARRA PERMANECE TRAVADA ATÉ FINALIZAR"} />
             </div>
