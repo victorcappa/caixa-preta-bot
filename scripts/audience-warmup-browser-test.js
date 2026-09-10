@@ -74,7 +74,7 @@ try {
   assert.equal(await display.getByText("... PROVE QUE VOCÊ É HUMANO", { exact: true }).count(), 0);
   const conversationAfterBoot = afterIntro.conversation.length;
   assert.equal(conversationAfterBoot, 1, "a primeira pergunta física deve iniciar após o título isolado");
-  const wordAction = operator.getByRole("button", { name: /Falar uma palavra/ });
+  const wordAction = operator.getByRole("button", { name: /Levantar a mão/ });
   await operator.waitForFunction(() => document.querySelector('[aria-labelledby="audience-warmup-title"]')?.getAttribute("aria-busy") === "false");
   assert.equal(await wordAction.isEnabled(), true, `ação deve estar habilitada; page errors: ${pageErrors.join(" | ")}`);
   await Promise.all([
@@ -83,7 +83,7 @@ try {
   ]);
   await Promise.all([
     operator.waitForResponse((response) => response.url().endsWith("/api/audience-warmup") && response.request().postDataJSON()?.action === "configure-and-generate"),
-    operator.getByRole("button", { name: "MÉDIO" }).click()
+    operator.getByRole("button", { name: "DINHEIRO / POLÍTICA" }).click()
   ]);
   assert.equal(await operator.getByRole("button", { name: "GERAR PERGUNTA" }).count(), 0);
   const preview = operator.getByLabel("Preview do esquentar público");
@@ -125,21 +125,22 @@ try {
   await warmup(context.request, "select-action", { selectedAction: "word" });
   await warmup(context.request, "set-interval", { intervalMs: 800 });
   await warmup(context.request, "send", { text: "Quando eu disser quatro, digam uma cor." });
-  await display.getByText("Quatro.", { exact: true }).waitFor({ timeout: 9000 });
+  await display.getByText("DADOS INCOMPATÍVEIS. ACEITOS.", { exact: true }).waitFor({ timeout: 9000 });
   snapshot = await (await context.request.get(`${BASE_URL}/api/state`)).json();
-  assert.deepEqual(snapshot.audienceWarmup.history.slice(-5).map((entry) => entry.text), [
+  assert.deepEqual(snapshot.audienceWarmup.history.slice(-6).map((entry) => entry.text), [
     "Quando eu disser quatro, digam uma cor.",
     "Um.",
     "Dois.",
     "Três.",
-    "Quatro."
+    "Quatro.",
+    "DADOS INCOMPATÍVEIS. ACEITOS."
   ], "uma instrução deve cumprir automaticamente a contagem que prometeu");
-  assert.equal(snapshot.audienceWarmup.awaitingOperator, true, "depois do último número, a reação volta a aguardar o operador");
+  assert.equal(snapshot.audienceWarmup.active, false, "a reação deve concluir a contagem prometida");
   const beforeRepeat = (await (await context.request.get(`${BASE_URL}/api/state`)).json()).conversation.length;
   await warmup(context.request, "repeat");
   snapshot = await (await context.request.get(`${BASE_URL}/api/state`)).json();
   assert.equal(snapshot.conversation.length, beforeRepeat + 1);
-  assert.equal(snapshot.publicMessage.content, "Quatro.");
+  assert.equal(snapshot.publicMessage.content, "DADOS INCOMPATÍVEIS. ACEITOS.");
   await warmup(context.request, "cancel");
   snapshot = await (await context.request.get(`${BASE_URL}/api/state`)).json();
   assert.equal(snapshot.audienceWarmup.active, false);
@@ -162,10 +163,18 @@ try {
   snapshot = await (await context.request.get(`${BASE_URL}/api/state`)).json();
   assert.equal(snapshot.conversation.length, beforeAutomaticCancel, "cancelar deve interromper o avanço automático imediatamente");
   await warmup(context.request, "send", { text: "Quem ouviu a máquina bate palmas." });
-  await display.getByText("Interessante.", { exact: true }).waitFor({ timeout: 4000 });
+  await display.getByText("RESPOSTA SONORA REGISTRADA.", { exact: true }).waitFor({ timeout: 4000 });
   snapshot = await (await context.request.get(`${BASE_URL}/api/state`)).json();
   assert.equal(snapshot.audienceWarmup.active, false, "sequência automática deve concluir");
   await warmup(context.request, "set-automatic", { automatic: false });
+
+  await warmup(context.request, "trigger-prompt", { promptId: "public-07", withProgress: false });
+  await display.getByText("Quem votou no Lula fica de pé.", { exact: true }).waitFor();
+  await warmup(context.request, "next");
+  await display.getByText("Quem não votou, olhe para quem está de pé.", { exact: true }).waitFor();
+  snapshot = await (await context.request.get(`${BASE_URL}/api/state`)).json();
+  assert.equal(snapshot.audienceWarmup.display.action, "look", "cada passo da partitura deve expor sua própria ação");
+  await warmup(context.request, "cancel");
 
   const longText = "Esta é uma mensagem longa para validar a leitura em projeção, a largura confortável, a quebra responsiva das linhas e a permanência integral do texto dentro da área visível sem criar uma coluna crescente de mensagens anteriores.";
   await warmup(context.request, "send", { text: longText });

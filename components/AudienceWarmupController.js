@@ -192,7 +192,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
               <article className={styles.promptItem} key={prompt.id}>
                 <div>
                   <small>{prompt.category} · {prompt.id}</small>
-                  <p>{prompt.text}</p>
+                  <p>{prompt.steps?.length ? prompt.steps.map((step) => typeof step === "string" ? step : step.text).join(" → ") : prompt.text}</p>
                   <strong>{prompt.progressValue > 0 ? `+${prompt.progressValue}%` : "0% · SEM PROGRESSO"} · {prompt.repeatableProgress ? "REPETÍVEL" : scored ? "JÁ PONTUOU" : "AINDA NÃO PONTUOU"}</strong>
                 </div>
                 <div>

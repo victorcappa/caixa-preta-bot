@@ -119,19 +119,20 @@ Uma nova fala substitui visualmente a anterior; `LIMPAR TELA` remove somente
 linha permanece fixo e os caracteres avançam para a direita, sem recentralizar
 ou rebalancear o texto a cada atualização.
 
-No `/operator`, `AQUECIMENTO DA PLATEIA` oferece ações físicas, intensidades
-`LEVE`, `MÉDIO` e `ESTRANHO`, 66 prompts em
-`data/audience-warmup-prompts.js`, frase manual, preview e `SURPREENDA-ME`. O
-boot atualiza fatos de São Paulo e algumas atualidades do Brasil e do mundo;
-chamadas sucessivas de `SURPREENDA-ME` usam esse contexto e aumentam a
-estranheza a cada duas perguntas na sequência `ação → exposição → divisão →
-julgamento → contato → confronto`. As falas são ordens curtas de sistema, sem
-convite, explicação ou tom de animador. O fallback para a biblioteca
-estática preserva essa progressão e inclui perguntas específicas sobre Metrô,
-Tietê, Pinheiros, trânsito e clima paulistano.
+No `/operator`, `AQUECIMENTO DA PLATEIA` oferece ações físicas, quatro degraus
+(`COTIDIANO`, `DINHEIRO / POLÍTICA`, `SEXO / DROGAS` e `SEGREDO / CULPA`), 46
+prompts em `data/audience-warmup-prompts.js`, frase manual, preview e
+`SURPREENDA-ME`. Chamadas sucessivas de `SURPREENDA-ME` sobem um degrau a cada
+duas perguntas e permanecem no último: `cotidiano → dinheiro/política →
+sexo/drogas → segredo/culpa e exposição entre pessoas`. As falas são ordens
+curtas, secas e ligadas a marcadores concretos da vida da plateia; toda pergunta
+exige uma resposta corporal visível. A biblioteca evita completar por padrão a
+resposta de quem não se manifestou, de modo que os corpos imóveis também
+signifiquem. Algumas entradas são partituras de duas a quatro falas e permitem
+ao operador construir consequências a partir da resposta anterior.
 O módulo começa comprimido e alterna entre `EXPANDIR` e `COMPRIMIR` ao tocar no
 cabeçalho; `JOGO DAS MALAS` fica imediatamente abaixo, sempre visível no fluxo
-do operator. A lista completa das 66 falas também começa comprimida dentro do
+do operator. A lista completa das 46 falas também começa comprimida dentro do
 aquecimento e pode ser aberta quando necessária.
 Escolher um tipo de ação e uma intensidade já gera e envia a primeira etapa,
 sem botão intermediário. A ordem dos dois cliques é livre: a segunda escolha

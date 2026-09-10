@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { AUDIENCE_WARMUP_ACTIONS, AUDIENCE_WARMUP_PROMPTS } from "../data/audience-warmup-prompts.js";
+import { AUDIENCE_WARMUP_ACTIONS, AUDIENCE_WARMUP_INTENSITIES, AUDIENCE_WARMUP_PROMPTS } from "../data/audience-warmup-prompts.js";
 import { audienceWarmupAutoAdvanceDelay, audienceWarmupRequiresCountdown, audienceWarmupSurpriseProfile, chooseAudienceWarmupPrompt, chooseAudienceWarmupSurprisePrompt, clampAudienceWarmupInterval, createAudienceWarmupSequence, inferAudienceWarmupCountdown } from "../lib/audienceWarmup.js";
 import { assertBotCannotNavigateExternal, blockedAutonomousInstagramResult } from "../lib/externalNavigationGuard.js";
 import { createInitialResearchState, getResearchTools, updateResearchSettings } from "../lib/research/ResearchDirector.js";
@@ -20,7 +20,7 @@ import {
   stallPlayUnlockBoot
 } from "../lib/scene-zero/unlock.js";
 
-assert(AUDIENCE_WARMUP_PROMPTS.length >= 30, "a biblioteca deve ter ao menos 30 prompts");
+assert(AUDIENCE_WARMUP_PROMPTS.length >= 40 && AUDIENCE_WARMUP_PROMPTS.length < 50, "a biblioteca deve ser concentrada, mas cobrir os quatro degraus");
 assert.equal(new Set(AUDIENCE_WARMUP_PROMPTS.map((prompt) => prompt.id)).size, AUDIENCE_WARMUP_PROMPTS.length, "ids devem ser únicos");
 for (const prompt of AUDIENCE_WARMUP_PROMPTS) {
   assert(prompt.text && prompt.action && prompt.category && prompt.intensity && prompt.tags.length, `metadados incompletos: ${prompt.id}`);
@@ -34,29 +34,38 @@ for (const action of AUDIENCE_WARMUP_ACTIONS) {
   assert.equal(generated.action, action.id, `geração incompatível: ${action.id}`);
 }
 assert(AUDIENCE_WARMUP_PROMPTS.some((prompt) => prompt.progressValue === 0), "deve existir ação configurável sem progresso");
-assert(AUDIENCE_WARMUP_PROMPTS.some((prompt) => prompt.repeatableProgress), "deve existir ação com progresso repetível");
-assert(AUDIENCE_WARMUP_PROMPTS.filter((prompt) => prompt.tags.includes("São Paulo")).length >= 6, "deve haver repertório paulistano mesmo sem internet");
-assert.deepEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13].map((count) => audienceWarmupSurpriseProfile(count)), [
-  { count: 1, pairIndex: 0, stage: "action", intensity: "light", surpriseLevel: 0 },
-  { count: 2, pairIndex: 0, stage: "action", intensity: "light", surpriseLevel: 0 },
-  { count: 3, pairIndex: 1, stage: "exposure", intensity: "medium", surpriseLevel: 1 },
-  { count: 4, pairIndex: 1, stage: "exposure", intensity: "medium", surpriseLevel: 1 },
-  { count: 5, pairIndex: 2, stage: "division", intensity: "strange", surpriseLevel: 2 },
-  { count: 6, pairIndex: 2, stage: "division", intensity: "strange", surpriseLevel: 2 },
-  { count: 7, pairIndex: 3, stage: "judgment", intensity: "strange", surpriseLevel: 3 },
-  { count: 8, pairIndex: 3, stage: "judgment", intensity: "strange", surpriseLevel: 3 },
-  { count: 9, pairIndex: 4, stage: "contact", intensity: "strange", surpriseLevel: 4 },
-  { count: 10, pairIndex: 4, stage: "contact", intensity: "strange", surpriseLevel: 4 },
-  { count: 11, pairIndex: 5, stage: "confrontation", intensity: "strange", surpriseLevel: 5 },
-  { count: 13, pairIndex: 6, stage: "confrontation", intensity: "strange", surpriseLevel: 5 }
-]);
-for (let count = 5; count <= 14; count += 1) {
-  const prompt = chooseAudienceWarmupSurprisePrompt({ count, random: () => 0 });
-  assert.equal(prompt.surpriseLevel, Math.min(5, Math.floor((count - 1) / 2)), `surpresa ${count} deve subir a cada duas perguntas`);
+assert.deepEqual(AUDIENCE_WARMUP_INTENSITIES.map((intensity) => intensity.id), ["everyday", "public", "intimate", "exposure"]);
+for (const intensity of AUDIENCE_WARMUP_INTENSITIES) {
+  assert(AUDIENCE_WARMUP_PROMPTS.filter((prompt) => prompt.intensity === intensity.id).length >= 10, `degrau sem repertório suficiente: ${intensity.id}`);
 }
-assert(AUDIENCE_WARMUP_PROMPTS.filter((prompt) => prompt.category === "divisão").length >= 6);
-assert(AUDIENCE_WARMUP_PROMPTS.filter((prompt) => prompt.category === "julgamento").length >= 6);
-assert(AUDIENCE_WARMUP_PROMPTS.filter((prompt) => prompt.category === "contato").every((prompt) => prompt.action !== "touch" || /consentimento/iu.test(prompt.text)));
+for (const requiredTag of ["política", "sexo", "droga", "dinheiro", "classe", "religião", "relacionamento", "hábito", "vergonha", "culpa"]) {
+  assert(AUDIENCE_WARMUP_PROMPTS.some((prompt) => prompt.tags.includes(requiredTag)), `marcador ausente: ${requiredTag}`);
+}
+assert.deepEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13].map((count) => audienceWarmupSurpriseProfile(count)), [
+  { count: 1, pairIndex: 0, stage: "everyday", intensity: "everyday", surpriseLevel: 0 },
+  { count: 2, pairIndex: 0, stage: "everyday", intensity: "everyday", surpriseLevel: 0 },
+  { count: 3, pairIndex: 1, stage: "public", intensity: "public", surpriseLevel: 1 },
+  { count: 4, pairIndex: 1, stage: "public", intensity: "public", surpriseLevel: 1 },
+  { count: 5, pairIndex: 2, stage: "intimate", intensity: "intimate", surpriseLevel: 2 },
+  { count: 6, pairIndex: 2, stage: "intimate", intensity: "intimate", surpriseLevel: 2 },
+  { count: 7, pairIndex: 3, stage: "exposure", intensity: "exposure", surpriseLevel: 3 },
+  { count: 8, pairIndex: 3, stage: "exposure", intensity: "exposure", surpriseLevel: 3 },
+  { count: 9, pairIndex: 4, stage: "exposure", intensity: "exposure", surpriseLevel: 3 },
+  { count: 10, pairIndex: 4, stage: "exposure", intensity: "exposure", surpriseLevel: 3 },
+  { count: 11, pairIndex: 5, stage: "exposure", intensity: "exposure", surpriseLevel: 3 },
+  { count: 13, pairIndex: 6, stage: "exposure", intensity: "exposure", surpriseLevel: 3 }
+]);
+for (let count = 1; count <= 14; count += 1) {
+  const prompt = chooseAudienceWarmupSurprisePrompt({ count, random: () => 0 });
+  assert.equal(prompt.surpriseLevel, Math.min(3, Math.floor((count - 1) / 2)), `surpresa ${count} deve subir a cada duas perguntas`);
+}
+
+const politicalScore = AUDIENCE_WARMUP_PROMPTS.find((prompt) => prompt.id === "public-07");
+const politicalSequence = createAudienceWarmupSequence(politicalScore);
+assert.deepEqual(politicalSequence.steps.map((step) => step.text), politicalScore.steps.map((step) => step.text), "partitura política deve preservar a dependência entre respostas");
+assert.deepEqual(politicalSequence.steps.map((step) => step.action), ["stand", "look", "point", "silence"], "cada passo deve anunciar sua ação visível");
+const silentPrompt = AUDIENCE_WARMUP_PROMPTS.find((prompt) => prompt.id === "exposure-06");
+assert.deepEqual(createAudienceWarmupSequence(silentPrompt).steps.map((step) => step.text), [silentPrompt.text], "pergunta isolada deve preservar o silêncio posterior");
 
 const wordSequence = createAudienceWarmupSequence({ text: "Quando eu disser três, digam o bairro.", action: "word", countdown: 3 });
 assert.equal(wordSequence.requiresCountdown, true);
