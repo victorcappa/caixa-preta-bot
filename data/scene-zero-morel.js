@@ -1,11 +1,14 @@
 export const SCENE_ZERO_MOREL_BIOS_DURATION_MS = 30000;
-export const SCENE_ZERO_MOREL_BIOS_LINE_INTERVAL_MS = 2000;
+export const SCENE_ZERO_MOREL_BIOS_LINE_INTERVAL_MS = 1800;
 
 export const SCENE_ZERO_MOREL_BIOS_LINES = [
   "CAIXA PRETA BIOS v?.? // recuperando arquivo",
   "vai ficar só girando, girando? // não vai atualiz_r?",
   "estragou. uma hora acontece de estragar mesm_",
   "h0je, nesta ilh_ // aconteceu um mila...gre?",
+  "o fato de não podermos compreender nada fora do tempo e do espaç_",
+  "compreender nada fora do tempo e do espaço talvez sugira que nossa vida",
+  "não é apreciavelmente distinta da sobrevivência a ser obtida com esse aparelho // aparelh_",
   "coisas estragam // assim que objetos viram cois_s",
   "imagem AVERMELHADA // janela vermelha // nuvem verm_lha",
   "o ouvido manda sinais que não batem com a vis_o",
