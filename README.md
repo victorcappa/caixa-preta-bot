@@ -520,12 +520,18 @@ pessoa descreve o objeto à sua frente, usa o objeto como microfone e canta
 “Evidências”, de Chitãozinho & Xororó; o público pode ajudar. A instrução é
 publicada literalmente pelo sistema e não pode ser reformulada pelo modelo.
 
-O operador inicia a contagem somente quando começar a música. O timer usa
-`endsAt` no servidor, mostra 20 segundos na projeção e, ao chegar a zero, o
+O operador inicia a faixa e a contagem pelo mesmo botão, somente quando a pessoa
+estiver pronta para cantar. O timer usa `endsAt` no servidor e dura 23 segundos:
+nos primeiros cinco, a projeção mostra um ponto novo por segundo durante a
+introdução; depois revela os sete versos como sing-along nos tempos
+`2s, 2s, 2s, 2s, 2s, 4s, 4s`. A faixa local está em
+`assets/audios/Evidências - Chitãozinho e Xororó - Karaokê - Karaokê Show Oficial (youtube).mp3`.
+Ao chegar a zero, o
 controller mantém `0 / CONCLUÍDA` por dois segundos e pede automaticamente ao robô um comentário curto e sarcástico sobre
 as habilidades de canto. O prompt permite o julgamento como bit teatral, mas
 proíbe inventar notas, afinação ou reações não informadas. Pausar, continuar,
-reiniciar, cancelar e registrar manualmente o resultado continuam disponíveis.
+reiniciar e cancelar também pausam, retomam, reiniciam e encerram o áudio.
+Registrar manualmente o resultado continua disponível.
 
 `MALA 3 — OBJETO PELO CHEIRO` é sempre a segunda escolha. A pessoa pega o objeto
 sem revelá-lo, cheira e tem 20 segundos para ajudar o público a adivinhar o que

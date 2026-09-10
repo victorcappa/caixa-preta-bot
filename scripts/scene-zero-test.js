@@ -1,4 +1,6 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 
 async function main() {
   const sceneZero = await import("../lib/scene-zero/state.js");
@@ -250,12 +252,26 @@ async function main() {
     "Gincana. Você tem 105 segundos. Traga exatamente uma chave, uma moeda e uma caneta. Os três objetos devem caber juntos em uma das suas mãos. Começar."
   );
   assert.equal(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE.id, "evidencias_objeto_microfone");
-  assert.equal(suitcaseGame.chooseGincanaDuration(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE), 20);
-  assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 20), /objeto como microfone/);
-  assert.doesNotMatch(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 20), /lanterna/i);
-  assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 20), /Evidências/);
-  assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 20), /20 segundos/);
-  assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 20), /público pode ajudar/i);
+  assert.equal(gincanaBank.SCENE_ZERO_EVIDENCIAS_INTRO_SECONDS, 5);
+  assert.equal(gincanaBank.SCENE_ZERO_EVIDENCIAS_LYRICS.reduce((total, line) => total + line.durationSeconds, 0), 18);
+  assert.equal(gincanaBank.SCENE_ZERO_EVIDENCIAS_DURATION_SECONDS, 23);
+  assert.deepEqual(gincanaBank.SCENE_ZERO_EVIDENCIAS_LYRICS.map((line) => line.durationSeconds), [2, 2, 2, 2, 2, 4, 4]);
+  assert.deepEqual(gincanaBank.sceneZeroEvidenciasFrameAt(0), { phase: "intro", activeDots: 1 });
+  assert.deepEqual(gincanaBank.sceneZeroEvidenciasFrameAt(4.2), { phase: "intro", activeDots: 5 });
+  assert.deepEqual(gincanaBank.sceneZeroEvidenciasFrameAt(5), { phase: "lyrics", lineIndex: 0, lineProgress: 0 });
+  assert.deepEqual(gincanaBank.sceneZeroEvidenciasFrameAt(7), { phase: "lyrics", lineIndex: 1, lineProgress: 0 });
+  assert.deepEqual(gincanaBank.sceneZeroEvidenciasFrameAt(15), { phase: "lyrics", lineIndex: 5, lineProgress: 0 });
+  assert.deepEqual(gincanaBank.sceneZeroEvidenciasFrameAt(19), { phase: "lyrics", lineIndex: 6, lineProgress: 0 });
+  assert.deepEqual(gincanaBank.sceneZeroEvidenciasFrameAt(23), { phase: "complete", lineIndex: 6, lineProgress: 1 });
+  assert.equal(suitcaseGame.chooseGincanaDuration(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE), 23);
+  assert.equal(suitcaseGame.sceneZeroGincanaDuration(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 20), 23);
+  assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 23), /objeto como microfone/);
+  assert.doesNotMatch(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 23), /lanterna/i);
+  assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 23), /Evidências/);
+  assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 23), /5 segundos de introdução/);
+  assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 23), /23 segundos/);
+  assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE, 23), /público pode ajudar/i);
+  assert.equal(fs.existsSync(path.join(process.cwd(), "assets", gincanaBank.SCENE_ZERO_EVIDENCIAS_AUDIO_FILE)), true);
   assert.equal(suitcaseGame.SCENE_ZERO_SECOND_CHALLENGE.id, "objeto_pelo_cheiro");
   assert.equal(suitcaseGame.sceneZeroSuitcaseChallenge(2).id, "evidencias_objeto_microfone");
   assert.equal(suitcaseGame.sceneZeroSuitcaseChallenge(3).id, "objeto_pelo_cheiro");

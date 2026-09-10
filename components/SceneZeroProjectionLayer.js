@@ -2,6 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { PLAY_UNLOCK_CONFIG, PLAY_UNLOCK_STATES, playUnlockBootLines } from "@/data/scene-zero-unlock";
+import {
+  SCENE_ZERO_EVIDENCIAS_AUDIO_FILE,
+  SCENE_ZERO_EVIDENCIAS_INTRO_SECONDS,
+  SCENE_ZERO_EVIDENCIAS_LYRICS,
+  sceneZeroEvidenciasFrameAt
+} from "@/data/scene-zero-gincanas";
 import { SCENE_ZERO_MOREL_BIOS_DURATION_MS, SCENE_ZERO_MOREL_BIOS_LINES, SCENE_ZERO_MOREL_BIOS_LINE_INTERVAL_MS } from "@/data/scene-zero-morel";
 import { SCENE_ZERO_SUITCASE_CUE_DURATION_MS, shouldShowGincanaTimer } from "@/lib/scene-zero/suitcaseGame";
 import BlinkingCursor from "./BlinkingCursor";
@@ -10,6 +16,7 @@ import styles from "./SceneZeroProjectionLayer.module.css";
 
 const AIRPORT_VIDEO = "/api/game-assets?file=videos%2Fglitch%2Fpainel-aeroporto.mp4";
 const TEA_FOR_TWO_AUDIO = "/api/game-assets?file=audios%2FDoris%20Day%20-%20Tea%20For%20Two%20(1950).mp3";
+const EVIDENCIAS_KARAOKE_AUDIO = `/api/game-assets?file=${encodeURIComponent(SCENE_ZERO_EVIDENCIAS_AUDIO_FILE)}`;
 
 function timerSeconds(timer, now) {
   if (timer?.status === "running" && timer.endsAt) {
@@ -21,6 +28,54 @@ function timerSeconds(timer, now) {
 
 function countdownSeconds(endsAt, now) {
   return endsAt ? Math.max(0, Math.ceil((Date.parse(endsAt) - now) / 1000)) : 10;
+}
+
+function timerElapsedSeconds(timer, now) {
+  const duration = Number(timer?.durationSeconds) || 0;
+  if (timer?.status === "running" && timer.endsAt) {
+    return Math.max(0, Math.min(duration, duration - ((Date.parse(timer.endsAt) - now) / 1000)));
+  }
+  if (timer?.status === "paused") {
+    return Math.max(0, Math.min(duration, duration - (Number(timer.remainingSeconds) || 0)));
+  }
+  if (["complete", "completed"].includes(timer?.status)) return duration;
+  return 0;
+}
+
+function EvidenciasKaraoke({ timer, now, seconds }) {
+  const elapsed = timerElapsedSeconds(timer, now);
+  const frame = sceneZeroEvidenciasFrameAt(elapsed);
+  const terminalLabel = timer?.status === "failed"
+    ? "FALHOU"
+    : (["complete", "completed"].includes(timer?.status) || frame.phase === "complete" ? "FIM" : "");
+
+  return (
+    <div className={styles.karaokeOverlay} aria-live="assertive">
+      <span className={styles.karaokeCountdown}>{seconds}</span>
+      {terminalLabel ? (
+        <strong className={styles.karaokeFinished}>{terminalLabel}</strong>
+      ) : frame.phase === "intro" ? (
+        <div className={styles.karaokeIntro} aria-label={`Introdução: ${frame.activeDots} de ${SCENE_ZERO_EVIDENCIAS_INTRO_SECONDS} segundos`}>
+          <small>INTRO</small>
+          <strong aria-hidden="true">
+            {Array.from({ length: SCENE_ZERO_EVIDENCIAS_INTRO_SECONDS }, (_, index) => (
+              <i className={index < frame.activeDots ? styles.karaokeDotActive : ""} key={index}>.</i>
+            ))}
+          </strong>
+        </div>
+      ) : (
+        <div className={styles.karaokeSingAlong}>
+          <small>EVIDÊNCIAS · CANTE JUNTO</small>
+          <div className={styles.karaokeLyrics}>
+            {SCENE_ZERO_EVIDENCIAS_LYRICS.slice(0, frame.lineIndex + 1).map((line, index) => (
+              <p className={index === frame.lineIndex ? styles.karaokeCurrentLine : ""} key={line.text}>{line.text}</p>
+            ))}
+          </div>
+          <div className={styles.karaokeProgress} aria-hidden="true"><span style={{ width: `${frame.lineProgress * 100}%` }} /></div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function UnlockProgressBar({ progress, showValue = true }) {
@@ -144,7 +199,8 @@ function PlayUnlockProjection({ unlock, now }) {
 
 export default function SceneZeroProjectionLayer({ sceneZero }) {
   const [now, setNow] = useState(Date.now());
-  const audioRef = useRef(null);
+  const teaAudioRef = useRef(null);
+  const evidenciasAudioRef = useRef(null);
   const tea = sceneZero?.teaForTwo;
   const timer = sceneZero?.timer;
   const collectionTimer = sceneZero?.collection?.activeCountdown;
@@ -159,7 +215,7 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
   }, []);
 
   useEffect(() => {
-    const audio = audioRef.current;
+    const audio = teaAudioRef.current;
     if (!audio) return;
 
     if (tea?.status !== "playing") {
@@ -172,6 +228,28 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
     audio.play().catch(() => {});
   }, [tea?.sequence, tea?.status]);
 
+  useEffect(() => {
+    const audio = evidenciasAudioRef.current;
+    const isEvidencias = gincana?.currentTask?.id === "evidencias_objeto_microfone";
+    if (!audio) return;
+
+    if (!isEvidencias || !["running", "paused"].includes(gincanaTimer?.status)) {
+      audio.pause();
+      audio.currentTime = 0;
+      return;
+    }
+
+    const targetTime = timerElapsedSeconds(gincanaTimer, Date.now());
+    if (Math.abs(audio.currentTime - targetTime) > 0.35) audio.currentTime = targetTime;
+
+    if (gincanaTimer.status === "paused") {
+      audio.pause();
+      return;
+    }
+
+    audio.play().catch(() => {});
+  }, [gincana?.currentTask?.id, gincanaTimer]);
+
   const gincanaCompletionAge = now - Date.parse(gincanaTimer?.completedAt || "");
   const gincanaTimerVisible = shouldShowGincanaTimer(gincanaTimer)
     && (!["complete", "completed"].includes(gincanaTimer?.status) || (gincanaCompletionAge >= 0 && gincanaCompletionAge < 2000));
@@ -181,6 +259,9 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
       ? collectionTimer
       : sceneZero?.stage === "singing" ? timer : null;
   const showTimer = ["running", "paused", "complete", "completed", "failed"].includes(visibleTimer?.status);
+  const showEvidenciasKaraoke = showTimer
+    && visibleTimer === gincanaTimer
+    && gincana?.currentTask?.id === "evidencias_objeto_microfone";
   const seconds = timerSeconds(visibleTimer, now);
   const airport = sceneZero?.stage === "airport" || sceneZero?.airportActive;
   const collapse = sceneZero?.stage === "collapse";
@@ -221,7 +302,7 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
     : [];
 
   useCountdownSound(seconds, {
-    active: Boolean(showTimer && ["running", "complete"].includes(visibleTimer?.status)),
+    active: Boolean(showTimer && !showEvidenciasKaraoke && ["running", "complete"].includes(visibleTimer?.status)),
     countdownKey: `scene-zero:${visibleTimer === gincanaTimer ? "gincana" : visibleTimer === collectionTimer ? "collection" : "singing"}:${visibleTimer?.sequence || 0}`
   });
   useCountdownSound(participantSeconds, {
@@ -231,7 +312,8 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
 
   return (
     <>
-      <audio preload="auto" ref={audioRef} src={TEA_FOR_TWO_AUDIO} />
+      <audio preload="auto" ref={teaAudioRef} src={TEA_FOR_TWO_AUDIO} />
+      <audio preload="auto" ref={evidenciasAudioRef} src={EVIDENCIAS_KARAOKE_AUDIO} />
       <PlayUnlockProjection now={now} unlock={sceneZero?.unlock} />
       {collapse ? (
         <div className={styles.airportContamination} aria-hidden="true">
@@ -243,10 +325,12 @@ export default function SceneZeroProjectionLayer({ sceneZero }) {
           <video autoPlay loop muted playsInline src={AIRPORT_VIDEO} />
         </div>
       ) : null}
-      {showTimer ? (
+      {showEvidenciasKaraoke ? (
+        <EvidenciasKaraoke now={now} seconds={seconds} timer={gincanaTimer} />
+      ) : showTimer ? (
         <div className={`${styles.timerOverlay} ${visibleTimer.status === "complete" ? styles.complete : ""}`} aria-live="assertive">
           {visibleTimer === collectionTimer ? <small>COLETA EM CURSO</small> : null}
-          {visibleTimer === gincanaTimer ? <small>{gincana?.currentTask?.id === "objeto_pelo_cheiro" ? "ADIVINHE O OBJETO · APENAS PELO CHEIRO" : "EVIDÊNCIAS · O PÚBLICO PODE AJUDAR"}</small> : null}
+          {visibleTimer === gincanaTimer ? <small>ADIVINHE O OBJETO · APENAS PELO CHEIRO</small> : null}
           <strong>{seconds}</strong>
           {["complete", "completed", "failed"].includes(visibleTimer.status) ? <span>{visibleTimer.status === "completed" ? "CONCLUÍDA" : visibleTimer.status === "failed" ? "FALHOU" : "FIM"}</span> : null}
         </div>

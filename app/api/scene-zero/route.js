@@ -354,7 +354,7 @@ async function activateSuitcase(suitcaseNumber, detail = "") {
   if (challengeTask) {
     const challenge = showState.controlSceneZero("gincana-draw", {
       task: challengeTask,
-      durationSeconds: 20
+      durationSeconds: challengeTask.durationMin
     }, { source: "system" });
     if (!challenge.applied) return challenge;
   }
@@ -371,7 +371,7 @@ async function activateSuitcase(suitcaseNumber, detail = "") {
 
   if (challengeTask) {
     const challengeTurn = {
-      text: buildGincanaPresentation(challengeTask, 20),
+      text: buildGincanaPresentation(challengeTask, challengeTask.durationMin),
       events: [],
       salience: []
     };

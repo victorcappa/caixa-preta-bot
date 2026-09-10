@@ -550,11 +550,14 @@ npm run dev</code></pre>
                 <article class="panel">
                   <h3>1a ESCOLHA / MALA 2 / EVIDENCIAS</h3>
                   <p>
-                    O desafio fixo pede que a pessoa descreva a lanterna a sua frente, use-a como
+                    O desafio fixo pede que a pessoa descreva o objeto a sua frente, use-o como
                     microfone e cante <em>Evidencias</em>, de Chitaozinho &amp; Xororo; o publico
-                    pode ajudar. A contagem de 20 segundos vale somente para a musica. Ao chegar a
-                    zero, o controller pede automaticamente um comentario curto e sarcastico sobre
-                    as habilidades de canto, sem inventar detalhes concretos da performance.
+                    pode ajudar. O botao de inicio dispara junto o audio e o timer de 23 segundos.
+                    Nos primeiros cinco segundos, a projecao acrescenta um ponto por segundo; em
+                    seguida, revela os sete versos como sing-along nos tempos 2s, 2s, 2s, 2s, 2s,
+                    4s e 4s. Ao chegar a zero, o controller pede automaticamente um comentario
+                    curto e sarcastico sobre as habilidades de canto, sem inventar detalhes
+                    concretos da performance.
                   </p>
                 </article>
 
@@ -569,24 +572,23 @@ npm run dev</code></pre>
                 </article>
 
                 <article class="panel">
-                  <h3>3a ESCOLHA / MALA 1 / NOVA BIOS MOREL</h3>
+                  <h3>3a ESCOLHA / MALA 1 / NOVA BIOS</h3>
                   <p>
                     Nao inicia <code>verdade_ou_bolo</code> nem Instagram. Depois do aviso com o
-                    numero da mala, o robo sofre um glitch curto e a projecao carrega uma nova BIOS
-                    por 30 segundos. A tela mostra um trecho breve de <em>A invencao de Morel</em>
-                    e fragmentos dramaturgicos sobre copia, repeticao, imagem e presenca presa no
-                    dispositivo. O operador pode recarregar ou interromper a BIOS.
+                    numero da mala, o robo sofre um glitch crescente e a projecao carrega uma BIOS
+                    com fragmentos corrompidos do texto-base misturados a falas do piloto. Titulo e
+                    autor nao aparecem. Aos 30 segundos, tudo fica preto e permanece assim ate o
+                    operador interromper, finalizar ou reiniciar o fluxo.
                   </p>
                 </article>
               </div>
 
               <p>
                 Ao iniciar uma mala diferente, a mala anterior e interrompida: jogo ativo,
-                timer do desafio, BIOS Morel e glitch associado nao continuam em paralelo.
-                Cada escolha mostra por dez segundos <code>VA ATE A MALA INDICADA</code>, o numero
-                selecionado e <code>A LUZ VAI INDICAR</code>. Nas duas primeiras malas, o desafio
-                so entra na fila do chatbot depois que esse aviso sai da frente. Na ultima, o
-                aviso da lugar ao glitch e ao carregamento da nova BIOS.
+                timer do desafio, BIOS final e glitch associado nao continuam em paralelo.
+                Cada escolha mostra por dez segundos somente o numero selecionado. Nas duas
+                primeiras malas, o desafio so entra na fila do chatbot depois que o numero sai da
+                frente. Na ultima, ele da lugar ao glitch e ao carregamento da nova BIOS.
               </p>
 
               <pre><code>npm run test:suitcases</code></pre>

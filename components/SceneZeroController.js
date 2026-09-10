@@ -384,7 +384,7 @@ export default function SceneZeroController() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "gincana-complete",
-        detail: "A contagem de 20 segundos de Evidências chegou ao fim. Faça agora o comentário sarcástico sobre a cantoria."
+        detail: "A faixa de 23 segundos de Evidências chegou ao fim. Faça agora o comentário sarcástico sobre a cantoria."
       })
     })
       .then(async (response) => {
@@ -404,7 +404,7 @@ export default function SceneZeroController() {
         <Readout label="DESAFIO FIXO" value={challenge.instruction} />
         <Readout label="DIFICULDADE / OBSERVAÇÕES" value={`${challenge.difficulty} · ${challenge.notes}`} />
         <div className={`${styles.timer} ${active && gincanaTimer.status === "complete" ? styles.timerComplete : ""}`}>{active ? gincanaSeconds ?? "—" : "—"}</div>
-        <strong className={styles.timerStatus}>TEMPO: 20s<br />{active ? (gincanaTimer.status || "idle").toUpperCase() : "AGUARDANDO A MALA"}</strong>
+        <strong className={styles.timerStatus}>TEMPO: {challenge.durationMin}s<br />{active ? (gincanaTimer.status || "idle").toUpperCase() : "AGUARDANDO A MALA"}</strong>
         <Button primary onClick={() => sceneAction("gincana-timer-start")} pending={pending || !active}>{startLabel}</Button>
         <Button onClick={() => sceneAction("gincana-timer-pause")} pending={pending || !active || gincanaTimer.status !== "running"}>PAUSAR</Button>
         <Button onClick={() => sceneAction("gincana-timer-resume")} pending={pending || !active || gincanaTimer.status !== "paused"}>CONTINUAR</Button>
@@ -546,7 +546,7 @@ export default function SceneZeroController() {
             <h3>1ª ESCOLHA — MALA 2 / EVIDÊNCIAS</h3>
             <Button onClick={() => setOpenSuitcaseControls((current) => current === 2 ? null : 2)} pressed={openSuitcaseControls === 2}>{openSuitcaseControls === 2 ? "COMPRIMIR" : "CONTROLES"}</Button>
             <div className={styles.suitcaseDetails} hidden={openSuitcaseControls !== 2}>
-            {challengeControls(SCENE_ZERO_FIRST_CHALLENGE, "INICIAR EVIDÊNCIAS / 20s")}
+            {challengeControls(SCENE_ZERO_FIRST_CHALLENGE, "INICIAR EVIDÊNCIAS / 23s")}
             </div>
           </section>
 
