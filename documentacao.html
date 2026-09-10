@@ -548,38 +548,36 @@ npm run dev</code></pre>
 
               <div class="panels">
                 <article class="panel">
-                  <h3>1a ESCOLHA / MALA 2 / EVIDENCIAS</h3>
+                  <h3>1a ESCOLHA / MALA 2 / DESAFIO COM OBJETO</h3>
                   <p>
-                    O desafio fixo pede que a pessoa descreva o objeto a sua frente, use-o como
-                    microfone e cante <em>Evidencias</em>, de Chitaozinho &amp; Xororo; o publico
-                    pode ajudar. O botao de inicio dispara junto o audio e o timer de 24 segundos, com a faixa levemente desacelerada.
-                    Nos primeiros cinco segundos, a projecao acrescenta um ponto por segundo; em
-                    seguida, revela os sete versos como sing-along nos tempos 2s, 2s, 2s, 2s, 2s,
-                    4s e 4s. Ao chegar a zero, o controller pede automaticamente um comentario
-                    curto e sarcastico sobre as habilidades de canto, sem inventar detalhes
-                    concretos da performance.
+                    O robo sorteia um pedido de objeto ou conjunto de objetos que o participante
+                    deve conseguir com ajuda da plateia. O pedido varia a cada execucao. Todo
+                    desafio inclui uma segunda etapa obrigatoria: todos fingem estar mortos nas
+                    cadeiras e no chao por 30 segundos. A projecao separa visualmente as duas
+                    etapas, o alvo e o cronometro para evitar sobreposicoes.
                   </p>
                 </article>
 
                 <article class="panel">
-                  <h3>2a ESCOLHA / MALA 3 / OBJETO PELO CHEIRO</h3>
+                  <h3>2a ESCOLHA / MALA 3 / FORCA</h3>
                   <p>
-                    A pessoa pega o objeto sem revela-lo, cheira e tem 20 segundos para ajudar o
-                    publico a adivinhar qual e o objeto descrevendo apenas o cheiro. O objeto nao
-                    pode ser mostrado nem nomeado. O mesmo timer oferece inicio, pausa, continuacao,
-                    reinicio, cancelamento e registro do resultado.
+                    A forca comeca automaticamente depois do aviso da mala e abre uma contagem de
+                    60 segundos. Acertar a palavra encerra em vitoria; quatro erros ou o fim do
+                    tempo encerram em derrota. Vitoria e derrota sao reconhecidas sem botao manual
+                    e cada resultado dispara seu proprio efeito sonoro.
                   </p>
                 </article>
 
                 <article class="panel">
-                  <h3>3a ESCOLHA / MALA 1 / NOVA BIOS</h3>
+                  <h3>3a ESCOLHA / MALA 1 / FIM DO TUTORIAL</h3>
                   <p>
                     Nao inicia <code>verdade_ou_bolo</code> nem Instagram. Depois do aviso com o
-                    numero da mala, o robo sofre um glitch crescente e a projecao carrega uma BIOS
+                    numero da mala, a barra e concluida e a projecao mostra
+                    <code>FIM DO TUTORIAL</code>. Somente depois dessa frase o robo sofre um glitch
+                    crescente e a projecao carrega uma BIOS
                     com fragmentos corrompidos do texto-base misturados a falas do piloto. Titulo e
                     autor nao aparecem. Aos 30 segundos, tudo fica preto e permanece assim ate o
-                    operador finalizar ou reiniciar o fluxo. Ao finalizar essa terceira mala, a
-                    barra chega primeiro a 100% e so depois aparece <code>FIM DO TUTORIAL</code>.
+                    operador reiniciar o fluxo.
                   </p>
                 </article>
               </div>
@@ -589,17 +587,16 @@ npm run dev</code></pre>
                 timer do desafio, BIOS final e glitch associado nao continuam em paralelo.
                 Cada escolha gira os numeros como uma maquina de caca-niquel e entao mostra
                 <code>MALA</code> acima do numero selecionado. Nas duas
-                primeiras malas, o desafio so entra na fila do chatbot depois que o numero sai da
-                frente. Na ultima, ele da lugar ao glitch e ao carregamento da nova BIOS.
+                primeiras malas, o desafio so aparece depois que o numero sai da frente. Na ultima,
+                ele da lugar primeiro ao fim do tutorial e depois ao glitch e a nova BIOS.
               </p>
 
               <pre><code>npm run test:suitcases</code></pre>
 
               <p class="note">
                 A escolha parece aleatoria em cena, mas o software sempre protege a sequencia
-                MALA 2 → MALA 3 → MALA 1. A primeira mala e escolhida ao entrar na etapa; depois
-                do comentario de Evidencias, a Mala 3 e escolhida automaticamente. O operador
-                libera a ultima pelo botao de proxima mala. Os
+                MALA 2 → MALA 3 → MALA 1. O operador chama a proxima mala, enquanto a forca e o
+                encerramento da ultima mala iniciam automaticamente. Os
                 comandos <code>/mala</code> continuam disponiveis para recuperacao do
                 <code>SuitcaseDirector</code> legado.
               </p>

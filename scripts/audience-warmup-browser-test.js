@@ -81,7 +81,8 @@ try {
   // Fluxo completo + TAPÃO: briefing, sorteio visual, dois turnos e bloqueio de um segundo jogo.
   await bootToWarmup(context.request, { waitForBriefing: true });
   const briefing = (await snapshot(context.request)).audienceWarmup.history.map((entry) => entry.text);
-  assert.deepEqual(briefing.slice(-5), ["ANTES DAS PERGUNTAS, UM TESTE.", "FORMEM DUPLAS.", "UM JOGO SERÁ SORTEADO.", "SIGAM AS INSTRUÇÕES.", "NÃO COMPLIQUEM."]);
+  assert.deepEqual(briefing.slice(-4), ["ANTES DAS PERGUNTAS, UM TESTE.", "FORMEM DUPLAS.", "UM JOGO SERÁ SORTEADO.", "SIGAM AS INSTRUÇÕES."]);
+  assert.equal(briefing.some((line) => /NÃO COMPLIQUEM/.test(line)), false);
   await post(context.request, "minigame-draw");
   await display.getByText("SORTEANDO TESTE", { exact: true }).waitFor();
   await display.screenshot({ path: "/private/tmp/caixa-preta-warmup-draw.png" });

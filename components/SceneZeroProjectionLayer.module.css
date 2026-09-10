@@ -58,15 +58,20 @@
 .suitcaseCueOverlay { z-index: 114; display: grid; place-content: center; justify-items: center; gap: clamp(18px, 3vh, 42px); color: #fff; background: #030303; font-family: var(--font-mono, monospace); text-align: center; }
 .suitcaseCueOverlay > span { min-height: 1em; color: #fff; font-size: clamp(28px, 5vw, 76px); font-weight: 900; letter-spacing: .18em; }
 .suitcaseCueOverlay strong { color: #fff; font-size: min(52vw, 52vh); line-height: .78; text-shadow: 6px 6px 0 #00ff66; }
-.physicalChallengeOverlay { z-index: 111; display: grid; grid-template-rows: auto 1fr auto; gap: clamp(18px, 4vh, 52px); overflow: hidden; padding: clamp(30px, 5vw, 78px); color: #fff; background: #020202; font-family: var(--font-mono, monospace); }
+.physicalChallengeOverlay { z-index: 111; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: clamp(14px, 2.4vh, 28px); overflow: hidden; padding: clamp(118px, 14vh, 152px) clamp(30px, 5vw, 78px) clamp(24px, 4vh, 48px); color: #fff; background: #020202; font-family: var(--font-mono, monospace); }
 .physicalChallengeOverlay::before { position: absolute; inset: 0; content: ""; opacity: .2; background: repeating-linear-gradient(0deg, transparent 0 5px, rgba(0,255,102,.18) 5px 6px); }
 .physicalChallengeOverlay > * { position: relative; }
 .physicalChallengeOverlay header { display: flex; justify-content: space-between; gap: 20px; color: #00ff66; font-size: clamp(16px, 2vw, 30px); letter-spacing: .12em; }
-.physicalChallengeOverlay p { align-self: center; max-width: 1300px; margin: 0 auto; font-size: clamp(42px, 7.5vw, 118px); font-weight: 950; line-height: .9; text-align: center; text-wrap: balance; }
-.physicalChallengeReadout { display: grid; grid-template-columns: 1fr auto; gap: clamp(28px, 6vw, 100px); align-items: end; }
+.physicalChallengeBody { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(210px, 25vw); gap: clamp(22px, 4vw, 64px); align-items: stretch; }
+.physicalChallengeSteps { min-height: 0; display: grid; grid-template-rows: repeat(2, minmax(0, 1fr)); gap: clamp(12px, 2vh, 24px); }
+.physicalChallengeSteps article { min-height: 0; display: grid; align-content: center; gap: clamp(8px, 1.2vh, 14px); padding: clamp(16px, 2.2vw, 30px); border: 1px solid #274d35; background: rgba(0, 20, 8, .72); opacity: .48; }
+.physicalChallengeSteps article[data-active="true"] { border-color: #00ff66; opacity: 1; box-shadow: inset 5px 0 0 #00ff66; }
+.physicalChallengeSteps small { color: #00ff66; font-size: clamp(13px, 1.25vw, 20px); font-weight: 900; letter-spacing: .12em; }
+.physicalChallengeSteps p { margin: 0; font-size: clamp(24px, 3.25vw, 52px); font-weight: 950; line-height: .98; text-wrap: balance; }
+.physicalChallengeReadout { display: grid; grid-template-rows: auto 1fr; align-items: stretch; padding: clamp(16px, 2vw, 28px); border: 1px solid #274d35; background: rgba(0, 10, 4, .78); }
 .physicalChallengeReadout > span { display: grid; color: #8cae98; font-size: clamp(16px, 2vw, 28px); letter-spacing: .16em; }
-.physicalChallengeReadout > span strong { color: #fff; font-size: clamp(84px, 15vw, 230px); line-height: .75; }
-.physicalChallengeReadout time { color: #fff; font-size: clamp(130px, 25vw, 380px); font-weight: 950; line-height: .65; }
+.physicalChallengeReadout > span strong { color: #fff; font-size: clamp(58px, 8vw, 126px); line-height: .8; }
+.physicalChallengeReadout time { align-self: end; justify-self: end; color: #fff; font-size: clamp(92px, 16vw, 245px); font-weight: 950; line-height: .7; }
 .physicalChallengeStatus { justify-self: center; color: #00ff66; font-size: clamp(18px, 2.4vw, 36px); letter-spacing: .14em; }
 .physicalChallengeResult { position: absolute; z-index: 2; inset: 0; display: grid; place-content: center; justify-items: center; gap: 20px; color: #ff3155; background: rgba(0,0,0,.95); text-align: center; }
 .physicalChallengeResult strong { font-size: clamp(100px, 22vw, 330px); line-height: .75; }
@@ -75,7 +80,7 @@
 .physicalChallengeResult[data-success="true"] { color: #00ff66; }
 .physicalChallengeUrgent { color: #fff; background: #260006; animation: physicalAlarm .24s steps(2) infinite; }
 .physicalChallengeUrgent .physicalChallengeReadout time { color: #ff3155; text-shadow: 8px 8px 0 #fff; animation: physicalNumber .5s steps(2) infinite; }
-.suitcaseHangmanOverlay { z-index: 112; display: grid; grid-template-rows: auto 1fr auto auto; gap: clamp(18px, 3vh, 40px); overflow: hidden; padding: clamp(32px, 5vw, 76px); color: #00ff66; background: #010302; font-family: var(--font-mono, monospace); transition: filter 180ms, transform 180ms; }
+.suitcaseHangmanOverlay { z-index: 112; display: grid; grid-template-rows: auto 1fr auto auto; gap: clamp(18px, 3vh, 40px); overflow: hidden; padding: clamp(118px, 14vh, 152px) clamp(32px, 5vw, 76px) clamp(26px, 4vh, 54px); color: #00ff66; background: #010302; font-family: var(--font-mono, monospace); transition: filter 180ms, transform 180ms; }
 .suitcaseHangmanOverlay > *:not(.hangmanInterference) { position: relative; z-index: 1; }
 .suitcaseHangmanOverlay header { display: flex; justify-content: space-between; gap: 24px; align-items: baseline; font-size: clamp(16px, 2vw, 30px); letter-spacing: .12em; }
 .suitcaseHangmanOverlay header strong { color: #fff; font-size: clamp(24px, 4vw, 62px); }

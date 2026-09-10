@@ -529,39 +529,42 @@ O bloco `JOGO DAS MALAS` mantém o `SuitcaseDirector` existente para recuperaç�
 e compatibilidade, mas organiza a dramaturgia atual em três cartões. Ao entrar
 na etapa, o robô explica rapidamente o jogo, anuncia que escolherá uma mala
 aleatoriamente e só então inicia a roleta, enquanto o software protege a ordem
-temporária `MALA 1 → MALA 2 → MALA 3`. A passagem seguinte fica disponível no
+fixa `MALA 2 → MALA 3 → MALA 1`. A passagem seguinte fica disponível no
 botão `ROBÔ ESCOLHER PRÓXIMA MALA`. A ordem completa nunca entra na fala pública.
 Cada escolha gira os números como caça-níquel e depois mostra `MALA` acima do
 número sorteado. Enquanto esse aviso está na frente, nenhuma fala da escolha ou
 do desafio entra na fila pública;
 o chatbot só começa a escrever depois que os dez segundos terminam.
 
-`MALA 1 — DESAFIO FÍSICO` usa a biblioteca declarativa de 12 testes em
-`data/scene-zero-physical-challenges.js`. A projeção destaca ordem, alvo e
-cronômetro; os últimos três segundos piscam de forma agressiva e o zero encerra
-automaticamente. O operador seleciona ou pula para outro desafio, inicia, pausa,
-continua, reinicia, acrescenta cinco segundos e marca sucesso ou falha.
+`MALA 2 — DESAFIO COM OBJETO` usa a biblioteca declarativa de 12 pedidos em
+`data/scene-zero-physical-challenges.js`. O objeto ou conjunto de objetos varia e
+deve ser obtido com ajuda da plateia. Todo sorteio inclui uma segunda etapa
+obrigatória: todos fingem estar mortos nas cadeiras e no chão por 30 segundos.
+A projeção separa as duas etapas do cronômetro em colunas para não sobrepor
+instrução, alvo, barra superior e contagem.
 
-`MALA 2 — FORCA / QUEDA` reutiliza o motor de forca de `lib/activities.js`, agora
+`MALA 3 — FORCA / QUEDA` reutiliza o motor de forca de `lib/activities.js`, agora
 adaptado a palavras e expressões do espetáculo. A biblioteca fica em
-`data/scene-zero-hangman-words.js`. Quatro erros percorrem `ESTÁVEL`, `ALERTA`,
+`data/scene-zero-hangman-words.js`. A partida começa automaticamente após o aviso
+da mala e dura 60 segundos. Acertar a palavra encerra em vitória; quatro erros ou
+o fim do tempo encerram em derrota, com efeito sonoro próprio para cada resultado.
+Os quatro erros percorrem `ESTÁVEL`, `ALERTA`,
 `PERDA DE ALTITUDE`, `FALHA` e `IMPACTO`; ruído, deslocamento e degradação visual
 aumentam a cada erro. Vitória mostra `REGISTRO RECUPERADO`; derrota revela a
 palavra e termina em `IMPACTO`.
 
-`MALA 3 — NOVA BIOS` mantém o glitch crescente, os trechos corrompidos, sons,
-timings e blackout anteriores. Depois dos dez segundos que mostram o número da
-mala, a sequência existente começa automaticamente e termina em preto.
+`MALA 1 — FIM DO TUTORIAL` completa o jogo automaticamente depois dos dez
+segundos que mostram o número. A projeção exibe `FIM DO TUTORIAL` primeiro; só
+depois a sequência de glitch crescente, BIOS corrompida e blackout começa.
 
-A configuração anterior `MALA 2 → MALA 3 → MALA 1`, com Evidências e objeto
+A configuração anterior, com Evidências e objeto
 pelo cheiro, não foi apagada. Ela está documentada e exportada por
 `data/archive/scene-zero-suitcases-legacy.js`; as falas permanecem em
 `data/scene-zero-gincanas.js` e os assets continuam em seus locais originais.
 O percurso temporário completo pode ser validado com
 `npm run test:scene-zero:suitcases:browser`, com o servidor local ativo.
-Ao finalizar essa terceira mala, a barra completa primeiro; somente depois de
-atingir 100% a projeção mostra `FIM DO TUTORIAL`. Essa frase não é exibida antes
-nem durante o glitch.
+Na última mala, a barra completa primeiro e então a projeção mostra
+`FIM DO TUTORIAL`. O glitch só começa depois que essa frase termina.
 
 Nos controles gerais de Instagram, o botão de Robson resolve a entrada `Robinson Rogério` de
 `data/instagram-participants.json` (`@rogerio.robinson`); Janaína resolve

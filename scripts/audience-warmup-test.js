@@ -48,6 +48,7 @@ for (const prompt of AUDIENCE_WARMUP_PROMPTS) {
   assert.doesNotMatch(completeText, /\b(?:político X|candidato A|um determinado político|uma substância)\b/iu, `placeholder ou suavização proibida: ${prompt.id}`);
   assert.doesNotMatch(completeText, /\b(?:imagine|imaginem|imaginário|imaginária|invisível|apocalipse|cachorro ou gato|mais humano|finjam|como se)\b/iu, `situação fictícia ou pergunta genérica proibida: ${prompt.id}`);
 }
+assert.equal(AUDIENCE_WARMUP_PROMPTS.some((prompt) => /mora em s[aã]o paulo fica de p[eé]/iu.test(prompt.text)), false);
 for (const action of AUDIENCE_WARMUP_ACTIONS) {
   assert(AUDIENCE_WARMUP_PROMPTS.some((prompt) => prompt.action === action.id), `ação sem prompt: ${action.id}`);
   const generated = chooseAudienceWarmupPrompt({ action: action.id, random: () => 0 });
@@ -140,7 +141,8 @@ assert.equal(clampAudienceWarmupInterval(10), 800);
 assert.equal(clampAudienceWarmupInterval(99999), 15000);
 
 assert.deepEqual(AUDIENCE_WARMUP_MINIGAMES.map((game) => game.name), ["TAPÃO", "PISCADA", "SERINHO"]);
-assert.deepEqual(AUDIENCE_WARMUP_MINIGAME_INTRO, ["ANTES DAS PERGUNTAS, UM TESTE.", "FORMEM DUPLAS.", "UM JOGO SERÁ SORTEADO.", "SIGAM AS INSTRUÇÕES.", "NÃO COMPLIQUEM."]);
+assert.deepEqual(AUDIENCE_WARMUP_MINIGAME_INTRO, ["ANTES DAS PERGUNTAS, UM TESTE.", "FORMEM DUPLAS.", "UM JOGO SERÁ SORTEADO.", "SIGAM AS INSTRUÇÕES."]);
+assert.doesNotMatch(AUDIENCE_WARMUP_MINIGAME_INTRO.join(" "), /NÃO COMPLIQUEM/);
 for (const instruction of [...AUDIENCE_WARMUP_MINIGAME_INTRO, ...AUDIENCE_WARMUP_MINIGAMES.flatMap((game) => game.rules)]) {
   assert.equal(audienceWarmupHasForbiddenLanguage(instruction), false, `linguagem de pedido proibida no minigame: ${instruction}`);
 }
@@ -250,7 +252,10 @@ assert.match(sceneZeroProjection, /SORTEANDO TESTE/);
 assert.doesNotMatch(sceneZeroProjection, />10 SEGUNDOS</, "contagem do participante não deve repetir a duração por escrito");
 assert.match(sceneZeroProjection, /suitcaseCueFrame\.phase === "reveal" \? "MALA"/, "revelação deve mostrar MALA acima do número");
 assert.match(sceneZeroProjection, /allVisibleMorelLines\.slice\(-10\)/, "BIOS final deve acompanhar as linhas mais recentes");
+assert.match(sceneZeroProjection, /hangman\.status === "won"\) robotSoundEngine\.success\(\)/, "vitória da forca deve disparar som de sucesso");
+assert.match(sceneZeroProjection, /else robotSoundEngine\.error\(\)/, "derrota da forca deve disparar som de erro");
 assert.match(sceneZeroRoute, /O jogo é simples:[\s\S]*Vou escolher uma mala aleatoriamente\./, "primeira mala deve ser precedida de explicação e anúncio");
-assert.match(sceneZeroRoute, /scene-zero-evidencias-comment-next[\s\S]*activateSuitcase\(3\)/, "Evidências deve avançar para a Mala 3 depois do comentário");
+assert.match(sceneZeroRoute, /scheduleHangmanStart[\s\S]*controlSceneZero\("hangman-start"/, "a forca deve iniciar automaticamente");
+assert.match(sceneZeroRoute, /FIM DO TUTORIAL|tutorialCompleteDurationMs/, "a Mala 1 deve terminar o tutorial antes do glitch");
 
 console.log(`audience warmup tests passed (${AUDIENCE_WARMUP_PROMPTS.length} prompts)`);

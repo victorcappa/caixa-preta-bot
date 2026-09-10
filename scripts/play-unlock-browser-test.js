@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
+import { AUDIENCE_WARMUP_PROMPTS } from "../data/audience-warmup-prompts.js";
 
 const BASE_URL = process.env.CAIXA_PRETA_URL || "http://localhost:3000";
 
@@ -24,6 +25,16 @@ async function waitForUnlock(request, predicate, timeoutMs = 10000) {
     await new Promise((resolve) => setTimeout(resolve, 80));
   }
   throw new Error("timeout waiting for unlock state");
+}
+
+async function waitForState(request, predicate, timeoutMs = 10000) {
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < timeoutMs) {
+    const snapshot = await state(request);
+    if (predicate(snapshot)) return snapshot;
+    await new Promise((resolve) => setTimeout(resolve, 80));
+  }
+  throw new Error("timeout waiting for application state");
 }
 
 const browser = await chromium.launch({ headless: true });
@@ -66,7 +77,7 @@ try {
   await participantBlock.getByRole("heading", { name: "ESCOLHER PARTICIPANTE" }).waitFor();
   assert.equal(await participantBlock.evaluate((element) => element.nextElementSibling?.id), "scene-zero-suitcases");
   await operator.getByRole("heading", { name: "JOGO DAS MALAS" }).waitFor();
-  const suitcaseOne = operator.getByRole("heading", { name: "MALA 3 / BUG + BIOS CORROMPIDA" }).locator("..");
+  const suitcaseOne = operator.getByRole("heading", { name: "MALA 1 / FIM DO TUTORIAL" }).locator("..");
   const reloadMorelBios = suitcaseOne.getByRole("button", { name: "RECARREGAR GLITCH + BIOS", exact: true });
   assert.equal(await reloadMorelBios.isVisible(), false, "detalhes das malas devem iniciar comprimidos");
   await suitcaseOne.getByRole("button", { name: "CONTROLES", exact: true }).click();
@@ -140,29 +151,36 @@ try {
   await new Promise((resolve) => setTimeout(resolve, 900));
   await display.screenshot({ path: "/private/tmp/caixa-preta-human-verification-title.png" });
 
-  snapshot = await waitForUnlock(context.request, (value) => value.status === "WARMING_AUDIENCE", 7000);
+  snapshot = await waitForUnlock(context.request, (value) => value.status === "WAITING_FOR_AUDIENCE", 7000);
   assert.equal(snapshot.sceneZero.unlock.progress, 78);
   assert.equal(snapshot.sceneZero.unlock.verificationTitleSequence, 1);
-  assert.equal(snapshot.publicMessage.content, "Quem veio de transporte público bate palmas.");
+  assert.equal(snapshot.publicMessage.content, "ANTES DAS PERGUNTAS, UM TESTE.");
   await verificationTitle.waitFor({ state: "detached" });
   const compactProgress = display.getByRole("complementary", { name: "Progresso" });
   await compactProgress.waitFor();
   assert.equal(await compactProgress.getByText("DESBLOQUEAR A PEÇA", { exact: true }).count(), 0);
   assert.equal(await compactProgress.getByText("VERIFICAÇÃO HUMANA EM ANDAMENTO", { exact: true }).count(), 0);
   await display.getByText(snapshot.publicMessage.content, { exact: true }).waitFor();
+  const skipMinigame = await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "minigame-skip" } });
+  assert.equal(skipMinigame.ok(), true);
+  snapshot = await waitForState(context.request, (value) => value.audienceWarmup.phase === "questions" && value.audienceWarmup.previewPromptId, 10000);
+  const firstLibraryPrompt = AUDIENCE_WARMUP_PROMPTS.find((prompt) => prompt.id === snapshot.audienceWarmup.previewPromptId);
+  assert(firstLibraryPrompt);
+  await display.getByText(firstLibraryPrompt.text, { exact: true }).waitFor();
 
-  await unlockPanel.getByRole("button", { name: "CONFIRMAR AÇÃO +4%", exact: true }).click();
+  await unlockPanel.getByRole("button", { name: `CONFIRMAR AÇÃO +${firstLibraryPrompt.progressValue}%`, exact: true }).click();
   snapshot = await waitForUnlock(context.request, (value) => Boolean(value.pendingProgress));
   assert.equal(snapshot.sceneZero.unlock.progress, 78, "o feedback técnico deve aparecer antes de a barra subir");
   assert(snapshot.sceneZero.unlock.technicalFeedback);
-  snapshot = await waitForUnlock(context.request, (value) => value.progress === 82);
-  assert(snapshot.sceneZero.unlock.scoredActionIds.includes("transport-01"));
+  const firstProgress = 78 + firstLibraryPrompt.progressValue;
+  snapshot = await waitForUnlock(context.request, (value) => value.progress === firstProgress);
+  assert(snapshot.sceneZero.unlock.scoredActionIds.includes(firstLibraryPrompt.id));
 
-  const manualText = "Quem ouviu a máquina bate palmas.";
+  const manualText = "FAÇAM UMA ONDA DA ESQUERDA PARA A DIREITA.";
   const warmupResponse = await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "send", text: manualText, progressValue: 5 } });
   assert.equal(warmupResponse.ok(), true);
   await unlockPanel.getByRole("button", { name: "CONFIRMAR AÇÃO +5%", exact: true }).click();
-  snapshot = await waitForUnlock(context.request, (value) => value.progress === 87);
+  snapshot = await waitForUnlock(context.request, (value) => value.progress === firstProgress + 5);
 
   await unlock(context.request, "set-progress", { progress: 84 });
   snapshot = await waitForUnlock(context.request, (value) => value.progress === 84);
@@ -182,7 +200,7 @@ try {
   await unlockPanel.getByRole("button", { name: "COMPLETAR BARRA", exact: true }).click();
   snapshot = await waitForUnlock(context.request, (value) => value.progress > 84 && value.progress < 100);
   assert.equal(snapshot.sceneZero.unlock.animation.kind, "complete", "completar barra deve animar a partir do percentual atual");
-  await display.getByText("CAIXA PRETA .................... PRONTA", { exact: true }).waitFor({ timeout: 8000 });
+  await display.getByText("HUMANIDADE SUFICIENTE.", { exact: true }).waitFor({ timeout: 8000 });
   assert.equal(await display.getByText("PEÇA DESBLOQUEADA", { exact: true }).count(), 0);
   await display.screenshot({ path: "/private/tmp/caixa-preta-play-unlocked.png" });
   snapshot = await waitForUnlock(context.request, (value) => value.status === "UNLOCKED");
@@ -202,7 +220,7 @@ try {
     snapshot = await state(context.request);
   }
   await unlock(context.request, "start-warmup");
-  await waitForUnlock(context.request, (value) => value.status === "WARMING_AUDIENCE", 7000);
+  await waitForUnlock(context.request, (value) => value.status === "WAITING_FOR_AUDIENCE", 7000);
   await unlock(context.request, "unlock-now");
   snapshot = await waitForUnlock(context.request, (value) => value.status === "UNLOCKED");
   assert.equal(snapshot.sceneZero.unlock.onPlayUnlocked.source, "operator-force");

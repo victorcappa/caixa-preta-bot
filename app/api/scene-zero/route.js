@@ -19,6 +19,7 @@ import { getSceneZeroHangmanWord } from "@/data/scene-zero-hangman-words";
 import { chooseSceneZeroHangmanWord } from "@/lib/scene-zero/suitcaseHangman";
 import { buildDataCollectionSystemPrompt } from "@/prompts/dataCollection";
 import { SCENE_ZERO_MOREL_BIOS_DURATION_MS } from "@/data/scene-zero-morel";
+import { PLAY_UNLOCK_CONFIG } from "@/data/scene-zero-unlock";
 import { PUBLIC_TYPE_INTERVAL_MS } from "@/lib/messageTiming";
 
 export const dynamic = "force-dynamic";
@@ -279,16 +280,47 @@ function scheduleSuitcaseDialogue(selectionSequence, selectedAt, turns) {
   }, delayMs);
 }
 
-function scheduleMorelBios(selectionSequence, selectedAt) {
+function suitcaseCueDelay(selectedAt) {
   const selectedAtMs = Date.parse(selectedAt || "");
   const elapsedMs = Number.isFinite(selectedAtMs) ? Math.max(0, Date.now() - selectedAtMs) : 0;
-  const delayMs = Math.max(0, SCENE_ZERO_SUITCASE_CUE_DURATION_MS - elapsedMs);
+  return Math.max(0, SCENE_ZERO_SUITCASE_CUE_DURATION_MS - elapsedMs);
+}
 
+function scheduleHangmanStart(selectionSequence, selectedAt) {
   setTimeout(() => {
     const current = showState.snapshot().sceneZero.suitcaseGame;
-    if (current?.suitcaseSelectionSequence !== selectionSequence || current.currentSuitcase !== 3) return;
-    beginMorelBiosSequence(selectionSequence, "system");
-  }, delayMs);
+    if (
+      current?.suitcaseSelectionSequence !== selectionSequence
+      || current.currentSuitcase !== 3
+      || current.hangman?.status !== "ready"
+    ) return;
+    showState.controlSceneZero("hangman-start", {}, { source: "system" });
+  }, suitcaseCueDelay(selectedAt));
+}
+
+function scheduleTutorialEnd(selectionSequence, selectedAt) {
+  setTimeout(async () => {
+    const before = showState.snapshot().sceneZero;
+    const current = before.suitcaseGame;
+    if (current?.suitcaseSelectionSequence !== selectionSequence || current.currentSuitcase !== 1) return;
+
+    const completesProgressBar = Number(before.unlock?.progress || 0) < 100;
+    const finished = await finishSceneZeroSuitcaseGame();
+    if (!finished.applied) return;
+    const tutorialDurationMs = (completesProgressBar ? PLAY_UNLOCK_CONFIG.completeAnimationMs : 0)
+      + PLAY_UNLOCK_CONFIG.tutorialCompleteLeadMs
+      + PLAY_UNLOCK_CONFIG.tutorialCompleteDurationMs;
+
+    setTimeout(() => {
+      const next = showState.snapshot().sceneZero.suitcaseGame;
+      if (
+        next?.suitcaseSelectionSequence !== selectionSequence
+        || next.currentSuitcase !== 1
+        || next.status !== "finished"
+      ) return;
+      beginMorelBiosSequence(selectionSequence, "system");
+    }, tutorialDurationMs + 100);
+  }, suitcaseCueDelay(selectedAt));
 }
 
 function beginMorelBiosSequence(selectionSequence, source = "operator") {
@@ -307,7 +339,7 @@ function beginMorelBiosSequence(selectionSequence, source = "operator") {
       const sceneZero = showState.snapshot().sceneZero;
       const suitcaseGame = sceneZero.suitcaseGame;
       if (
-        suitcaseGame?.currentSuitcase !== 3
+        suitcaseGame?.currentSuitcase !== 1
         || suitcaseGame.suitcaseSelectionSequence !== selectionSequence
         || suitcaseGame.morelBios?.status !== "running"
         || suitcaseGame.morelBios.sequence !== biosSequence
@@ -321,7 +353,7 @@ function beginMorelBiosSequence(selectionSequence, source = "operator") {
     const sceneZero = showState.snapshot().sceneZero;
     const suitcaseGame = sceneZero.suitcaseGame;
     if (
-      suitcaseGame?.currentSuitcase !== 3
+      suitcaseGame?.currentSuitcase !== 1
       || suitcaseGame.suitcaseSelectionSequence !== selectionSequence
       || suitcaseGame.morelBios?.status !== "running"
       || suitcaseGame.morelBios.sequence !== biosSequence
@@ -347,6 +379,10 @@ async function interruptPreviousSuitcase(nextSuitcaseNumber) {
     showState.controlSceneZero("gincana-timer-cancel", {}, { source: "scene-zero-operator" });
   }
 
+  if (["ready", "active"].includes(snapshot.sceneZero.suitcaseGame?.hangman?.status)) {
+    showState.controlSceneZero("hangman-cancel", {}, { source: "scene-zero-operator" });
+  }
+
   const instagramSession = showState.privateSnapshot().sceneZero.suitcaseGame?.instagram;
   if (instagramSession?.currentProfile && instagramSession.status !== "stopped") {
     const controller = getExistingInstagramController();
@@ -357,11 +393,11 @@ async function interruptPreviousSuitcase(nextSuitcaseNumber) {
     showState.controlSceneZero("instagram-session-stop", {}, { source: "scene-zero-operator" });
   }
 
-  if (previousSuitcase === 3) {
+  if (previousSuitcase === 1) {
     showState.controlSceneZero("morel-bios-stop", {}, { source: "scene-zero-operator" });
   }
 
-  if (previousSuitcase === 3 && snapshot.sceneZero.glitchLevel !== "normal") {
+  if (previousSuitcase === 1 && snapshot.sceneZero.glitchLevel !== "normal") {
     showState.controlSceneZero("set-glitch", { level: "normal" }, { source: "scene-zero-operator" });
     applyGlitchLevel("normal");
   }
@@ -390,33 +426,35 @@ async function activateSuitcase(suitcaseNumber, detail = "") {
   const selected = showState.controlSceneZero("suitcase-select", { suitcase: suitcaseNumber, detail }, { source: "operator" });
   if (!selected.applied) return selected;
 
-  const challengeTask = sceneZeroSuitcaseChallenge(suitcaseNumber);
+  const challengeTask = sceneZeroSuitcaseChallenge(suitcaseNumber, before?.gincana?.usedTaskIds || []);
   if (challengeTask) {
     const challenge = showState.controlSceneZero("gincana-draw", {
       task: challengeTask,
-      durationSeconds: challengeTask.durationMin
+      durationSeconds: challengeTask.duration
     }, { source: "system" });
     if (!challenge.applied) return challenge;
   }
 
-  if (suitcaseNumber === 2) {
+  if (suitcaseNumber === 3) {
     const configured = showState.controlSceneZero("hangman-configure", {}, { source: "system" });
     if (!configured.applied) return configured;
+    const suitcaseGame = showState.snapshot().sceneZero.suitcaseGame;
+    scheduleHangmanStart(suitcaseGame.suitcaseSelectionSequence, suitcaseGame.suitcaseSelectedAt);
   }
 
-  if (suitcaseNumber === 3) {
+  if (suitcaseNumber === 1) {
     const activeGame = showState.snapshot().game;
     if (activeGame?.active && activeGame.id === "verdade_ou_bolo") {
       showState.stopGame({ status: "removed_from_suitcase_flow", source: "scene-zero-operator" });
     }
     const suitcaseGame = showState.snapshot().sceneZero.suitcaseGame;
-    scheduleMorelBios(suitcaseGame.suitcaseSelectionSequence, suitcaseGame.suitcaseSelectedAt);
+    scheduleTutorialEnd(suitcaseGame.suitcaseSelectionSequence, suitcaseGame.suitcaseSelectedAt);
     return { applied: true, state: showState.snapshot().sceneZero, turn: null };
   }
 
   if (challengeTask) {
     const challengeTurn = {
-      text: buildGincanaPresentation(challengeTask, challengeTask.durationMin),
+      text: buildGincanaPresentation(challengeTask, challengeTask.duration),
       events: [],
       salience: []
     };
@@ -467,29 +505,16 @@ async function finishGincana(outcome, detail = "") {
   const result = showState.controlSceneZero("gincana-finish", { outcome, detail }, { source: "operator" });
   if (!result.applied) return result;
   const gincana = showState.privateSnapshot().sceneZero.suitcaseGame.gincana;
-  if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase === 1) {
+  if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase === 2) {
     return { applied: true, state: showState.snapshot().sceneZero, turn: null };
   }
-  const isEvidence = gincana.currentTask?.id === "evidencias_objeto_microfone";
   const turn = await speak(outcome === "completed" ? "gincana_complete" : "gincana_failed", [
     detail,
     `Resultado registrado: ${outcome}.`,
     `Tempo decorrido registrado: ${gincana.elapsedSeconds} segundos.`,
     `Tarefa: ${gincana.currentTask?.instruction || "não informada"}.`
-  ].filter(Boolean).join(" "), {
-    messageSource: isEvidence && outcome === "completed"
-      ? "scene-zero-evidencias-comment-next"
-      : "scene-zero-operator"
-  });
+  ].filter(Boolean).join(" "), { messageSource: "scene-zero-operator" });
   showState.controlSceneZero("suitcase-comment", { kind: "gincana", text: turn.text }, { source: "agent" });
-  const message = turn.messages?.at(-1);
-  if (isEvidence && outcome === "completed" && message) {
-    setTimeout(() => {
-      const sceneZero = showState.snapshot().sceneZero;
-      if (sceneZero.suitcaseGame?.currentSuitcase !== 2 || nextSceneZeroSuitcase(sceneZero.suitcaseGame) !== 3) return;
-      activateSuitcase(3).catch((error) => console.error("SCENE ZERO AUTO NEXT ERROR", error));
-    }, suitcaseSpeechDelay(message.content));
-  }
   return { applied: true, state: showState.snapshot().sceneZero, turn };
 }
 
@@ -788,11 +813,11 @@ export async function POST(request) {
     }
 
     if (action === "gincana-draw") {
-      if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase !== 1) {
-        return Response.json({ error: "INICIE A MALA 1 ANTES DO DESAFIO", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
+      if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase !== 2) {
+        return Response.json({ error: "INICIE A MALA 2 ANTES DO DESAFIO", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
       }
       if (body.challengeId && !getSceneZeroPhysicalChallenge(body.challengeId)) {
-        return Response.json({ error: "DESAFIO DA MALA 1 DESCONHECIDO", sceneZero: showState.snapshot().sceneZero }, { status: 400 });
+        return Response.json({ error: "DESAFIO DA MALA 2 DESCONHECIDO", sceneZero: showState.snapshot().sceneZero }, { status: 400 });
       }
       const result = await drawGincana(body.challengeId);
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
@@ -800,8 +825,8 @@ export async function POST(request) {
     }
 
     if (["gincana-timer-start", "gincana-timer-pause", "gincana-timer-resume", "gincana-timer-restart", "gincana-timer-add", "gincana-timer-cancel"].includes(action)) {
-      if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase !== 1) {
-        return Response.json({ error: "INICIE A MALA 1 ANTES DO CRONÔMETRO", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
+      if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase !== 2) {
+        return Response.json({ error: "INICIE A MALA 2 ANTES DO CRONÔMETRO", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
       }
       const result = showState.controlSceneZero(action, body, { source: "operator" });
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
@@ -810,8 +835,8 @@ export async function POST(request) {
 
     if (action === "hangman-configure" || action === "hangman-new") {
       const suitcaseGame = showState.snapshot().sceneZero.suitcaseGame;
-      if (suitcaseGame?.currentSuitcase !== 2) {
-        return Response.json({ error: "INICIE A MALA 2 ANTES DA FORCA", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
+      if (suitcaseGame?.currentSuitcase !== 3) {
+        return Response.json({ error: "INICIE A MALA 3 ANTES DA FORCA", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
       }
       const selectedWord = action === "hangman-new"
         ? chooseSceneZeroHangmanWord({ excludeIds: [suitcaseGame.hangman?.wordId].filter(Boolean) })
@@ -825,8 +850,8 @@ export async function POST(request) {
     }
 
     if (["hangman-start", "hangman-guess", "hangman-error", "hangman-reveal", "hangman-win", "hangman-lose", "hangman-restart"].includes(action)) {
-      if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase !== 2) {
-        return Response.json({ error: "INICIE A MALA 2 ANTES DA FORCA", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
+      if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase !== 3) {
+        return Response.json({ error: "INICIE A MALA 3 ANTES DA FORCA", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
       }
       const result = showState.controlSceneZero(action, body, { source: "operator" });
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
@@ -834,8 +859,8 @@ export async function POST(request) {
     }
 
     if (action === "morel-bios-start" || action === "morel-bios-stop") {
-      if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase !== 3) {
-        return Response.json({ error: "INICIE A MALA 3 ANTES DA BIOS FINAL", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
+      if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase !== 1) {
+        return Response.json({ error: "INICIE A MALA 1 ANTES DA BIOS FINAL", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
       }
       const suitcaseGame = showState.snapshot().sceneZero.suitcaseGame;
       const result = action === "morel-bios-start"

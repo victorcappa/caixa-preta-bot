@@ -12,6 +12,7 @@ import {
 import { SCENE_ZERO_MOREL_BIOS_DURATION_MS, SCENE_ZERO_MOREL_BIOS_LINES, SCENE_ZERO_MOREL_BIOS_LINE_INTERVAL_MS } from "@/data/scene-zero-morel";
 import { SCENE_ZERO_SUITCASE_CUE_DURATION_MS, sceneZeroSuitcaseCueFrameAt } from "@/lib/scene-zero/suitcaseGame";
 import { AUDIENCE_WARMUP_MINIGAMES, getAudienceWarmupMinigame } from "@/data/audience-warmup-minigames";
+import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
 import BlinkingCursor from "./BlinkingCursor";
 import useCountdownSound from "./useCountdownSound";
 import styles from "./SceneZeroProjectionLayer.module.css";
@@ -245,7 +246,7 @@ function AudienceWarmupMinigameProjection({ warmup, now }) {
         <div className={styles.warmupGameTimer} data-paused={minigame.status === "paused"}>
           <header><span>{game?.name || "TESTE"}</span><b>{minigame.timer?.phase === "round_two" ? "TURNO 2" : minigame.timer?.phase === "exchange" ? "TROQUEM" : minigame.timer?.phase === "countdown" ? "COMEÇANDO" : "TURNO 1"}</b></header>
           <strong>{seconds}</strong>
-          <small>{minigame.status === "paused" ? "PAUSADO" : minigame.timer?.phase === "exchange" ? "INVERTAM OS PAPÉIS" : "NÃO COMPLIQUEM"}</small>
+          <small>{minigame.status === "paused" ? "PAUSADO" : minigame.timer?.phase === "exchange" ? "INVERTAM OS PAPÉIS" : "EM CURSO"}</small>
         </div>
       )}
     </section>
@@ -349,21 +350,24 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
     && !showTimer
   );
   const showPhysicalChallenge = Boolean(
-    sceneZero?.suitcaseGame?.currentSuitcase === 1
+    sceneZero?.suitcaseGame?.currentSuitcase === 2
     && gincana?.currentTask
     && suitcaseSelectionAge >= SCENE_ZERO_SUITCASE_CUE_DURATION_MS
   );
   const physicalSeconds = timerSeconds(gincanaTimer, now);
   const physicalUrgent = gincanaTimer?.status === "running" && physicalSeconds <= 3;
+  const physicalMandatory = gincanaTimer?.status === "running"
+    && physicalSeconds <= Number(gincana?.currentTask?.mandatoryDuration || 30);
   const showHangman = Boolean(
-    sceneZero?.suitcaseGame?.currentSuitcase === 2
+    sceneZero?.suitcaseGame?.currentSuitcase === 3
     && hangman?.activity
     && hangman.status !== "ready"
     && suitcaseSelectionAge >= SCENE_ZERO_SUITCASE_CUE_DURATION_MS
   );
+  const hangmanSeconds = timerSeconds(hangman?.timer, now);
   const morelBiosAge = now - Date.parse(morelBios?.startedAt || "");
   const showMorelBios = Boolean(
-    sceneZero?.suitcaseGame?.currentSuitcase === 3
+    sceneZero?.suitcaseGame?.currentSuitcase === 1
     && morelBios?.status === "running"
     && morelBiosAge >= 0
   );
@@ -394,6 +398,20 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
     active: Boolean(showPhysicalChallenge && ["running", "complete"].includes(gincanaTimer?.status)),
     countdownKey: `scene-zero:physical:${gincanaTimer?.sequence || 0}`
   });
+  useCountdownSound(hangmanSeconds, {
+    active: Boolean(showHangman && hangman?.status === "active"),
+    countdownKey: `scene-zero:hangman:${hangman?.timer?.sequence || 0}`
+  });
+
+  const hangmanResultSoundRef = useRef(null);
+  useEffect(() => {
+    if (!["won", "lost"].includes(hangman?.status)) return;
+    const resultKey = `${hangman.sequence}:${hangman.status}`;
+    if (hangmanResultSoundRef.current === resultKey) return;
+    hangmanResultSoundRef.current = resultKey;
+    if (hangman.status === "won") robotSoundEngine.success();
+    else robotSoundEngine.error();
+  }, [hangman?.sequence, hangman?.status]);
 
   return (
     <>
@@ -429,12 +447,23 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
         </div>
       ) : null}
       {showPhysicalChallenge ? (
-        <section className={`${styles.physicalChallengeOverlay} ${physicalUrgent ? styles.physicalChallengeUrgent : ""}`} aria-label="Desafio físico da Mala 1" aria-live="assertive">
-          <header><span>MALA 1</span><b>TESTE FÍSICO</b></header>
-          <p>{gincana.currentTask.text || gincana.currentTask.instruction}</p>
-          <div className={styles.physicalChallengeReadout}>
-            <span>ALVO<strong>{gincana.currentTask.target}</strong></span>
-            <time>{physicalSeconds}</time>
+        <section className={`${styles.physicalChallengeOverlay} ${physicalUrgent ? styles.physicalChallengeUrgent : ""}`} aria-label="Desafio com objeto da Mala 2" aria-live="assertive">
+          <header><span>MALA 2</span><b>DESAFIO COM OBJETO</b></header>
+          <div className={styles.physicalChallengeBody}>
+            <div className={styles.physicalChallengeSteps}>
+              <article data-active={!physicalMandatory}>
+                <small>01 · OBJETOS · {gincana.currentTask.objectDuration || 15}s</small>
+                <p>{gincana.currentTask.text || gincana.currentTask.instruction}</p>
+              </article>
+              <article data-active={physicalMandatory}>
+                <small>02 · TODOS · {gincana.currentTask.mandatoryDuration || 30}s</small>
+                <p>{gincana.currentTask.mandatoryAction}</p>
+              </article>
+            </div>
+            <div className={styles.physicalChallengeReadout}>
+              <span>{physicalMandatory ? "ETAPA" : "ALVO"}<strong>{physicalMandatory ? "02" : gincana.currentTask.target}</strong></span>
+              <time>{physicalSeconds}</time>
+            </div>
           </div>
           {gincana.result === "completed" ? (
             <div className={styles.physicalChallengeResult} data-success="true">
@@ -461,7 +490,7 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
       {showHangman ? (
         <section
           className={`${styles.suitcaseHangmanOverlay} ${styles[`hangmanErrors${Math.min(4, Number(hangman.errorCount) || 0)}`] || ""}`}
-          aria-label="Forca da Mala 2"
+          aria-label="Forca da Mala 3"
           aria-live="assertive"
           style={{
             "--descent": `${Math.min(100, (Number(hangman.errorCount) || 0) * 25)}%`,
@@ -469,12 +498,13 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
           }}
         >
           <div className={styles.hangmanInterference} aria-hidden="true" />
-          <header><span>MALA 2 / FORCA</span><strong>{hangman.flightState || "ESTÁVEL"}</strong></header>
+          <header><span>MALA 3 / FORCA</span><strong>{hangmanSeconds}s · {hangman.flightState || "ESTÁVEL"}</strong></header>
           <p className={styles.hangmanWord}>{hangmanPublic.progress || "_ _ _"}</p>
           <div className={styles.hangmanFlight} aria-hidden="true">
             <span>✈</span><i />
           </div>
           <div className={styles.hangmanTelemetry}>
+            <span>TEMPO <b>{hangmanSeconds}s</b></span>
             <span>ERROS <b>{hangman.errorCount || 0}/4</b></span>
             <span>USADAS <b>{(hangmanPublic.usedGuesses || []).join(" · ").toUpperCase() || "—"}</b></span>
           </div>
