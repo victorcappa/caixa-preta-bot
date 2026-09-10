@@ -26,6 +26,7 @@ for (const prompt of AUDIENCE_WARMUP_PROMPTS) {
   assert(prompt.text && prompt.action && prompt.category && prompt.intensity && prompt.tags.length, `metadados incompletos: ${prompt.id}`);
   assert(Number.isFinite(prompt.progressValue), `progresso não configurado: ${prompt.id}`);
   assert.equal(prompt.countdown === 3, /\bquando eu disser três\b/iu.test(prompt.text), `contagem inconsistente: ${prompt.id}`);
+  assert.doesNotMatch(prompt.text, /\b(?:por favor|vamos|imagine|historinha|quando eu disser|quem acredita que)\b/iu, `tom de animador proibido: ${prompt.id}`);
 }
 for (const action of AUDIENCE_WARMUP_ACTIONS) {
   assert(AUDIENCE_WARMUP_PROMPTS.some((prompt) => prompt.action === action.id), `ação sem prompt: ${action.id}`);
@@ -35,21 +36,27 @@ for (const action of AUDIENCE_WARMUP_ACTIONS) {
 assert(AUDIENCE_WARMUP_PROMPTS.some((prompt) => prompt.progressValue === 0), "deve existir ação configurável sem progresso");
 assert(AUDIENCE_WARMUP_PROMPTS.some((prompt) => prompt.repeatableProgress), "deve existir ação com progresso repetível");
 assert(AUDIENCE_WARMUP_PROMPTS.filter((prompt) => prompt.tags.includes("São Paulo")).length >= 6, "deve haver repertório paulistano mesmo sem internet");
-assert.deepEqual([1, 2, 3, 4, 5, 6, 7, 8, 13].map((count) => audienceWarmupSurpriseProfile(count)), [
-  { count: 1, pairIndex: 0, intensity: "light", surpriseLevel: 0 },
-  { count: 2, pairIndex: 0, intensity: "light", surpriseLevel: 0 },
-  { count: 3, pairIndex: 1, intensity: "medium", surpriseLevel: 0 },
-  { count: 4, pairIndex: 1, intensity: "medium", surpriseLevel: 0 },
-  { count: 5, pairIndex: 2, intensity: "strange", surpriseLevel: 1 },
-  { count: 6, pairIndex: 2, intensity: "strange", surpriseLevel: 1 },
-  { count: 7, pairIndex: 3, intensity: "strange", surpriseLevel: 2 },
-  { count: 8, pairIndex: 3, intensity: "strange", surpriseLevel: 2 },
-  { count: 13, pairIndex: 6, intensity: "strange", surpriseLevel: 5 }
+assert.deepEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13].map((count) => audienceWarmupSurpriseProfile(count)), [
+  { count: 1, pairIndex: 0, stage: "action", intensity: "light", surpriseLevel: 0 },
+  { count: 2, pairIndex: 0, stage: "action", intensity: "light", surpriseLevel: 0 },
+  { count: 3, pairIndex: 1, stage: "exposure", intensity: "medium", surpriseLevel: 1 },
+  { count: 4, pairIndex: 1, stage: "exposure", intensity: "medium", surpriseLevel: 1 },
+  { count: 5, pairIndex: 2, stage: "division", intensity: "strange", surpriseLevel: 2 },
+  { count: 6, pairIndex: 2, stage: "division", intensity: "strange", surpriseLevel: 2 },
+  { count: 7, pairIndex: 3, stage: "judgment", intensity: "strange", surpriseLevel: 3 },
+  { count: 8, pairIndex: 3, stage: "judgment", intensity: "strange", surpriseLevel: 3 },
+  { count: 9, pairIndex: 4, stage: "contact", intensity: "strange", surpriseLevel: 4 },
+  { count: 10, pairIndex: 4, stage: "contact", intensity: "strange", surpriseLevel: 4 },
+  { count: 11, pairIndex: 5, stage: "confrontation", intensity: "strange", surpriseLevel: 5 },
+  { count: 13, pairIndex: 6, stage: "confrontation", intensity: "strange", surpriseLevel: 5 }
 ]);
 for (let count = 5; count <= 14; count += 1) {
   const prompt = chooseAudienceWarmupSurprisePrompt({ count, random: () => 0 });
-  assert.equal(prompt.surpriseLevel, Math.min(5, Math.floor((count - 1) / 2) - 1), `surpresa ${count} deve subir a cada duas perguntas`);
+  assert.equal(prompt.surpriseLevel, Math.min(5, Math.floor((count - 1) / 2)), `surpresa ${count} deve subir a cada duas perguntas`);
 }
+assert(AUDIENCE_WARMUP_PROMPTS.filter((prompt) => prompt.category === "divisão").length >= 6);
+assert(AUDIENCE_WARMUP_PROMPTS.filter((prompt) => prompt.category === "julgamento").length >= 6);
+assert(AUDIENCE_WARMUP_PROMPTS.filter((prompt) => prompt.category === "contato").every((prompt) => prompt.action !== "touch" || /consentimento/iu.test(prompt.text)));
 
 const wordSequence = createAudienceWarmupSequence({ text: "Quando eu disser três, digam o bairro.", action: "word", countdown: 3 });
 assert.equal(wordSequence.requiresCountdown, true);
@@ -65,9 +72,9 @@ assert.equal(directWordSequence.steps.some((step) => step.kind === "count"), fal
 assert.equal(audienceWarmupRequiresCountdown({ text: "Quando eu disser 3, respondam." }), true);
 assert.equal(audienceWarmupRequiresCountdown({ text: "Digam uma palavra agora." }), false);
 assert.equal(audienceWarmupRequiresCountdown({ text: "Respondam sem uma contagem." }), false);
-assert(createAudienceWarmupSequence({ text: "Palmas.", action: "clap" }).steps.length >= 3);
-assert(createAudienceWarmupSequence({ text: "Mãos.", action: "hand" }).steps.at(-1).text.toLowerCase().includes("abaixar"));
-assert(createAudienceWarmupSequence({ text: "Silêncio.", action: "silence" }).steps.length >= 3);
+assert.deepEqual(createAudienceWarmupSequence({ text: "Palmas.", action: "clap" }).steps.map((step) => step.text), ["Palmas.", "RESPOSTA SONORA REGISTRADA."]);
+assert.equal(createAudienceWarmupSequence({ text: "Mãos.", action: "hand" }).steps.at(-1).text, "ABAIXEM.");
+assert.deepEqual(createAudienceWarmupSequence({ text: "Silêncio.", action: "silence" }).steps.map((step) => step.text), ["Silêncio.", "SILÊNCIO COMPUTADO."]);
 assert.equal(clampAudienceWarmupInterval(10), 800);
 assert.equal(clampAudienceWarmupInterval(99999), 15000);
 
