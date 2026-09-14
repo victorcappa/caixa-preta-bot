@@ -30,6 +30,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:scene-two-d-audio-effects` -> `node --no-warnings scripts/scene-two-d-audio-effects-browser-test.js`
 - `npm run test:robot-sound` -> `node --no-warnings scripts/robot-sound-test.js`
 - `npm run test:robot-sound:browser` -> `node --no-warnings scripts/robot-sound-browser-test.js`
+- `npm run test:sound-control:browser` -> `node --no-warnings scripts/sound-control-browser-test.js`
 - `npm run test:audience-warmup` -> `node --no-warnings scripts/audience-warmup-test.js`
 - `npm run test:audience-sound-check:browser` -> `node --no-warnings scripts/audience-sound-check-browser-test.js`
 - `npm run test:audience-warmup:browser` -> `node --no-warnings scripts/audience-warmup-browser-test.js`
@@ -58,6 +59,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `/queda-aviao-controller` -> `app/queda-aviao-controller/page.js`
 - `/queda-aviao/debug` -> `app/queda-aviao/debug/page.js`
 - `/queda-aviao` -> `app/queda-aviao/page.js`
+- `/sound-control` -> `app/sound-control/page.js`
 - `/tea-for-two-controller` -> `app/tea-for-two-controller/page.js`
 - `/tea-for-two` -> `app/tea-for-two/page.js`
 - `/tecnologia-floresta-controller` -> `app/tecnologia-floresta-controller/page.js`
@@ -128,6 +130,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/SceneProjectionPage.js`
 - `components/SceneZeroController.js`
 - `components/SceneZeroProjectionLayer.js`
+- `components/SoundControlPanel.js`
 - `components/Terminal.js`
 - `components/TrainingConsole.js`
 - `components/useCountdownSound.js`
@@ -220,6 +223,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/scene-two-d-audio-effects-browser-test.js`
 - `scripts/scene-zero-suitcases-browser-test.js`
 - `scripts/scene-zero-test.js`
+- `scripts/sound-control-browser-test.js`
 - `scripts/suitcase-director-test.js`
 - `scripts/verdade-ou-bolo-layout-browser-test.js`
 - `scripts/videomapping-browser-test.js`

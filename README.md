@@ -155,8 +155,9 @@ Toda sessão, inclusive quando o minigame é pulado, abre as perguntas com a aç
 obrigatória de 30 segundos: `TODOS FINJAM ESTAR MORTOS NAS CADEIRAS E NO CHÃO.`
 Ela não volta a entrar nos sorteios comuns da mesma sessão.
 O avanço automático continua opcional e cancelável. Todos os temporizadores da
-Cena 0 usam um único cartão fixo; no videomapping ele permanece no mesmo ponto
-do quadrante inferior esquerdo, sem duplicar a contagem junto à fala do chatbot.
+Cena 0 usam um único cartão fixo que exibe apenas o número; no videomapping ele
+permanece no mesmo ponto do quadrante inferior esquerdo, sem duplicar a contagem
+junto à fala do chatbot.
 Ações temporizadas podem ser avançadas antes do fim. O endpoint
 rejeita frases manuais que não correspondam exatamente a uma entrada da
 biblioteca.
@@ -167,10 +168,11 @@ Somente o botão `BOOT`, no controller, inicia a BIOS orientada a dados. Ela
 carrega teatro, técnica e elenco, detecta a plateia e trava em `78%`. A barra pertence a
 `showState.sceneZero.unlock`: continua visível sobre o chat durante o
 aquecimento e sai da projeção quando a verificação termina.
-Ao travar, a BIOS mostra o erro e a dependência `AÇÃO COLETIVA`; depois, limpa a
-tela e mantém somente um cursor piscando. O estado permanece parado aí por tempo
-indeterminado. O operador precisa abrir `AQUECIMENTO DA PLATEIA` e acionar
-`INICIAR AQUECIMENTO`. Só então `... PROVE QUE VOCÊ É HUMANO` aparece uma vez.
+Ao travar, a BIOS mostra o erro e a dependência `AÇÃO COLETIVA` e permanece nessa
+tela em `78%` por tempo indeterminado. O operador precisa abrir `AQUECIMENTO DA
+PLATEIA` e acionar `ENCERRAR BIOS`; o comando completa visualmente a barra em
+`100%` e só então inicia a etapa sonora seguinte. Depois dela, `... PROVE QUE
+VOCÊ É HUMANO` aparece uma vez.
 Antes dessa verificação, a projeção executa uma prova de vida sonora uma única
 vez. `Olá, mundo...`, `Tem alguém aí?`, `Boa noite...`, a instrução e os
 comentários de espera entram como falas verdes do chatbot, com a digitação
@@ -180,7 +182,9 @@ técnica separada. O controller solicita a permissão de microfone assim que é
 aberto e mostra no topo o estado da autorização e uma tentativa manual de
 recuperação. O áudio é analisado somente pelo controller, que transmite à
 projeção apenas o nível numérico suavizado; a projeção nunca solicita o
-microfone e nenhum áudio bruto é enviado ao servidor. No Safari, a captura já
+microfone e nenhum áudio bruto é enviado ao servidor. Durante a preparação da
+seleção de participante, a projeção mostra `/pensando...` com as reticências
+animadas até a fala da roleta ficar pronta. No Safari, a captura já
 autorizada é reativada pelo primeiro clique ou tecla do operador; o topo muda
 para `ATIVO · NÍVEL X%`, sem abrir um segundo pedido antes da prova sonora. A
 captura conserva o cancelamento de eco do navegador e permanece ativa inclusive
@@ -286,7 +290,8 @@ Grupos atuais:
 - `CENA 3`: `Tea For Two`
 - `CENA 4`: `Piloto / Videogame`
 - `CAMADAS`: `Tecnologia x Floresta`
-- `OUTROS`: `Operator` (console técnico neutro), `Glitch Geral` e `Treino`
+- `OUTROS`: `Sound Control`, rota `/sound-control`, `Operator` (console técnico
+  neutro), `Glitch Geral` e `Treino`
 
 Cada aba cenica troca a projecao para sua rota publica correspondente. `Bot /
 Malas` abre `/`, `Baralho Morbido` abre `/baralho-morbido`, `Queda /
@@ -732,10 +737,16 @@ fica salvo no navegador para o proximo reload.
 
 ## Sons procedurais do robô
 
-O `ROBOT SOUND ENGINE` fica no `/operator` e também no operator embutido da tela
-principal. Ele controla `SOUND ON/OFF`, volume geral, volume, velocidade visual
+O `ROBOT SOUND ENGINE` tem a aba superior dedicada `Sound Control`, rota
+`/sound-control`, e também fica disponível no `/operator`. Ele controla `SOUND
+ON/OFF`, volume geral, volume de digitação, altura em semitons, velocidade visual
 da digitação (de 5 a 60 caracteres por segundo), frequência dos cliques, som de
-encerramento e os presets `NORMAL`, `SECO`, `MECÂNICO` e `INSTÁVEL`. Em 100% o
+encerramento, os estilos gerais `ROBÔ ATUAL` e `WINDOWS 95 / 8-BIT`, e os presets
+de digitação `NORMAL`, `SECO`, `MECÂNICO` e `INSTÁVEL`. `WINDOWS 95 / 8-BIT` é
+o estilo padrão. Esse estilo troca digitação, wake, processamento, contagens,
+sucesso, erro, glitch,
+impacto e bipes da BIOS/desbloqueio por blips e alertas digitais; músicas, vozes
+e samples gravados das cenas não são processados por essa seleção. Em 100% o
 som acompanha todos os caracteres elegíveis; reduzir o slider de frequência faz
 o motor tocar em menos caracteres sem alterar a velocidade visual do texto. Os botões de
 teste cobrem digitação, `WAKE`, `THINKING`, `SUCCESS / OBEY`, `ERROR`, `GLITCH` e
@@ -747,7 +758,10 @@ arquivos do sampler. O motor mantém um único `AudioContext` por janela, ganho 
 compressor centrais e limite de vozes. Cada click é disparado no intervalo que
 revela visualmente o próximo caractere em `components/Chat.js`, não quando o
 texto chega do servidor. Pontuação, espaço e quebra de linha usam pequenas
-variações do mesmo sintetizador. O glitch global altera pitch, falhas, duplicação
+variações do mesmo sintetizador. No estilo 8-bit cada caractere usa um blip
+monofônico de onda quadrada, com frequências limitadas e uma mudança abrupta de
+altura como um PC speaker dos anos 90, sem a camada de ruído do timbre original.
+O glitch global altera pitch, falhas, duplicação
 e ruído da digitação; os presets fortes podem habilitar clicks fantasmas sem
 letras visíveis. `STOP ALL`, reset, troca de tela e desmontagem encerram os
 timers locais.

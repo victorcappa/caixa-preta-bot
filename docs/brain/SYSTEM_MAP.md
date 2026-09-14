@@ -56,7 +56,7 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 ## Cross-cutting effects
 
 - Glitch -> `lib/glitch/state.js` -> `app/api/glitch/route.js` -> `components/PublicGlitchLayer.js` / `components/GlitchOverlay.js`.
-- Robot sound -> `lib/robot-sound/RobotSoundEngine.js`, `lib/robot-sound/state.js`, `components/RobotSoundControls.js`.
+- Robot sound and shared microphone sensitivity -> `lib/robot-sound/RobotSoundEngine.js`, `lib/robot-sound/state.js`, `components/RobotSoundControls.js`; the Scene Zero meter applies sensitivity in `components/SceneZeroController.js`; dedicated private route -> `app/sound-control/page.js` / `components/SoundControlPanel.js`.
 - Global volume -> `lib/globalVolume.js` -> `app/api/global-volume/route.js` -> media stages/controllers.
 - Blackout -> `lib/displayBlackout.js` -> `components/DisplayBlackout.js` -> public surfaces.
 - Instagram -> `lib/instagram/InstagramController.js`; embedded UI -> `components/InstagramBrowserPanel.js`; server endpoints -> `app/api/instagram/`.

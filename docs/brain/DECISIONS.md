@@ -42,6 +42,10 @@ This keeps local control immediate without introducing a second application or d
 
 State does not survive a server restart. New cross-screen features should extend the existing store/events instead of creating parallel state channels, unless isolation is explicitly justified.
 
+Scene Zero stage navigation is stateful, not local scrolling: returning through the controller index must cancel the abandoned stage's timers and external routines in `showState`, normalize public effects, and then publish the restored stage over the existing event stream.
+
+The opening BIOS handoff is operator-gated in the same state machine: `BOOT_FAILED` remains visibly stalled at 78%, and only `ENCERRAR BIOS` may complete the BIOS bar to 100% and begin the sound-check stage.
+
 ## ADR-003 — Principal and videomapping are layouts of the same public chat
 
 Status: Active
@@ -72,7 +76,7 @@ Audience actions are dramaturgical material with fixed wording, sequencing metad
 
 ### Decision
 
-`data/audience-warmup-prompts.js` is the source of truth. The warmup endpoint accepts registered prompts, and `components/AudienceWarmupController.js` exposes draw, trigger, timing, reaction, manual progression, and end controls.
+`data/audience-warmup-prompts.js` is the source of truth. The warmup endpoint accepts registered prompts, and the controller exposes draw, trigger, timing, contextual audience-result, manual progression, and end controls. The operator's response is stored against the active prompt; it is not itself projected.
 
 ### Reason
 
@@ -80,7 +84,7 @@ The performance needs repeatable authored instructions and human control rather 
 
 ### Consequences
 
-Edit the library when changing wording. Do not silently rewrite a prompt in a renderer or model response path.
+Edit the library when changing wording. Do not silently rewrite a prompt in a renderer or model response path. Keep between-question reactions and phase-result comments in the authored warmup data files. Require a contextual `few` or `many` observation for the active prompt, never repeat an already used reaction in the same session, and select the next prompt only after that reaction has been projected.
 
 ## ADR-005 — External navigation requires explicit operator action
 
