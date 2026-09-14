@@ -29,6 +29,7 @@
 .reactionControls small { color: #7c9a88; font-size: 9px; letter-spacing: .1em; }
 .reactionControls button { min-height: 38px; padding: 7px; color: #d7ff41; background: #11150f; border: 1px solid #586827; font: inherit; font-size: 10px; font-weight: 850; letter-spacing: .04em; cursor: pointer; }
 .reactionControls button:last-child { color: #00ff66; border-color: #237c45; }
+.reactionControls button.selectedReaction { color: #001c0c; background: #d7ff41; border-color: #fff; }
 .reactionControls button:disabled { opacity: .3; cursor: default; }
 .header { display: grid; grid-template-columns: minmax(220px, .65fr) 1.35fr; gap: 18px; align-items: end; padding-bottom: 14px; border-bottom: 1px solid #303030; }
 .header p, .header h1, .memoryPanel h2, .personalityPanel h2, .stagePanel h2, .block h2 { margin: 0; }
@@ -52,6 +53,8 @@
 .bootPrimary { color: #001c0c; background: #00ff66; border: 1px solid #00ff66; }
 .bootReset { color: #ff708b; background: #16090c; border: 1px solid #8a3042; }
 .bootPrimary:disabled, .bootReset:disabled { opacity: .45; cursor: default; }
+.soundCheckReturnPanel { margin-top: 10px; border-color: #39704e; background: #09100b; }
+.soundCheckReturnPanel .bootActions { grid-template-columns: 1fr; }
 .warmupDisclosure { margin-top: 10px; border: 1px solid #39704e; background: #07100a; }
 .warmupDisclosureToggle { width: 100%; display: grid; grid-template-columns: minmax(220px, 1fr) auto auto; gap: 16px; align-items: center; min-height: 76px; padding: 14px 18px; color: #00ff66; background: transparent; border: 0; cursor: pointer; font: inherit; text-align: left; }
 .warmupDisclosureToggle:hover, .warmupDisclosureToggle:focus-visible { background: #0b1a10; outline: 1px solid #00ff66; outline-offset: -1px; }

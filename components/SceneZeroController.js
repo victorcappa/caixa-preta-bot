@@ -5,11 +5,14 @@ import InstagramBrowserPanel from "./InstagramBrowserPanel";
 import AudienceWarmupController from "./AudienceWarmupController";
 import { setSharedInstagramPanelVisible } from "@/lib/instagram/panelClient";
 import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
+import { robotMicrophoneSensitivity } from "@/lib/robot-sound/state";
 import { SCENE_ZERO_GLITCH_LEVELS, SCENE_ZERO_PERSONALITY_DIRECTIONS, SCENE_ZERO_STAGES, sceneZeroStageLabel } from "@/lib/scene-zero/state";
 import { nextSceneZeroSuitcase } from "@/lib/scene-zero/suitcaseGame";
 import { SCENE_ZERO_PHYSICAL_CHALLENGES } from "@/data/scene-zero-physical-challenges";
 import { SCENE_ZERO_HANGMAN_WORDS } from "@/data/scene-zero-hangman-words";
 import { PLAY_UNLOCK_CONFIG } from "@/data/scene-zero-unlock";
+import { audienceWarmupResponseOptions } from "@/data/audience-warmup-reactions";
+import { AUDIENCE_WARMUP_PROMPTS } from "@/data/audience-warmup-prompts";
 import styles from "./SceneZeroController.module.css";
 
 const PRIMARY_STAGES = [
@@ -36,6 +39,7 @@ const COLLECTION_RESULTS = [
 
 const SCENE_ZERO_INDEX = [
   ["scene-zero-boot", "BOOT"],
+  ["scene-zero-sound-check", "ESCUTA DE DECIBÉIS"],
   ["scene-zero-unlock", "ESQUENTAR PÚBLICO"],
   ["scene-zero-participant", "ESCOLHER PARTICIPANTE"],
   ["scene-zero-suitcases", "JOGO DAS MALAS"],
@@ -292,6 +296,7 @@ export default function SceneZeroController() {
 
   const activeSoundCheckPhase = snapshot.sceneZero?.unlock?.soundCheck?.phase;
   const activeSoundCheckSequence = snapshot.sceneZero?.unlock?.soundCheck?.sequence;
+  const microphoneSensitivity = robotMicrophoneSensitivity(snapshot.robotSound);
 
   useEffect(() => {
     if (activeSoundCheckPhase !== "listening") return undefined;
@@ -362,7 +367,7 @@ export default function SceneZeroController() {
       }
       const rms = Math.sqrt(energy / samples.length);
       // Medidor teatral sensível a voz/palmas; não pretende representar dB científicos.
-      const normalized = Math.max(0, Math.min(1, (rms - 0.006) / 0.055));
+      const normalized = Math.max(0, Math.min(1, ((rms - 0.006) / 0.055) * microphoneSensitivity));
       smoothedLevel = (smoothedLevel * 0.82) + (normalized * 0.18);
       const elapsed = Math.min(80, frameAt - lastFrameAt);
       lastFrameAt = frameAt;
@@ -386,7 +391,7 @@ export default function SceneZeroController() {
       cancelled = true;
       window.cancelAnimationFrame(frame);
     };
-  }, [activeSoundCheckPhase, activeSoundCheckSequence, microphonePermission]);
+  }, [activeSoundCheckPhase, activeSoundCheckSequence, microphonePermission, microphoneSensitivity]);
 
   useEffect(() => {
     function handleManualNext(event) {
@@ -472,7 +477,13 @@ export default function SceneZeroController() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "ERRO CENA 0");
-      if (data.sceneZero) setSnapshot((current) => ({ ...current, sceneZero: data.sceneZero }));
+      if (data.sceneZero || data.audienceWarmup) {
+        setSnapshot((current) => ({
+          ...current,
+          ...(data.sceneZero ? { sceneZero: data.sceneZero } : {}),
+          ...(data.audienceWarmup ? { audienceWarmup: data.audienceWarmup } : {})
+        }));
+      }
       setNotice(data.message || action.toUpperCase());
       setDetail("");
       return data;
@@ -652,7 +663,9 @@ export default function SceneZeroController() {
   const sceneZero = snapshot.sceneZero || {};
   const audienceWarmup = snapshot.audienceWarmup || {};
   const manualMode = Boolean(audienceWarmup.manualMode);
-  const reactionControlsActive = ["questions", "briefing", "minigame", "transition"].includes(audienceWarmup.phase);
+  const activeWarmupPrompt = AUDIENCE_WARMUP_PROMPTS.find((prompt) => prompt.id === audienceWarmup.sequence?.promptId) || null;
+  const responseOptions = audienceWarmupResponseOptions(activeWarmupPrompt?.action);
+  const reactionControlsActive = audienceWarmup.phase === "questions" && Boolean(activeWarmupPrompt);
   const unlockStatusLabel = sceneZero.unlock?.status === "BOOT_FAILED"
     ? "AGUARDANDO INÍCIO MANUAL"
     : (sceneZero.unlock?.status || "STANDBY").replaceAll("_", " ");
@@ -684,10 +697,41 @@ export default function SceneZeroController() {
   const questions = useMemo(() => [...(collection.questions || [])].reverse(), [collection.questions]);
   const latestMemories = useMemo(() => [...(snapshot.memories || [])].slice(-5).reverse(), [snapshot.memories]);
 
-  function navigateToSection(event, id) {
+  async function navigateToSection(event, id) {
     event.preventDefault();
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
     setActiveIndexSection(id);
+    if (id === "scene-zero-boot" && sceneZero.unlock?.status !== "STANDBY") {
+      await sceneAction("return-to-boot");
+      return;
+    }
+    if (id === "scene-zero-sound-check") {
+      if (!sceneZero.unlock?.bootComplete) {
+        setNotice("ENCERRE A BIOS ANTES DE RETOMAR A ESCUTA");
+        return;
+      }
+      await sceneAction("return-to-sound-check");
+      return;
+    }
+    if (id === "scene-zero-unlock") {
+      setWarmupOpen(true);
+      const alreadyInWarmupQuestions = sceneZero.stage === "idle" && audienceWarmup.phase === "questions";
+      const canReturnToWarmup = sceneZero.stage !== "idle" || [
+        "WAITING_FOR_AUDIENCE",
+        "WARMING_AUDIENCE",
+        "UNLOCKING",
+        "UNLOCKED"
+      ].includes(sceneZero.unlock?.status);
+      if (!alreadyInWarmupQuestions && canReturnToWarmup) await sceneAction("return-to-warmup");
+      return;
+    }
+    if (id === "scene-zero-participant" && sceneZero.stage !== "participant") {
+      await sceneAction("set-stage", { stage: "participant" });
+      return;
+    }
+    if (id === "scene-zero-suitcases" && sceneZero.stage !== "suitcases") {
+      await sceneAction("set-stage", { stage: "suitcases" });
+    }
   }
 
   return (
@@ -749,14 +793,22 @@ export default function SceneZeroController() {
           ))}
         </nav>
         <section
-          aria-label="Reação rápida do público"
+          aria-label="Resposta da pergunta atual"
           className={styles.reactionControls}
           data-phase={audienceWarmup.phase || "idle"}
           data-pending={pending || ""}
         >
-          <small>REAÇÃO DA PLATEIA</small>
-          <button disabled={Boolean(pending) || !reactionControlsActive} onClick={() => warmupAction("reaction-none")} type="button">NINGUÉM REAGIU</button>
-          <button disabled={Boolean(pending) || !reactionControlsActive} onClick={() => warmupAction("reaction-many")} type="button">MUITOS REAGIRAM</button>
+          <small>RESPOSTA DESTA PERGUNTA</small>
+          {responseOptions.map((option) => (
+            <button
+              aria-pressed={audienceWarmup.currentResponse?.promptId === activeWarmupPrompt?.id && audienceWarmup.currentResponse?.kind === option.kind}
+              className={audienceWarmup.currentResponse?.promptId === activeWarmupPrompt?.id && audienceWarmup.currentResponse?.kind === option.kind ? styles.selectedReaction : ""}
+              disabled={Boolean(pending) || !reactionControlsActive}
+              key={option.kind}
+              onClick={() => warmupAction("record-response", option)}
+              type="button"
+            >{option.label}</button>
+          ))}
         </section>
       </aside>
 
@@ -785,6 +837,28 @@ export default function SceneZeroController() {
             onClick={() => operatorCommand("/reset")}
             type="button"
           >REINICIAR</button>
+        </div>
+      </section>
+
+      <section aria-label="Escuta de decibéis" className={`${styles.bootPanel} ${styles.soundCheckReturnPanel}`} id="scene-zero-sound-check">
+        <div className={styles.bootHeading}>
+          <span>02</span>
+          <div>
+            <h2>ESCUTA DE DECIBÉIS</h2>
+            <p>RETORNA AO MEDIDOR LOGO DEPOIS DA BIOS</p>
+          </div>
+        </div>
+        <div className={styles.bootStatus}>
+          <strong>{Math.round(Number(sceneZero.unlock?.soundCheck?.liveLevel) || 0)}%</strong>
+          <span>{(sceneZero.unlock?.soundCheck?.phase || "AGUARDANDO").replaceAll("_", " ").toUpperCase()}</span>
+        </div>
+        <div className={styles.bootActions}>
+          <button
+            className={styles.bootPrimary}
+            disabled={Boolean(pending) || !sceneZero.unlock?.bootComplete}
+            onClick={() => sceneAction("return-to-sound-check")}
+            type="button"
+          >VOLTAR À ESCUTA</button>
         </div>
       </section>
 

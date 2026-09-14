@@ -843,7 +843,11 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
         <DisplayBlackout blackout={displayBlackout} target="chatbot" />
         <section className={`${styles.layoutRegion} ${styles.sceneZeroRegion}`} aria-label="Quadrante de status, BIOS e Cena 0">
           <div className={styles.quadrantCanvas}>
-            <SceneZeroStatusProjection sceneZero={sceneZero} />
+            <SceneZeroStatusProjection
+              pitchScale={robotSound?.pitchScale}
+              sceneZero={sceneZero}
+              soundStyle={robotSound?.soundStyle}
+            />
           </div>
         </section>
         <section className={`${styles.layoutRegion} ${styles.sceneZeroAuxRegion}`} aria-label="Quadrante de contagens e conteúdos da Cena 0">

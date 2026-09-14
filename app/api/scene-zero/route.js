@@ -2,7 +2,7 @@ import { getExistingInstagramController, getInstagramController, normalizeUserna
 import { analyzeInstagramScreenshot, generateCaixaPretaTurn, generateGoogleResearchComment, interpretSceneZeroBrowserRequest, refreshSceneZeroLocalContext } from "@/lib/openai";
 import { fallbackSceneZeroBrowserPlan, preserveExplicitNewsIntent } from "@/lib/scene-zero/browserCommand";
 import { collectionRepertoireBlock, parseCollectionIntervention, shouldRejectRepeatedHandAction } from "@/lib/scene-zero/collection";
-import { buildSceneZeroDirection, sceneZeroGlitchCommand } from "@/lib/scene-zero/state";
+import { buildSceneZeroDirection, normalizeSceneZeroStage, sceneZeroGlitchCommand } from "@/lib/scene-zero/state";
 import { showState } from "@/lib/showState";
 import { SHOW_MODES } from "@/prompts/modes";
 import { findInstagramParticipantByName } from "@/lib/suitcases/SuitcaseDirector";
@@ -174,8 +174,10 @@ function parseParticipantSequence(text = "") {
       ? parsed.comentarios.map((comment) => `${comment || ""}`.trim()).filter(Boolean).slice(0, 3)
       : [];
     const announcement = `${parsed.anuncio || ""}`.trim();
-    if (invite && comments.length === 3 && announcement) {
-      return { invite, comments, announcement };
+    const centerInvitation = `${parsed.centro || ""}`.trim();
+    const gameExplanation = `${parsed.malas || ""}`.trim();
+    if (invite && comments.length === 3 && announcement && centerInvitation && gameExplanation) {
+      return { invite, comments, announcement, centerInvitation, gameExplanation };
     }
   } catch {
     // Invalid structured copy is retried by the operator instead of leaking internal formatting.
@@ -200,11 +202,20 @@ async function generateParticipantSequence({ candidates, winner, detail = "" }) 
     ),
     operatorOutputInstruction: [
       "Responda somente JSON válido, sem Markdown.",
-      "Formato exato: {\"convite\":\"...\",\"comentarios\":[\"...\",\"...\",\"...\"],\"anuncio\":\"...\"}.",
-      "O convite abre os 10 segundos. Os três comentários acontecem durante a roleta e não podem revelar o vencedor. O anúncio final deve convocar exatamente o vencedor informado."
+      "Formato exato: {\"convite\":\"...\",\"comentarios\":[\"...\",\"...\",\"...\"],\"anuncio\":\"...\",\"centro\":\"...\",\"malas\":\"...\"}.",
+      "O convite abre os 10 segundos. Os três comentários acontecem durante a roleta e não podem revelar o vencedor.",
+      `O anúncio revela exatamente ${winner.name}. Em centro, fale diretamente com ${winner.name} e mande a pessoa vir até o centro da cena.`,
+      "Em malas, mande a pessoa olhar para as três malas e explique com clareza: ela escolherá uma mala por vez e deverá cumprir o que houver nela. Não revele conteúdos das malas. As falas centro e malas vêm depois do anúncio, nessa ordem."
     ].join(" ")
   });
-  return parseParticipantSequence(turn.text);
+  const sequence = parseParticipantSequence(turn.text);
+  if (!sequence) return null;
+  const normalizeCopy = (value) => `${value || ""}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+  const centerCopy = normalizeCopy(sequence.centerInvitation);
+  const gameCopy = normalizeCopy(sequence.gameExplanation);
+  if (!centerCopy.includes(normalizeCopy(winner.name)) || !centerCopy.includes("centro")) return null;
+  if (!gameCopy.includes("tres malas") || !gameCopy.includes("escolh") || !gameCopy.includes("cumpr")) return null;
+  return sequence;
 }
 
 async function startParticipantFlow({ chooseAnother = false, detail = "" } = {}) {
@@ -228,6 +239,7 @@ async function startParticipantFlow({ chooseAnother = false, detail = "" } = {})
     invite: sequence.invite,
     comments: sequence.comments,
     announcement: sequence.announcement,
+    postSelection: [sequence.centerInvitation, sequence.gameExplanation],
     inviteMessageId: inviteMessage.id
   });
   return { ...started, text: sequence.invite };
@@ -399,6 +411,7 @@ function scheduleTutorialEnd(selectionSequence, selectedAt) {
 }
 
 function beginMorelBiosSequence(selectionSequence, source = "operator") {
+  clearSceneZeroFinalBlackout();
   const started = showState.controlSceneZero("morel-bios-start", {}, { source });
   const biosSequence = started.state.suitcaseGame.morelBios.sequence;
   const pulses = [
@@ -420,7 +433,7 @@ function beginMorelBiosSequence(selectionSequence, source = "operator") {
         || suitcaseGame.morelBios.sequence !== biosSequence
       ) return;
       showState.controlSceneZero("set-glitch", { level }, { source });
-      applyGlitchLevel(level);
+      applyGlitchLevel(level, { scope: "full-frame" });
     }, offsetMs);
   }
 
@@ -435,6 +448,7 @@ function beginMorelBiosSequence(selectionSequence, source = "operator") {
     ) return;
     showState.controlSceneZero("set-glitch", { level: "normal" }, { source });
     applyGlitchLevel("normal");
+    showState.controlDisplayBlackout("all", true, { source: "scene-zero-final" });
   }, SCENE_ZERO_MOREL_BIOS_DURATION_MS);
 
   return started;
@@ -470,6 +484,7 @@ async function interruptPreviousSuitcase(nextSuitcaseNumber) {
 
   if (previousSuitcase === 1) {
     showState.controlSceneZero("morel-bios-stop", {}, { source: "scene-zero-operator" });
+    clearSceneZeroFinalBlackout();
   }
 
   if (previousSuitcase === 1 && snapshot.sceneZero.glitchLevel !== "normal") {
@@ -684,9 +699,100 @@ async function startSceneZeroInstagramTarget(targetId) {
   }
 }
 
-function applyGlitchLevel(level) {
+function clearSceneZeroFinalBlackout() {
+  const blackout = showState.snapshot().displayBlackout;
+  if (blackout?.updatedBy === "scene-zero-final" && Object.values(blackout.targets || {}).some(Boolean)) {
+    showState.controlDisplayBlackout("all", false, { source: "scene-zero-final-reset" });
+  }
+}
+
+function applyGlitchLevel(level, overrides = {}) {
   const command = sceneZeroGlitchCommand(level);
-  showState.controlGlitch(command.action, command.payload, { source: "scene-zero" });
+  showState.controlGlitch(command.action, { ...command.payload, ...overrides }, { source: "scene-zero" });
+}
+
+async function interruptSceneZeroSuitcaseFlow(detail = "") {
+  const snapshot = showState.snapshot();
+  const suitcaseGame = snapshot.sceneZero?.suitcaseGame;
+  const hasSuitcaseFlow = snapshot.sceneZero?.stage === "suitcases"
+    || Boolean(suitcaseGame?.currentSuitcase)
+    || Boolean(snapshot.suitcase?.active);
+  if (!hasSuitcaseFlow) return false;
+
+  if (snapshot.game?.active) {
+    showState.stopGame({ status: "stage_navigation", source: "scene-zero-operator" });
+  }
+
+  const controller = getExistingInstagramController();
+  if (controller) {
+    try {
+      const stopped = await controller.stopAllRoutines();
+      showState.updateInstagram({ ...controller.getStatus(), message: stopped.message });
+    } catch (error) {
+      console.error("SCENE ZERO STAGE NAVIGATION BROWSER STOP ERROR", error);
+    }
+  }
+
+  if (snapshot.suitcase?.active) {
+    showState.abortSuitcases({ source: "scene-zero-stage-navigation" });
+  }
+  showState.controlSceneZero("interrupt-suitcases", { detail }, { source: "operator" });
+  showState.controlSceneZero("set-glitch", { level: "normal" }, { source: "operator" });
+  applyGlitchLevel("normal");
+  clearSceneZeroFinalBlackout();
+  showState.setMode(SHOW_MODES.host);
+  return true;
+}
+
+async function returnToAudienceWarmup(detail = "") {
+  await interruptSceneZeroSuitcaseFlow(detail || "retorno ao aquecimento");
+  showState.controlGlitch("stop", {}, { source: "scene-zero-stage-navigation" });
+  clearSceneZeroFinalBlackout();
+  showState.setMode(SHOW_MODES.host);
+  const stage = showState.controlSceneZero("set-stage", { stage: "idle", detail }, { source: "operator" });
+  if (!stage.applied) return stage;
+  const warmup = showState.controlAudienceWarmup("resume-questions", {}, { source: "operator" });
+  if (!warmup.ok) return { applied: false, error: warmup.error, state: showState.snapshot().sceneZero };
+  return {
+    applied: true,
+    state: showState.snapshot().sceneZero,
+    audienceWarmup: showState.snapshot().audienceWarmup
+  };
+}
+
+async function returnToSoundCheck(detail = "") {
+  if (!showState.snapshot().sceneZero?.unlock?.bootComplete) {
+    return { applied: false, error: "COMPLETE BIOS BEFORE SOUND CHECK", state: showState.snapshot().sceneZero };
+  }
+  await interruptSceneZeroSuitcaseFlow(detail || "retorno à escuta de decibéis");
+  showState.controlGlitch("stop", {}, { source: "scene-zero-stage-navigation" });
+  clearSceneZeroFinalBlackout();
+  showState.setMode(SHOW_MODES.host);
+  const stage = showState.controlSceneZero("set-stage", { stage: "idle", detail }, { source: "operator" });
+  if (!stage.applied) return stage;
+  const unlock = showState.controlPlayUnlock("return-to-sound-check", {}, { source: "operator" });
+  if (!unlock.ok) return { applied: false, error: unlock.error, state: showState.snapshot().sceneZero };
+  return {
+    applied: true,
+    state: showState.snapshot().sceneZero,
+    audienceWarmup: showState.snapshot().audienceWarmup
+  };
+}
+
+async function returnToBoot(detail = "") {
+  await interruptSceneZeroSuitcaseFlow(detail || "retorno ao boot");
+  showState.controlGlitch("stop", {}, { source: "scene-zero-stage-navigation" });
+  clearSceneZeroFinalBlackout();
+  showState.setMode(SHOW_MODES.host);
+  const stage = showState.controlSceneZero("set-stage", { stage: "idle", detail }, { source: "operator" });
+  if (!stage.applied) return stage;
+  const unlock = showState.controlPlayUnlock("reset", {}, { source: "operator" });
+  if (!unlock.ok) return { applied: false, error: unlock.error, state: showState.snapshot().sceneZero };
+  return {
+    applied: true,
+    state: showState.snapshot().sceneZero,
+    audienceWarmup: showState.snapshot().audienceWarmup
+  };
 }
 
 async function researchCurrentSceneZeroParticipant() {
@@ -702,22 +808,29 @@ async function researchCurrentSceneZeroParticipant() {
 }
 
 async function enterStage(stage, detail) {
-  const changed = showState.controlSceneZero("set-stage", { stage, detail }, { source: "operator" });
+  const normalizedStage = normalizeSceneZeroStage(stage);
+  if (!normalizedStage) {
+    return { applied: false, error: "SCENE ZERO STAGE UNKNOWN", state: showState.snapshot().sceneZero };
+  }
+  if (normalizedStage !== "suitcases") {
+    await interruptSceneZeroSuitcaseFlow(detail || `retorno para ${normalizedStage}`);
+  }
+  const changed = showState.controlSceneZero("set-stage", { stage: normalizedStage, detail }, { source: "operator" });
   if (!changed.applied) return changed;
 
-  if (stage !== "suitcases") {
+  if (normalizedStage !== "suitcases") {
     const controller = getExistingInstagramController();
     if (controller?.browserMode === "person_research") {
       await controller.stopPersonResearch();
     }
   }
 
-  if (stage === "participant") {
+  if (normalizedStage === "participant") {
     const participantFlow = await startParticipantFlow({ detail });
     return { ...participantFlow, state: showState.snapshot().sceneZero };
   }
 
-  if (stage === "suitcases") {
+  if (normalizedStage === "suitcases") {
     showState.setMode(SHOW_MODES.malas);
     if (!showState.snapshot().suitcase?.active) showState.startSuitcases({ source: "scene-zero-operator" });
     const currentSuitcase = showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase;
@@ -725,18 +838,18 @@ async function enterStage(stage, detail) {
       const selected = announceNextSuitcase({ includeRules: true });
       return { ...selected, research: null, state: showState.snapshot().sceneZero };
     }
-    const turn = await speak(STAGE_DIRECTIONS[stage], detail);
+    const turn = await speak(STAGE_DIRECTIONS[normalizedStage], detail);
     return { ...changed, turn, research: null, state: showState.snapshot().sceneZero };
   }
 
-  if (stage === "cake") {
+  if (normalizedStage === "cake") {
     const game = showState.snapshot().game;
     if (!game?.active || game.id !== "verdade_ou_bolo") {
       showState.startGame({ requestedGame: "verdade-ou-bolo", source: "operator", replace: Boolean(game?.active) });
     }
   }
 
-  if (stage === "glitch") {
+  if (normalizedStage === "glitch") {
     const currentLevel = showState.snapshot().sceneZero.glitchLevel;
     const level = ["glitch-1", "glitch-2", "glitch-3", "glitch-4"].includes(currentLevel)
       ? currentLevel
@@ -747,20 +860,20 @@ async function enterStage(stage, detail) {
     applyGlitchLevel(level);
   }
 
-  if (stage === "collapse") {
+  if (normalizedStage === "collapse") {
     showState.controlSceneZero("set-glitch", { level: "collapse" }, { source: "operator" });
     applyGlitchLevel("collapse");
   }
 
-  if (stage === "airport") {
+  if (normalizedStage === "airport") {
     showState.controlGlitch("stop", {}, { source: "scene-zero" });
   }
 
-  if (stage === "collection") {
-    const intervention = await generateCollectionIntervention(STAGE_DIRECTIONS[stage], detail);
+  if (normalizedStage === "collection") {
+    const intervention = await generateCollectionIntervention(STAGE_DIRECTIONS[normalizedStage], detail);
     return { ...changed, turn: { text: intervention.text } };
   }
-  const turn = await speak(STAGE_DIRECTIONS[stage], detail);
+  const turn = await speak(STAGE_DIRECTIONS[normalizedStage], detail);
   return { ...changed, turn };
 }
 
@@ -841,6 +954,36 @@ export async function POST(request) {
       const result = await enterStage(body.stage, detail);
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
       return Response.json({ message: `CENA 0 — ${result.state.stage.toUpperCase()}`, sceneZero: showState.snapshot().sceneZero });
+    }
+
+    if (action === "return-to-warmup") {
+      const result = await returnToAudienceWarmup(detail);
+      if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
+      return Response.json({
+        message: "CENA 0 — AQUECIMENTO RETOMADO",
+        sceneZero: result.state,
+        audienceWarmup: result.audienceWarmup
+      });
+    }
+
+    if (action === "return-to-sound-check") {
+      const result = await returnToSoundCheck(detail);
+      if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
+      return Response.json({
+        message: "CENA 0 — ESCUTA DE DECIBÉIS RETOMADA",
+        sceneZero: result.state,
+        audienceWarmup: result.audienceWarmup
+      });
+    }
+
+    if (action === "return-to-boot") {
+      const result = await returnToBoot(detail);
+      if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
+      return Response.json({
+        message: "CENA 0 — BOOT EM STANDBY",
+        sceneZero: result.state,
+        audienceWarmup: result.audienceWarmup
+      });
     }
 
     if (action === "set-personality-guidance") {
@@ -941,6 +1084,7 @@ export async function POST(request) {
       if (action === "morel-bios-stop") {
         showState.controlSceneZero("set-glitch", { level: "normal" }, { source: "operator" });
         applyGlitchLevel("normal");
+        clearSceneZeroFinalBlackout();
       }
       return Response.json({
         message: action === "morel-bios-start" ? "BIOS FINAL RECARREGADA" : "BIOS FINAL INTERROMPIDA",

@@ -159,6 +159,7 @@ export default function GlitchOverlay({ children, glitch = DEFAULT_GLITCH, previ
     styles.wrapper,
     preview ? styles.preview : "",
     publicLayout === "quadrants" ? styles.quadrants : "",
+    glitch?.scope === "full-frame" ? styles.fullFrame : "",
     active ? styles.active : "",
     videoEstablished ? styles.videoEstablished : "",
     glitch?.mode === "continuous" ? styles.continuous : "",

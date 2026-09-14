@@ -25,12 +25,19 @@ import {
   pauseAudienceWarmupMinigame,
   resumeAudienceWarmupMinigame,
   selectAudienceWarmupMinigame,
-  startAudienceWarmupMinigameCountdown
 } from "../lib/audienceWarmup.js";
 import { AUDIENCE_WARMUP_MINIGAME_INTRO, AUDIENCE_WARMUP_MINIGAMES } from "../data/audience-warmup-minigames.js";
-import { AUDIENCE_WARMUP_REACTIONS, chooseAudienceWarmupReaction } from "../data/audience-warmup-reactions.js";
+import {
+  AUDIENCE_WARMUP_MINIGAME_RESULT_COMMENTS,
+  AUDIENCE_WARMUP_QUESTIONS_RESULT_COMMENT,
+  AUDIENCE_WARMUP_REACTIONS,
+  audienceWarmupResponseOptions,
+  audienceWarmupMinigameResultComment,
+  chooseAudienceWarmupReaction
+} from "../data/audience-warmup-reactions.js";
 import { assertBotCannotNavigateExternal, blockedAutonomousInstagramResult } from "../lib/externalNavigationGuard.js";
 import { createInitialResearchState, getResearchTools, updateResearchSettings } from "../lib/research/ResearchDirector.js";
+import { controllerNavigationSurfaces } from "../lib/controllerSurfaces.js";
 import { executeAutonomousInstagramTool } from "../lib/instagram/autonomousTools.js";
 import { PLAY_UNLOCK_CONFIG, PLAY_UNLOCK_STATES, playUnlockSequenceLines } from "../data/scene-zero-unlock.js";
 import {
@@ -40,12 +47,14 @@ import {
   beginPlayUnlockHumanVerification,
   commitPlayUnlockProgress,
   completePlayUnlock,
+  completePlayUnlockBoot,
   completePlayUnlockSoundCheck,
   createInitialPlayUnlockState,
   listenForPlayUnlockAudience,
   preparePlayUnlockProgress,
   readyPlayUnlockAudience,
   recordPlayUnlockAudienceAction,
+  restartPlayUnlockSoundCheck,
   startPlayUnlockBoot,
   stallPlayUnlockBoot,
   updatePlayUnlockSoundCheckLevel
@@ -168,10 +177,18 @@ assert.equal(clampAudienceWarmupInterval(99999), 15000);
 assert.deepEqual(AUDIENCE_WARMUP_MINIGAMES.map((game) => game.name), ["TAPÃO", "PISCADA", "SERINHO"]);
 assert.deepEqual(AUDIENCE_WARMUP_MINIGAME_INTRO, ["PERGUNTAS CONCLUÍDAS. AGORA, UM TESTE.", "ESCOLHA A PESSOA AO SEU LADO E FORME UMA DUPLA.", "UM JOGO SERÁ SORTEADO.", "SIGAM AS INSTRUÇÕES."]);
 assert.doesNotMatch(AUDIENCE_WARMUP_MINIGAME_INTRO.join(" "), /NÃO COMPLIQUEM/);
-assert.equal(AUDIENCE_WARMUP_REACTIONS.none.length, 5);
-assert.equal(AUDIENCE_WARMUP_REACTIONS.many.length, 5);
-assert.equal(chooseAudienceWarmupReaction("none", "", () => 0), "Nossa. Entusiasmo contagiante.");
-assert.notEqual(chooseAudienceWarmupReaction("none", "Nossa. Entusiasmo contagiante.", () => 0), "Nossa. Entusiasmo contagiante.");
+assert(AUDIENCE_WARMUP_REACTIONS.few.length >= 20);
+assert(AUDIENCE_WARMUP_REACTIONS.many.length >= 20);
+assert.deepEqual(audienceWarmupResponseOptions("hand").map((option) => option.label), ["POUCOS LEVANTARAM A MÃO", "MUITOS LEVANTARAM A MÃO"]);
+assert.equal(chooseAudienceWarmupReaction("few", [], () => 0), AUDIENCE_WARMUP_REACTIONS.few[0]);
+assert.notEqual(chooseAudienceWarmupReaction("few", [AUDIENCE_WARMUP_REACTIONS.few[0]], () => 0), AUDIENCE_WARMUP_REACTIONS.few[0]);
+assert.equal(new Set(AUDIENCE_WARMUP_REACTIONS.few).size, AUDIENCE_WARMUP_REACTIONS.few.length);
+assert.equal(new Set(AUDIENCE_WARMUP_REACTIONS.many).size, AUDIENCE_WARMUP_REACTIONS.many.length);
+assert.equal(AUDIENCE_WARMUP_QUESTIONS_RESULT_COMMENT, "VOCÊS SE EXPUSERAM O SUFICIENTE. JÁ TENHO MATERIAL.");
+assert.equal(audienceWarmupMinigameResultComment("tapao"), AUDIENCE_WARMUP_MINIGAME_RESULT_COMMENTS.tapao);
+assert.equal(audienceWarmupMinigameResultComment("piscada"), AUDIENCE_WARMUP_MINIGAME_RESULT_COMMENTS.piscada);
+assert.equal(audienceWarmupMinigameResultComment("serinho"), AUDIENCE_WARMUP_MINIGAME_RESULT_COMMENTS.serinho);
+assert.equal(audienceWarmupMinigameResultComment(null, { skipped: true }), AUDIENCE_WARMUP_MINIGAME_RESULT_COMMENTS.skipped);
 for (const instruction of [...AUDIENCE_WARMUP_MINIGAME_INTRO, ...AUDIENCE_WARMUP_MINIGAMES.flatMap((game) => game.rules)]) {
   assert.equal(audienceWarmupHasForbiddenLanguage(instruction), false, `linguagem de pedido proibida no minigame: ${instruction}`);
 }
@@ -179,16 +196,14 @@ let minigame = createInitialAudienceWarmupMinigameState("2026-09-09T00:00:00.000
 let minigameResult = selectAudienceWarmupMinigame(minigame, "tapao", { now: "2026-09-09T00:00:01.000Z" });
 assert.equal(minigameResult.applied, true);
 minigame = { ...minigameResult.state, status: "ready", round: 1 };
-minigameResult = startAudienceWarmupMinigameCountdown(minigame, "2026-09-09T00:00:02.000Z");
-assert.equal(minigameResult.state.timer.durationSeconds, 3);
-minigameResult.state.durations.tapao = 60;
-minigameResult = beginAudienceWarmupMinigameRound(minigameResult.state, "2026-09-09T00:00:05.000Z");
+minigame.durations.tapao = 60;
+minigameResult = beginAudienceWarmupMinigameRound(minigame, "2026-09-09T00:00:02.000Z");
 assert.equal(minigameResult.state.timer.durationSeconds, 10, "cada turno do TAPÃO deve começar fixado em dez segundos");
-minigameResult = pauseAudienceWarmupMinigame(minigameResult.state, "2026-09-09T00:00:09.000Z");
+minigameResult = pauseAudienceWarmupMinigame(minigameResult.state, "2026-09-09T00:00:06.000Z");
 assert.equal(minigameResult.state.timer.remainingSeconds, 6);
-minigameResult = adjustAudienceWarmupMinigameTime(minigameResult.state, 5, "2026-09-09T00:00:09.000Z");
+minigameResult = adjustAudienceWarmupMinigameTime(minigameResult.state, 5, "2026-09-09T00:00:06.000Z");
 assert.equal(minigameResult.state.timer.remainingSeconds, 11);
-minigameResult = resumeAudienceWarmupMinigame(minigameResult.state, "2026-09-09T00:00:10.000Z");
+minigameResult = resumeAudienceWarmupMinigame(minigameResult.state, "2026-09-09T00:00:07.000Z");
 assert.equal(minigameResult.state.status, "running");
 assert.equal(selectAudienceWarmupMinigame(minigameResult.state, "serinho").reason, "MINIGAME_ALREADY_STARTED", "um jogo iniciado não pode ser substituído por outro");
 assert.equal(selectAudienceWarmupMinigame({ ...minigameResult.state, status: "completed" }, "serinho").reason, "MINIGAME_ALREADY_STARTED", "perguntas não podem voltar ao bloco de minigame");
@@ -207,7 +222,8 @@ for (const expectedStep of PLAY_UNLOCK_CONFIG.bootSteps) {
 }
 unlock = stallPlayUnlockBoot(unlock);
 assert.equal(unlock.status, PLAY_UNLOCK_STATES.BOOT_FAILED);
-assert.equal(unlock.bootProgress, 100);
+assert.equal(unlock.bootProgress, PLAY_UNLOCK_CONFIG.bootStallProgress);
+assert.equal(unlock.bootComplete, false);
 assert.equal(unlock.progress, 0);
 assert.equal(PLAY_UNLOCK_CONFIG.soundCheck.waitingComments[0].text, "Boa noite...");
 assert(PLAY_UNLOCK_CONFIG.soundCheck.waitingComments.length >= 30, "a prova sonora deve ter pelo menos 30 falas de espera");
@@ -224,6 +240,10 @@ assert.equal(PLAY_UNLOCK_CONFIG.unlockLines.includes("PEÇA DESBLOQUEADA."), tru
 assert.equal(PLAY_UNLOCK_CONFIG.unlockLines.includes("HUMANIDADE SUFICIENTE."), true);
 assert.deepEqual(playUnlockSequenceLines("suitcases-finished"), ["FIM DO TUTORIAL"]);
 assert.equal(playUnlockSequenceLines("progress").includes("FIM DO TUTORIAL"), false);
+assert.equal(beginPlayUnlockSoundCheck(unlock), unlock, "a BIOS não pode avançar antes de ENCERRAR BIOS");
+unlock = completePlayUnlockBoot(unlock, "2026-09-09T00:00:19.000Z");
+assert.equal(unlock.bootProgress, 100);
+assert.equal(unlock.bootComplete, true);
 unlock = beginPlayUnlockSoundCheck(unlock, "2026-09-09T00:00:20.000Z");
 assert.equal(unlock.status, PLAY_UNLOCK_STATES.SOUND_CHECK);
 assert.equal(unlock.soundCheck.phase, "greeting");
@@ -251,6 +271,14 @@ assert.equal(unlock.verificationTitleSequence, 1);
 unlock = readyPlayUnlockAudience(unlock, "2026-09-09T00:00:24.000Z");
 assert.equal(unlock.status, PLAY_UNLOCK_STATES.WAITING_FOR_AUDIENCE);
 assert.equal(unlock.progress, PLAY_UNLOCK_CONFIG.soundCheck.progressValue);
+const soundCheckSequence = unlock.soundCheck.sequence;
+const restartedSoundCheck = restartPlayUnlockSoundCheck(unlock, "2026-09-09T00:00:25.000Z");
+assert.equal(restartedSoundCheck.status, PLAY_UNLOCK_STATES.SOUND_CHECK);
+assert.equal(restartedSoundCheck.soundCheck.phase, "listening");
+assert.equal(restartedSoundCheck.soundCheck.sequence, soundCheckSequence + 1);
+assert.equal(restartedSoundCheck.bootProgress, 100);
+assert.equal(restartedSoundCheck.bootComplete, true);
+assert.equal(restartedSoundCheck.progress, 0);
 
 const firstAction = recordPlayUnlockAudienceAction(unlock, { label: "Palmas", progressId: "clap-once", progressValue: 4, externalInput: { sequenceId: "warmup-1" } });
 assert.equal(firstAction.applied, true);
@@ -290,6 +318,7 @@ assert.throws(
 );
 assert.doesNotThrow(() => assertBotCannotNavigateExternal({ source: "operator", target: "https://instagram.com/test" }));
 assert.equal(blockedAutonomousInstagramResult().code, "BOT_EXTERNAL_NAVIGATION_BLOCKED");
+assert.deepEqual(controllerNavigationSurfaces.map((surface) => surface.menuLabel), ["Principal", "Videomapping", "Sound Control", "Operator", "Glitch", "Treino"]);
 assert.equal((await executeAutonomousInstagramTool({ name: "instagram_open_profile", args: { username: "test" } })).code, "BOT_EXTERNAL_NAVIGATION_BLOCKED");
 
 const research = updateResearchSettings(createInitialResearchState(), { autonomousInstagramEnabled: true });
@@ -302,6 +331,7 @@ const showStateSource = fs.readFileSync(new URL("../lib/showState.js", import.me
 const sceneZeroProjection = fs.readFileSync(new URL("../components/SceneZeroProjectionLayer.js", import.meta.url), "utf8");
 const sceneZeroController = fs.readFileSync(new URL("../components/SceneZeroController.js", import.meta.url), "utf8");
 const chatProjection = fs.readFileSync(new URL("../components/Chat.js", import.meta.url), "utf8");
+const controllerSurface = fs.readFileSync(new URL("../components/ControllerSurface.js", import.meta.url), "utf8");
 const participantResearchCalls = sceneZeroRoute.match(/researchCurrentSceneZeroParticipant\(\)/g) || [];
 assert.equal(participantResearchCalls.length, 2, "pesquisa de participante deve existir apenas na declaração e no handler manual");
 assert.match(sceneZeroRoute, /action === "suitcase-research-person"/);
@@ -314,15 +344,20 @@ assert.match(showStateSource, /action === "minigame-draw"/);
 assert.match(showStateSource, /action === "minigame-tapao-swap"/);
 assert.match(
   showStateSource,
-  /action === "surprise"\) \{\s*const prompt = drawAudienceWarmupSelection\(current, \{ intensity: current\.intensity \}, now\);\s*publishSelectedAudienceWarmupPrompt\(prompt\);/,
-  "SORTEAR deve usar a intensidade selecionada e disparar imediatamente"
+  /action === "surprise"\) \{\s*const reaction = reactThenDrawAudienceWarmupPrompt\(current\.intensity\);/,
+  "SORTEAR deve começar por uma reação à pergunta anterior"
 );
+assert.match(showStateSource, /pending\.kind === "draw-and-publish"[\s\S]*drawAudienceWarmupSelection[\s\S]*publishSelectedAudienceWarmupPrompt\(prompt\)/, "depois da reação, SORTEAR deve escolher e disparar a próxima pergunta");
+assert.match(showStateSource, /currentResponse[\s\S]*REGISTRE A RESPOSTA DESTA PERGUNTA ANTES DE SORTEAR/, "SORTEAR deve exigir o resultado contextual da pergunta atual");
+assert.match(showStateSource, /responseHistory:[\s\S]*promptId !== promptId/, "a resposta observada deve ser salva por pergunta");
+assert.doesNotMatch(showStateSource, /startAudienceWarmupMinigameCountdown/, "minigame deve iniciar sem pré-contagem");
 assert.match(showStateSource, /armAudienceWarmupAdvance\(\s*"questions-start"/, "a confirmação sonora deve abrir a rodada de perguntas");
 assert.match(showStateSource, /completionKind: "first-provocation"/, "a ação de mortos deve preparar a primeira provocação");
 assert.match(showStateSource, /AUDIENCE_WARMUP_REQUIRED_ACKNOWLEDGEMENT[\s\S]*"first-provocation"/, "o fim da ação obrigatória deve reconhecer a obediência e continuar");
 assert.match(showStateSource, /launchFirstAudienceWarmupProvocation\(\)[\s\S]*AUDIENCE_WARMUP_FIRST_QUESTION_INTENSITY[\s\S]*publishSelectedAudienceWarmupPrompt\(prompt\)/, "a primeira pergunta deve ser sorteada e disparada na intensidade 4");
 assert.match(showStateSource, /addMessage\("assistant", PLAY_UNLOCK_CONFIG\.questionsIntroduction, "audience-warmup-introduction"\)/, "o chatbot deve introduzir a série de perguntas depois dos decibéis");
-assert.match(showStateSource, /action === "questions-complete"[\s\S]*startAudienceWarmupBriefing\(\)/, "o mini game deve começar somente depois das perguntas");
+assert.match(showStateSource, /action === "questions-complete"[\s\S]*startAudienceWarmupBriefing\(\{ includeResultsComment: true \}\)/, "o fim das perguntas deve comentar os resultados antes do mini game");
+assert.match(showStateSource, /audienceWarmupMinigameResultComment\(current\.selectedId, \{ skipped \}\)/, "o fim do mini game deve publicar um comentário específico sobre o resultado");
 assert.match(showStateSource, /publishAudienceWarmupSystemSequence\(transition, "warmup-complete"\)/, "o mini game deve encerrar o aquecimento sem voltar às perguntas");
 assert.match(showStateSource, /action === "manual-next"[\s\S]*executeAudienceWarmupAdvance\(\)/, "NEXT manual deve consumir um único avanço pendente");
 assert.match(showStateSource, /pending\.kind === "reaction-resume"[\s\S]*continuation\.dueAt/, "reação automática deve retomar a continuação no instante original");
@@ -332,6 +367,9 @@ assert.doesNotMatch(sceneZeroController, /ignoreMicrophoneUntil/, "a fala do bot
 assert.doesNotMatch(sceneZeroProjection, /getUserMedia\(/, "a projeção nunca deve solicitar permissão de microfone");
 assert.match(showStateSource, /action === "sound-check-level"[\s\S]*updatePlayUnlockSoundCheckLevel/, "o controller deve transmitir somente o nível sonoro pelo estado compartilhado");
 assert.match(sceneZeroProjection, /SORTEANDO TESTE/);
+assert.match(sceneZeroProjection, /participantSelection\.status === "preparing"[\s\S]*\/pensando/, "a projeção deve sinalizar enquanto prepara a seleção do participante");
+assert.doesNotMatch(sceneZeroProjection, /<span>TEMPO<\/span>/, "o cronômetro fixo deve projetar somente o número");
+assert.doesNotMatch(sceneZeroProjection, /: "EM CURSO"/, "o cronômetro fixo não deve repetir EM CURSO");
 assert.doesNotMatch(sceneZeroProjection, />10 SEGUNDOS</, "contagem do participante não deve repetir a duração por escrito");
 assert.match(sceneZeroProjection, /suitcaseCueFrame\.phase === "reveal" \? "MALA"/, "revelação deve mostrar MALA acima do número");
 assert.match(sceneZeroProjection, /allVisibleMorelLines\.slice\(-10\)/, "BIOS final deve acompanhar as linhas mais recentes");
@@ -344,5 +382,10 @@ assert.match(sceneZeroRoute, /O jogo é simples:[\s\S]*Vou escolher uma mala ale
 assert.match(sceneZeroRoute, /SCENE_ZERO_HANGMAN_INSTRUCTION[\s\S]*scene-zero-hangman-instruction[\s\S]*hangman-start/, "a forca deve pedir a letra em voz alta antes de iniciar");
 assert.match(sceneZeroRoute, /scheduleHangmanStart[\s\S]*controlSceneZero\("hangman-start"/, "a forca deve iniciar automaticamente");
 assert.match(sceneZeroRoute, /FIM DO TUTORIAL|tutorialCompleteDurationMs/, "a Mala 1 deve terminar o tutorial antes do glitch");
+assert.match(sceneZeroRoute, /parsed\.centro[\s\S]*centro da cena/, "o GPT deve criar um chamado nominal ao centro da cena");
+assert.match(sceneZeroRoute, /parsed\.malas[\s\S]*olhar para as três malas/, "o GPT deve explicar o jogo depois de mostrar as três malas");
+assert.match(sceneZeroRoute, /scope: "full-frame"/, "o glitch final deve ocupar todos os quadrantes");
+assert.match(sceneZeroRoute, /controlDisplayBlackout\("all", true, \{ source: "scene-zero-final" \}\)/, "a BIOS final deve terminar em blackout global");
+assert.doesNotMatch(controllerSurface, /ControllerBlackoutBar/, "a barra de abas de blackout não deve aparecer nos controllers");
 
 console.log(`audience warmup tests passed (${AUDIENCE_WARMUP_PROMPTS.length} prompts)`);

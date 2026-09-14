@@ -65,7 +65,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
   const warmupDisabled = busy || !warming || !questionsReady || Boolean(playUnlock.pendingProgress);
   const minigame = warmup.minigame || {};
   const minigameReady = ["briefing", "minigame"].includes(warmup.phase);
-  const minigameStarted = ["countdown", "running", "paused", "exchange", "ready_round_two"].includes(minigame.status);
+  const minigameStarted = ["running", "paused", "exchange", "ready_round_two"].includes(minigame.status);
   const minigameLocked = minigame.status === "completed" || questionsReady;
 
   async function chooseAction(action) {
@@ -144,7 +144,9 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
           </div>
         ) : null}
         {bootFailed ? (
-          <button className={styles.startWarmup} disabled={busy} onClick={() => act("unlock-start-warmup")} type="button">INICIAR AQUECIMENTO</button>
+          <button className={styles.startWarmup} disabled={busy || playUnlock.bootComplete} onClick={() => act("unlock-end-bios")} type="button">
+            {playUnlock.bootComplete ? "ENCERRANDO BIOS..." : "ENCERRAR BIOS"}
+          </button>
         ) : null}
         {soundChecking ? (
           <div className={styles.soundCheckControls}>
@@ -219,7 +221,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
           <button disabled={busy || !minigame.selectedId || minigameLocked} onClick={() => act("minigame-restart")} type="button">REINICIAR</button>
           <button disabled={busy || !["running", "paused"].includes(minigame.status)} onClick={() => act("minigame-adjust-time", { deltaSeconds: 5 })} type="button">+5 SEGUNDOS</button>
           <button disabled={busy || !["running", "paused"].includes(minigame.status)} onClick={() => act("minigame-adjust-time", { deltaSeconds: -5 })} type="button">−5 SEGUNDOS</button>
-          {minigame.selectedId === "tapao" ? <button disabled={busy || minigame.round === 2 || !["countdown", "running", "paused"].includes(minigame.status)} onClick={() => act("minigame-tapao-swap")} type="button">TROQUEM AGORA</button> : null}
+          {minigame.selectedId === "tapao" ? <button disabled={busy || minigame.round === 2 || !["running", "paused"].includes(minigame.status)} onClick={() => act("minigame-tapao-swap")} type="button">TROQUEM AGORA</button> : null}
           <button className={styles.endGame} disabled={busy || !minigame.selectedId || minigameLocked} onClick={() => act("minigame-end")} type="button">ENCERRAR</button>
           <button className={styles.skipGame} disabled={busy || !warming || !minigameReady || minigameLocked} onClick={() => act("minigame-skip")} type="button">PULAR MINIGAME</button>
         </div>
@@ -306,7 +308,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
       </div>
 
       <div className={styles.cueControls}>
-        <button className={styles.surprise} disabled={warmupDisabled} onClick={() => act("surprise")} type="button">SORTEAR</button>
+        <button className={styles.surprise} disabled={warmupDisabled || Boolean(warmup.pendingAdvance) || warmup.currentResponse?.promptId !== warmup.sequence?.promptId} onClick={() => act("surprise")} type="button">SORTEAR</button>
         <button disabled={warmupDisabled || !previewPrompt} onClick={() => act("skip")} type="button">PULAR</button>
         <button disabled={warmupDisabled || !current} onClick={() => act("repeat")} type="button">REPETIR</button>
         <button disabled={warmupDisabled || !sequence || !next} onClick={() => act("next")} type="button">PRÓXIMO</button>

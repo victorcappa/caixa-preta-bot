@@ -64,7 +64,8 @@ try {
     state = await snapshot(context.request);
   }
   assert.equal(state.sceneZero.unlock.status, "BOOT_FAILED");
-  await control(context.request, "start-warmup");
+  const ending = await control(context.request, "end-bios");
+  assert.equal(ending.bootProgress, 100);
   await waitFor(context.request, (value) => value.sceneZero.unlock.soundCheck?.phase === "listening", 8000);
 
   await controller.evaluate(async () => {
@@ -83,7 +84,16 @@ try {
   assert.equal(await controller.evaluate(() => localStorage.getItem("caixa-preta-mic-test-count")), "1");
   await projection.getByText(state.sceneZero.unlock.soundCheck.comment, { exact: true }).waitFor();
 
-  console.log("audience sound-check browser test passed");
+  await controller.evaluate(() => {
+    window.__audienceSoundCheckTestInput.gain.gain.value = 0;
+  });
+  await controller.getByRole("link", { name: /ESCUTA DE DECIBÉIS/ }).click();
+  state = await waitFor(context.request, (value) => value.sceneZero.unlock.soundCheck?.phase === "listening", 8000);
+  assert.equal(state.sceneZero.unlock.bootProgress, 100);
+  assert.equal(state.sceneZero.unlock.bootComplete, true);
+  assert.equal(state.sceneZero.unlock.progress, 0);
+
+  console.log("audience sound-check browser test passed: microphone completion and return navigation");
 } finally {
   await context.request.post(`${BASE_URL}/api/operator`, { data: { command: "/reset" } }).catch(() => {});
   await context.close();

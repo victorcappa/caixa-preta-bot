@@ -44,7 +44,9 @@ async function unlockProjection(request) {
     unlock = await unlockAction(request, "advance-boot");
   }
   assert.equal(unlock.status, "BOOT_FAILED");
-  await unlockAction(request, "start-warmup");
+  const ending = await unlockAction(request, "end-bios");
+  assert.equal(ending.bootProgress, 100);
+  await waitForState(request, (candidate) => candidate.sceneZero.unlock.status === "SOUND_CHECK");
   await unlockAction(request, "sound-check-skip");
   const state = await waitForState(
     request,
@@ -163,14 +165,36 @@ try {
   assert.equal(state.sceneZero.unlock.progress, 100);
   await projection.getByLabel("Nova BIOS corrompida").waitFor();
   await projection.getByRole("progressbar", { name: "DESBLOQUEIO DO ESPETÁCULO: 100%" }).waitFor();
+  state = await waitForState(context.request, (value) => value.glitch.active && value.glitch.scope === "full-frame", 5000);
+  assert.equal(state.glitch.scope, "full-frame", "o glitch final deve tomar o quadro público inteiro");
   await projection.screenshot({ path: "/private/tmp/caixa-preta-mala-1-bios.png" });
 
-  await context.request.post(`${BASE_URL}/api/operator`, { data: { command: "/reset" } });
-  state = await waitForState(context.request, (value) => value.sceneZero.suitcaseGame.currentSuitcase === null);
+  state = await waitForState(
+    context.request,
+    (value) => Object.values(value.displayBlackout.targets || {}).every(Boolean),
+    35000
+  );
+  assert.equal(state.displayBlackout.updatedBy, "scene-zero-final");
+  await projection.locator('[data-blackout-target="chatbot"]').waitFor();
+
+  await controller.locator('a[href="#scene-zero-unlock"]').click();
+  state = await waitForState(
+    context.request,
+    (value) => value.sceneZero.stage === "idle"
+      && value.sceneZero.suitcaseGame.currentSuitcase === null
+      && value.audienceWarmup.phase === "questions",
+    10000
+  );
   assert.equal(state.sceneZero.suitcaseGame.gincana.timer.status, "idle");
   assert.equal(state.sceneZero.suitcaseGame.hangman.status, "idle");
   assert.equal(state.sceneZero.suitcaseGame.morelBios.status, "idle");
   assert.equal(state.sceneZero.glitchLevel, "normal");
+  assert.equal(state.mode, "host");
+  assert.equal(Object.values(state.displayBlackout.targets || {}).some(Boolean), false);
+  assert.equal(state.sceneZero.unlock.status, "WARMING_AUDIENCE");
+  assert.equal(state.sceneZero.unlock.progress, 99, "voltar ao aquecimento deve reabrir a barra sem manter o desbloqueio final");
+  assert(state.audienceWarmup.sequence?.promptId, "o aquecimento retomado deve republicar uma pergunta contextual");
+  await projection.locator('[data-blackout-target="chatbot"]').waitFor({ state: "detached" });
 
   console.log("scene zero suitcase browser tests passed");
 } finally {

@@ -128,14 +128,17 @@
 @keyframes soundCheckBlink { 0%, 48% { opacity: 1; } 49%, 100% { opacity: 0; } }
 @keyframes soundCheckComplete { 0% { opacity: .4; transform: scaleX(.94); transform-origin: left; } 60% { opacity: 1; } 100% { transform: scaleX(1); } }
 .selectionOverlay { position: absolute; inset: 0; z-index: 115; display: grid; place-items: center; pointer-events: none; color: #fff; background: #030303; font-family: var(--font-mono, monospace); }
-.volunteerCountdown, .roulette, .selectedParticipant { width: min(1100px, 90vw); display: grid; justify-items: center; gap: 20px; text-align: center; }
+.participantThinking, .volunteerCountdown, .roulette, .selectedParticipant { width: min(1100px, 90vw); display: grid; justify-items: center; gap: 20px; text-align: center; }
+.participantThinking { display: flex; justify-content: center; align-items: baseline; color: #00ff66; font-size: clamp(42px, 8vw, 128px); font-weight: 900; letter-spacing: -.04em; }
+.thinkingDots { display: inline-flex; }
+.thinkingDots i { opacity: 0; font-style: normal; animation: thinkingDot 1.2s steps(1) infinite; }
+.thinkingDots i:nth-child(2) { animation-delay: .2s; }
+.thinkingDots i:nth-child(3) { animation-delay: .4s; }
 .volunteerCountdown { transform: translateY(clamp(22px, 5vh, 64px)); }
 .volunteerCountdown p { max-width: 1050px; margin: 0; color: #fff; font-size: clamp(24px, 4vw, 58px); font-weight: 850; }
 .roulette > span, .selectedParticipant span { color: #00ff66; font-size: clamp(18px, 2.6vw, 38px); font-weight: 900; letter-spacing: .1em; }
-.sceneZeroTimer { box-sizing: border-box; position: absolute !important; z-index: 150 !important; top: clamp(24px, 4vh, 52px); right: clamp(24px, 4vw, 68px); width: clamp(176px, 18vw, 260px); height: clamp(132px, 17vh, 188px); display: grid; grid-template-rows: auto 1fr auto; place-items: center; gap: 2px; padding: clamp(10px, 1.4vw, 18px); pointer-events: none; color: #00ff66; border: 1px solid currentColor; background: rgba(0,0,0,.92); box-shadow: 0 0 24px rgba(0,255,102,.12); font-family: var(--font-mono, monospace); transform: none !important; }
-.sceneZeroTimer span { color: #00ff66; font-size: clamp(11px, 1vw, 16px); font-weight: 900; letter-spacing: .14em; }
+.sceneZeroTimer { box-sizing: border-box; position: absolute !important; z-index: 150 !important; top: clamp(24px, 4vh, 52px); right: clamp(24px, 4vw, 68px); width: clamp(176px, 18vw, 260px); height: clamp(132px, 17vh, 188px); display: grid; place-items: center; padding: clamp(10px, 1.4vw, 18px); pointer-events: none; color: #00ff66; border: 1px solid currentColor; background: rgba(0,0,0,.92); box-shadow: 0 0 24px rgba(0,255,102,.12); font-family: var(--font-mono, monospace); transform: none !important; }
 .sceneZeroTimer strong { align-self: center; color: #fff; font-size: clamp(58px, 8vw, 118px); font-weight: 950; line-height: .72; text-shadow: 5px 5px 0 #00a844; }
-.sceneZeroTimer small { color: #00ff66; font-size: clamp(10px, .9vw, 14px); font-weight: 900; letter-spacing: .08em; text-align: center; }
 .physicalChallengeUrgent .sceneZeroTimer strong { color: #ff3155; text-shadow: 5px 5px 0 #fff; animation: physicalNumber .5s steps(2) infinite; }
 .warmupGameTimer[data-paused="true"] .sceneZeroTimer strong { color: #ffb52d; text-shadow: none; }
 .volunteerCountdown small { font-size: clamp(22px, 4vw, 58px); font-weight: 900; }
@@ -150,6 +153,7 @@
 @keyframes contaminate { 0% { transform: translate(0); filter: hue-rotate(0); } 50% { transform: translate(2.5%, -1%); filter: hue-rotate(55deg) contrast(1.8); } 100% { transform: translate(-1.5%, 1%); filter: hue-rotate(-35deg); } }
 @keyframes endFlash { 50% { background: #250009; } }
 @keyframes rouletteHit { 50% { transform: translateX(2.5%); filter: invert(1); } }
+@keyframes thinkingDot { 0%, 24%, 76%, 100% { opacity: 0; } 25%, 75% { opacity: 1; } }
 @keyframes rouletteCommentTremor {
   0%, 68%, 82%, 100% { transform: translate3d(0, 0, 0) rotate(0); }
   70% { transform: translate3d(-1px, .5px, 0) rotate(-.12deg); }
@@ -174,7 +178,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .verificationTitle > strong { animation: none; }
-  .rouletteComment { animation: none; }
+  .rouletteComment, .thinkingDots i { animation: none; }
+  .thinkingDots i { opacity: 1; }
   .karaokeLyrics .karaokeCurrentLine, .karaokeFinished { animation: none; }
   .physicalChallengeUrgent, .physicalChallengeUrgent .sceneZeroTimer strong, .hangmanInterference, .hangmanErrors3, .hangmanErrors4, .morelBiosOverlay, .morelBiosNoise, .morelBiosTerminal p, .morelBiosTerminal i { animation: none; }
 }

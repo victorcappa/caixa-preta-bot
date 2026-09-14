@@ -12,6 +12,8 @@ export const PLAY_UNLOCK_STATES = {
 
 export const PLAY_UNLOCK_CONFIG = {
   bootLimit: 100,
+  bootStallProgress: 78,
+  bootCompletionDurationMs: 1800,
   preFinalProgressLimit: 99,
   questionProgressValue: 5,
   manualProgressStep: 2,
@@ -213,6 +215,13 @@ export const PLAY_UNLOCK_CONFIG = {
     verification: { frequency: 330, durationMs: 180, volume: 0.045, oscillator: "square" },
     unlock: { frequency: 880, durationMs: 110, volume: 0.04, oscillator: "square" }
   },
+  system95Sounds: {
+    tick: { frequencies: [880, 1174.66], stepMs: 28, durationMs: 22, volume: 0.026, oscillator: "square" },
+    warning: { frequencies: [246.94, 185], stepMs: 72, durationMs: 66, volume: 0.04, oscillator: "square" },
+    progress: { frequencies: [523.25, 659.25], stepMs: 42, durationMs: 34, volume: 0.032, oscillator: "square" },
+    verification: { frequencies: [392, 523.25, 659.25], stepMs: 52, durationMs: 45, volume: 0.038, oscillator: "square" },
+    unlock: { frequencies: [523.25, 659.25, 783.99, 1046.5], stepMs: 58, durationMs: 52, volume: 0.04, oscillator: "square" }
+  },
   bootSteps: [
     {
       id: "machine",
@@ -295,7 +304,7 @@ export const PLAY_UNLOCK_CONFIG = {
     },
     {
       id: "audience",
-      progress: 100,
+      progress: 78,
       durationMs: 900,
       sound: "warning",
       lines: [

@@ -193,6 +193,24 @@
   position: absolute;
 }
 
+.quadrants.fullFrame.active .content {
+  animation: contentJitter var(--glitch-speed, 160ms) steps(2, end) infinite;
+  filter:
+    contrast(calc(1 + var(--glitch-intensity, 0) * 0.32))
+    saturate(calc(1 + var(--glitch-distortion, 0) * 1.8))
+    hue-rotate(calc(var(--glitch-distortion, 0) * 26deg));
+}
+
+.quadrants.fullFrame .overlay,
+.quadrants.fullFrame .invadingVideo {
+  position: fixed;
+  inset: 0;
+  width: 100dvw;
+  height: 100dvh;
+  max-width: 100dvw;
+  max-height: 100dvh;
+}
+
 @keyframes contentJitter {
   0% {
     transform: translate3d(0, 0, 0);

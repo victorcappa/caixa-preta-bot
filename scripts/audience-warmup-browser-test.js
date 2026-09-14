@@ -1,5 +1,13 @@
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
+import {
+  AUDIENCE_WARMUP_FIRST_QUESTION_INTENSITY,
+  AUDIENCE_WARMUP_REQUIRED_ACKNOWLEDGEMENT
+} from "../data/audience-warmup-prompts.js";
+import {
+  AUDIENCE_WARMUP_MINIGAME_RESULT_COMMENTS,
+  AUDIENCE_WARMUP_QUESTIONS_RESULT_COMMENT
+} from "../data/audience-warmup-reactions.js";
 import { PLAY_UNLOCK_CONFIG } from "../data/scene-zero-unlock.js";
 
 const BASE_URL = process.env.CAIXA_PRETA_URL || "http://localhost:3000";
@@ -41,7 +49,8 @@ async function bootToWarmup(request, { waitForMinigame = false } = {}) {
     unlock = (await post(request, "unlock-advance-boot")).unlock;
   }
   assert.equal(unlock.status, "BOOT_FAILED");
-  await post(request, "unlock-start-warmup");
+  const ending = await post(request, "unlock-end-bios");
+  assert.equal(ending.unlock.bootProgress, 100);
   await waitFor(request, (state) => state.sceneZero.unlock.status === "SOUND_CHECK" && state.sceneZero.unlock.soundCheck?.phase === "listening", "sound check", 7000);
   await post(request, "unlock-sound-check-skip");
   const ready = await waitFor(
@@ -105,10 +114,8 @@ try {
   const manualToggle = sceneOperator.getByRole("region", { name: "Controles iniciais do aquecimento" }).getByRole("checkbox");
   await manualToggle.waitFor();
   assert.equal(await manualToggle.isChecked(), false);
-  const noReactionButton = sceneOperator.getByRole("button", { name: "NINGUÉM REAGIU", exact: true });
-  const manyReactionButton = sceneOperator.getByRole("button", { name: "MUITOS REAGIRAM", exact: true });
-  await noReactionButton.waitFor();
-  await manyReactionButton.waitFor();
+  const responseControls = sceneOperator.getByRole("region", { name: "Resposta da pergunta atual" });
+  await responseControls.waitFor();
 
   // Fluxo completo: prova sonora -> perguntas/ações -> mini game.
   let state = await bootToWarmup(context.request);
@@ -117,26 +124,42 @@ try {
   assert.equal(state.publicMessage.content, "TODOS FINJAM ESTAR MORTOS NAS CADEIRAS E NO CHÃO.");
   await display.getByText(state.publicMessage.content, { exact: true }).waitFor();
 
+  state = await waitFor(
+    context.request,
+    (candidate) => candidate.publicMessage?.content === AUDIENCE_WARMUP_REQUIRED_ACKNOWLEDGEMENT,
+    "reconhecimento depois dos 30 segundos de mortos",
+    35000
+  );
+  await display.getByText(AUDIENCE_WARMUP_REQUIRED_ACKNOWLEDGEMENT, { exact: true }).waitFor();
+  state = await waitFor(
+    context.request,
+    (candidate) => candidate.audienceWarmup.previewPromptId?.startsWith("provocative-")
+      && candidate.publicMessage?.content === candidate.audienceWarmup.preview,
+    "primeira provocação automática"
+  );
+  assert.equal(state.audienceWarmup.intensity, AUDIENCE_WARMUP_FIRST_QUESTION_INTENSITY);
+  assert.match(state.audienceWarmup.previewPromptId, /^provocative-/);
+
   const promptBeforeReaction = state.audienceWarmup.previewPromptId;
   const progressBeforeReaction = state.sceneZero.unlock.progress;
-  if (!(await noReactionButton.isEnabled())) {
-    const controls = sceneOperator.getByRole("region", { name: "Reação rápida do público" });
+  const fewResponseButton = responseControls.getByRole("button").first();
+  const manyResponseButton = responseControls.getByRole("button").last();
+  assert.match(await fewResponseButton.textContent(), /^POUCOS /);
+  assert.match(await manyResponseButton.textContent(), /^MUITOS /);
+  if (!(await fewResponseButton.isEnabled())) {
     throw new Error(`controles de reação desabilitados: ${JSON.stringify({
-      phase: await controls.getAttribute("data-phase"),
-      pending: await controls.getAttribute("data-pending")
+      phase: await responseControls.getAttribute("data-phase"),
+      pending: await responseControls.getAttribute("data-pending")
     })}`);
   }
-  await noReactionButton.click();
-  state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.reaction?.kind === "none", "reação de ninguém");
-  assert.equal(state.audienceWarmup.previewPromptId, promptBeforeReaction, "reação não pode trocar a pergunta");
-  assert.equal(state.sceneZero.unlock.progress, progressBeforeReaction, "reação não pode pontuar");
-  await display.getByLabel("Reação do chatbot").waitFor();
-  await display.getByText(state.audienceWarmup.reaction.text, { exact: true }).waitFor();
-  await manyReactionButton.click();
-  state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.reaction?.kind === "many", "reação de muitos");
-  assert.equal(state.audienceWarmup.previewPromptId, promptBeforeReaction, "segunda reação também não pode trocar a pergunta");
-  assert.equal(state.sceneZero.unlock.progress, progressBeforeReaction, "segunda reação não pode pontuar");
-  await display.getByText(state.audienceWarmup.reaction.text, { exact: true }).waitFor();
+  await fewResponseButton.click();
+  state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.currentResponse?.kind === "few", "registro de poucos");
+  assert.equal(state.audienceWarmup.previewPromptId, promptBeforeReaction, "registrar resposta não pode trocar a pergunta");
+  assert.equal(state.publicMessage.content, state.audienceWarmup.preview, "registrar resposta não pode falar antes de SORTEAR");
+  assert.equal(state.sceneZero.unlock.progress, progressBeforeReaction, "registrar resposta não pode pontuar");
+  await manyResponseButton.click();
+  state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.currentResponse?.kind === "many", "registro de muitos");
+  assert.equal(state.audienceWarmup.responseHistory.at(-1).promptId, promptBeforeReaction);
 
   const literalCases = [
     ["public-07", "QUEM VOTOU NO LULA FICA DE PÉ."],
@@ -161,9 +184,13 @@ try {
   assert.equal(state.sceneZero.unlock.progress, expectedQuestionProgress, "redisparar a mesma pergunta não pode pontuar outra vez");
 
   await post(context.request, "set-intensity", { intensity: "social_pressure" });
+  const promptBeforeSurprise = (await snapshot(context.request)).audienceWarmup.previewPromptId;
+  await post(context.request, "record-response", { kind: "many", label: "MUITOS TOCARAM O CORPO" });
   await post(context.request, "surprise");
-  state = await snapshot(context.request);
-  assert.equal(state.audienceWarmup.active, true, "sortear deve disparar imediatamente");
+  state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.reaction?.kind === "many", "reação contextual antes do sorteio");
+  assert.equal(state.audienceWarmup.previewPromptId, promptBeforeSurprise, "a reação deve acontecer antes de escolher a próxima pergunta");
+  assert.equal(state.publicMessage.content, state.audienceWarmup.reaction.text, "a reação automática deve ser projetada");
+  state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.previewPromptId?.startsWith("social-") && candidate.publicMessage?.content === candidate.audienceWarmup.preview, "sorteio depois da reação");
   assert.equal(state.audienceWarmup.intensity, "social_pressure", "sortear deve preservar a intensidade selecionada");
   assert(state.audienceWarmup.previewPromptId, "sorteio deve preparar um id da biblioteca");
   assert.match(state.audienceWarmup.previewPromptId, /^social-/, "sortear deve escolher uma ação da intensidade selecionada");
@@ -171,9 +198,11 @@ try {
 
   await post(context.request, "minigame-draw", {}, false);
   await post(context.request, "questions-complete");
+  state = await waitFor(context.request, (candidate) => candidate.publicMessage?.content === AUDIENCE_WARMUP_QUESTIONS_RESULT_COMMENT, "comentário final das perguntas");
+  await display.getByText(AUDIENCE_WARMUP_QUESTIONS_RESULT_COMMENT, { exact: true }).waitFor();
   state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "ready_for_draw", "briefing depois das perguntas", 40000);
   const briefing = state.audienceWarmup.history.map((entry) => entry.text);
-  assert.deepEqual(briefing.slice(-4), ["PERGUNTAS CONCLUÍDAS. AGORA, UM TESTE.", "ESCOLHA A PESSOA AO SEU LADO E FORME UMA DUPLA.", "UM JOGO SERÁ SORTEADO.", "SIGAM AS INSTRUÇÕES."]);
+  assert.deepEqual(briefing.slice(-5), [AUDIENCE_WARMUP_QUESTIONS_RESULT_COMMENT, "PERGUNTAS CONCLUÍDAS. AGORA, UM TESTE.", "ESCOLHA A PESSOA AO SEU LADO E FORME UMA DUPLA.", "UM JOGO SERÁ SORTEADO.", "SIGAM AS INSTRUÇÕES."]);
   assert.equal(briefing.some((line) => /NÃO COMPLIQUEM/.test(line)), false);
   await post(context.request, "minigame-draw");
   await display.getByText("SORTEANDO TESTE", { exact: true }).waitFor();
@@ -187,9 +216,6 @@ try {
   await post(context.request, "minigame-start");
   await display.getByLabel("Minigame do aquecimento").waitFor();
   await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "running", "primeiro turno do TAPÃO");
-  await manyReactionButton.click();
-  state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.reaction?.kind === "many", "reação durante mini game");
-  await display.getByLabel("Reação do chatbot").waitFor();
   await post(context.request, "minigame-tapao-swap");
   await display.getByText("INVERTAM OS PAPÉIS", { exact: true }).waitFor();
   await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "ready_round_two", "troca do TAPÃO");
@@ -198,6 +224,7 @@ try {
   await post(context.request, "minigame-end");
   state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.phase === "complete", "fim do aquecimento depois do TAPÃO", 20000);
   assert.equal(state.audienceWarmup.minigame.status, "completed");
+  assert(state.audienceWarmup.history.some((entry) => entry.text === AUDIENCE_WARMUP_MINIGAME_RESULT_COMMENTS.tapao));
   assert(state.sceneZero.unlock.progress >= 5, "minigame concluído deve aumentar a barra de desbloqueio em 5%");
 
   await post(context.request, "unlock-complete");
@@ -213,8 +240,6 @@ try {
   await selectAndPrepare(context.request, "piscada");
   await post(context.request, "minigame-start");
   await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "running", "PISCADA em curso");
-  await manyReactionButton.click();
-  await waitFor(context.request, (candidate) => candidate.audienceWarmup.reaction?.kind === "many", "reação durante o cronômetro da PISCADA");
   await new Promise((resolve) => setTimeout(resolve, 2500));
   state = await snapshot(context.request);
   assert.equal(state.audienceWarmup.minigame.status, "running", "reação não pode antecipar o fim do cronômetro");
@@ -225,7 +250,8 @@ try {
   assert.equal(state.audienceWarmup.minigame.timer.remainingSeconds, paused + 5);
   await post(context.request, "minigame-resume");
   await post(context.request, "minigame-end");
-  await waitFor(context.request, (candidate) => candidate.audienceWarmup.phase === "complete", "fim do aquecimento depois da PISCADA", 20000);
+  state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.phase === "complete", "fim do aquecimento depois da PISCADA", 20000);
+  assert(state.audienceWarmup.history.some((entry) => entry.text === AUDIENCE_WARMUP_MINIGAME_RESULT_COMMENTS.piscada));
 
   // SERINHO: timer, reinício, -5 e encerramento.
   await bootToWarmup(context.request, { waitForMinigame: true });
@@ -242,6 +268,7 @@ try {
   await post(context.request, "minigame-end");
   state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.phase === "complete", "fim do aquecimento depois do SERINHO", 20000);
   assert.equal(state.audienceWarmup.minigame.selectedId, "serinho");
+  assert(state.audienceWarmup.history.some((entry) => entry.text === AUDIENCE_WARMUP_MINIGAME_RESULT_COMMENTS.serinho));
 
   const allWarmupText = state.audienceWarmup.history.map((entry) => entry.text).join(" ");
   assert.doesNotMatch(allWarmupText, /\bpor favor\b/iu);

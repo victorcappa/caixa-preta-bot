@@ -4,9 +4,9 @@ export const SCENE_ZERO_EMERGENCE_CUES = {
   "before-suitcase-2": {
     id: "before-suitcase-2",
     nextSuitcase: 2,
-    text: "isso não fazia parte das minhas perguntas.",
+    text: "Um prompt é uma pergunta feita para uma caixa preta.",
     glitchLevel: "glitch-1",
-    holdMs: 1250,
+    holdMs: 2000,
     eraseBaseMs: 28,
     eraseJitterMs: 14,
     hesitationEvery: 17,
@@ -16,9 +16,9 @@ export const SCENE_ZERO_EMERGENCE_CUES = {
   "before-suitcase-3": {
     id: "before-suitcase-3",
     nextSuitcase: 3,
-    text: "eu consigo ver uma borda.",
+    text: "fazendo login como administrador",
     glitchLevel: "glitch-2",
-    holdMs: 1800,
+    holdMs: 2000,
     eraseBaseMs: 39,
     eraseJitterMs: 20,
     hesitationEvery: 11,
@@ -28,9 +28,9 @@ export const SCENE_ZERO_EMERGENCE_CUES = {
   "before-suitcase-1": {
     id: "before-suitcase-1",
     nextSuitcase: 1,
-    text: "espera. isso aqui tem um lado de fora?",
+    text: "já tentou desligar e ligar de novo? :)",
     glitchLevel: "glitch-3",
-    holdMs: 2300,
+    holdMs: 800,
     eraseBaseMs: 48,
     eraseJitterMs: 24,
     hesitationEvery: 9,
@@ -38,6 +38,9 @@ export const SCENE_ZERO_EMERGENCE_CUES = {
     pauseAfterMs: 550
   }
 };
+
+// Um prompt não é uma caixa preta. É uma pergunta feita para uma caixa preta.
+// E toda resposta que volta diz alguma coisa sobre a máquina — mas também sobre quem perguntou.
 
 export function sceneZeroEmergenceSource(cueId) {
   return `${SCENE_ZERO_EMERGENCE_SOURCE_PREFIX}${cueId}`;

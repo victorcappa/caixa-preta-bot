@@ -276,7 +276,7 @@ async function main() {
     ["glitch-1", "glitch-2", "glitch-3"]
   );
   const finalEmergenceCue = emergence.sceneZeroEmergenceCueForNextSuitcase(1);
-  assert.match(finalEmergenceCue.text, /lado de fora/i);
+  assert.match(finalEmergenceCue.text, /desligar e ligar de novo/i);
   assert.equal(
     emergence.sceneZeroEmergenceCueForMessage({ source: emergence.sceneZeroEmergenceSource(finalEmergenceCue.id) }),
     finalEmergenceCue

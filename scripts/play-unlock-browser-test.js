@@ -150,22 +150,26 @@ try {
     snapshot = await state(context.request);
   }
   assert.equal(snapshot.sceneZero.unlock.status, "BOOT_FAILED");
-  assert.equal(snapshot.sceneZero.unlock.bootProgress, 100);
+  assert.equal(snapshot.sceneZero.unlock.bootProgress, PLAY_UNLOCK_CONFIG.bootStallProgress);
+  assert.equal(snapshot.sceneZero.unlock.bootComplete, false);
   assert.equal(snapshot.sceneZero.unlock.progress, 0);
   assert.equal(snapshot.publicMessage, null, "o erro da BIOS não deve criar fala do chatbot");
   await display.getByLabel("BIOS da Cena 0").waitFor();
   await display.getByText("AÇÃO COLETIVA", { exact: true }).waitFor();
   await new Promise((resolve) => setTimeout(resolve, 800));
   await display.screenshot({ path: "/private/tmp/caixa-preta-bios-stalled.png" });
-  await display.getByLabel("Aguardando início do aquecimento").waitFor({ timeout: 7000 });
+  await new Promise((resolve) => setTimeout(resolve, PLAY_UNLOCK_CONFIG.bootFailureDurationMs + 400));
+  await display.getByLabel("BIOS da Cena 0").waitFor();
   snapshot = await state(context.request);
   assert.equal(snapshot.sceneZero.unlock.status, "BOOT_FAILED", "aquecimento não deve começar automaticamente");
   assert.equal(snapshot.publicMessage, null);
-  await display.getByRole("progressbar", { name: "DESBLOQUEIO DO ESPETÁCULO: 0%" }).waitFor();
-  await display.screenshot({ path: "/private/tmp/caixa-preta-awaiting-warmup-cursor.png" });
+  await display.getByRole("progressbar", { name: `CARREGAMENTO DA BIOS: ${PLAY_UNLOCK_CONFIG.bootStallProgress}%` }).waitFor();
 
-  const startWarmupButton = unlockPanel.getByRole("button", { name: "INICIAR AQUECIMENTO", exact: true });
-  await startWarmupButton.click();
+  const endBiosButton = unlockPanel.getByRole("button", { name: "ENCERRAR BIOS", exact: true });
+  await endBiosButton.click();
+  snapshot = await waitForUnlock(context.request, (value) => value.status === "SOUND_CHECK" && value.bootComplete);
+  assert.equal(snapshot.sceneZero.unlock.bootProgress, 100, "ENCERRAR BIOS deve completar a barra antes da próxima etapa");
+  await display.getByRole("progressbar", { name: "CARREGAMENTO DA BIOS: 100%" }).waitFor();
   await display.getByLabel("Verificação sonora da plateia").waitFor({ timeout: 7000 });
   snapshot = await state(context.request);
   assert.equal(snapshot.sceneZero.unlock.status, "SOUND_CHECK");
@@ -280,7 +284,7 @@ try {
   const manualMode = operator.getByRole("region", { name: "Controles iniciais do aquecimento" }).getByRole("checkbox");
   await manualMode.click();
   snapshot = await waitForState(context.request, (value) => value.audienceWarmup.manualMode === true);
-  await unlock(context.request, "start-warmup");
+  await unlock(context.request, "end-bios");
   snapshot = await waitForUnlock(context.request, (value) => value.status === "SOUND_CHECK" && value.soundCheck?.phase === "greeting", 7000);
   await new Promise((resolve) => setTimeout(resolve, PLAY_UNLOCK_CONFIG.soundCheck.greetingDurationMs + 500));
   snapshot = await state(context.request);

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
+import { PLAY_UNLOCK_CONFIG } from "../data/scene-zero-unlock.js";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 const PROJECTION_WINDOW_ID = `videomapping-test-${Date.now()}`;
@@ -65,33 +66,19 @@ try {
     postBiosState = (await (await page.request.get(`${BASE_URL}/api/state`)).json()).sceneZero.unlock;
   }
   assert.equal(postBiosState.status, "BOOT_FAILED");
-  await page.getByLabel("Aguardando início do aquecimento").waitFor({ timeout: 8000 });
+  assert.equal(postBiosState.bootProgress, PLAY_UNLOCK_CONFIG.bootStallProgress);
+  await page.getByLabel("BIOS da Cena 0").waitFor({ timeout: 8000 });
   const postBiosVisual = await page.evaluate(() => {
-    const visibleAnimatedGlyphs = [...document.querySelectorAll("*")]
-      .filter((element) => {
-        const style = getComputedStyle(element);
-        const bounds = element.getBoundingClientRect();
-        return bounds.width > 0
-          && bounds.height > 0
-          && style.visibility !== "hidden"
-          && style.display !== "none"
-          && /(?:introBlink|BlinkingCursor.*blink)/.test(style.animationName);
-      })
-      .map((element) => element.textContent.trim())
-      .filter(Boolean);
-    const cursor = document.querySelector('[aria-label="Cursor da Caixa Preta"]').getBoundingClientRect();
-    const progress = document.querySelector('[role="progressbar"][aria-label^="DESBLOQUEIO DO ESPETÁCULO"]').getBoundingClientRect();
+    const bios = document.querySelector('[aria-label="BIOS da Cena 0"]').getBoundingClientRect();
+    const progress = document.querySelector('[role="progressbar"][aria-label^="CARREGAMENTO DA BIOS"]').getBoundingClientRect();
     return {
-      visibleAnimatedGlyphs,
-      cursorCenterX: cursor.left + (cursor.width / 2),
+      biosCenterX: bios.left + (bios.width / 2),
       progressCenterX: progress.left + (progress.width / 2),
       viewportHalf: window.innerWidth / 2
     };
   });
-  assert.deepEqual(postBiosVisual.visibleAnimatedGlyphs, [">"], "o pós-BIOS deve ter exatamente um glifo piscando");
-  assert(postBiosVisual.cursorCenterX < postBiosVisual.viewportHalf, "o cursor deve permanecer no quadrante do chatbot");
+  assert(postBiosVisual.biosCenterX > postBiosVisual.viewportHalf, "a BIOS deve permanecer no quadrante de status até o operador encerrá-la");
   assert(postBiosVisual.progressCenterX > postBiosVisual.viewportHalf, "a barra deve permanecer em outro quadrante");
-  await page.waitForFunction(() => Number(getComputedStyle(document.querySelector('[aria-label="Cursor da Caixa Preta"]')).opacity) > 0.9);
   await page.screenshot({ path: "/private/tmp/caixa-preta-videomapping-pos-bios.png" });
 
   async function postWarmup(action, payload = {}) {
@@ -109,8 +96,17 @@ try {
   }
 
   await postWarmup("set-manual-mode", { manualMode: true });
-  await postWarmup("unlock-start-warmup");
+  await postWarmup("unlock-end-bios");
+  await page.waitForFunction(async () => {
+    const response = await fetch("/api/state");
+    const state = await response.json();
+    return state.sceneZero.unlock.status === "SOUND_CHECK";
+  });
   await postWarmup("manual-next");
+  await page.waitForFunction(async () => {
+    const response = await fetch("/api/state");
+    return (await response.json()).sceneZero.unlock.soundCheck?.phase === "listening";
+  });
   await postWarmup("unlock-sound-check-skip");
   await postWarmup("manual-next");
   await page.waitForFunction(async () => {

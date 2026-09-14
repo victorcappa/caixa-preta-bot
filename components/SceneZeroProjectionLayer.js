@@ -46,12 +46,10 @@ function timerElapsedSeconds(timer, now) {
   return 0;
 }
 
-function SceneZeroTimerReadout({ seconds, status = "" }) {
+function SceneZeroTimerReadout({ seconds }) {
   return (
     <aside className={styles.sceneZeroTimer} data-scene-zero-timer aria-label={`Tempo: ${seconds} segundos`}>
-      <span>TEMPO</span>
       <strong>{seconds}</strong>
-      {status ? <small>{status}</small> : null}
     </aside>
   );
 }
@@ -164,11 +162,12 @@ function AudienceSoundCheck({ unlock }) {
   );
 }
 
-function PlayUnlockProjection({ unlock, now }) {
+function PlayUnlockProjection({ unlock, now, pitchScale = 1, soundStyle = "robot" }) {
   const soundSequenceRef = useRef(null);
   const status = unlock?.status;
   const hidden = !status || status === PLAY_UNLOCK_STATES.STANDBY;
-  const showStalledTerminal = status === PLAY_UNLOCK_STATES.BOOT_FAILED
+  const showStalledTerminal = status === PLAY_UNLOCK_STATES.BOOT_FAILED;
+  const showCompletedTerminal = status === PLAY_UNLOCK_STATES.SOUND_CHECK
     && Date.parse(unlock.handoffUntil || "") > now;
 
   useEffect(() => {
@@ -189,30 +188,39 @@ function PlayUnlockProjection({ unlock, now }) {
           : status === PLAY_UNLOCK_STATES.WARMING_AUDIENCE
             ? "progress"
             : PLAY_UNLOCK_CONFIG.bootSteps[unlock.bootStep]?.sound || "tick";
-      const sound = PLAY_UNLOCK_CONFIG.sounds[soundId];
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-      oscillator.type = sound.oscillator;
-      oscillator.frequency.value = sound.frequency;
-      gain.gain.setValueAtTime(0.0001, context.currentTime);
-      gain.gain.exponentialRampToValueAtTime(sound.volume, context.currentTime + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + sound.durationMs / 1000);
-      oscillator.connect(gain);
-      gain.connect(context.destination);
-      oscillator.start();
-      oscillator.stop(context.currentTime + sound.durationMs / 1000 + 0.01);
-      oscillator.addEventListener("ended", () => context.close().catch(() => {}), { once: true });
+      const palette = soundStyle === "system95" ? PLAY_UNLOCK_CONFIG.system95Sounds : PLAY_UNLOCK_CONFIG.sounds;
+      const sound = palette[soundId];
+      const frequencies = Array.isArray(sound.frequencies) ? sound.frequencies : [sound.frequency];
+      const baseTime = context.currentTime + 0.002;
+      frequencies.forEach((frequency, index) => {
+        const start = baseTime + ((Number(sound.stepMs) || 0) * index / 1000);
+        const end = start + sound.durationMs / 1000;
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = sound.oscillator;
+        oscillator.frequency.value = frequency * pitchScale;
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(sound.volume, start + Math.min(0.008, sound.durationMs / 4000));
+        gain.gain.exponentialRampToValueAtTime(0.0001, end);
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start(start);
+        oscillator.stop(end + 0.01);
+        if (index === frequencies.length - 1) {
+          oscillator.addEventListener("ended", () => context.close().catch(() => {}), { once: true });
+        }
+      });
     } catch {
       // Browsers may block boot audio before a physical interaction.
     }
-  }, [status, unlock?.bootStep, unlock?.soundCheck?.phase, unlock?.soundEnabled, unlock?.soundSequence, hidden]);
+  }, [status, unlock?.bootStep, unlock?.soundCheck?.phase, unlock?.soundEnabled, unlock?.soundSequence, hidden, pitchScale, soundStyle]);
 
   if (hidden) return null;
 
-  if (status === PLAY_UNLOCK_STATES.BOOTING || showStalledTerminal) {
+  if (status === PLAY_UNLOCK_STATES.BOOTING || showStalledTerminal || showCompletedTerminal) {
     const lines = [
       ...playUnlockBootLines(unlock.bootStep),
-      ...(showStalledTerminal ? PLAY_UNLOCK_CONFIG.stalledLines : [])
+      ...(showStalledTerminal || showCompletedTerminal ? PLAY_UNLOCK_CONFIG.stalledLines : [])
     ];
     return (
       <section className={styles.biosOverlay} aria-label="BIOS da Cena 0" aria-live="polite">
@@ -222,16 +230,6 @@ function PlayUnlockProjection({ unlock, now }) {
           </div>
           <UnlockProgressBar key="bios-progress" label="CARREGAMENTO DA BIOS" progress={unlock.bootProgress} />
           {unlock.bootPaused ? <p className={styles.biosPaused}>BIOS PAUSADA PELO OPERADOR</p> : null}
-        </div>
-      </section>
-    );
-  }
-
-  if (status === PLAY_UNLOCK_STATES.BOOT_FAILED) {
-    return (
-      <section className={`${styles.biosOverlay} ${styles.waitingCursorOverlay}`} aria-label="Aguardando início do aquecimento">
-        <div className={styles.waitingUnlock}>
-          <UnlockProgressBar key="show-unlock-progress" label="DESBLOQUEIO DO ESPETÁCULO" progress={unlock.progress} />
         </div>
       </section>
     );
@@ -278,7 +276,7 @@ function PlayUnlockProjection({ unlock, now }) {
   );
 }
 
-export function SceneZeroStatusProjection({ sceneZero }) {
+export function SceneZeroStatusProjection({ sceneZero, pitchScale = 1, soundStyle = "robot" }) {
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -286,7 +284,7 @@ export function SceneZeroStatusProjection({ sceneZero }) {
     return () => window.clearInterval(interval);
   }, []);
 
-  return <PlayUnlockProjection now={now} unlock={sceneZero?.unlock} />;
+  return <PlayUnlockProjection now={now} pitchScale={pitchScale} soundStyle={soundStyle} unlock={sceneZero?.unlock} />;
 }
 
 function AudienceWarmupReactionProjection({ reaction }) {
@@ -431,7 +429,7 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
     ? Math.floor(rouletteElapsed / Math.max(70, 260 - Math.min(190, rouletteElapsed / 28))) % selectionCandidates.length
     : 0;
   const rouletteName = selectionCandidates[rouletteIndex]?.name || "—";
-  const showParticipantSelection = ["countdown", "roulette", "selected"].includes(participantSelection.status);
+  const showParticipantSelection = ["preparing", "countdown", "roulette", "selected"].includes(participantSelection.status);
   const participantSeconds = participantSelection.status === "countdown"
     ? countdownSeconds(participantSelection.countdownEndsAt, now)
     : null;
@@ -499,7 +497,7 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
                     ? "PAUSADO"
                     : audienceWarmup.minigame.timer?.phase === "exchange"
                       ? "INVERTAM OS PAPÉIS"
-                      : "EM CURSO"
+                      : ""
                 }
               : null;
   const auxiliaryActive = Boolean(
@@ -606,9 +604,9 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
               <strong>0</strong>
               <span>TEMPO ESGOTADO.</span>
             </div>
-          ) : (
-            <small className={styles.physicalChallengeStatus}>{gincanaTimer?.status === "paused" ? "PAUSADO" : gincanaTimer?.status === "running" ? "EM CURSO" : "AGUARDANDO INÍCIO"}</small>
-          )}
+          ) : gincanaTimer?.status !== "running" ? (
+            <small className={styles.physicalChallengeStatus}>{gincanaTimer?.status === "paused" ? "PAUSADO" : "AGUARDANDO INÍCIO"}</small>
+          ) : null}
         </section>
       ) : null}
       {showHangman ? (
@@ -667,6 +665,12 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
       ) : null}
       {showParticipantSelection ? (
         <div className={styles.selectionOverlay} aria-live="assertive">
+          {participantSelection.status === "preparing" ? (
+            <div className={styles.participantThinking} aria-label="Pensando em qual participante escolher">
+              <span aria-hidden="true">/pensando</span>
+              <span className={styles.thinkingDots} aria-hidden="true"><i>.</i><i>.</i><i>.</i></span>
+            </div>
+          ) : null}
           {participantSelection.status === "countdown" ? (
             <div className={styles.volunteerCountdown}>
               <p>{participantSelection.invite}</p>
@@ -689,12 +693,12 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
             <div className={styles.selectedParticipant}>
               <span>PARTICIPANTE ESCOLHIDO</span>
               <strong>{sceneZero.currentParticipant?.name || "—"}</strong>
-              <p>{participantSelection.announcement}</p>
+              <p>{participantSelection.lastComment || participantSelection.announcement}</p>
             </div>
           ) : null}
         </div>
       ) : null}
-      {fixedTimer ? <SceneZeroTimerReadout seconds={fixedTimer.seconds} status={fixedTimer.status} /> : null}
+      {fixedTimer ? <SceneZeroTimerReadout seconds={fixedTimer.seconds} /> : null}
     </>
   );
 }
