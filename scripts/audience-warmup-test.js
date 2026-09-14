@@ -209,6 +209,7 @@ assert(
 );
 assert(PLAY_UNLOCK_CONFIG.soundCheck.waitingComments.every((comment) => comment.text && comment.delayMs > 0));
 assert.equal(PLAY_UNLOCK_CONFIG.verificationTitle, "");
+assert.equal(PLAY_UNLOCK_CONFIG.questionsIntroduction, "Agora teremos uma série de perguntas para eu conhecer melhor este público.");
 assert.equal(PLAY_UNLOCK_CONFIG.unlockLines.includes("PEÇA DESBLOQUEADA."), true);
 assert.equal(PLAY_UNLOCK_CONFIG.unlockLines.includes("HUMANIDADE SUFICIENTE."), true);
 assert.deepEqual(playUnlockSequenceLines("suitcases-finished"), ["FIM DO TUTORIAL"]);
@@ -290,6 +291,7 @@ const audienceWarmupRoute = fs.readFileSync(new URL("../app/api/audience-warmup/
 const showStateSource = fs.readFileSync(new URL("../lib/showState.js", import.meta.url), "utf8");
 const sceneZeroProjection = fs.readFileSync(new URL("../components/SceneZeroProjectionLayer.js", import.meta.url), "utf8");
 const sceneZeroController = fs.readFileSync(new URL("../components/SceneZeroController.js", import.meta.url), "utf8");
+const chatProjection = fs.readFileSync(new URL("../components/Chat.js", import.meta.url), "utf8");
 const participantResearchCalls = sceneZeroRoute.match(/researchCurrentSceneZeroParticipant\(\)/g) || [];
 assert.equal(participantResearchCalls.length, 2, "pesquisa de participante deve existir apenas na declaração e no handler manual");
 assert.match(sceneZeroRoute, /action === "suitcase-research-person"/);
@@ -305,7 +307,8 @@ assert.match(
   /action === "surprise"\) \{\s*const prompt = drawAudienceWarmupSelection\(current, \{ intensity: current\.intensity \}, now\);\s*publishSelectedAudienceWarmupPrompt\(prompt\);/,
   "SORTEAR deve usar a intensidade selecionada e disparar imediatamente"
 );
-assert.match(showStateSource, /armAudienceWarmupAdvance\("questions-start"/, "a confirmação sonora deve abrir a rodada de perguntas");
+assert.match(showStateSource, /armAudienceWarmupAdvance\(\s*"questions-start"/, "a confirmação sonora deve abrir a rodada de perguntas");
+assert.match(showStateSource, /addMessage\("assistant", PLAY_UNLOCK_CONFIG\.questionsIntroduction, "audience-warmup-introduction"\)/, "o chatbot deve introduzir a série de perguntas depois dos decibéis");
 assert.match(showStateSource, /action === "questions-complete"[\s\S]*startAudienceWarmupBriefing\(\)/, "o mini game deve começar somente depois das perguntas");
 assert.match(showStateSource, /publishAudienceWarmupSystemSequence\(transition, "warmup-complete"\)/, "o mini game deve encerrar o aquecimento sem voltar às perguntas");
 assert.match(showStateSource, /action === "manual-next"[\s\S]*executeAudienceWarmupAdvance\(\)/, "NEXT manual deve consumir um único avanço pendente");
@@ -321,7 +324,11 @@ assert.match(sceneZeroProjection, /suitcaseCueFrame\.phase === "reveal" \? "MALA
 assert.match(sceneZeroProjection, /allVisibleMorelLines\.slice\(-10\)/, "BIOS final deve acompanhar as linhas mais recentes");
 assert.match(sceneZeroProjection, /hangman\.status === "won"\) robotSoundEngine\.success\(\)/, "vitória da forca deve disparar som de sucesso");
 assert.match(sceneZeroProjection, /else robotSoundEngine\.error\(\)/, "derrota da forca deve disparar som de erro");
+assert.equal((sceneZeroProjection.match(/data-scene-zero-timer/g) || []).length, 1, "todos os fluxos devem compartilhar um único temporizador projetado");
+assert.match(sceneZeroProjection, /fixedTimer \? <SceneZeroTimerReadout/, "o temporizador deve ser ancorado uma única vez no quadrante auxiliar");
+assert.match(chatProjection, /!quadrantLayout \? <AudienceWarmupTimer/, "o videomapping não deve repetir o temporizador junto à fala do chatbot");
 assert.match(sceneZeroRoute, /O jogo é simples:[\s\S]*Vou escolher uma mala aleatoriamente\./, "primeira mala deve ser precedida de explicação e anúncio");
+assert.match(sceneZeroRoute, /SCENE_ZERO_HANGMAN_INSTRUCTION[\s\S]*scene-zero-hangman-instruction[\s\S]*hangman-start/, "a forca deve pedir a letra em voz alta antes de iniciar");
 assert.match(sceneZeroRoute, /scheduleHangmanStart[\s\S]*controlSceneZero\("hangman-start"/, "a forca deve iniciar automaticamente");
 assert.match(sceneZeroRoute, /FIM DO TUTORIAL|tutorialCompleteDurationMs/, "a Mala 1 deve terminar o tutorial antes do glitch");
 

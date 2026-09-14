@@ -206,7 +206,8 @@ try {
   await display.getByLabel("Protocolo de verificação humana").waitFor({ timeout: 7000 });
   snapshot = await state(context.request);
   assert.equal(snapshot.sceneZero.unlock.status, "HUMAN_VERIFICATION");
-  assert.equal(snapshot.publicMessage.content, snapshot.sceneZero.unlock.soundCheck.comment, "o comentário final deve permanecer como última fala até as perguntas");
+  assert.equal(snapshot.publicMessage.content, PLAY_UNLOCK_CONFIG.questionsIntroduction, "o bot deve apresentar a série de perguntas depois dos decibéis");
+  await display.getByText(PLAY_UNLOCK_CONFIG.questionsIntroduction, { exact: true }).waitFor();
   await new Promise((resolve) => setTimeout(resolve, 900));
   await display.screenshot({ path: "/private/tmp/caixa-preta-human-verification-title.png" });
 
@@ -302,7 +303,11 @@ try {
   snapshot = await state(context.request);
   assert.equal(snapshot.sceneZero.unlock.soundCheck.phase, "confirmed", "modo manual não pode sair da confirmação sozinho");
   await operator.keyboard.press("ArrowRight");
-  await waitForUnlock(context.request, (value) => value.status === "HUMAN_VERIFICATION", 7000);
+  snapshot = await waitForState(context.request, (value) => (
+    value.sceneZero.unlock.status === "HUMAN_VERIFICATION"
+    && value.publicMessage?.content === PLAY_UNLOCK_CONFIG.questionsIntroduction
+  ), 7000);
+  assert.equal(snapshot.audienceWarmup.pendingAdvance.kind, "questions-start");
   await new Promise((resolve) => setTimeout(resolve, PLAY_UNLOCK_CONFIG.verificationTitleDurationMs + 400));
   snapshot = await state(context.request);
   assert.equal(snapshot.sceneZero.unlock.status, "HUMAN_VERIFICATION", "modo manual não pode iniciar perguntas sozinho");
@@ -326,12 +331,12 @@ try {
   assert.equal(manualFinishQuestions.ok(), true);
   snapshot = await waitForState(context.request, (value) => value.audienceWarmup.phase === "briefing" && value.audienceWarmup.pendingAdvance?.kind === "system-sequence", 7000);
   assert.equal(snapshot.audienceWarmup.history.length, historyBeforeBriefing, "encerrar perguntas não deve publicar fala no modo manual");
-  await operator.waitForFunction(() => !document.querySelector('section[aria-label="Controles iniciais do aquecimento"] input')?.disabled);
-  await operator.keyboard.press("ArrowRight");
+  let nextResponse = await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "manual-next" } });
+  assert.equal(nextResponse.ok(), true);
   snapshot = await waitForState(context.request, (value) => value.audienceWarmup.history.length === historyBeforeBriefing + 1, 7000);
   assert.equal(snapshot.audienceWarmup.history.at(-1).text, "PERGUNTAS CONCLUÍDAS. AGORA, UM TESTE.");
-  await operator.waitForFunction(() => !document.querySelector('section[aria-label="Controles iniciais do aquecimento"] input')?.disabled);
-  await operator.keyboard.press("ArrowRight");
+  nextResponse = await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "manual-next" } });
+  assert.equal(nextResponse.ok(), true);
   snapshot = await waitForState(context.request, (value) => value.audienceWarmup.history.length === historyBeforeBriefing + 2, 7000);
   assert.equal(snapshot.audienceWarmup.history.at(-1).text, "ESCOLHA A PESSOA AO SEU LADO E FORME UMA DUPLA.");
 

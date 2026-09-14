@@ -46,7 +46,17 @@ function timerElapsedSeconds(timer, now) {
   return 0;
 }
 
-function EvidenciasKaraoke({ timer, now, seconds }) {
+function SceneZeroTimerReadout({ seconds, status = "" }) {
+  return (
+    <aside className={styles.sceneZeroTimer} data-scene-zero-timer aria-label={`Tempo: ${seconds} segundos`}>
+      <span>TEMPO</span>
+      <strong>{seconds}</strong>
+      {status ? <small>{status}</small> : null}
+    </aside>
+  );
+}
+
+function EvidenciasKaraoke({ timer, now }) {
   const elapsed = timerElapsedSeconds(timer, now);
   const frame = sceneZeroEvidenciasFrameAt(elapsed);
   const terminalLabel = timer?.status === "failed"
@@ -55,7 +65,6 @@ function EvidenciasKaraoke({ timer, now, seconds }) {
 
   return (
     <div className={styles.karaokeOverlay} aria-live="assertive">
-      <span className={styles.karaokeCountdown}>{seconds}</span>
       {terminalLabel ? (
         <strong className={styles.karaokeFinished}>{terminalLabel}</strong>
       ) : frame.phase === "intro" ? (
@@ -333,15 +342,13 @@ function AudienceWarmupMinigameProjection({ warmup, now }) {
       ) : (
         <div className={styles.warmupGameTimer} data-paused={minigame.status === "paused"}>
           <header><span>{game?.name || "TESTE"}</span><b>{minigame.timer?.phase === "round_two" ? "TURNO 2" : minigame.timer?.phase === "exchange" ? "TROQUEM" : minigame.timer?.phase === "countdown" ? "COMEÇANDO" : "TURNO 1"}</b></header>
-          <strong>{seconds}</strong>
-          <small>{minigame.status === "paused" ? "PAUSADO" : minigame.timer?.phase === "exchange" ? "INVERTAM OS PAPÉIS" : "EM CURSO"}</small>
         </div>
       )}
     </section>
   );
 }
 
-function AudienceWarmupActionTimer({ warmup, now }) {
+function AudienceWarmupActionCountdownSound({ warmup, now }) {
   const timer = warmup?.actionTimer;
   const seconds = timerSeconds(timer, now);
   const visible = warmup?.phase === "questions" && timer?.status === "running";
@@ -349,8 +356,7 @@ function AudienceWarmupActionTimer({ warmup, now }) {
     active: visible,
     countdownKey: `audience-warmup-action:${warmup?.sequence?.id || "none"}:${warmup?.currentStep ?? -1}`
   });
-  if (!visible) return null;
-  return <aside className={styles.warmupActionTimer} aria-label={`Tempo da ação: ${seconds} segundos`}><span>TEMPO</span><strong>{seconds}</strong></aside>;
+  return null;
 }
 
 export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) {
@@ -472,7 +478,30 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
   const visibleMorelLines = allVisibleMorelLines.slice(-10);
   const visibleMorelStartIndex = Math.max(0, allVisibleMorelLines.length - visibleMorelLines.length);
   const warmupMinigameVisible = ["drawing", "selected", "countdown", "running", "paused", "exchange", "ready_round_two"].includes(audienceWarmup?.minigame?.status);
+  const warmupMinigameTimerVisible = ["countdown", "running", "paused", "exchange"].includes(audienceWarmup?.minigame?.status);
+  const warmupMinigameSeconds = timerSeconds(audienceWarmup?.minigame?.timer, now);
   const warmupActionVisible = audienceWarmup?.phase === "questions" && audienceWarmup?.actionTimer?.status === "running";
+  const warmupActionSeconds = timerSeconds(audienceWarmup?.actionTimer, now);
+  const fixedTimer = showPhysicalChallenge
+    ? { seconds: physicalSeconds, status: gincanaTimer?.status === "paused" ? "PAUSADO" : "" }
+    : showHangman
+      ? { seconds: hangmanSeconds, status: "" }
+      : showTimer
+        ? { seconds, status: visibleTimer?.status === "paused" ? "PAUSADO" : "" }
+        : participantSelection.status === "countdown"
+          ? { seconds: participantSeconds, status: "" }
+          : warmupActionVisible
+            ? { seconds: warmupActionSeconds, status: "" }
+            : warmupMinigameTimerVisible
+              ? {
+                  seconds: warmupMinigameSeconds,
+                  status: audienceWarmup.minigame.status === "paused"
+                    ? "PAUSADO"
+                    : audienceWarmup.minigame.timer?.phase === "exchange"
+                      ? "INVERTAM OS PAPÉIS"
+                      : "EM CURSO"
+                }
+              : null;
   const auxiliaryActive = Boolean(
     collapse
     || airport
@@ -520,7 +549,7 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
       <audio preload="auto" ref={evidenciasAudioRef} src={EVIDENCIAS_KARAOKE_AUDIO} />
       <AudienceWarmupReactionProjection reaction={audienceWarmup?.reaction} />
       <AudienceWarmupMinigameProjection now={now} warmup={audienceWarmup} />
-      <AudienceWarmupActionTimer now={now} warmup={audienceWarmup} />
+      <AudienceWarmupActionCountdownSound now={now} warmup={audienceWarmup} />
       {collapse ? (
         <div className={styles.airportContamination} aria-hidden="true">
           <video autoPlay loop muted playsInline src={AIRPORT_VIDEO} />
@@ -532,12 +561,11 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
         </div>
       ) : null}
       {showEvidenciasKaraoke ? (
-        <EvidenciasKaraoke now={now} seconds={seconds} timer={gincanaTimer} />
+        <EvidenciasKaraoke now={now} timer={gincanaTimer} />
       ) : showTimer ? (
         <div className={`${styles.timerOverlay} ${visibleTimer.status === "complete" ? styles.complete : ""}`} aria-live="assertive">
           {visibleTimer === collectionTimer ? <small>COLETA EM CURSO</small> : null}
           {visibleTimer === gincanaTimer ? <small>ADIVINHE O OBJETO · APENAS PELO CHEIRO</small> : null}
-          <strong>{seconds}</strong>
           {["complete", "completed", "failed"].includes(visibleTimer.status) ? <span>{visibleTimer.status === "completed" ? "CONCLUÍDA" : visibleTimer.status === "failed" ? "FALHOU" : "FIM"}</span> : null}
         </div>
       ) : null}
@@ -559,7 +587,6 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
             </div>
             <div className={styles.physicalChallengeReadout}>
               <span>ALVO<strong>{gincana.currentTask.target}</strong></span>
-              <time>{physicalSeconds}</time>
             </div>
           </div>
           {gincana.result === "completed" ? (
@@ -595,13 +622,12 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
           }}
         >
           <div className={styles.hangmanInterference} aria-hidden="true" />
-          <header><span>MALA 3 / FORCA</span><strong>{hangmanSeconds}s · {hangman.flightState || "ESTÁVEL"}</strong></header>
+          <header><span>MALA 3 / FORCA</span><strong>{hangman.flightState || "ESTÁVEL"}</strong></header>
           <p className={styles.hangmanWord}>{hangmanPublic.progress || "_ _ _"}</p>
           <div className={styles.hangmanFlight} aria-hidden="true">
             <span>✈</span><i />
           </div>
           <div className={styles.hangmanTelemetry}>
-            <span>TEMPO <b>{hangmanSeconds}s</b></span>
             <span>ERROS <b>{hangman.errorCount || 0}/4</b></span>
             <span>USADAS <b>{(hangmanPublic.usedGuesses || []).join(" · ").toUpperCase() || "—"}</b></span>
           </div>
@@ -644,7 +670,6 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
           {participantSelection.status === "countdown" ? (
             <div className={styles.volunteerCountdown}>
               <p>{participantSelection.invite}</p>
-              <strong>{participantSeconds}</strong>
             </div>
           ) : null}
           {participantSelection.status === "roulette" ? (
@@ -669,6 +694,7 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
           ) : null}
         </div>
       ) : null}
+      {fixedTimer ? <SceneZeroTimerReadout seconds={fixedTimer.seconds} status={fixedTimer.status} /> : null}
     </>
   );
 }

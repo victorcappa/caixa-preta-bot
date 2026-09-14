@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
+import { SCENE_ZERO_HANGMAN_INSTRUCTION } from "../data/scene-zero-hangman-words.js";
 
 const BASE_URL = process.env.CAIXA_PRETA_URL || "http://localhost:3000";
+const PROJECTION_WINDOW_ID = `scene-zero-suitcases-test-${Date.now()}`;
 
 async function snapshot(request) {
   const response = await request.get(`${BASE_URL}/api/state`);
@@ -61,10 +63,11 @@ try {
   await unlockProjection(context.request);
   const projection = await context.newPage();
   await projection.setViewportSize({ width: 1920, height: 1080 });
-  await projection.goto(BASE_URL, { waitUntil: "domcontentloaded" });
+  await projection.goto(`${BASE_URL}/videomapping?projectionWindow=${PROJECTION_WINDOW_ID}`, { waitUntil: "domcontentloaded" });
+  await projection.waitForSelector('[data-public-layout="quadrants"]');
   const controller = await context.newPage();
   await controller.setViewportSize({ width: 1440, height: 1100 });
-  await controller.goto(`${BASE_URL}/cena-0-controller`, { waitUntil: "domcontentloaded" });
+  await controller.goto(`${BASE_URL}/videomapping-controller`, { waitUntil: "domcontentloaded" });
 
   await controller.getByRole("heading", { name: "MALA 2 / DESAFIO COM OBJETO" }).waitFor();
   await controller.getByRole("heading", { name: "MALA 3 / FORCA — 60s" }).waitFor();
@@ -81,17 +84,51 @@ try {
   assert.equal(await projection.getByText("TODOS FINJAM ESTAR MORTOS NAS CADEIRAS E NO CHÃO.", { exact: true }).count(), 0);
   result = await sceneAction(context.request, "gincana-timer-start");
   assert.equal(result.sceneZero.suitcaseGame.gincana.timer.durationSeconds, 12);
+  const physicalTimer = projection.locator("[data-scene-zero-timer]");
+  await physicalTimer.waitFor();
+  await projection.getByRole("complementary", { name: /Tempo: (?:1[0-2]) segundos/ }).waitFor();
+  const physicalTimerGeometry = await physicalTimer.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const auxiliary = document.querySelector('[aria-label="Quadrante de contagens e conteúdos da Cena 0"]').getBoundingClientRect();
+    const pane = document.querySelector('[aria-label="Chat publico"]');
+    const workspace = document.querySelector('[data-public-layout]');
+    return {
+      center: { x: bounds.left + (bounds.width / 2), y: bounds.top + (bounds.height / 2) },
+      auxiliary: { left: auxiliary.left, top: auxiliary.top, right: auxiliary.right, bottom: auxiliary.bottom },
+      layout: workspace?.dataset.publicLayout,
+      paneClass: pane?.className,
+      workspaceClass: workspace?.className
+    };
+  });
+  const physicalTimerCenter = physicalTimerGeometry.center;
+  assert(
+    physicalTimerCenter.x > physicalTimerGeometry.auxiliary.left
+      && physicalTimerCenter.x < physicalTimerGeometry.auxiliary.right
+      && physicalTimerCenter.y > physicalTimerGeometry.auxiliary.top
+      && physicalTimerCenter.y < physicalTimerGeometry.auxiliary.bottom,
+    `o temporizador deve ocupar o quadrante auxiliar: ${JSON.stringify(physicalTimerGeometry)}`
+  );
   await projection.screenshot({ path: "/private/tmp/caixa-preta-mala-2-desafio.png" });
 
   result = await sceneAction(context.request, "suitcase-three-start");
   assert.deepEqual(result.sceneZero.suitcaseGame.openedSuitcases, [2, 3]);
   assert.equal(result.sceneZero.suitcaseGame.gincana.timer.status, "cancelled");
   await sceneAction(context.request, "hangman-configure", { wordId: "hangman-11" });
-  let state = await waitForState(context.request, (value) => value.sceneZero.suitcaseGame.hangman.status === "active", 12000);
+  let state = await waitForState(context.request, (value) => value.publicMessage?.content === SCENE_ZERO_HANGMAN_INSTRUCTION, 12000);
+  assert.equal(state.sceneZero.suitcaseGame.hangman.status, "ready", "a forca deve aguardar a instrução terminar");
+  await projection.getByText(SCENE_ZERO_HANGMAN_INSTRUCTION, { exact: true }).waitFor();
+  state = await waitForState(context.request, (value) => value.sceneZero.suitcaseGame.hangman.status === "active", 7000);
   assert.equal(state.sceneZero.suitcaseGame.hangman.timer.durationSeconds, 60);
   assert.equal(state.sceneZero.suitcaseGame.hangman.timer.status, "running");
   assert(Date.parse(state.sceneZero.suitcaseGame.hangman.timer.endsAt) > Date.now());
+  assert.equal(state.publicMessage.content, SCENE_ZERO_HANGMAN_INSTRUCTION);
   await projection.getByLabel("Forca da Mala 3").waitFor();
+  const hangmanTimerCenter = await projection.locator("[data-scene-zero-timer]").evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return { x: bounds.left + (bounds.width / 2), y: bounds.top + (bounds.height / 2) };
+  });
+  assert.ok(Math.abs(hangmanTimerCenter.x - physicalTimerCenter.x) <= 1, "a forca deve manter a mesma posição horizontal do temporizador");
+  assert.ok(Math.abs(hangmanTimerCenter.y - physicalTimerCenter.y) <= 1, "a forca deve manter a mesma posição vertical do temporizador");
   await controller.getByRole("button", { name: "MARCAR ERRO", exact: true }).waitFor();
   const hangmanCard = controller.getByRole("heading", { name: "MALA 3 / FORCA — 60s" }).locator("..");
   assert.equal(await hangmanCard.getByRole("button", { name: "INICIAR", exact: true }).count(), 0, "a forca não deve depender de início manual");

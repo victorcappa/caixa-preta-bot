@@ -15,7 +15,7 @@ import {
   sceneZeroSuitcaseChallenge
 } from "@/lib/scene-zero/suitcaseGame";
 import { getSceneZeroPhysicalChallenge, SCENE_ZERO_PHYSICAL_CHALLENGES } from "@/data/scene-zero-physical-challenges";
-import { getSceneZeroHangmanWord } from "@/data/scene-zero-hangman-words";
+import { getSceneZeroHangmanWord, SCENE_ZERO_HANGMAN_INSTRUCTION } from "@/data/scene-zero-hangman-words";
 import { chooseSceneZeroHangmanWord } from "@/lib/scene-zero/suitcaseHangman";
 import { buildDataCollectionSystemPrompt } from "@/prompts/dataCollection";
 import { SCENE_ZERO_MOREL_BIOS_DURATION_MS } from "@/data/scene-zero-morel";
@@ -360,7 +360,16 @@ function scheduleHangmanStart(selectionSequence, selectedAt) {
       || current.currentSuitcase !== 3
       || current.hangman?.status !== "ready"
     ) return;
-    showState.controlSceneZero("hangman-start", {}, { source: "system" });
+    showState.addMessage("assistant", SCENE_ZERO_HANGMAN_INSTRUCTION, "scene-zero-hangman-instruction");
+    setTimeout(() => {
+      const latest = showState.snapshot().sceneZero.suitcaseGame;
+      if (
+        latest?.suitcaseSelectionSequence !== selectionSequence
+        || latest.currentSuitcase !== 3
+        || latest.hangman?.status !== "ready"
+      ) return;
+      showState.controlSceneZero("hangman-start", {}, { source: "system" });
+    }, suitcaseSpeechDelay(SCENE_ZERO_HANGMAN_INSTRUCTION));
   }, suitcaseCueDelay(selectedAt));
 }
 

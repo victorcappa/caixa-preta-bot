@@ -880,7 +880,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
                 {audienceWarmup?.display?.messageId === publicMessage.id ? (
                   <div className={styles.actionCue}>
                     <small>{audienceWarmup.display.actionLabel}</small>
-                    <AudienceWarmupTimer endsAt={audienceWarmup.display.endsAt} />
+                    {!quadrantLayout ? <AudienceWarmupTimer endsAt={audienceWarmup.display.endsAt} /> : null}
                   </div>
                 ) : null}
                 <p className={`${styles.machine} ${publicMessage.content.length > 180 ? styles.machineLong : publicMessage.content.length > 95 ? styles.machineMedium : ""} ${selfErasingMessageId === publicMessage.id ? styles.machineErasing : ""}`}>

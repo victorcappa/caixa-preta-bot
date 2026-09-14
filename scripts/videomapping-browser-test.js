@@ -129,6 +129,21 @@ try {
     `a barra não pode saltar ao iniciar as perguntas: ${verificationBarCenterY} -> ${questionBarCenterY}`
   );
 
+  await page.locator("[data-scene-zero-timer]").waitFor({ timeout: 7000 });
+  const timerGeometry = await page.evaluate(() => {
+    const timer = document.querySelector("[data-scene-zero-timer]").getBoundingClientRect();
+    const auxiliary = document.querySelector('[aria-label="Quadrante de contagens e conteúdos da Cena 0"]').getBoundingClientRect();
+    return {
+      count: document.querySelectorAll("[data-scene-zero-timer]").length,
+      centerX: timer.left + (timer.width / 2),
+      centerY: timer.top + (timer.height / 2),
+      auxiliary: { left: auxiliary.left, top: auxiliary.top, right: auxiliary.right, bottom: auxiliary.bottom }
+    };
+  });
+  assert.equal(timerGeometry.count, 1, "deve existir somente um temporizador no videomapping");
+  assert(timerGeometry.centerX > timerGeometry.auxiliary.left && timerGeometry.centerX < timerGeometry.auxiliary.right);
+  assert(timerGeometry.centerY > timerGeometry.auxiliary.top && timerGeometry.centerY < timerGeometry.auxiliary.bottom);
+
   const occupiedAuxiliaryGeometry = await page.evaluate(() => {
     const marker = document.querySelector('[data-scene-zero-aux-active]');
     marker.setAttribute("data-scene-zero-aux-active", "true");

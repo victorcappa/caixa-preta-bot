@@ -154,8 +154,10 @@ biblioteca e oferece `PULAR`, `REPETIR`, `PRÓXIMO`, `+5s` e `ENCERRAR AÇÃO`.
 Toda sessão, inclusive quando o minigame é pulado, abre as perguntas com a ação
 obrigatória de 30 segundos: `TODOS FINJAM ESTAR MORTOS NAS CADEIRAS E NO CHÃO.`
 Ela não volta a entrar nos sorteios comuns da mesma sessão.
-O avanço automático continua opcional e cancelável. Ações temporizadas exibem
-uma contagem pequena na projeção e podem ser avançadas antes do fim. O endpoint
+O avanço automático continua opcional e cancelável. Todos os temporizadores da
+Cena 0 usam um único cartão fixo; no videomapping ele permanece no mesmo ponto
+do quadrante inferior esquerdo, sem duplicar a contagem junto à fala do chatbot.
+Ações temporizadas podem ser avançadas antes do fim. O endpoint
 rejeita frases manuais que não correspondam exatamente a uma entrada da
 biblioteca.
 
@@ -188,7 +190,8 @@ etapa, dispara um comentário sarcástico aleatório e segue automaticamente. Se
 microfone falhar, o controller ainda oferece `COMPLETAR PROVA SONORA` e
 `PULAR · MICROFONE FALHOU`.
 Ao concluir a prova sonora, a barra de desbloqueio avança `5%`. Depois da
-verificação, começa a rodada de perguntas e ações, sempre abrindo com
+verificação, o chatbot avisa que fará uma série de perguntas para conhecer o
+público; somente depois começa a rodada de perguntas e ações, sempre abrindo com
 a ação obrigatória de 30 segundos. O operador encerra essa rodada explicitamente;
 só então o chatbot pede que cada pessoa escolha quem está ao seu lado e forme
 uma dupla, antes de liberar o sorteio de exatamente um
@@ -596,8 +599,10 @@ exclusivamente ao aquecimento do público.
 `MALA 3 — FORCA / QUEDA` reutiliza o motor de forca de `lib/activities.js`, agora
 adaptado a palavras e expressões do espetáculo. A biblioteca fica em
 `data/scene-zero-hangman-words.js`. A partida começa automaticamente após o aviso
-da mala e dura 60 segundos. Acertar a palavra encerra em vitória; quatro erros ou
-o fim do tempo encerram em derrota, com efeito sonoro próprio para cada resultado.
+da mala e depois de o chatbot pedir que a pessoa escolha uma letra e diga em voz
+alta para o operador registrar. Então começam os 60 segundos. Acertar a palavra
+encerra em vitória; quatro erros ou o fim do tempo encerram em derrota, com
+efeito sonoro próprio para cada resultado.
 Os quatro erros percorrem `ESTÁVEL`, `ALERTA`,
 `PERDA DE ALTITUDE`, `FALHA` e `IMPACTO`; ruído, deslocamento e degradação visual
 aumentam a cada erro. Vitória mostra `REGISTRO RECUPERADO`; derrota revela a

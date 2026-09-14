@@ -18,6 +18,7 @@ export const PLAY_UNLOCK_CONFIG = {
   feedbackLeadMs: 480,
   bootFailureDurationMs: 2800,
   verificationTitleDurationMs: 3200,
+  questionsIntroduction: "Agora teremos uma série de perguntas para eu conhecer melhor este público.",
   soundCheck: {
     progressValue: 5,
     greeting: "Olá, mundo...",
