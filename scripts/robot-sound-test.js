@@ -4,10 +4,15 @@ async function main() {
   const sound = await import("../lib/robot-sound/state.js");
   const engineModule = await import("../lib/robot-sound/RobotSoundEngine.js");
   const glitch = await import("../lib/glitch/state.js");
+  const unlock = await import("../data/scene-zero-unlock.js");
 
   const initial = sound.createInitialRobotSoundState();
   assert.equal(initial.enabled, true);
+  assert.equal(initial.soundStyle, "system95");
+  assert.equal(initial.soundStyleVersion, sound.ROBOT_SOUND_STYLE_VERSION);
   assert.equal(initial.preset, "normal");
+  assert.equal(initial.pitchScale, 1);
+  assert.equal(initial.microphoneSensitivity, 1);
   assert.equal(initial.typingFrequency, 0.35);
   assert.equal(initial.outputResetSequence, 0);
   assert(initial.masterVolume > 0 && initial.masterVolume < 0.5);
@@ -16,18 +21,33 @@ async function main() {
     enabled: false,
     masterVolume: 4,
     typingVolume: -2,
+    pitchScale: 4,
+    microphoneSensitivity: 8,
     typingFrequency: 4,
     outputResetSequence: -4,
-    preset: "unknown"
+    preset: "unknown",
+    soundStyle: "unknown"
   });
   assert.equal(normalized.enabled, false);
   assert.equal(normalized.masterVolume, 1);
   assert.equal(normalized.typingVolume, 0);
+  assert.equal(normalized.pitchScale, 2);
+  assert.equal(normalized.microphoneSensitivity, 3);
   assert.equal(normalized.typingFrequency, 1);
   assert.equal(normalized.preset, "normal");
+  assert.equal(normalized.soundStyle, "system95");
   assert.equal(normalized.outputResetSequence, 0);
 
   assert.equal(sound.normalizeRobotSoundSettings({ typingFrequency: -1 }).typingFrequency, 0);
+  assert.equal(sound.normalizeRobotSoundSettings({ pitchScale: 0.1 }).pitchScale, 0.5);
+  assert.equal(sound.normalizeRobotSoundSettings({ microphoneSensitivity: 0 }).microphoneSensitivity, 0.25);
+  assert.equal(sound.robotMicrophoneSensitivity({ microphoneSensitivity: 1.75 }), 1.75);
+  assert.equal(sound.normalizeRobotSoundSettings({ soundStyle: "system95" }).soundStyle, "system95");
+  assert.equal(sound.normalizeRobotSoundSettings({ soundStyle: "robot" }).soundStyle, "system95");
+  assert.equal(sound.normalizeRobotSoundSettings({
+    soundStyle: "robot",
+    soundStyleVersion: sound.ROBOT_SOUND_STYLE_VERSION
+  }).soundStyle, "robot");
 
   assert.equal(sound.classifyRobotSoundCharacter("A"), "key");
   assert.equal(sound.classifyRobotSoundCharacter(" "), "space");
@@ -37,6 +57,11 @@ async function main() {
   assert.equal(sound.classifyRobotSoundCharacter("\n"), "return");
 
   assert.deepEqual(sound.ROBOT_SOUND_PRESET_NAMES, ["normal", "seco", "mecanico", "instavel"]);
+  assert.deepEqual(sound.ROBOT_SOUND_STYLE_NAMES, ["robot", "system95"]);
+  assert.deepEqual(Object.keys(unlock.PLAY_UNLOCK_CONFIG.system95Sounds), [
+    "tick", "warning", "progress", "verification", "unlock"
+  ]);
+  assert(unlock.PLAY_UNLOCK_CONFIG.system95Sounds.unlock.frequencies.length > 1);
   assert.equal(glitch.glitchAudioForPreset("normal").ghostTyping, false);
   assert.equal(glitch.glitchAudioForPreset("strong").ghostTyping, true);
   assert.equal(glitch.publicGlitchSnapshot({
@@ -51,16 +76,45 @@ async function main() {
   globalThis.window = { setTimeout, clearTimeout };
   Math.random = () => 0;
   const engine = new engineModule.RobotSoundEngine();
-  let typingClicks = 0;
+  const typingClicks = [];
   engine.relayEffect = () => false;
   engine.canPlay = () => true;
-  engine.click = () => { typingClicks += 1; };
-  engine.setSettings({ ...engine.settings, typingFrequency: 0 });
+  engine.typingGain = { id: "typing-gain" };
+  engine.click = (options) => { typingClicks.push(options); };
+  engine.setSettings({
+    ...engine.settings,
+    soundStyle: "robot",
+    soundStyleVersion: sound.ROBOT_SOUND_STYLE_VERSION,
+    typingFrequency: 0
+  });
   engine.typing("A", { force: true, localOnly: true });
-  assert.equal(typingClicks, 0);
+  assert.equal(typingClicks.length, 0);
   engine.setSettings({ ...engine.settings, typingFrequency: 1 });
   engine.typing("A", { force: true, localOnly: true });
-  assert.equal(typingClicks, 1);
+  assert.equal(typingClicks.length, 1);
+  const robotClick = typingClicks[0];
+  const system95Blips = [];
+  engine.computerBlip = (options) => { system95Blips.push(options); };
+  engine.setSettings({ ...engine.settings, soundStyle: "system95" });
+  engine.typing("A", { force: true, localOnly: true });
+  const system95Blip = system95Blips[0];
+  assert(system95Blip);
+  assert.notEqual(system95Blip.pitch, robotClick.pitch);
+  assert.notEqual(system95Blip.pitch, system95Blip.toPitch);
+  assert.equal(system95Blip.destination, engine.typingGain);
+
+  const system95Effects = [];
+  engine.system95Sequence = (notes, options) => system95Effects.push({ notes, options });
+  engine.success({ localOnly: true });
+  engine.error({ localOnly: true });
+  engine.impact({ localOnly: true });
+  engine.wake({ localOnly: true });
+  engine.setSettings({ ...engine.settings, completeEnabled: true });
+  engine.complete({ localOnly: true });
+  engine.countdown(0, { localOnly: true });
+  assert.deepEqual(system95Effects.map((entry) => entry.options.kind), [
+    "success", "error", "impact", "wake", "complete", "countdown"
+  ]);
 
   const relayedCountdowns = [];
   engine.relayEffect = (effect, detail) => {

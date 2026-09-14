@@ -6,11 +6,21 @@ import {
   normalizeRobotSoundSettings,
   ROBOT_SOUND_DEFAULTS,
   ROBOT_SOUND_PRESET_NAMES,
+  ROBOT_SOUND_STYLES,
+  ROBOT_SOUND_STYLE_NAMES,
   robotTypingIntervalMs
 } from "@/lib/robot-sound/state";
 import styles from "./RobotSoundControls.module.css";
 
 const TYPE_TEST_TEXT = "DADO REGISTRADO.";
+
+function semitonesForPitchScale(scale) {
+  return Math.round(12 * Math.log2(Number(scale) || 1));
+}
+
+function pitchScaleForSemitones(semitones) {
+  return 2 ** (Number(semitones) / 12);
+}
 
 async function postSettings(settings) {
   const response = await fetch("/api/robot-sound", {
@@ -25,14 +35,20 @@ async function postSettings(settings) {
 
 export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, onLog = () => {}, relaySink = false }) {
   const [draft, setDraft] = useState(() => normalizeRobotSoundSettings(settings));
+  const draftRef = useRef(normalizeRobotSoundSettings(settings));
   const [audioStatus, setAudioStatus] = useState("LOCKED");
   const saveTimerRef = useRef(null);
   const saveQueueRef = useRef(Promise.resolve());
+  const pendingPatchRef = useRef({});
   const testTimersRef = useRef(new Set());
   const outputResetSequenceRef = useRef(null);
+  const localRevisionRef = useRef(0);
+  const settledRevisionRef = useRef(0);
 
   useEffect(() => {
+    if (localRevisionRef.current !== settledRevisionRef.current) return;
     const normalized = normalizeRobotSoundSettings(settings);
+    draftRef.current = normalized;
     setDraft(normalized);
     robotSoundEngine.setSettings(normalized);
 
@@ -61,31 +77,53 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
   }
 
   function commit(patch, delayMs = 0) {
-    const next = normalizeRobotSoundSettings({ ...draft, ...patch }, draft);
+    const current = draftRef.current;
+    const next = normalizeRobotSoundSettings({ ...current, ...patch }, current);
+    const localRevision = localRevisionRef.current + 1;
+    localRevisionRef.current = localRevision;
+    draftRef.current = next;
     setDraft(next);
     robotSoundEngine.setSettings(next);
+    pendingPatchRef.current = { ...pendingPatchRef.current, ...patch };
     window.clearTimeout(saveTimerRef.current);
     saveTimerRef.current = window.setTimeout(() => {
+      const pendingPatch = pendingPatchRef.current;
+      pendingPatchRef.current = {};
       saveQueueRef.current = saveQueueRef.current
         .catch(() => {})
-        .then(() => postSettings(next))
-        .catch((error) => onLog(error.message, "error"));
+        .then(() => postSettings(pendingPatch))
+        .then((saved) => {
+          settledRevisionRef.current = Math.max(settledRevisionRef.current, localRevision);
+          if (localRevisionRef.current === localRevision) {
+            const normalized = normalizeRobotSoundSettings(saved);
+            draftRef.current = normalized;
+            setDraft(normalized);
+            robotSoundEngine.setSettings(normalized);
+          }
+          return saved;
+        })
+        .catch((error) => {
+          settledRevisionRef.current = Math.max(settledRevisionRef.current, localRevision);
+          onLog(error.message, "error");
+        });
     }, delayMs);
   }
 
   async function toggleSound() {
-    if (!draft.enabled && !(await unlock())) return;
-    commit({ enabled: !draft.enabled });
+    const current = draftRef.current;
+    if (!current.enabled && !(await unlock())) return;
+    commit({ enabled: !current.enabled });
   }
 
   async function reconnectAudio() {
     setAudioStatus("RECONNECTING");
     window.clearTimeout(saveTimerRef.current);
-    outputResetSequenceRef.current = Number(draft.outputResetSequence || 0) + 1;
+    const current = draftRef.current;
+    outputResetSequenceRef.current = Number(current.outputResetSequence || 0) + 1;
     const localReconnect = robotSoundEngine.reconnectOutput();
     saveQueueRef.current = saveQueueRef.current
       .catch(() => {})
-      .then(() => postSettings({ ...draft, reconnectOutput: true }))
+      .then(() => postSettings({ ...current, reconnectOutput: true }))
       .catch((error) => {
         onLog(error.message, "error");
         return null;
@@ -94,7 +132,8 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
   }
 
   async function testEffect(effect) {
-    if (!draft.enabled) {
+    const current = draftRef.current;
+    if (!current.enabled) {
       onLog("ROBOT SOUND IS OFF", "error");
       return;
     }
@@ -103,22 +142,22 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
       return;
     }
 
-    robotSoundEngine.setSettings(draft);
+    robotSoundEngine.setSettings(current);
     if (effect === "typing") {
       for (const [index, character] of [...TYPE_TEST_TEXT].entries()) {
         const timer = window.setTimeout(() => {
           testTimersRef.current.delete(timer);
-          robotSoundEngine.typing(character, { force: true });
-        }, index * robotTypingIntervalMs(draft));
+          robotSoundEngine.typing(character, { force: true, localOnly: true });
+        }, index * robotTypingIntervalMs(current));
         testTimersRef.current.add(timer);
       }
       return;
     }
     if (effect === "thinking") {
-      robotSoundEngine.startThinking();
+      robotSoundEngine.startThinking({ localOnly: true });
       const timer = window.setTimeout(() => {
         testTimersRef.current.delete(timer);
-        robotSoundEngine.stopThinking();
+        robotSoundEngine.stopThinking({ localOnly: true });
       }, 2200);
       testTimersRef.current.add(timer);
       return;
@@ -134,16 +173,11 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
       return;
     }
     if (effect === "glitch") {
-      robotSoundEngine.setGlitch({ active: true, sequence: Date.now(), params: { intensity: 0.72 }, audio: { ghostTyping: false } });
-      const timer = window.setTimeout(() => {
-        testTimersRef.current.delete(timer);
-        robotSoundEngine.setGlitch({ active: false, sequence: Date.now() });
-      }, 420);
-      testTimersRef.current.add(timer);
+      robotSoundEngine.glitchEffect({ intensity: 0.72, localOnly: true });
       return;
     }
 
-    robotSoundEngine[effect]?.();
+    robotSoundEngine[effect]?.({ localOnly: true });
   }
 
   return (
@@ -164,6 +198,38 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
       <button className={styles.reconnectButton} onClick={reconnectAudio} type="button">
         RECONECTAR ÁUDIO
       </button>
+
+      <label className={styles.field}>
+        <span>SENSIBILIDADE DO MICROFONE</span>
+        <output>{Math.round(draft.microphoneSensitivity * 100)}%</output>
+        <input
+          aria-label="Sensibilidade do microfone"
+          max="3"
+          min="0.25"
+          onChange={(event) => commit({ microphoneSensitivity: Number(event.target.value) }, 120)}
+          step="0.05"
+          type="range"
+          value={draft.microphoneSensitivity}
+        />
+      </label>
+
+      <label className={styles.selectField}>
+        <span>ESTILO GERAL</span>
+        <select
+          aria-label="Estilo geral dos efeitos do robô"
+          onChange={(event) => commit({ soundStyle: event.target.value })}
+          value={draft.soundStyle}
+        >
+          {ROBOT_SOUND_STYLE_NAMES.map((soundStyle) => (
+            <option key={soundStyle} value={soundStyle}>{ROBOT_SOUND_STYLES[soundStyle]}</option>
+          ))}
+        </select>
+        <small>
+          {draft.soundStyle === "system95"
+            ? "BLIPS DIGITAIS E ALERTAS DE SISTEMA EM TODOS OS EFEITOS PROCEDURAIS."
+            : "TIMBRE PROCEDURAL ORIGINAL DA CAIXA PRETA."}
+        </small>
+      </label>
 
       <label className={styles.field}>
         <span>VOLUME GERAL</span>
@@ -190,6 +256,23 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
           step="0.01"
           type="range"
           value={draft.typingVolume}
+        />
+      </label>
+
+      <label className={styles.field}>
+        <span>ALTURA DO SOM / PITCH</span>
+        <output>
+          {semitonesForPitchScale(draft.pitchScale) > 0 ? "+" : ""}
+          {semitonesForPitchScale(draft.pitchScale)} semitons
+        </output>
+        <input
+          aria-label="Altura dos efeitos do robô"
+          max="12"
+          min="-12"
+          onChange={(event) => commit({ pitchScale: pitchScaleForSemitones(event.target.value) }, 120)}
+          step="1"
+          type="range"
+          value={semitonesForPitchScale(draft.pitchScale)}
         />
       </label>
 
@@ -223,7 +306,11 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
 
       <label className={styles.selectField}>
         <span>PRESET DIGITAÇÃO</span>
-        <select onChange={(event) => commit({ preset: event.target.value })} value={draft.preset}>
+        <select
+          aria-label="Preset da digitação do robô"
+          onChange={(event) => commit({ preset: event.target.value })}
+          value={draft.preset}
+        >
           {ROBOT_SOUND_PRESET_NAMES.map((preset) => (
             <option key={preset} value={preset}>{preset.toUpperCase()}</option>
           ))}
