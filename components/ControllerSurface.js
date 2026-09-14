@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import ControllerBlackoutBar from "./ControllerBlackoutBar";
 import ControllerGlobalVolume from "./ControllerGlobalVolume";
 import SceneNotes from "./SceneNotes";
 import {
-  getControllerSurfaceGroups,
+  controllerNavigationSurfaces,
   sortedControllerSurfaces,
   isControllerSurfaceActive
 } from "@/lib/controllerSurfaces";
@@ -52,7 +51,6 @@ async function navigateProjection(path) {
 export default function ControllerSurface({ children }) {
   const pathname = usePathname();
   const activeSurface = sortedControllerSurfaces.find((surface) => isControllerSurfaceActive(surface, pathname));
-  const groupedSurfaces = getControllerSurfaceGroups();
 
   useEffect(() => {
     if (!activeSurface?.projectionPath) {
@@ -70,30 +68,21 @@ export default function ControllerSurface({ children }) {
     <div className={styles.surface}>
       <ControllerGlobalVolume />
       <nav className={styles.tabs} aria-label="Controllers cênicos">
-        <div className={styles.controllerGroups}>
-          {groupedSurfaces.map((group) => (
-            <section className={styles.group} key={group.id} aria-label={`${group.label} — ${group.name}`}>
-              {group.surfaces.map((surface) => {
-                const active = isControllerSurfaceActive(surface, pathname);
-
-                return (
-                  <Link
-                    aria-current={active ? "page" : undefined}
-                    className={active ? styles.activeTab : styles.tab}
-                    href={surface.path}
-                    key={surface.id}
-                    title={surface.name}
-                  >
-                    {surface.sceneNumber ? <span className={styles.tabSceneNumber}>{surface.sceneNumber}</span> : null}
-                    <span>{surface.menuLabel || surface.shortName || surface.label}</span>
-                  </Link>
-                );
-              })}
-            </section>
-          ))}
-        </div>
+        {controllerNavigationSurfaces.map((surface) => {
+          const active = isControllerSurfaceActive(surface, pathname);
+          return (
+            <Link
+              aria-current={active ? "page" : undefined}
+              className={active ? styles.activeTab : styles.tab}
+              href={surface.path}
+              key={surface.id}
+              title={surface.name}
+            >
+              {surface.menuLabel || surface.shortName || surface.label}
+            </Link>
+          );
+        })}
       </nav>
-      <ControllerBlackoutBar />
       <div className={styles.content}>{children}</div>
       {activeSurface?.sceneNumber?.startsWith("CENA") ? <SceneNotes scene={activeSurface} /> : null}
     </div>
