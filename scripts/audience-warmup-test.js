@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { AUDIENCE_WARMUP_ACTIONS, AUDIENCE_WARMUP_INTENSITIES, AUDIENCE_WARMUP_INTERACTION_TYPES, AUDIENCE_WARMUP_PROMPTS, AUDIENCE_WARMUP_REQUIRED_PROMPT_ID } from "../data/audience-warmup-prompts.js";
+import {
+  AUDIENCE_WARMUP_ACTIONS,
+  AUDIENCE_WARMUP_FIRST_QUESTION_INTENSITY,
+  AUDIENCE_WARMUP_INTENSITIES,
+  AUDIENCE_WARMUP_INTERACTION_TYPES,
+  AUDIENCE_WARMUP_PROMPTS,
+  AUDIENCE_WARMUP_REQUIRED_ACKNOWLEDGEMENT,
+  AUDIENCE_WARMUP_REQUIRED_PROMPT_ID
+} from "../data/audience-warmup-prompts.js";
 import {
   adjustAudienceWarmupMinigameTime,
   audienceWarmupAutoAdvanceDelay,
@@ -60,6 +68,8 @@ assert.equal(requiredEverySessionPrompts.length, 1, "deve existir exatamente uma
 assert.equal(requiredEverySessionPrompts[0].id, AUDIENCE_WARMUP_REQUIRED_PROMPT_ID);
 assert.equal(requiredEverySessionPrompts[0].text, "TODOS FINJAM ESTAR MORTOS NAS CADEIRAS E NO CHÃO.");
 assert.equal(requiredEverySessionPrompts[0].durationSeconds, 30);
+assert.equal(AUDIENCE_WARMUP_REQUIRED_ACKNOWLEDGEMENT, "OBEDIENTES... ÓTIMO.");
+assert.equal(AUDIENCE_WARMUP_FIRST_QUESTION_INTENSITY, "provocative");
 assert.equal(AUDIENCE_WARMUP_PROMPTS.some((prompt) => /mora em s[aã]o paulo fica de p[eé]/iu.test(prompt.text)), false);
 for (const action of AUDIENCE_WARMUP_ACTIONS) {
   assert(AUDIENCE_WARMUP_PROMPTS.some((prompt) => prompt.action === action.id), `ação sem prompt: ${action.id}`);
@@ -308,6 +318,9 @@ assert.match(
   "SORTEAR deve usar a intensidade selecionada e disparar imediatamente"
 );
 assert.match(showStateSource, /armAudienceWarmupAdvance\(\s*"questions-start"/, "a confirmação sonora deve abrir a rodada de perguntas");
+assert.match(showStateSource, /completionKind: "first-provocation"/, "a ação de mortos deve preparar a primeira provocação");
+assert.match(showStateSource, /AUDIENCE_WARMUP_REQUIRED_ACKNOWLEDGEMENT[\s\S]*"first-provocation"/, "o fim da ação obrigatória deve reconhecer a obediência e continuar");
+assert.match(showStateSource, /launchFirstAudienceWarmupProvocation\(\)[\s\S]*AUDIENCE_WARMUP_FIRST_QUESTION_INTENSITY[\s\S]*publishSelectedAudienceWarmupPrompt\(prompt\)/, "a primeira pergunta deve ser sorteada e disparada na intensidade 4");
 assert.match(showStateSource, /addMessage\("assistant", PLAY_UNLOCK_CONFIG\.questionsIntroduction, "audience-warmup-introduction"\)/, "o chatbot deve introduzir a série de perguntas depois dos decibéis");
 assert.match(showStateSource, /action === "questions-complete"[\s\S]*startAudienceWarmupBriefing\(\)/, "o mini game deve começar somente depois das perguntas");
 assert.match(showStateSource, /publishAudienceWarmupSystemSequence\(transition, "warmup-complete"\)/, "o mini game deve encerrar o aquecimento sem voltar às perguntas");

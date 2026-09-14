@@ -59,6 +59,8 @@ function step(text, action, options = {}) {
 }
 
 export const AUDIENCE_WARMUP_REQUIRED_PROMPT_ID = "play-dead-30";
+export const AUDIENCE_WARMUP_REQUIRED_ACKNOWLEDGEMENT = "OBEDIENTES... ÓTIMO.";
+export const AUDIENCE_WARMUP_FIRST_QUESTION_INTENSITY = "provocative";
 
 // O texto abaixo é a fonte de verdade. Nenhuma camada de modelo pode reconstruí-lo.
 export const AUDIENCE_WARMUP_PROMPTS = [

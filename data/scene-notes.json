@@ -1,6 +1,7 @@
 {
   "notes": {
-    "bot-malas": "",
+    "bot-malas": "deixar a bios fixa antes de começar o cursor (ir para cursor só quando projeção ir para tela grande)",
+    "videomapping": "",
     "queda-emergencia": "",
     "forca-g-samples": "",
     "baralho-morbido": "",
@@ -9,8 +10,9 @@
     "piloto-videogame": ""
   },
   "updatedAt": {
-    "bot-malas": "2026-08-20T17:42:42.944Z",
-    "queda-emergencia": "2026-08-20T17:42:51.103Z",
+    "bot-malas": "2026-09-14T19:20:27.477Z",
+    "videomapping": "2026-09-14T19:46:26.036Z",
+    "queda-emergencia": "2026-09-14T18:07:09.615Z",
     "forca-g-samples": "2026-08-20T17:45:29.461Z",
     "baralho-morbido": "2026-08-20T17:52:59.882Z",
     "transicao-psicodelica": "2026-08-20T18:04:34.793Z",

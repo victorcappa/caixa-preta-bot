@@ -31,6 +31,9 @@
     "test:play-unlock:browser": "node --no-warnings scripts/play-unlock-browser-test.js",
     "test:videomapping:browser": "node --no-warnings scripts/videomapping-browser-test.js",
     "test:verdade-ou-bolo:layout": "node --no-warnings scripts/verdade-ou-bolo-layout-browser-test.js",
+    "brain:sync": "node scripts/brain-sync.js",
+    "brain:check": "node scripts/brain-check.js",
+    "brain:summary": "node scripts/brain-summary.js",
     "generate:elderly-voice": "node scripts/generate-elderly-voice.js"
   },
   "dependencies": {
