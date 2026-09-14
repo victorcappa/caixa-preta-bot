@@ -92,7 +92,8 @@ conectada; registros antigos ou fechados são ignorados, sem gerar conflito 409.
 
 Telas publicas controlaveis:
 
-- `Chatbot`: `/`
+- `Bot / Principal`: `/`
+- `Videomapping / Quadrantes`: `/videomapping`
 - `Baralho Morbido`: `/baralho-morbido`
 - `Queda Aviao`: `/queda-aviao`
 - `Forca G — Sampler + Shaders`: `/forca-g-samples`
@@ -109,47 +110,147 @@ O operator tambem pode ser aberto dentro da tela principal pelo botao `OP`,
 abaixo do botao `?`. Ele alterna entre chat em tela cheia e chat com terminal
 operador ao lado; em telas menores, aparece como gaveta animada.
 
+Na Cena 0, as abas `Bot / Principal` e `Videomapping` usam exatamente o mesmo
+estado e os mesmos componentes públicos. A segunda apenas distribui a fala
+principal, a BIOS/barra, as contagens da Cena 0, as intervenções visuais e o
+conteúdo contextual em uma grade 2x2. A fala fica no quadrante superior
+esquerdo, a BIOS/barra no superior direito e contagens ocupam o inferior
+esquerdo. Quando uma contagem aparece, os visuais auxiliares migram para o
+inferior direito se ele estiver disponível. Ao alternar entre essas duas telas
+na mesma janela de projeção, a troca de layout acontece sem recarregar o `Chat`,
+preservando digitação, timers, mídia e animações que já estejam em curso. O
+cursor inicial pisca continuamente até surgir conteúdo público.
+
 ## UI pública e Esquentar Público
 
 O chatbot público mostra apenas `publicMessage`, a última fala relevante da
 Caixa Preta, com tipografia responsiva de projeção. `conversation` continua
 guardando todas as mensagens para contexto do modelo e histórico do operator.
 Uma nova fala substitui visualmente a anterior; `LIMPAR TELA` remove somente
-`publicMessage` e preserva a conversa.
+`publicMessage` e preserva a conversa. Durante a digitação, o início de cada
+linha permanece fixo e os caracteres avançam para a direita, sem recentralizar
+ou rebalancear o texto a cada atualização.
 
-No `/operator`, `ESQUENTAR PÚBLICO` oferece oito ações físicas, intensidades
-`LEVE`, `MÉDIO` e `ESTRANHO`, 34 prompts em
-`data/audience-warmup-prompts.js`, frase manual, preview e `SURPREENDA-ME`.
-`GERAR PERGUNTA` e `SURPREENDA-ME` geram e enviam a primeira etapa imediatamente,
-sem confirmação intermediária. Na frase manual, `Enter` envia e `Shift+Enter`
-insere uma quebra de linha. Depois do envio, o operador pode avançar, repetir,
-cancelar ou limpar a partitura. O avanço automático é opcional, configurável e
-sempre cancelável. A projeção mostra somente a etapa corrente e uma indicação
-pequena da ação esperada.
+No `/operator`, `AQUECIMENTO DA PLATEIA` oferece 100 prompts em
+`data/audience-warmup-prompts.js`, distribuídos igualmente entre cinco degraus:
+`PLAY`, `PERSONAL`, `EXPOSED`, `PROVOCATIVE` e `SOCIAL PRESSURE`. A biblioteca é
+a fonte de verdade: sorteio, preview, sequência e projeção usam literalmente o
+texto e os `steps` registrados, sem geração ou paráfrase pelo modelo. Os prompts
+combinam comandos corporais, ritmo, mímica, coro, objetos, movimento, confissão,
+divisão da sala e microcompetições. A seleção mantém memória curta de ID, ação,
+categoria, `interactionType`, tags e abertura textual para evitar repetições
+recentes.
+O modo não usa situações imaginárias nem fórmulas educadas: as instruções são
+imperativas e tratam de ações ou fatos reais.
+O módulo começa comprimido e alterna entre `EXPANDIR` e `COMPRIMIR` ao tocar no
+cabeçalho; `JOGO DAS MALAS` fica imediatamente abaixo, sempre visível no fluxo
+do operator. A lista completa das 100 falas também começa comprimida dentro do
+aquecimento e pode ser aberta quando necessária.
+`SORTEAR` escolhe a próxima ação dentro da intensidade selecionada e publica o
+texto exato imediatamente, sem sortear outro degrau. O controller mostra
+categoria, intensidade, `interactionType`,
+duração e todos os `steps`, permite navegar e disparar qualquer item da
+biblioteca e oferece `PULAR`, `REPETIR`, `PRÓXIMO`, `+5s` e `ENCERRAR AÇÃO`.
+Toda sessão, inclusive quando o minigame é pulado, abre as perguntas com a ação
+obrigatória de 30 segundos: `TODOS FINJAM ESTAR MORTOS NAS CADEIRAS E NO CHÃO.`
+Ela não volta a entrar nos sorteios comuns da mesma sessão.
+O avanço automático continua opcional e cancelável. Todos os temporizadores da
+Cena 0 usam um único cartão fixo que exibe apenas o número; no videomapping ele
+permanece no mesmo ponto do quadrante inferior esquerdo, sem duplicar a contagem
+junto à fala do chatbot.
+Ações temporizadas podem ser avançadas antes do fim. O endpoint
+rejeita frases manuais que não correspondam exatamente a uma entrada da
+biblioteca.
 
 A abertura da Cena 0 começa em `STANDBY`: ao abrir ou executar `/reset`, a
 projeção fica totalmente preta, sem cursor, texto, campo público ou animação.
 Somente o botão `BOOT`, no controller, inicia a BIOS orientada a dados. Ela
-carrega teatro, técnica e elenco, detecta a plateia e trava em `50%`. A barra pertence a
+carrega teatro, técnica e elenco, detecta a plateia e trava em `78%`. A barra pertence a
 `showState.sceneZero.unlock`: continua visível sobre o chat durante o
-aquecimento e só sai da projeção depois da sequência `PEÇA DESBLOQUEADA`.
-Ao travar, a primeira fala pública é exatamente `... DESBLOQUEIE A PEÇA`; o
-sistema então espera, sem escolher ou enviar nada sozinho, até o operador
-acionar a primeira pergunta em `ESQUENTAR PÚBLICO`.
-Os estados semânticos são `STANDBY`, `BOOTING`, `WAITING_FOR_AUDIENCE`,
+aquecimento e sai da projeção quando a verificação termina.
+Ao travar, a BIOS mostra o erro e a dependência `AÇÃO COLETIVA` e permanece nessa
+tela em `78%` por tempo indeterminado. O operador precisa abrir `AQUECIMENTO DA
+PLATEIA` e acionar `ENCERRAR BIOS`; o comando completa visualmente a barra em
+`100%` e só então inicia a etapa sonora seguinte. Depois dela, `... PROVE QUE
+VOCÊ É HUMANO` aparece uma vez.
+Antes dessa verificação, a projeção executa uma prova de vida sonora uma única
+vez. `Olá, mundo...`, `Tem alguém aí?`, `Boa noite...`, a instrução e os
+comentários de espera entram como falas verdes do chatbot, com a digitação
+normal caractere a caractere; enquanto ninguém atinge a meta, o bot fica
+progressivamente mais sarcástico. O medidor suavizado permanece como informação
+técnica separada. O controller solicita a permissão de microfone assim que é
+aberto e mostra no topo o estado da autorização e uma tentativa manual de
+recuperação. O áudio é analisado somente pelo controller, que transmite à
+projeção apenas o nível numérico suavizado; a projeção nunca solicita o
+microfone e nenhum áudio bruto é enviado ao servidor. Durante a preparação da
+seleção de participante, a projeção mostra `/pensando...` com as reticências
+animadas até a fala da roleta ficar pronta. No Safari, a captura já
+autorizada é reativada pelo primeiro clique ou tecla do operador; o topo muda
+para `ATIVO · NÍVEL X%`, sem abrir um segundo pedido antes da prova sonora. A
+captura conserva o cancelamento de eco do navegador e permanece ativa inclusive
+enquanto o chatbot está digitando ou emitindo som. Um sinal acima da meta por um
+segundo completa a
+etapa, dispara um comentário sarcástico aleatório e segue automaticamente. Se o
+microfone falhar, o controller ainda oferece `COMPLETAR PROVA SONORA` e
+`PULAR · MICROFONE FALHOU`.
+Ao concluir a prova sonora, a barra de desbloqueio avança `5%`. Depois da
+verificação, o chatbot avisa que fará uma série de perguntas para conhecer o
+público; somente depois começa a rodada de perguntas e ações, sempre abrindo com
+a ação obrigatória de 30 segundos. O operador encerra essa rodada explicitamente;
+só então o chatbot pede que cada pessoa escolha quem está ao seu lado e forme
+uma dupla, antes de liberar o sorteio de exatamente um
+entre `TAPÃO`, `PISCADA` e `SERINHO`. O sorteio reutiliza a linguagem visual da
+janela rotativa das malas, revela apenas o jogo escolhido e apresenta suas
+regras em etapas. O operador também pode substituir o resultado antes do
+início.
+
+`TAPÃO` executa dois turnos de 10 segundos separados por `TROQUEM`; `PISCADA` e
+`SERINHO` usam 60 segundos por padrão e aceitam outra duração. O operator dispõe
+de iniciar, pausar, continuar, reiniciar, encerrar, ajustar cinco segundos,
+antecipar a troca do TAPÃO e pular o minigame. Não há câmera nem detecção
+automática de piscada, riso ou vencedor. Depois de `FIM.`, o aquecimento é
+concluído e não admite novo sorteio. A conclusão do jogo
+soma pouco progresso, sem completar a barra.
+
+No topo do controller da Cena 0, `MODO MANUAL` interrompe todas as transições
+automáticas do aquecimento. Cada pressão da seta para a direita consome somente
+o próximo avanço pendente. Os atalhos laterais `NINGUÉM REAGIU` e
+`MUITOS REAGIRAM` inserem uma resposta sarcástica curta sem trocar a pergunta,
+a instrução ou a etapa seguinte; no modo automático, a continuação é retomada
+após uma pausa breve e, no manual, permanece aguardando a seta.
+
+Não há imagens nem CAPTCHA visual nesse protocolo. Ao chegar a `100%`, a
+projeção mostra `HUMANIDADE SUFICIENTE.` e `PEÇA DESBLOQUEADA.` antes de seguir
+para o fluxo existente.
+Ao lado de `BOOT`, `REINICIAR` executa o reset global: sinaliza parada para as
+requisições em curso, encerra rotinas externas e internas, limpa jogos, timers,
+glitch, navegador e aquecimento e devolve a projeção ao preto de `STANDBY`.
+Os estados semânticos são `STANDBY`, `BOOTING`, `BOOT_FAILED`,
+`HUMAN_VERIFICATION`, `WAITING_FOR_AUDIENCE`,
 `WARMING_AUDIENCE`, `UNLOCKING` e `UNLOCKED`; enquanto a peça está bloqueada,
 esse contexto também é enviado ao bot.
 
-As partituras de aquecimento registram a ação coletiva e deixam a avaliação
-real com o operador: `AÇÃO AUMENTOU +2%` ou `AÇÃO DIMINUIU −2%`. A barra pode
-oscilar entre `0%` e `99%`; cada partitura aceita uma única avaliação. Ela só
-chega a `100%` quando o estado central das malas emite `suitcases_finished`. No fluxo
-manual, isso acontece pelo botão `FINALIZAR JOGO DAS MALAS / PREENCHER BARRA`,
-disponível após iniciar a Mala 3; os comandos legados de vitória ou derrota das
-malas passam pelo mesmo evento. Não há definição direta de percentual nem
-desbloqueio de emergência no controller. Além da avaliação das ações, ele mantém
-`BOOT`, pausa/avanço da BIOS, áudio e reinício. A configuração de conteúdo,
-duração, feedback e conclusão fica em
+Antes do `BOOT`, a projeção mostra somente o cursor piscando. A BIOS usa uma
+barra própria, que conclui em `100%`; em seguida, a barra de desbloqueio do
+espetáculo aparece em `0%` e permanece visível durante o restante da Cena 0.
+
+Cada item da lista mostra texto, categoria e estado de pontuação. Toda nova
+pergunta publicada avança automaticamente `5%`; repetições da mesma pergunta e
+reações intermediárias não pontuam. No videomapping, a barra permanece ancorada
+no centro do quadrante superior direito durante toda a transição entre a
+confirmação sonora e as perguntas. Na projeção, a faixa compacta de aquecimento identifica
+o desbloqueio do espetáculo e mantém o percentual visível.
+`DISPARAR` envia a ação e aplica os `5%` automaticamente. Um mesmo ID pontua
+somente uma vez. O feedback técnico continua registrado no
+estado antes da mudança de percentual, gira por uma sequência controlada e não
+é mais escrito na faixa pública da barra.
+
+O controller também mantém `+ PARTICIPAÇÃO`, `− PARTICIPAÇÃO`, definição exata
+de progresso, preparação até `99%`, áudio, pausa/avanço da BIOS e reinício.
+Antes do encerramento das malas, qualquer ajuste fica limitado a `99%`. Somente
+a conclusão da última mala anima a barra até `100%` e inicia a sequência final;
+o botão de retomada serve apenas para recuperar essa conclusão depois de o jogo
+das malas já estar finalizado. A configuração de conteúdo, ritmo, feedback e conclusão fica em
 `data/scene-zero-unlock.js`; `onPlayUnlocked` fica registrado no estado e no
 evento SSE para futuras integrações de luz, som, vídeo e mecanismos.
 
@@ -181,14 +282,16 @@ modelo.
 
 Grupos atuais:
 
-- `CENA 0`: `Bot / Malas`, rota `/cena-0-controller`
+- `CENA 0`: `Bot / Principal`, rota `/cena-0-controller`, e `Videomapping`,
+  rota `/videomapping-controller`
 - `CENA 1`: `Queda / Emergencia`, rota `/queda-aviao-controller`
 - `CENA 2`: `Forca G — Sampler + Shaders`, `Baralho Morbido`,
   `Transicao Psicodelica`
 - `CENA 3`: `Tea For Two`
 - `CENA 4`: `Piloto / Videogame`
 - `CAMADAS`: `Tecnologia x Floresta`
-- `OUTROS`: `Operator` (console técnico neutro), `Glitch Geral` e `Treino`
+- `OUTROS`: `Sound Control`, rota `/sound-control`, `Operator` (console técnico
+  neutro), `Glitch Geral` e `Treino`
 
 Cada aba cenica troca a projecao para sua rota publica correspondente. `Bot /
 Malas` abre `/`, `Baralho Morbido` abre `/baralho-morbido`, `Queda /
@@ -370,14 +473,16 @@ sem apagar os valores preparados. Para validar o fluxo completo no navegador, us
 
 `/cena-0-controller` é a superfície privada dedicada à Cena 0. `/operator`
 continua disponível como console técnico e hub neutro; entrar nele não troca a
-projeção. O controller da Cena 0 organiza, sem timeline automática, os blocos
-`BIOS / DESBLOQUEIO`, `COLETA`, `PARTICIPANTE`, `JOGO DAS MALAS`,
-`CANTAR 15s` legado, `GLITCH`,
-`GOOGLE + INSTAGRAM` e `AEROPORTO / TEA FOR TWO`.
-Um índice fixo exclusivo dessa rota ocupa a lateral direita e navega com scroll
-suave entre topo, memória, personalidade, direção e cada bloco operacional. A seção
-visível fica destacada; em telas estreitas, o mesmo índice vira uma faixa fixa
-compacta na parte inferior para não cobrir os controles.
+projeção. O controller da Cena 0 segue a ordem operacional `BOOT` → `ESQUENTAR
+PÚBLICO` → `ESCOLHER PARTICIPANTE` → `JOGO DAS MALAS`, sem outro painel entre
+essas etapas. O aquecimento começa comprimido; os detalhes da roleta também.
+Memória, personalidade, direção, coleta, canto,
+glitch, navegador e aeroporto/áudio permanecem preservados dentro de `OUTROS
+CONTROLES`, fechado por padrão.
+Um índice fixo exclusivo dessa rota ocupa a lateral direita e navega somente
+entre boot, aquecimento, participante, malas e outros controles. A seção visível fica
+destacada; em telas estreitas, o mesmo índice vira uma faixa fixa compacta na
+parte inferior para não cobrir os controles.
 
 No bloco `GLITCH`, além dos níveis dramatúrgicos, o operator pode escolher um
 vídeo real de `assets/videos/glitch/`, ativar loop e configurar entre `0,6` e
@@ -480,45 +585,48 @@ PESSOA` exclui o nome atual quando há alternativa. Mudar para outra etapa
 interrompe imediatamente countdown, roleta e comentários pendentes.
 
 O bloco `JOGO DAS MALAS` mantém o `SuitcaseDirector` existente para recuperação
-e compatibilidade, mas organiza a dramaturgia atual em três cartões. A troca
-entre eles só acontece quando o operador pressiona o botão da mala; nenhum fim
-de jogo, timer ou rotina de Instagram avança para a mala seguinte.
+e compatibilidade, mas organiza a dramaturgia atual em três cartões. Ao entrar
+na etapa, o robô explica rapidamente o jogo, anuncia que escolherá uma mala
+aleatoriamente e só então inicia a roleta, enquanto o software protege a ordem
+fixa `MALA 2 → MALA 3 → MALA 1`. A passagem seguinte fica disponível no
+botão `ROBÔ ESCOLHER PRÓXIMA MALA`. A ordem completa nunca entra na fala pública.
+Cada escolha gira os números como caça-níquel e depois mostra `MALA` acima do
+número sorteado. Enquanto esse aviso está na frente, nenhuma fala da escolha ou
+do desafio entra na fila pública;
+o chatbot só começa a escrever depois que os dez segundos terminam.
 
-`MALA 1 — VERDADE OU BOLO` inicia e controla o jogo `verdade_ou_bolo` já
-registrado no `GameDirector`. Rodada, resposta, vídeo, votação, revelação e
-placar continuam determinísticos. Entrada, comentário e provocação são gerados
-pelo modelo com a personalidade, memória, participante e contexto atuais; não
-há lista fixa de piadas.
+`MALA 2 — DESAFIO COM OBJETO` usa a biblioteca declarativa de 12 pedidos em
+`data/scene-zero-physical-challenges.js`. O objeto ou conjunto de objetos varia e
+deve ser obtido com ajuda da plateia. Cada desafio contém somente a coleta
+sorteada e usa o tempo configurado para essa coleta; a ação dos mortos pertence
+exclusivamente ao aquecimento do público.
 
-`MALA 2 — GINCANA` usa o banco editável
-`data/scene-zero-gincanas.js`. Cada item define `id`, `description`,
-`instruction`, `durationMin`, `durationMax`, `difficulty` e `notes`. O sorteio
-escolhe somente tarefas ainda não usadas na sessão enquanto houver alternativas.
-Para acrescentar uma tarefa, adicione outro objeto exportado nesse arquivo.
-As durações configuradas são limitadas pelo sistema a 60–120 segundos e um
-valor inteiro é sorteado inclusivamente entre o mínimo e o máximo da tarefa.
+`MALA 3 — FORCA / QUEDA` reutiliza o motor de forca de `lib/activities.js`, agora
+adaptado a palavras e expressões do espetáculo. A biblioteca fica em
+`data/scene-zero-hangman-words.js`. A partida começa automaticamente após o aviso
+da mala e depois de o chatbot pedir que a pessoa escolha uma letra e diga em voz
+alta para o operador registrar. Então começam os 60 segundos. Acertar a palavra
+encerra em vitória; quatro erros ou o fim do tempo encerram em derrota, com
+efeito sonoro próprio para cada resultado.
+Os quatro erros percorrem `ESTÁVEL`, `ALERTA`,
+`PERDA DE ALTITUDE`, `FALHA` e `IMPACTO`; ruído, deslocamento e degradação visual
+aumentam a cada erro. Vitória mostra `REGISTRO RECUPERADO`; derrota revela a
+palavra e termina em `IMPACTO`.
 
-Depois do sorteio, o sistema anuncia literalmente a instrução do banco com a
-duração sorteada. A fala é uma ordem fechada: nunca devolve ao participante a
-escolha de objeto ou característica e não oferece exemplos ou alternativas. O
-modelo não pode reformular essa ordem. O timer da gincana tem iniciar, pausar, continuar,
-reiniciar e cancelar, usa `endsAt` no servidor e mostra a contagem na projeção até zero.
-`AÇÃO CONCLUÍDA` e `FALHOU / TEMPO ESGOTADO` encerram o timer, registram tempo
-decorrido e a observação livre do operador, e só então pedem ao modelo um
-comentário. O comentário recebe tarefa, resultado, tempo, objetos e reações
-realmente informados; não existe comentário durante toda a busca nem avanço de
-mala ao chegar a zero.
+`MALA 1 — FIM DO TUTORIAL` completa o jogo automaticamente depois dos dez
+segundos que mostram o número. A projeção exibe `FIM DO TUTORIAL` primeiro; só
+depois a sequência de glitch crescente, BIOS corrompida e blackout começa.
 
-`MALA 3 — INSTAGRAM / GLITCH` começa em `GLITCH 1` somente quando o estado
-estava normal e não abre perfil sozinho. O operador controla manualmente
-`NORMAL`, `GLITCH 1–4`, `COLAPSO`, Robson, Janaína, próximo post, pausa,
-continuação e parada. O nível entra no prompt como degradação progressiva:
-pequena estranheza, repetição/associação deslocada, inadequação compreensível,
-mistura de contexto e, por fim, fragmentação com memória cruzada. Mesmo em
-colapso, a instrução proíbe caracteres aleatórios e exige algum vínculo com o
-post real.
+A configuração anterior, com Evidências e objeto
+pelo cheiro, não foi apagada. Ela está documentada e exportada por
+`data/archive/scene-zero-suitcases-legacy.js`; as falas permanecem em
+`data/scene-zero-gincanas.js` e os assets continuam em seus locais originais.
+O percurso temporário completo pode ser validado com
+`npm run test:scene-zero:suitcases:browser`, com o servidor local ativo.
+Na última mala, a barra completa primeiro e então a projeção mostra
+`FIM DO TUTORIAL`. O glitch só começa depois que essa frase termina.
 
-O botão de Robson resolve a entrada `Robinson Rogério` de
+Nos controles gerais de Instagram, o botão de Robson resolve a entrada `Robinson Rogério` de
 `data/instagram-participants.json` (`@rogerio.robinson`); Janaína resolve
 `Janaína Leite` (`@janainafontesleite`). A rotina reutiliza o mesmo
 `InstagramController`, perfil persistente, login, iframe, whitelist e guardas
@@ -629,12 +737,18 @@ fica salvo no navegador para o proximo reload.
 
 ## Sons procedurais do robô
 
-O `ROBOT SOUND ENGINE` fica no `/operator` e também no operator embutido da tela
-principal. Ele controla `SOUND ON/OFF`, volume geral, volume e frequência dos
-cliques da digitação, som de encerramento e os presets `NORMAL`, `SECO`,
-`MECÂNICO` e `INSTÁVEL`. Em 100% o som acompanha todos os caracteres elegíveis;
-reduzir o slider faz o motor tocar em menos caracteres sem alterar a velocidade
-visual do texto. Os botões de
+O `ROBOT SOUND ENGINE` tem a aba superior dedicada `Sound Control`, rota
+`/sound-control`, e também fica disponível no `/operator`. Ele controla `SOUND
+ON/OFF`, volume geral, volume de digitação, altura em semitons, velocidade visual
+da digitação (de 5 a 60 caracteres por segundo), frequência dos cliques, som de
+encerramento, os estilos gerais `ROBÔ ATUAL` e `WINDOWS 95 / 8-BIT`, e os presets
+de digitação `NORMAL`, `SECO`, `MECÂNICO` e `INSTÁVEL`. `WINDOWS 95 / 8-BIT` é
+o estilo padrão. Esse estilo troca digitação, wake, processamento, contagens,
+sucesso, erro, glitch,
+impacto e bipes da BIOS/desbloqueio por blips e alertas digitais; músicas, vozes
+e samples gravados das cenas não são processados por essa seleção. Em 100% o
+som acompanha todos os caracteres elegíveis; reduzir o slider de frequência faz
+o motor tocar em menos caracteres sem alterar a velocidade visual do texto. Os botões de
 teste cobrem digitação, `WAKE`, `THINKING`, `SUCCESS / OBEY`, `ERROR`, `GLITCH` e
 `IMPACT`. O teste soa na janela onde houve o clique; a projeção recebe os mesmos
 ajustes pelo estado compartilhado e pelo SSE existente.
@@ -644,7 +758,10 @@ arquivos do sampler. O motor mantém um único `AudioContext` por janela, ganho 
 compressor centrais e limite de vozes. Cada click é disparado no intervalo que
 revela visualmente o próximo caractere em `components/Chat.js`, não quando o
 texto chega do servidor. Pontuação, espaço e quebra de linha usam pequenas
-variações do mesmo sintetizador. O glitch global altera pitch, falhas, duplicação
+variações do mesmo sintetizador. No estilo 8-bit cada caractere usa um blip
+monofônico de onda quadrada, com frequências limitadas e uma mudança abrupta de
+altura como um PC speaker dos anos 90, sem a camada de ruído do timbre original.
+O glitch global altera pitch, falhas, duplicação
 e ruído da digitação; os presets fortes podem habilitar clicks fantasmas sem
 letras visíveis. `STOP ALL`, reset, troca de tela e desmontagem encerram os
 timers locais.
@@ -976,7 +1093,10 @@ encerrar ou `/game replace tipo` para substituir explicitamente. Em Maria
 Antonieta no modo em que a Caixa adivinha, `/game secret texto` define o segredo
 no servidor/operator sem enviar esse segredo para o modelo.
 
-Em `Verdade ou Bolo?`, chat e jogo aparecem lado a lado. Ao iniciar uma rodada,
+Em `Verdade ou Bolo?`, chat e jogo aparecem em paineis separados e lado a lado
+em telas largas. A fala da Caixa usa uma escala propria para a largura do painel,
+sem quebrar palavras ou disputar espaco com o video; em telas menores, os paineis
+passam a ficar empilhados. Ao iniciar uma rodada,
 a projecao carrega e mostra primeiro o frame inicial pausado do video; somente
 depois desse frame estar pronto comecam os 10 segundos para decidir entre
 `VERDADE` e `BOLO`. Ao chegar a zero, a rodada revela imediatamente a resposta,

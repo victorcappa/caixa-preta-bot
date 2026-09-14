@@ -72,6 +72,12 @@
   padding: 6px;
 }
 
+.selectField small {
+  color: var(--green-dim);
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
 .checkboxField {
   display: flex;
   gap: 8px;

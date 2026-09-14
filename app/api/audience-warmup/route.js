@@ -1,4 +1,5 @@
 import { showState } from "@/lib/showState";
+import { refreshSceneZeroLocalContext } from "@/lib/openai";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -11,9 +12,22 @@ export async function POST(request) {
   try {
     const body = await request.json();
     if (`${body.action || ""}`.startsWith("unlock-")) {
-      const result = showState.controlPlayUnlock(body.action.slice("unlock-".length), body, { source: "operator" });
+      const unlockAction = body.action.slice("unlock-".length);
+      const source = ["sound-check-complete", "sound-check-level"].includes(unlockAction) && body.automatic === true
+        ? "microphone"
+        : "operator";
+      const result = showState.controlPlayUnlock(unlockAction, body, { source });
       if (!result.ok) return Response.json({ error: result.error }, { status: 400 });
-      return Response.json({ message: result.message, unlock: result.state });
+      if (body.action === "unlock-boot") {
+        showState.controlSceneZero("collection-local-context-loading", {}, { source: "system" });
+        try {
+          const localContext = await refreshSceneZeroLocalContext();
+          showState.controlSceneZero("collection-local-context-ready", localContext, { source: "system" });
+        } catch (error) {
+          showState.controlSceneZero("collection-local-context-error", { error: error.message }, { source: "system" });
+        }
+      }
+      return Response.json({ message: result.message, unlock: showState.snapshot().sceneZero.unlock });
     }
     const result = showState.controlAudienceWarmup(body.action, body, { source: "operator" });
     if (!result.ok) return Response.json({ error: result.error }, { status: 400 });

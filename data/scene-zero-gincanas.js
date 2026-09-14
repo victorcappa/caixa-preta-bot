@@ -1,4 +1,75 @@
-// Banco editável da Mala 2. Durações são sempre limitadas a 60–120 segundos.
+export const SCENE_ZERO_EVIDENCIAS_INTRO_SECONDS = 5;
+export const SCENE_ZERO_EVIDENCIAS_PLAYBACK_RATE = 0.96;
+export const SCENE_ZERO_EVIDENCIAS_AUDIO_FILE = "audios/Evidências - Chitãozinho e Xororó - Karaokê - Karaokê Show Oficial (youtube).mp3";
+export const SCENE_ZERO_EVIDENCIAS_LYRICS = [
+  { text: "E nessa loucura", durationSeconds: 2 },
+  { text: "de dizer que não te quero", durationSeconds: 2 },
+  { text: "Vou negando as aparências", durationSeconds: 2 },
+  { text: "Disfarçando as evidências", durationSeconds: 2 },
+  { text: "Mas pra que viver fingindo", durationSeconds: 2 },
+  { text: "Se eu não posso enganar meu coração?", durationSeconds: 4 },
+  { text: "Eu sei que te amo!", durationSeconds: 4 }
+];
+export const SCENE_ZERO_EVIDENCIAS_SOURCE_DURATION_SECONDS = SCENE_ZERO_EVIDENCIAS_INTRO_SECONDS
+  + SCENE_ZERO_EVIDENCIAS_LYRICS.reduce((total, line) => total + line.durationSeconds, 0);
+export const SCENE_ZERO_EVIDENCIAS_DURATION_SECONDS = Math.ceil(
+  SCENE_ZERO_EVIDENCIAS_SOURCE_DURATION_SECONDS / SCENE_ZERO_EVIDENCIAS_PLAYBACK_RATE
+);
+
+export function sceneZeroEvidenciasFrameAt(elapsedSeconds) {
+  const elapsed = Math.max(0, Math.min(
+    SCENE_ZERO_EVIDENCIAS_SOURCE_DURATION_SECONDS,
+    (Number(elapsedSeconds) || 0) * SCENE_ZERO_EVIDENCIAS_PLAYBACK_RATE
+  ));
+  if (elapsed < SCENE_ZERO_EVIDENCIAS_INTRO_SECONDS) {
+    return {
+      phase: "intro",
+      activeDots: Math.min(SCENE_ZERO_EVIDENCIAS_INTRO_SECONDS, Math.floor(elapsed) + 1)
+    };
+  }
+
+  let lineStart = SCENE_ZERO_EVIDENCIAS_INTRO_SECONDS;
+  for (let index = 0; index < SCENE_ZERO_EVIDENCIAS_LYRICS.length; index += 1) {
+    const line = SCENE_ZERO_EVIDENCIAS_LYRICS[index];
+    const lineEnd = lineStart + line.durationSeconds;
+    if (elapsed < lineEnd) {
+      return {
+        phase: "lyrics",
+        lineIndex: index,
+        lineProgress: (elapsed - lineStart) / line.durationSeconds
+      };
+    }
+    lineStart = lineEnd;
+  }
+
+  return { phase: "complete", lineIndex: SCENE_ZERO_EVIDENCIAS_LYRICS.length - 1, lineProgress: 1 };
+}
+
+// Desafio fixo da primeira mala escolhida pelo robô (Mala 2).
+export const SCENE_ZERO_EVIDENCIAS_CHALLENGE = {
+  id: "evidencias_objeto_microfone",
+  description: "Descrever o objeto e transformá-lo em microfone para cantar Evidências.",
+  instruction: "Primeiro, descreva o objeto à sua frente. Agora use o objeto como microfone e cante Evidências, de Chitãozinho & Xororó. O público pode ajudar.",
+  presentation: "Primeiro: descreva o objeto à sua frente. Agora use o objeto como microfone e cante Evidências, de Chitãozinho & Xororó. O público pode ajudar. A faixa começa com cerca de 5 segundos de introdução; depois, acompanhe a letra na tela. São 24 segundos no total. Começar.",
+  durationMin: SCENE_ZERO_EVIDENCIAS_DURATION_SECONDS,
+  durationMax: SCENE_ZERO_EVIDENCIAS_DURATION_SECONDS,
+  difficulty: "coragem vocal",
+  notes: "O timer começa junto com o áudio, reproduzido a 96% da velocidade original: cerca de 5 segundos de introdução e 19 segundos de canto. A identidade do objeto não entra na fala pública."
+};
+
+// Desafio fixo da segunda mala escolhida pelo robô (Mala 3).
+export const SCENE_ZERO_SMELL_CHALLENGE = {
+  id: "objeto_pelo_cheiro",
+  description: "Ajudar o público a adivinhar um objeto descrevendo somente o cheiro.",
+  instruction: "Pegue o objeto, mas não revele para o público. Cheire o objeto. Ajude o público a adivinhar qual é o objeto descrevendo apenas o cheiro.",
+  presentation: "Pegue o objeto, mas não revele para o público. Cheire o objeto. Você tem 20 segundos para ajudar o público a adivinhar qual é o objeto descrevendo apenas o cheiro. Começar.",
+  durationMin: 20,
+  durationMax: 20,
+  difficulty: "descrição olfativa",
+  notes: "Não mostrar nem nomear o objeto. Não cheirar substâncias desconhecidas, irritantes ou potencialmente perigosas."
+};
+
+// Banco editável legado da Mala 2, preservado para recuperação e ensaio.
 export const SCENE_ZERO_GINCANAS = [
   {
     id: "tres_objetos_verdes",

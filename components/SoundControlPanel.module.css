@@ -1,0 +1,52 @@
+.page {
+  width: min(760px, 100%);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 28px clamp(14px, 4vw, 42px) 56px;
+  font-family: "Courier New", Courier, monospace;
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: end;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--green-soft);
+}
+
+.pageHeader small,
+.pageHeader strong,
+.intro,
+.notice {
+  color: var(--green-dim);
+}
+
+.pageHeader h1 {
+  margin: 4px 0 0;
+  color: var(--green);
+  font-size: clamp(1.45rem, 4vw, 2.5rem);
+}
+
+.pageHeader strong[data-status="CONNECTED"] {
+  color: var(--green);
+}
+
+.intro {
+  margin: 0 0 18px;
+  line-height: 1.5;
+}
+
+.notice {
+  display: block;
+  min-height: 1.4em;
+  font-size: 0.76rem;
+}
+
+@media (max-width: 520px) {
+  .pageHeader {
+    align-items: start;
+    flex-direction: column;
+  }
+}

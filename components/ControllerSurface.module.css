@@ -3,7 +3,7 @@
   height: 100vh;
   min-height: 0;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   overflow: hidden;
   background: #000000;
   color: var(--green);
@@ -13,24 +13,12 @@
   min-width: 0;
   flex: 0 0 auto;
   overflow-x: auto;
-  padding: 7px 320px 8px 10px;
+  display: flex;
+  gap: 7px;
+  padding: 8px 320px 8px 10px;
   border-bottom: 1px solid var(--green-soft);
   background: #000000;
   font-family: "Courier New", Courier, monospace;
-}
-
-.controllerGroups {
-  width: max-content;
-  min-width: 100%;
-  display: flex;
-  gap: 6px;
-  align-items: flex-start;
-}
-
-.group {
-  flex: 0 0 auto;
-  display: grid;
-  gap: 6px;
 }
 
 .tab,
@@ -38,7 +26,7 @@
   flex: 0 0 auto;
   min-height: 32px;
   display: inline-flex;
-  gap: 7px;
+  justify-content: center;
   align-items: center;
   border: 1px solid var(--green-soft);
   color: var(--green-dim);
@@ -46,13 +34,9 @@
   text-decoration: none;
   text-transform: uppercase;
   white-space: nowrap;
-  font-size: 0.82rem;
-}
-
-.tabSceneNumber {
-  color: var(--green);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   font-weight: 700;
+  letter-spacing: .04em;
 }
 
 .tab:hover,

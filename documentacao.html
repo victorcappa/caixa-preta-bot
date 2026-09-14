@@ -548,61 +548,57 @@ npm run dev</code></pre>
 
               <div class="panels">
                 <article class="panel">
-                  <h3>MALA 1 / VERDADE OU BOLO</h3>
+                  <h3>1a ESCOLHA / MALA 2 / DESAFIO COM OBJETO</h3>
                   <p>
-                    Reutiliza o jogo estruturado <code>verdade_ou_bolo</code> do
-                    <code>GameDirector</code>. O jogo entra direto na primeira rodada e mostra
-                    o frame inicial pausado antes de iniciar os 10 segundos de decisao. O video
-                    pode ser tocado separadamente; tanto o fim do timer quanto <code>REVELAR</code>
-                    exibem imediatamente resposta, resultado e placar. O operador controla o
-                    timing e avanca diretamente com <code>PROXIMA RODADA</code>. A
-                    Caixa improvisa entrada, comentarios e provocacoes com o contexto atual, e
-                    essas falas aparecem no chat ao lado da tela do jogo.
+                    O robo sorteia um pedido de objeto ou conjunto de objetos que o participante
+                    deve conseguir com ajuda da plateia. O pedido varia a cada execucao. Todo
+                    desafio inclui uma segunda etapa obrigatoria: todos fingem estar mortos nas
+                    cadeiras e no chao por 30 segundos. A projecao separa visualmente as duas
+                    etapas, o alvo e o cronometro para evitar sobreposicoes.
                   </p>
                 </article>
 
                 <article class="panel">
-                  <h3>MALA 2 / GINCANA</h3>
+                  <h3>2a ESCOLHA / MALA 3 / FORCA</h3>
                   <p>
-                    Sorteia sem repeticao durante a sessao a partir de
-                    <code>data/scene-zero-gincanas.js</code>. Cada tarefa configura instrucao,
-                    dificuldade, observacoes e faixa de duracao limitada a 60–120 segundos. O
-                    sistema apresenta literalmente uma ordem fechada do banco, sem deixar objeto
-                    ou criterio para o participante escolher e sem permitir reformulacao pelo
-                    modelo. O timer aparece na projecao; somente <code>ACAO CONCLUIDA</code> ou
-                    <code>FALHOU / TEMPO ESGOTADO</code> pede ao modelo o comentario posterior.
+                    A forca comeca automaticamente depois do aviso da mala e abre uma contagem de
+                    60 segundos. Acertar a palavra encerra em vitoria; quatro erros ou o fim do
+                    tempo encerram em derrota. Vitoria e derrota sao reconhecidas sem botao manual
+                    e cada resultado dispara seu proprio efeito sonoro.
                   </p>
                 </article>
 
                 <article class="panel">
-                  <h3>MALA 3 / GLITCH + INSTAGRAM</h3>
+                  <h3>3a ESCOLHA / MALA 1 / FIM DO TUTORIAL</h3>
                   <p>
-                    O operador inicia a mala, dosa <code>NORMAL</code>, <code>GLITCH 1–4</code> e
-                    <code>COLAPSO</code>, e abre manualmente Robson ou Janaina. O mesmo navegador
-                    real inspeciona ate dez posts por perfil. Cada comentario gerado aparece em
-                    preview e so e publicado pelo botao explicito de envio; posts comentados nao
-                    podem receber um segundo envio na sessao. O <code>X</code> recolhe o painel no
-                    operator e na tela pública via estado compartilhado, sem encerrar o navegador
-                    ou invalidar o login; o encerramento real usa
-                    <code>FECHAR NAVEGADOR</code>. O botão <code>COPIAR SENHA DO INSTAGRAM</code>
-                    lê a credencial somente após o clique e o servidor local a grava direto na área
-                    de transferência do macOS, sem devolvê-la ao navegador nem registrá-la no estado,
-                    nos logs ou no prompt.
+                    Nao inicia <code>verdade_ou_bolo</code> nem Instagram. Depois do aviso com o
+                    numero da mala, a barra e concluida e a projecao mostra
+                    <code>FIM DO TUTORIAL</code>. Somente depois dessa frase o robo sofre um glitch
+                    crescente e a projecao carrega uma BIOS
+                    com fragmentos corrompidos do texto-base misturados a falas do piloto. Titulo e
+                    autor nao aparecem. Aos 30 segundos, tudo fica preto e permanece assim ate o
+                    operador reiniciar o fluxo.
                   </p>
                 </article>
               </div>
 
               <p>
                 Ao iniciar uma mala diferente, a mala anterior e interrompida: jogo ativo,
-                timer da gincana, rotina de Instagram e glitch associado nao continuam em paralelo.
+                timer do desafio, BIOS final e glitch associado nao continuam em paralelo.
+                Cada escolha gira os numeros como uma maquina de caca-niquel e entao mostra
+                <code>MALA</code> acima do numero selecionado. Nas duas
+                primeiras malas, o desafio so aparece depois que o numero sai da frente. Na ultima,
+                ele da lugar primeiro ao fim do tutorial e depois ao glitch e a nova BIOS.
               </p>
 
               <pre><code>npm run test:suitcases</code></pre>
 
               <p class="note">
-                A troca MALA 1 → MALA 2 → MALA 3 nunca e automatica. Os comandos
-                <code>/mala</code> continuam disponiveis para o <code>SuitcaseDirector</code> legado
-                e recuperacao; a dramaturgia atual e operada nos tres cartoes da Cena 0.
+                A escolha parece aleatoria em cena, mas o software sempre protege a sequencia
+                MALA 2 → MALA 3 → MALA 1. O operador chama a proxima mala, enquanto a forca e o
+                encerramento da ultima mala iniciam automaticamente. Os
+                comandos <code>/mala</code> continuam disponiveis para recuperacao do
+                <code>SuitcaseDirector</code> legado.
               </p>
             </section>
 

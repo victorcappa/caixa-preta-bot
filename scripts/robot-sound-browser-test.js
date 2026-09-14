@@ -1,6 +1,16 @@
 const assert = require("node:assert/strict");
 const { chromium } = require("playwright");
 
+async function openRobotSoundPanel(page) {
+  const panel = page.getByLabel("Robot Sound Engine");
+  if (!(await panel.isVisible())) {
+    const diagnostics = page.getByText("DIAGNÓSTICOS, MEMÓRIA E CONTROLES AVANÇADOS", { exact: true });
+    if (await diagnostics.isVisible()) await diagnostics.click();
+  }
+  await panel.waitFor();
+  return panel;
+}
+
 async function main() {
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext();
@@ -20,8 +30,8 @@ async function main() {
     await page.goto("http://localhost:3000", { waitUntil: "domcontentloaded" });
     await page.getByText("CONNECTED", { exact: true }).first().waitFor({ timeout: 10000 });
     await page.getByRole("button", { name: "Abrir terminal operador ao lado" }).click();
-    await page.getByLabel("Robot Sound Engine").waitFor();
-    await page.getByRole("button", { name: "TEST DIGITAÇÃO" }).click();
+    const soundPanel = await openRobotSoundPanel(page);
+    await soundPanel.getByRole("button", { name: "TEST DIGITAÇÃO" }).click();
     await page.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.context?.state === "running");
     await page.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.activeSources?.size > 0);
 
@@ -61,15 +71,17 @@ async function main() {
     assert(burst.peak <= 14);
     await page.waitForFunction(() => window.__caixaPretaRobotSoundEngine.activeSources.size === 0);
 
-    const soundPanel = page.getByLabel("Robot Sound Engine");
     await soundPanel.getByLabel("Volume geral dos efeitos do robô").fill("0.22");
     await soundPanel.getByLabel("Volume da digitação do robô").fill("0.35");
+    await soundPanel.getByLabel("Altura dos efeitos do robô").fill("6");
     await soundPanel.getByLabel("Frequência do som de digitação do robô").fill("0.25");
-    await soundPanel.getByRole("combobox").selectOption("instavel");
+    await soundPanel.getByLabel("Estilo geral dos efeitos do robô").selectOption("system95");
+    await soundPanel.getByLabel("Preset da digitação do robô").selectOption("instavel");
     await page.waitForFunction(async () => {
       const response = await fetch("/api/robot-sound");
       const settings = (await response.json()).robotSound;
-      return settings.preset === "instavel" && settings.masterVolume === 0.22 &&
+      return settings.soundStyle === "system95" && settings.preset === "instavel" && settings.masterVolume === 0.22 &&
+        Math.abs(settings.pitchScale - Math.SQRT2) < 0.001 &&
         settings.typingVolume === 0.35 && settings.typingFrequency === 0.25;
     });
 
@@ -93,8 +105,12 @@ async function main() {
     const operatorInput = page.getByLabel("Comando do operator");
     await operatorInput.fill("/reset");
     await operatorInput.press("Enter");
-    await page.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.activeSources?.size > 0, null, { timeout: 6500 });
-    await page.getByText("TEM ALGUEM AI?", { exact: false }).waitFor({ timeout: 7000 });
+    await page.waitForFunction(async () => {
+      const response = await fetch("/api/state");
+      return (await response.json()).sceneZero.unlock.status === "STANDBY";
+    });
+    await page.getByText("> _", { exact: true }).waitFor({ timeout: 7000 });
+    assert.equal(await page.getByText("TEM ALGUEM AI?", { exact: false }).count(), 0);
 
     await page.evaluate(async () => {
       const sound = window.__caixaPretaRobotSoundEngine;
@@ -135,19 +151,20 @@ async function main() {
 
     await page.goto("http://localhost:3000/operator", { waitUntil: "domcontentloaded" });
     await page.getByText("CONNECTED", { exact: true }).first().waitFor({ timeout: 10000 });
-    await page.getByLabel("Robot Sound Engine").waitFor();
-    await page.getByRole("button", { name: "TEST DIGITAÇÃO" }).click();
+    const standaloneSoundPanel = await openRobotSoundPanel(page);
+    await standaloneSoundPanel.getByRole("button", { name: "TEST DIGITAÇÃO" }).click();
     await page.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.context?.state === "running");
 
     const projectionPage = await context.newPage();
     await projectionPage.goto("http://localhost:3000", { waitUntil: "domcontentloaded" });
-    await projectionPage.getByText("CONNECTED", { exact: true }).first().waitFor({ timeout: 10000 });
+    await projectionPage.getByText("> _", { exact: true }).waitFor({ timeout: 10000 });
     await projectionPage.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.lastRelaySinkAt > 0);
 
     const secondOperatorPage = await context.newPage();
     await secondOperatorPage.goto("http://localhost:3000/operator", { waitUntil: "domcontentloaded" });
     await secondOperatorPage.getByText("CONNECTED", { exact: true }).first().waitFor({ timeout: 10000 });
-    await secondOperatorPage.getByRole("button", { name: "TEST DIGITAÇÃO" }).click();
+    const secondOperatorSoundPanel = await openRobotSoundPanel(secondOperatorPage);
+    await secondOperatorSoundPanel.getByRole("button", { name: "TEST DIGITAÇÃO" }).click();
     await secondOperatorPage.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.context?.state === "running");
     await projectionPage.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.relaySinks?.size === 2);
     await secondOperatorPage.waitForTimeout(900);
@@ -221,6 +238,28 @@ async function main() {
     }));
     await page.waitForFunction(() => window.__relayedBotTypingCount > 0, null, { timeout: 5000 });
     await projectionPage.close();
+
+    await page.goto("http://localhost:3000/sound-control", { waitUntil: "domcontentloaded" });
+    await page.getByRole("heading", { name: "SOUND CONTROL" }).waitFor();
+    assert.equal(
+      await page.getByRole("link", { name: "Sound Control", exact: true }).getAttribute("aria-current"),
+      "page"
+    );
+    const dedicatedSoundPanel = page.getByLabel("Robot Sound Engine");
+    await dedicatedSoundPanel.getByLabel("Estilo geral dos efeitos do robô").selectOption("system95");
+    await page.evaluate(() => {
+      const sound = window.__caixaPretaRobotSoundEngine;
+      window.__system95TypingBlips = [];
+      const originalComputerBlip = sound.computerBlip.bind(sound);
+      sound.computerBlip = (options) => {
+        window.__system95TypingBlips.push({ pitch: options.pitch, toPitch: options.toPitch });
+        return originalComputerBlip(options);
+      };
+    });
+    await dedicatedSoundPanel.getByRole("button", { name: "TEST DIGITAÇÃO" }).click();
+    await page.waitForFunction(() => window.__system95TypingBlips?.length >= 1);
+    const system95TypingBlip = await page.evaluate(() => window.__system95TypingBlips[0]);
+    assert.notEqual(system95TypingBlip.pitch, system95TypingBlip.toPitch);
 
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto("http://localhost:3000/cena-0-controller", { waitUntil: "domcontentloaded" });

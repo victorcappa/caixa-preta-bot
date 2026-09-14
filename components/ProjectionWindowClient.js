@@ -2,7 +2,11 @@
 
 import { useEffect, useRef } from "react";
 import { subscribePublicRealtime } from "@/lib/publicRealtime";
-import { PROJECTION_WINDOW_PARAM } from "@/lib/projectionScreens";
+import {
+  getPublicLayoutByPath,
+  PROJECTION_WINDOW_PARAM,
+  PUBLIC_LAYOUT_CHANGE_EVENT
+} from "@/lib/projectionScreens";
 
 const STORAGE_KEY = "caixa-preta.projectionWindowId";
 const HEARTBEAT_INTERVAL_MS = 5000;
@@ -69,6 +73,17 @@ export default function ProjectionWindowClient() {
 
       commandIdsRef.current.add(command.id);
       window.sessionStorage.setItem(STORAGE_KEY, projectionWindowId);
+      const currentPublicLayout = getPublicLayoutByPath(window.location.pathname);
+      const nextPublicLayout = getPublicLayoutByPath(command.path);
+
+      if (currentPublicLayout && nextPublicLayout) {
+        window.history.replaceState(window.history.state, "", nextUrl);
+        window.dispatchEvent(new CustomEvent(PUBLIC_LAYOUT_CHANGE_EVENT, {
+          detail: { layout: nextPublicLayout }
+        }));
+        return;
+      }
+
       navigatingRef.current = true;
       window.location.assign(nextUrl);
     };

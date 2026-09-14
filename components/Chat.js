@@ -7,15 +7,18 @@ import { setSharedInstagramPanelVisible } from "@/lib/instagram/panelClient";
 import GlitchOverlay from "./GlitchOverlay";
 import OperatorConsole from "./OperatorConsole";
 import PerformanceLayer from "./PerformanceLayer";
-import SceneZeroProjectionLayer from "./SceneZeroProjectionLayer";
+import SceneZeroProjectionLayer, { SceneZeroStatusProjection } from "./SceneZeroProjectionLayer";
 import styles from "./Chat.module.css";
 import { PUBLIC_TYPE_INTERVAL_MS } from "@/lib/messageTiming";
 import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
+import { robotTypingIntervalMs } from "@/lib/robot-sound/state";
 import { subscribePublicRealtime } from "@/lib/publicRealtime";
+import { PUBLIC_LAYOUT_CHANGE_EVENT, PUBLIC_LAYOUTS } from "@/lib/projectionScreens";
+import {
+  sceneZeroEmergenceCueForMessage,
+  sceneZeroEmergenceEraseDelay
+} from "@/data/scene-zero-emergence";
 
-const INTRO_READY_TEXT = "TEM ALGUEM AI?";
-const INTRO_DOTS_TEXT = "...";
-const TYPE_INTERVAL_MS = PUBLIC_TYPE_INTERVAL_MS;
 const DEFAULT_OPERATOR_WIDTH = 520;
 const DEFAULT_INSTAGRAM_WIDTH = 520;
 const DEFAULT_INSTAGRAM_HEIGHT = 480;
@@ -33,13 +36,24 @@ function storedNumber(key, fallback) {
   return Number.isFinite(value) ? value : fallback;
 }
 
-export default function Chat() {
+function AudienceWarmupTimer({ endsAt }) {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (!endsAt) return undefined;
+    const timer = window.setInterval(() => setNow(Date.now()), 200);
+    return () => window.clearInterval(timer);
+  }, [endsAt]);
+
+  if (!endsAt) return null;
+  return <strong className={styles.actionTimer}>{Math.max(0, Math.ceil((Date.parse(endsAt) - now) / 1000))}</strong>;
+}
+
+export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal }) {
   const [messages, setMessages] = useState([]);
   const [publicMessage, setPublicMessage] = useState(null);
   const [audienceWarmup, setAudienceWarmup] = useState(null);
   const [typedReplies, setTypedReplies] = useState({});
-  const [introText, setIntroText] = useState("");
-  const [introDotsText, setIntroDotsText] = useState("");
   const [input, setInput] = useState("");
   const [status, setStatus] = useState("CONNECTING");
   const [error, setError] = useState("");
@@ -55,7 +69,8 @@ export default function Chat() {
   const [robotSound, setRobotSound] = useState(null);
   const [displayBlackout, setDisplayBlackout] = useState(null);
   const [sceneZero, setSceneZero] = useState(null);
-  const [introStep, setIntroStep] = useState("cursor");
+  const [publicLayout, setPublicLayout] = useState(initialPublicLayout);
+  const [selfErasingMessageId, setSelfErasingMessageId] = useState(null);
   const [manualOpen, setManualOpen] = useState(false);
   const [operatorMounted, setOperatorMounted] = useState(false);
   const [operatorOpen, setOperatorOpen] = useState(false);
@@ -72,12 +87,12 @@ export default function Chat() {
   const typingQueueRef = useRef([]);
   const concurrentTypingRef = useRef(false);
   const drainTypingQueueRef = useRef(null);
-  const introTimerRef = useRef(null);
-  const introDotsTimerRef = useRef(null);
   const chatRequestControllerRef = useRef(null);
   const stoppedTypingIdsRef = useRef(new Set());
+  const completedTypingIdsRef = useRef(new Set());
   const notifiedTypedIdsRef = useRef(new Set());
   const soundOutputResetSequenceRef = useRef(null);
+  const typingIntervalMsRef = useRef(PUBLIC_TYPE_INTERVAL_MS);
 
   const notifySceneZeroMessageTyped = useCallback((messageId) => {
     if (!messageId || notifiedTypedIdsRef.current.has(messageId)) return;
@@ -105,13 +120,14 @@ export default function Chat() {
   }, []);
 
   useEffect(() => {
-    function hydrateInitialMessages(nextMessages) {
+    function hydrateInitialMessages(nextMessages, initialPublicMessage) {
       const initialReplies = {};
 
       for (const message of nextMessages) {
-        seenMessageIdsRef.current.add(message.id);
+        const resumeEmergence = message.id === initialPublicMessage?.id && sceneZeroEmergenceCueForMessage(message);
+        if (!resumeEmergence) seenMessageIdsRef.current.add(message.id);
         if (message.role === "assistant") {
-          initialReplies[message.id] = message.content;
+          initialReplies[message.id] = resumeEmergence ? "" : message.content;
         }
       }
 
@@ -145,7 +161,7 @@ export default function Chat() {
         setSceneZero(payload.state.sceneZero || null);
         setAudienceWarmup(payload.state.audienceWarmup || null);
         setPublicMessage(payload.state.publicMessage || [...(payload.state.conversation || [])].reverse().find((message) => message.role === "assistant") || null);
-        hydrateInitialMessages(payload.state.conversation || []);
+        hydrateInitialMessages(payload.state.conversation || [], payload.state.publicMessage);
         return;
       }
 
@@ -171,6 +187,19 @@ export default function Chat() {
     setInstagramHeight(storedNumber("caixa-preta.instagramHeight", DEFAULT_INSTAGRAM_HEIGHT));
   }, []);
 
+  useEffect(() => {
+    function changePublicLayout(event) {
+      const nextLayout = event.detail?.layout;
+
+      if (Object.values(PUBLIC_LAYOUTS).includes(nextLayout)) {
+        setPublicLayout(nextLayout);
+      }
+    }
+
+    window.addEventListener(PUBLIC_LAYOUT_CHANGE_EVENT, changePublicLayout);
+    return () => window.removeEventListener(PUBLIC_LAYOUT_CHANGE_EVENT, changePublicLayout);
+  }, []);
+
   useEffect(() => robotSoundEngine.armAutoUnlock(), []);
 
   useEffect(() => robotSoundEngine.armAudioRelay(), []);
@@ -179,6 +208,7 @@ export default function Chat() {
     if (!robotSound) return;
 
     robotSoundEngine.setSettings(robotSound);
+    typingIntervalMsRef.current = robotTypingIntervalMs(robotSound);
     const resetSequence = Number(robotSound.outputResetSequence || 0);
     if (soundOutputResetSequenceRef.current !== null && resetSequence !== soundOutputResetSequenceRef.current) {
       void robotSoundEngine.reconnectOutput();
@@ -201,6 +231,58 @@ export default function Chat() {
     }
     return () => robotSoundEngine.stopThinking();
   }, [informationProcessing]);
+
+  const finishEmergenceMessage = useCallback((messageId) => {
+    const send = async (attempt = 0) => {
+      try {
+        const response = await fetch("/api/scene-zero", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "message-typed", messageId }),
+          keepalive: true
+        });
+        if (!response.ok) throw new Error("emergence continuation failed");
+      } catch {
+        if (attempt < 2) {
+          const timer = window.setTimeout(() => send(attempt + 1), 500 * (attempt + 1));
+          typingTimersRef.current.set(messageId, timer);
+          return;
+        }
+      }
+      typingTimersRef.current.delete(messageId);
+      setSelfErasingMessageId((current) => current === messageId ? null : current);
+      drainTypingQueueRef.current?.();
+    };
+    send();
+  }, []);
+
+  const startSelfErasure = useCallback((message, cue) => {
+    let visibleLength = message.content.length;
+    setSelfErasingMessageId(message.id);
+
+    const eraseNextCharacter = () => {
+      if (visibleLength <= 0) {
+        const timer = window.setTimeout(() => finishEmergenceMessage(message.id), cue.pauseAfterMs);
+        typingTimersRef.current.set(message.id, timer);
+        return;
+      }
+
+      visibleLength -= 1;
+      setTypedReplies((current) => ({
+        ...current,
+        [message.id]: message.content.slice(0, visibleLength)
+      }));
+      robotSoundEngine.typing(message.content[visibleLength] || " ");
+      const timer = window.setTimeout(
+        eraseNextCharacter,
+        sceneZeroEmergenceEraseDelay(cue, visibleLength)
+      );
+      typingTimersRef.current.set(message.id, timer);
+    };
+
+    const timer = window.setTimeout(eraseNextCharacter, cue.holdMs);
+    typingTimersRef.current.set(message.id, timer);
+  }, [finishEmergenceMessage]);
 
   useEffect(() => {
     if (!manualOpen) {
@@ -242,7 +324,7 @@ export default function Chat() {
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ block: "end" });
-  }, [messages, pending, introStep, introDotsText, introText, typedReplies]);
+  }, [messages, pending, typedReplies]);
 
   const startTypingMessage = useCallback((message) => {
     if (!message?.id || typingTimersRef.current.has(message.id)) {
@@ -252,7 +334,7 @@ export default function Chat() {
     setTypedReplies((current) => ({ ...current, [message.id]: "" }));
     robotSoundEngine.wake();
     let index = 0;
-    const timer = setInterval(() => {
+    const typeNextCharacter = () => {
       index += 1;
       setTypedReplies((current) => ({
         ...current,
@@ -262,18 +344,29 @@ export default function Chat() {
 
       if (index >= message.content.length) {
         clearInterval(timer);
-        typingTimersRef.current.delete(message.id);
+        completedTypingIdsRef.current.add(message.id);
         robotSoundEngine.complete();
+        const emergenceCue = sceneZeroEmergenceCueForMessage(message);
+        if (emergenceCue) {
+          startSelfErasure(message, emergenceCue);
+          return;
+        }
+        typingTimersRef.current.delete(message.id);
         robotSoundEngine.success();
         if (["scene-zero-collection", "scene-zero-roulette", "scene-zero-cake-comment"].includes(message.source)) {
           notifySceneZeroMessageTyped(message.id);
         }
         drainTypingQueueRef.current?.();
+        return;
       }
-    }, TYPE_INTERVAL_MS);
 
+      const nextTimer = window.setTimeout(typeNextCharacter, typingIntervalMsRef.current);
+      typingTimersRef.current.set(message.id, nextTimer);
+    };
+
+    const timer = window.setTimeout(typeNextCharacter, typingIntervalMsRef.current);
     typingTimersRef.current.set(message.id, timer);
-  }, [notifySceneZeroMessageTyped]);
+  }, [notifySceneZeroMessageTyped, startSelfErasure]);
 
   const drainTypingQueue = useCallback(() => {
     if (concurrentTypingRef.current) {
@@ -304,7 +397,9 @@ export default function Chat() {
       typingQueueRef.current = [];
       seenMessageIdsRef.current.clear();
       stoppedTypingIdsRef.current.clear();
+      completedTypingIdsRef.current.clear();
       notifiedTypedIdsRef.current.clear();
+      setSelfErasingMessageId(null);
       setTypedReplies({});
     }
 
@@ -320,6 +415,7 @@ export default function Chat() {
       }
       typingTimersRef.current.clear();
       typingQueueRef.current = [];
+      setSelfErasingMessageId(null);
       robotSoundEngine.complete();
     }
     if (message?.role === "assistant" && !seenMessageIdsRef.current.has(message.id)) {
@@ -329,8 +425,10 @@ export default function Chat() {
       }
       typingTimersRef.current.clear();
       typingQueueRef.current = [];
+      setSelfErasingMessageId(null);
       seenMessageIdsRef.current.add(message.id);
       stoppedTypingIdsRef.current.delete(message.id);
+      completedTypingIdsRef.current.delete(message.id);
       typingQueueRef.current.push(message);
     }
 
@@ -361,15 +459,15 @@ export default function Chat() {
 
   useEffect(() => {
     const typingTimers = typingTimersRef.current;
+    const completedTypingIds = completedTypingIdsRef.current;
 
     return () => {
       for (const timer of typingTimers.values()) {
         clearInterval(timer);
       }
       typingQueueRef.current = [];
+      completedTypingIds.clear();
 
-      clearInterval(introTimerRef.current);
-      clearInterval(introDotsTimerRef.current);
       chatRequestControllerRef.current?.abort();
       robotSoundEngine.stopAll();
     };
@@ -387,8 +485,7 @@ export default function Chat() {
 
       typingTimersRef.current.clear();
       typingQueueRef.current = [];
-      clearInterval(introTimerRef.current);
-      clearInterval(introDotsTimerRef.current);
+      setSelfErasingMessageId(null);
       robotSoundEngine.stopAll();
       setPending(false);
     }
@@ -396,85 +493,6 @@ export default function Chat() {
     window.addEventListener("caixa-preta:stopall", stopChatOutput);
     return () => window.removeEventListener("caixa-preta:stopall", stopChatOutput);
   }, []);
-
-  useEffect(() => {
-    if (messages.length === 0) {
-      setIntroStep("cursor");
-      setIntroDotsText("");
-      setIntroText("");
-    }
-
-    if (messages.length > 0) {
-      setIntroStep("ready");
-      setIntroDotsText("");
-      setIntroText("");
-      return undefined;
-    }
-
-    const dotsTimer = setTimeout(() => setIntroStep("dots"), 2200);
-    const readyTimer = setTimeout(() => setIntroStep("ready"), 3900);
-
-    return () => {
-      clearTimeout(dotsTimer);
-      clearTimeout(readyTimer);
-    };
-  }, [messages.length]);
-
-  useEffect(() => {
-    clearInterval(introDotsTimerRef.current);
-
-    if (messages.length > 0 || introStep !== "dots") {
-      return undefined;
-    }
-
-    setIntroDotsText("");
-
-    let index = 0;
-    introDotsTimerRef.current = setInterval(() => {
-      index += 1;
-      setIntroDotsText(INTRO_DOTS_TEXT.slice(0, index));
-      robotSoundEngine.typing(INTRO_DOTS_TEXT[index - 1]);
-
-      if (index >= INTRO_DOTS_TEXT.length) {
-        clearInterval(introDotsTimerRef.current);
-        introDotsTimerRef.current = null;
-      }
-    }, TYPE_INTERVAL_MS * 5);
-
-    return () => {
-      clearInterval(introDotsTimerRef.current);
-      introDotsTimerRef.current = null;
-    };
-  }, [introStep, messages.length]);
-
-  useEffect(() => {
-    clearInterval(introTimerRef.current);
-
-    if (messages.length > 0 || introStep !== "ready") {
-      return undefined;
-    }
-
-    setIntroText("");
-    robotSoundEngine.wake();
-
-    let index = 0;
-    introTimerRef.current = setInterval(() => {
-      index += 1;
-      setIntroText(INTRO_READY_TEXT.slice(0, index));
-      robotSoundEngine.typing(INTRO_READY_TEXT[index - 1]);
-
-      if (index >= INTRO_READY_TEXT.length) {
-        clearInterval(introTimerRef.current);
-        introTimerRef.current = null;
-        robotSoundEngine.complete();
-      }
-    }, TYPE_INTERVAL_MS);
-
-    return () => {
-      clearInterval(introTimerRef.current);
-      introTimerRef.current = null;
-    };
-  }, [introStep, messages.length]);
 
   async function submitMessage(event) {
     event.preventDefault();
@@ -669,10 +687,12 @@ export default function Chat() {
   const activeTypingAssistant = [...messages].reverse().find((message) => (
     message.role === "assistant" &&
     typedReplies[message.id] !== message.content &&
+    !completedTypingIdsRef.current.has(message.id) &&
     !stoppedTypingIdsRef.current.has(message.id)
   ));
-  const machineBusy = pending || performancePending || Boolean(activeTypingAssistant);
+  const machineBusy = pending || performancePending || Boolean(activeTypingAssistant) || Boolean(selfErasingMessageId);
   const bootStandby = !sceneZero || sceneZero.unlock?.status === "STANDBY";
+  const quadrantLayout = publicLayout === PUBLIC_LAYOUTS.quadrants;
   const publicInput = (
     <form className={styles.form} onSubmit={submitMessage}>
       <span aria-hidden="true">&gt;</span>
@@ -716,9 +736,10 @@ export default function Chat() {
   };
 
   return (
-    <GlitchOverlay glitch={glitch}>
+    <GlitchOverlay glitch={glitch} publicLayout={publicLayout}>
       <div
         className={`${styles.workspace} ${operatorOpen ? styles.workspaceWithOperator : ""} ${bootStandby ? styles.bootStandby : ""}`}
+        data-public-layout={publicLayout}
         ref={workspaceRef}
         style={layoutStyle}
       >
@@ -815,57 +836,61 @@ export default function Chat() {
       ) : null}
 
       <section
-        className={`${styles.chatPane} ${visibleInstagramPanel ? styles.chatPaneWithInstagram : ""} ${game?.id === "verdade_ou_bolo" && game.active ? styles.chatPaneWithGame : ""}`}
+        className={`${styles.chatPane} ${visibleInstagramPanel && !quadrantLayout ? styles.chatPaneWithInstagram : ""} ${game?.id === "verdade_ou_bolo" && game.active && !quadrantLayout ? styles.chatPaneWithGame : ""} ${quadrantLayout ? styles.chatPaneQuadrants : ""}`}
         aria-label="Chat publico"
         ref={chatPaneRef}
       >
         <DisplayBlackout blackout={displayBlackout} target="chatbot" />
-        <SceneZeroProjectionLayer sceneZero={sceneZero} />
-        <PerformanceLayer
-          activities={performanceActivities}
-          events={visiblePerformanceEvents}
-          game={game}
-          suitcase={suitcase}
-          onMachineBusyChange={setPerformancePending}
-          phoneProjection={phoneProjection}
-        />
+        <section className={`${styles.layoutRegion} ${styles.sceneZeroRegion}`} aria-label="Quadrante de status, BIOS e Cena 0">
+          <div className={styles.quadrantCanvas}>
+            <SceneZeroStatusProjection
+              pitchScale={robotSound?.pitchScale}
+              sceneZero={sceneZero}
+              soundStyle={robotSound?.soundStyle}
+            />
+          </div>
+        </section>
+        <section className={`${styles.layoutRegion} ${styles.sceneZeroAuxRegion}`} aria-label="Quadrante de contagens e conteúdos da Cena 0">
+          <div className={styles.quadrantCanvas}>
+            <SceneZeroProjectionLayer audienceWarmup={audienceWarmup} sceneZero={sceneZero} />
+          </div>
+        </section>
+        <section className={`${styles.layoutRegion} ${styles.performanceRegion}`} aria-label="Quadrante de elementos visuais e conteúdos auxiliares">
+          <div className={styles.quadrantCanvas}>
+            <PerformanceLayer
+              activities={performanceActivities}
+              events={visiblePerformanceEvents}
+              game={game}
+              suitcase={suitcase}
+              onMachineBusyChange={setPerformancePending}
+              phoneProjection={phoneProjection}
+            />
+          </div>
+        </section>
 
         <main className={styles.publicStage} aria-label="Fala atual da Caixa Preta">
           <div className={styles.currentMessage}>
-            {!publicMessage && messages.length === 0 && introStep === "cursor" ? (
-              <p className={styles.introCursor}>&gt; <span>_</span></p>
-            ) : null}
-
-            {!publicMessage && messages.length === 0 && introStep === "dots" ? (
-              <p className={styles.introDots}>
-                &gt; {introDotsText}
-                {introDotsText !== INTRO_DOTS_TEXT ? (
-                  <span className={styles.replyCursor} aria-hidden="true">_</span>
-                ) : null}
-              </p>
-            ) : null}
-
-            {!publicMessage && messages.length === 0 && introStep === "ready" ? (
-              <p className={styles.machine}>
-                &gt; {introText}
-                {introText !== INTRO_READY_TEXT ? (
-                  <span className={styles.replyCursor} aria-hidden="true">_</span>
-                ) : null}
-              </p>
+            {!publicMessage && messages.length === 0 ? (
+              <p className={styles.introCursor} aria-label="Cursor da Caixa Preta">&gt;</p>
             ) : null}
 
             {publicMessage ? (
-              <div className={styles.messageFrame} key={publicMessage.id}>
+              <div
+                className={styles.messageFrame}
+                data-emergence-cue={sceneZeroEmergenceCueForMessage(publicMessage)?.id || undefined}
+                data-emergence-phase={selfErasingMessageId === publicMessage.id ? "erasing" : undefined}
+                key={publicMessage.id}
+              >
                 {audienceWarmup?.display?.messageId === publicMessage.id ? (
                   <div className={styles.actionCue}>
-                    <span aria-hidden="true">{audienceWarmup.display.icon}</span>
                     <small>{audienceWarmup.display.actionLabel}</small>
+                    {!quadrantLayout ? <AudienceWarmupTimer endsAt={audienceWarmup.display.endsAt} /> : null}
                   </div>
                 ) : null}
-                <p className={`${styles.machine} ${publicMessage.content.length > 180 ? styles.machineLong : publicMessage.content.length > 95 ? styles.machineMedium : ""}`}>
+                <p className={`${styles.machine} ${publicMessage.content.length > 180 ? styles.machineLong : publicMessage.content.length > 95 ? styles.machineMedium : ""} ${selfErasingMessageId === publicMessage.id ? styles.machineErasing : ""}`}>
                   {typedReplies[publicMessage.id] ?? ""}
-                  {typedReplies[publicMessage.id] !== publicMessage.content ? (
-                    <span className={styles.replyCursor} aria-hidden="true">_</span>
+                  {typedReplies[publicMessage.id] !== publicMessage.content || selfErasingMessageId === publicMessage.id ? (
+                    <span className={`${styles.replyCursor} ${selfErasingMessageId === publicMessage.id ? styles.eraseCursor : ""}`} aria-hidden="true">_</span>
                   ) : null}
                 </p>
               </div>
@@ -877,8 +902,9 @@ export default function Chat() {
           </div>
           <footer className={styles.publicInput}>{publicInput}</footer>
         </main>
-        {visibleInstagramPanel ? (
-          <>
+        <section className={`${styles.layoutRegion} ${styles.contextRegion}`} aria-label="Quadrante de conteúdos contextuais">
+          {visibleInstagramPanel ? (
+            <>
             <div
               aria-label="Redimensionar chat e Instagram"
               aria-orientation="vertical"
@@ -900,8 +926,9 @@ export default function Chat() {
                 }
               }}
             />
-          </>
-        ) : null}
+            </>
+          ) : null}
+        </section>
       </section>
 
       {operatorMounted && operatorOpen ? (

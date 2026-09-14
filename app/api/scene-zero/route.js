@@ -2,12 +2,31 @@ import { getExistingInstagramController, getInstagramController, normalizeUserna
 import { analyzeInstagramScreenshot, generateCaixaPretaTurn, generateGoogleResearchComment, interpretSceneZeroBrowserRequest, refreshSceneZeroLocalContext } from "@/lib/openai";
 import { fallbackSceneZeroBrowserPlan, preserveExplicitNewsIntent } from "@/lib/scene-zero/browserCommand";
 import { collectionRepertoireBlock, parseCollectionIntervention, shouldRejectRepeatedHandAction } from "@/lib/scene-zero/collection";
-import { buildSceneZeroDirection, sceneZeroGlitchCommand } from "@/lib/scene-zero/state";
+import { buildSceneZeroDirection, normalizeSceneZeroStage, sceneZeroGlitchCommand } from "@/lib/scene-zero/state";
 import { showState } from "@/lib/showState";
 import { SHOW_MODES } from "@/prompts/modes";
 import { findInstagramParticipantByName } from "@/lib/suitcases/SuitcaseDirector";
-import { buildGincanaPresentation, chooseGincana, chooseGincanaDuration, SCENE_ZERO_INSTAGRAM_TARGETS } from "@/lib/scene-zero/suitcaseGame";
+import {
+  buildGincanaPresentation,
+  chooseGincana,
+  nextSceneZeroSuitcase,
+  SCENE_ZERO_INSTAGRAM_TARGETS,
+  SCENE_ZERO_SUITCASE_CUE_DURATION_MS,
+  sceneZeroSuitcaseChallenge
+} from "@/lib/scene-zero/suitcaseGame";
+import { getSceneZeroPhysicalChallenge, SCENE_ZERO_PHYSICAL_CHALLENGES } from "@/data/scene-zero-physical-challenges";
+import { getSceneZeroHangmanWord, SCENE_ZERO_HANGMAN_INSTRUCTION } from "@/data/scene-zero-hangman-words";
+import { chooseSceneZeroHangmanWord } from "@/lib/scene-zero/suitcaseHangman";
 import { buildDataCollectionSystemPrompt } from "@/prompts/dataCollection";
+import { SCENE_ZERO_MOREL_BIOS_DURATION_MS } from "@/data/scene-zero-morel";
+import { PLAY_UNLOCK_CONFIG } from "@/data/scene-zero-unlock";
+import { robotTypingIntervalMs } from "@/lib/robot-sound/state";
+import {
+  sceneZeroEmergenceCueForMessage,
+  sceneZeroEmergenceCueForNextSuitcase,
+  sceneZeroEmergenceDurationMs,
+  sceneZeroEmergenceSource
+} from "@/data/scene-zero-emergence";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -35,6 +54,8 @@ const DIRECTION_ACTIONS = {
   "glitch-speak": "glitch_level",
   "instagram-stop": "instagram_stop"
 };
+
+const completedEmergenceMessages = new Set();
 
 function sceneZeroGooglePlan(guidance, originalCommand) {
   return preserveExplicitNewsIntent(parseGoogleGuidance(guidance), originalCommand);
@@ -124,6 +145,7 @@ async function generateCollectionIntervention(directionAction, detail = "", { re
 }
 
 function applyGeneratedTurn(turn, { messageSource = "scene-zero-operator" } = {}) {
+  const messages = [];
   if (turn.salience?.length) showState.addSalience(turn.salience, "agent");
   if (turn.game?.gameMove && showState.snapshot().game?.active) {
     showState.applyGameMove(turn.game, { source: "agent" });
@@ -137,10 +159,11 @@ function applyGeneratedTurn(turn, { messageSource = "scene-zero-operator" } = {}
       ? turn.text.split(/\n\s*\n/).map((fragment) => fragment.trim()).filter(Boolean).slice(0, 4)
       : [turn.text];
     for (const fragment of fragments) {
-      showState.addMessage("assistant", fragment, messageSource);
+      messages.push(showState.addMessage("assistant", fragment, messageSource));
     }
   }
   if (turn.events?.length) showState.queuePerformanceEvents(turn.events, "agent");
+  return messages;
 }
 
 function parseParticipantSequence(text = "") {
@@ -151,8 +174,10 @@ function parseParticipantSequence(text = "") {
       ? parsed.comentarios.map((comment) => `${comment || ""}`.trim()).filter(Boolean).slice(0, 3)
       : [];
     const announcement = `${parsed.anuncio || ""}`.trim();
-    if (invite && comments.length === 3 && announcement) {
-      return { invite, comments, announcement };
+    const centerInvitation = `${parsed.centro || ""}`.trim();
+    const gameExplanation = `${parsed.malas || ""}`.trim();
+    if (invite && comments.length === 3 && announcement && centerInvitation && gameExplanation) {
+      return { invite, comments, announcement, centerInvitation, gameExplanation };
     }
   } catch {
     // Invalid structured copy is retried by the operator instead of leaking internal formatting.
@@ -177,11 +202,20 @@ async function generateParticipantSequence({ candidates, winner, detail = "" }) 
     ),
     operatorOutputInstruction: [
       "Responda somente JSON válido, sem Markdown.",
-      "Formato exato: {\"convite\":\"...\",\"comentarios\":[\"...\",\"...\",\"...\"],\"anuncio\":\"...\"}.",
-      "O convite abre os 10 segundos. Os três comentários acontecem durante a roleta e não podem revelar o vencedor. O anúncio final deve convocar exatamente o vencedor informado."
+      "Formato exato: {\"convite\":\"...\",\"comentarios\":[\"...\",\"...\",\"...\"],\"anuncio\":\"...\",\"centro\":\"...\",\"malas\":\"...\"}.",
+      "O convite abre os 10 segundos. Os três comentários acontecem durante a roleta e não podem revelar o vencedor.",
+      `O anúncio revela exatamente ${winner.name}. Em centro, fale diretamente com ${winner.name} e mande a pessoa vir até o centro da cena.`,
+      "Em malas, mande a pessoa olhar para as três malas e explique com clareza: ela escolherá uma mala por vez e deverá cumprir o que houver nela. Não revele conteúdos das malas. As falas centro e malas vêm depois do anúncio, nessa ordem."
     ].join(" ")
   });
-  return parseParticipantSequence(turn.text);
+  const sequence = parseParticipantSequence(turn.text);
+  if (!sequence) return null;
+  const normalizeCopy = (value) => `${value || ""}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+  const centerCopy = normalizeCopy(sequence.centerInvitation);
+  const gameCopy = normalizeCopy(sequence.gameExplanation);
+  if (!centerCopy.includes(normalizeCopy(winner.name)) || !centerCopy.includes("centro")) return null;
+  if (!gameCopy.includes("tres malas") || !gameCopy.includes("escolh") || !gameCopy.includes("cumpr")) return null;
+  return sequence;
 }
 
 async function startParticipantFlow({ chooseAnother = false, detail = "" } = {}) {
@@ -205,6 +239,7 @@ async function startParticipantFlow({ chooseAnother = false, detail = "" } = {})
     invite: sequence.invite,
     comments: sequence.comments,
     announcement: sequence.announcement,
+    postSelection: [sequence.centerInvitation, sequence.gameExplanation],
     inviteMessageId: inviteMessage.id
   });
   return { ...started, text: sequence.invite };
@@ -216,8 +251,207 @@ async function speak(directionAction, detail = "", options = {}) {
     state,
     operatorInstruction: buildSceneZeroDirection(state.sceneZero, directionAction, detail)
   });
-  applyGeneratedTurn(turn, options);
-  return turn;
+  const messages = applyGeneratedTurn(turn, options);
+  return { ...turn, messages };
+}
+
+function suitcaseSpeechDelay(text = "") {
+  return Math.max(
+    800,
+    (`${text}`.length * robotTypingIntervalMs(showState.snapshot().robotSound)) + 500
+  );
+}
+
+async function startAnnouncedSuitcase(messageId) {
+  const choice = showState.snapshot().sceneZero.suitcaseGame?.choice;
+  if (choice?.status !== "announcing" || choice.messageId !== messageId) {
+    return { applied: false, error: "ESCOLHA DE MALA NÃO ESTÁ MAIS PENDENTE", state: showState.snapshot().sceneZero };
+  }
+  return activateSuitcase(choice.targetSuitcase);
+}
+
+function completeEmergenceMessage(messageId) {
+  if (!messageId || completedEmergenceMessages.has(messageId)) {
+    return { applied: false, error: "LAPSO JÁ APAGADO", state: showState.snapshot().sceneZero };
+  }
+
+  const snapshot = showState.privateSnapshot();
+  const message = snapshot.conversation.find((candidate) => candidate.id === messageId);
+  const cue = sceneZeroEmergenceCueForMessage(message);
+  if (!cue || snapshot.publicMessage?.id !== messageId) {
+    return { applied: false, error: "LAPSO NÃO ESTÁ MAIS VISÍVEL", state: snapshot.sceneZero };
+  }
+
+  const nextSuitcase = nextSceneZeroSuitcase(snapshot.sceneZero.suitcaseGame);
+  if (nextSuitcase !== cue.nextSuitcase) {
+    return { applied: false, error: "FLUXO DAS MALAS JÁ AVANÇOU", state: snapshot.sceneZero };
+  }
+
+  completedEmergenceMessages.add(messageId);
+  return announceNextSuitcase({
+    includeRules: cue.nextSuitcase === 2,
+    bypassEmergence: true
+  });
+}
+
+function startEmergenceMessage(cue) {
+  const source = sceneZeroEmergenceSource(cue.id);
+  const existing = showState.privateSnapshot().conversation.find((message) => message.source === source);
+  if (existing) {
+    return { applied: false, error: "LAPSO JÁ EXIBIDO", state: showState.snapshot().sceneZero };
+  }
+
+  const message = showState.addMessage("assistant", cue.text, source);
+  applyGlitchLevel(cue.glitchLevel);
+  setTimeout(
+    () => completeEmergenceMessage(message.id),
+    sceneZeroEmergenceDurationMs(cue, robotTypingIntervalMs(showState.snapshot().robotSound)) + 2000
+  );
+  return {
+    applied: true,
+    emergence: true,
+    text: cue.text,
+    messageId: message.id,
+    state: showState.snapshot().sceneZero
+  };
+}
+
+function announceNextSuitcase({ includeRules = false, bypassEmergence = false } = {}) {
+  const sceneZero = showState.snapshot().sceneZero;
+  const nextSuitcase = nextSceneZeroSuitcase(sceneZero.suitcaseGame);
+  if (!nextSuitcase) return { applied: false, error: "TODAS AS MALAS JÁ FORAM ESCOLHIDAS", state: sceneZero };
+  if (sceneZero.suitcaseGame?.choice?.status === "announcing") {
+    return { applied: false, error: "ESCOLHA DE MALA JÁ EM ANDAMENTO", state: sceneZero };
+  }
+  if (!bypassEmergence) {
+    const cue = sceneZeroEmergenceCueForNextSuitcase(nextSuitcase);
+    const source = cue ? sceneZeroEmergenceSource(cue.id) : "";
+    const alreadyShown = source && showState.privateSnapshot().conversation.some((message) => message.source === source);
+    if (cue && !alreadyShown) return startEmergenceMessage(cue);
+    if (cue && showState.privateSnapshot().publicMessage?.source === source) {
+      return { applied: false, error: "LAPSO AINDA ESTÁ SENDO APAGADO", state: sceneZero };
+    }
+  }
+  const text = includeRules
+    ? "O jogo é simples: eu indico uma mala. Quando o número aparecer, vá até ela, abra a mala e pegue o que estiver dentro. Depois, cumpra o desafio. Vou escolher uma mala agora."
+    : "Vou indicar outra mala. Quando o número aparecer, vá até ela e abra a mala.";
+  const message = showState.addMessage("assistant", text, "scene-zero-suitcase-choice");
+  const announced = showState.controlSceneZero("suitcase-choice-announce", {
+    targetSuitcase: nextSuitcase,
+    messageId: message.id
+  }, { source: "system" });
+  setTimeout(() => {
+    startAnnouncedSuitcase(message.id).catch((error) => console.error("SCENE ZERO SUITCASE CHOICE ERROR", error));
+  }, suitcaseSpeechDelay(text));
+  return { ...announced, text, messageId: message.id };
+}
+
+function scheduleSuitcaseDialogue(selectionSequence, selectedAt, turns) {
+  const selectedAtMs = Date.parse(selectedAt || "");
+  const elapsedMs = Number.isFinite(selectedAtMs) ? Math.max(0, Date.now() - selectedAtMs) : 0;
+  const delayMs = Math.max(0, SCENE_ZERO_SUITCASE_CUE_DURATION_MS - elapsedMs);
+
+  setTimeout(() => {
+    const current = showState.snapshot().sceneZero.suitcaseGame;
+    if (current?.suitcaseSelectionSequence !== selectionSequence) return;
+    for (const turn of turns) applyGeneratedTurn(turn);
+  }, delayMs);
+}
+
+function suitcaseCueDelay(selectedAt) {
+  const selectedAtMs = Date.parse(selectedAt || "");
+  const elapsedMs = Number.isFinite(selectedAtMs) ? Math.max(0, Date.now() - selectedAtMs) : 0;
+  return Math.max(0, SCENE_ZERO_SUITCASE_CUE_DURATION_MS - elapsedMs);
+}
+
+function scheduleHangmanStart(selectionSequence, selectedAt) {
+  setTimeout(() => {
+    const current = showState.snapshot().sceneZero.suitcaseGame;
+    if (
+      current?.suitcaseSelectionSequence !== selectionSequence
+      || current.currentSuitcase !== 3
+      || current.hangman?.status !== "ready"
+    ) return;
+    showState.addMessage("assistant", SCENE_ZERO_HANGMAN_INSTRUCTION, "scene-zero-hangman-instruction");
+    setTimeout(() => {
+      const latest = showState.snapshot().sceneZero.suitcaseGame;
+      if (
+        latest?.suitcaseSelectionSequence !== selectionSequence
+        || latest.currentSuitcase !== 3
+        || latest.hangman?.status !== "ready"
+      ) return;
+      showState.controlSceneZero("hangman-start", {}, { source: "system" });
+    }, suitcaseSpeechDelay(SCENE_ZERO_HANGMAN_INSTRUCTION));
+  }, suitcaseCueDelay(selectedAt));
+}
+
+function scheduleTutorialEnd(selectionSequence, selectedAt) {
+  setTimeout(async () => {
+    const before = showState.snapshot().sceneZero;
+    const current = before.suitcaseGame;
+    if (current?.suitcaseSelectionSequence !== selectionSequence || current.currentSuitcase !== 1) return;
+
+    const completesProgressBar = Number(before.unlock?.progress || 0) < 100;
+    const finished = await finishSceneZeroSuitcaseGame();
+    if (!finished.applied) return;
+    const tutorialDurationMs = (completesProgressBar ? PLAY_UNLOCK_CONFIG.completeAnimationMs : 0)
+      + PLAY_UNLOCK_CONFIG.tutorialCompleteLeadMs
+      + PLAY_UNLOCK_CONFIG.tutorialCompleteDurationMs;
+
+    setTimeout(() => {
+      const next = showState.snapshot().sceneZero.suitcaseGame;
+      if (
+        next?.suitcaseSelectionSequence !== selectionSequence
+        || next.currentSuitcase !== 1
+        || next.status !== "finished"
+      ) return;
+      beginMorelBiosSequence(selectionSequence, "system");
+    }, tutorialDurationMs + 100);
+  }, suitcaseCueDelay(selectedAt));
+}
+
+function beginMorelBiosSequence(selectionSequence, source = "operator") {
+  clearSceneZeroFinalBlackout();
+  const started = showState.controlSceneZero("morel-bios-start", {}, { source });
+  const biosSequence = started.state.suitcaseGame.morelBios.sequence;
+  const pulses = [
+    [0, "glitch-1"],
+    [6000, "glitch-2"],
+    [12000, "glitch-3"],
+    [18000, "glitch-4"],
+    [24000, "glitch-4"]
+  ];
+
+  for (const [offsetMs, level] of pulses) {
+    setTimeout(() => {
+      const sceneZero = showState.snapshot().sceneZero;
+      const suitcaseGame = sceneZero.suitcaseGame;
+      if (
+        suitcaseGame?.currentSuitcase !== 1
+        || suitcaseGame.suitcaseSelectionSequence !== selectionSequence
+        || suitcaseGame.morelBios?.status !== "running"
+        || suitcaseGame.morelBios.sequence !== biosSequence
+      ) return;
+      showState.controlSceneZero("set-glitch", { level }, { source });
+      applyGlitchLevel(level, { scope: "full-frame" });
+    }, offsetMs);
+  }
+
+  setTimeout(() => {
+    const sceneZero = showState.snapshot().sceneZero;
+    const suitcaseGame = sceneZero.suitcaseGame;
+    if (
+      suitcaseGame?.currentSuitcase !== 1
+      || suitcaseGame.suitcaseSelectionSequence !== selectionSequence
+      || suitcaseGame.morelBios?.status !== "running"
+      || suitcaseGame.morelBios.sequence !== biosSequence
+    ) return;
+    showState.controlSceneZero("set-glitch", { level: "normal" }, { source });
+    applyGlitchLevel("normal");
+    showState.controlDisplayBlackout("all", true, { source: "scene-zero-final" });
+  }, SCENE_ZERO_MOREL_BIOS_DURATION_MS);
+
+  return started;
 }
 
 async function interruptPreviousSuitcase(nextSuitcaseNumber) {
@@ -234,6 +468,10 @@ async function interruptPreviousSuitcase(nextSuitcaseNumber) {
     showState.controlSceneZero("gincana-timer-cancel", {}, { source: "scene-zero-operator" });
   }
 
+  if (["ready", "active"].includes(snapshot.sceneZero.suitcaseGame?.hangman?.status)) {
+    showState.controlSceneZero("hangman-cancel", {}, { source: "scene-zero-operator" });
+  }
+
   const instagramSession = showState.privateSnapshot().sceneZero.suitcaseGame?.instagram;
   if (instagramSession?.currentProfile && instagramSession.status !== "stopped") {
     const controller = getExistingInstagramController();
@@ -244,13 +482,29 @@ async function interruptPreviousSuitcase(nextSuitcaseNumber) {
     showState.controlSceneZero("instagram-session-stop", {}, { source: "scene-zero-operator" });
   }
 
-  if (previousSuitcase === 3 && snapshot.sceneZero.glitchLevel !== "normal") {
+  if (previousSuitcase === 1) {
+    showState.controlSceneZero("morel-bios-stop", {}, { source: "scene-zero-operator" });
+    clearSceneZeroFinalBlackout();
+  }
+
+  if (previousSuitcase === 1 && snapshot.sceneZero.glitchLevel !== "normal") {
     showState.controlSceneZero("set-glitch", { level: "normal" }, { source: "scene-zero-operator" });
     applyGlitchLevel("normal");
   }
 }
 
 async function activateSuitcase(suitcaseNumber, detail = "") {
+  const before = showState.snapshot().sceneZero.suitcaseGame;
+  const expectedSuitcase = nextSceneZeroSuitcase(before);
+  if (before?.currentSuitcase !== suitcaseNumber && expectedSuitcase !== suitcaseNumber) {
+    return {
+      applied: false,
+      error: expectedSuitcase
+        ? `A PRÓXIMA ESCOLHA DO ROBÔ É A MALA ${expectedSuitcase}`
+        : "TODAS AS MALAS JÁ FORAM ESCOLHIDAS",
+      state: showState.snapshot().sceneZero
+    };
+  }
   await interruptPreviousSuitcase(suitcaseNumber);
   const current = showState.snapshot();
   if (current.sceneZero.stage !== "suitcases") {
@@ -262,34 +516,50 @@ async function activateSuitcase(suitcaseNumber, detail = "") {
   const selected = showState.controlSceneZero("suitcase-select", { suitcase: suitcaseNumber, detail }, { source: "operator" });
   if (!selected.applied) return selected;
 
-  if (suitcaseNumber === 1) {
-    const game = showState.snapshot().game;
-    if (!game?.active || game.id !== "verdade_ou_bolo") {
-      showState.startGame({ requestedGame: "verdade-ou-bolo", source: "operator", replace: Boolean(game?.active) });
-    }
+  const challengeTask = sceneZeroSuitcaseChallenge(suitcaseNumber, before?.gincana?.usedTaskIds || []);
+  if (challengeTask) {
+    const challenge = showState.controlSceneZero("gincana-draw", {
+      task: challengeTask,
+      durationSeconds: challengeTask.duration
+    }, { source: "system" });
+    if (!challenge.applied) return challenge;
   }
 
   if (suitcaseNumber === 3) {
-    const level = showState.snapshot().sceneZero.glitchLevel === "normal" ? "glitch-1" : showState.snapshot().sceneZero.glitchLevel;
-    if (level !== showState.snapshot().sceneZero.glitchLevel) {
-      showState.controlSceneZero("set-glitch", { level }, { source: "operator" });
-    }
-    applyGlitchLevel(level);
+    const configured = showState.controlSceneZero("hangman-configure", {}, { source: "system" });
+    if (!configured.applied) return configured;
+    const suitcaseGame = showState.snapshot().sceneZero.suitcaseGame;
+    scheduleHangmanStart(suitcaseGame.suitcaseSelectionSequence, suitcaseGame.suitcaseSelectedAt);
   }
 
-  const direction = {
-    1: "suitcase_one_start",
-    2: "suitcase_two_start",
-    3: "suitcase_three_start"
-  }[suitcaseNumber];
-  const turn = await speak(direction, detail);
-  return { applied: true, state: showState.snapshot().sceneZero, turn };
+  if (suitcaseNumber === 1) {
+    const activeGame = showState.snapshot().game;
+    if (activeGame?.active && activeGame.id === "verdade_ou_bolo") {
+      showState.stopGame({ status: "removed_from_suitcase_flow", source: "scene-zero-operator" });
+    }
+    const suitcaseGame = showState.snapshot().sceneZero.suitcaseGame;
+    scheduleTutorialEnd(suitcaseGame.suitcaseSelectionSequence, suitcaseGame.suitcaseSelectedAt);
+    return { applied: true, state: showState.snapshot().sceneZero, turn: null };
+  }
+
+  if (challengeTask) {
+    const challengeTurn = {
+      text: buildGincanaPresentation(challengeTask, challengeTask.duration),
+      events: [],
+      salience: []
+    };
+    const suitcaseGame = showState.snapshot().sceneZero.suitcaseGame;
+    scheduleSuitcaseDialogue(suitcaseGame.suitcaseSelectionSequence, suitcaseGame.suitcaseSelectedAt, [challengeTurn]);
+    return { applied: true, state: showState.snapshot().sceneZero, turn: challengeTurn };
+  }
+
+  return { applied: true, state: showState.snapshot().sceneZero, turn: null };
 }
 
 async function finishSceneZeroSuitcaseGame() {
   const sceneZero = showState.snapshot().sceneZero;
-  if (sceneZero.suitcaseGame?.currentSuitcase !== 3) {
-    return { applied: false, error: "INICIE A MALA 3 ANTES DE FINALIZAR O JOGO", state: sceneZero };
+  if (nextSceneZeroSuitcase(sceneZero.suitcaseGame)) {
+    return { applied: false, error: "ESCOLHA AS TRÊS MALAS ANTES DE FINALIZAR O JOGO", state: sceneZero };
   }
   if (sceneZero.suitcaseGame?.status === "finished") {
     return { applied: false, error: "JOGO DAS MALAS JÁ FINALIZADO", state: sceneZero };
@@ -300,12 +570,16 @@ async function finishSceneZeroSuitcaseGame() {
   return { applied: true, state: showState.snapshot().sceneZero };
 }
 
-async function drawGincana() {
+async function drawGincana(challengeId = "") {
   const state = showState.privateSnapshot();
-  const usedTaskIds = state.sceneZero.suitcaseGame?.gincana?.usedTaskIds || [];
-  const task = chooseGincana(undefined, usedTaskIds);
-  if (!task) return { applied: false, error: "SCENE ZERO GINCANA BANK EMPTY", state: state.sceneZero };
-  const durationSeconds = chooseGincanaDuration(task);
+  const suitcaseGame = state.sceneZero.suitcaseGame;
+  const requested = getSceneZeroPhysicalChallenge(challengeId);
+  const task = requested || chooseGincana(
+    SCENE_ZERO_PHYSICAL_CHALLENGES,
+    suitcaseGame?.gincana?.usedTaskIds || []
+  );
+  if (!task) return { applied: false, error: "ESTA MALA NÃO POSSUI DESAFIO CRONOMETRADO", state: showState.snapshot().sceneZero };
+  const durationSeconds = task.duration;
   const selected = showState.controlSceneZero("gincana-draw", { task, durationSeconds }, { source: "operator" });
   if (!selected.applied) return selected;
   const turn = {
@@ -321,12 +595,15 @@ async function finishGincana(outcome, detail = "") {
   const result = showState.controlSceneZero("gincana-finish", { outcome, detail }, { source: "operator" });
   if (!result.applied) return result;
   const gincana = showState.privateSnapshot().sceneZero.suitcaseGame.gincana;
+  if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase === 2) {
+    return { applied: true, state: showState.snapshot().sceneZero, turn: null };
+  }
   const turn = await speak(outcome === "completed" ? "gincana_complete" : "gincana_failed", [
     detail,
     `Resultado registrado: ${outcome}.`,
     `Tempo decorrido registrado: ${gincana.elapsedSeconds} segundos.`,
     `Tarefa: ${gincana.currentTask?.instruction || "não informada"}.`
-  ].filter(Boolean).join(" "));
+  ].filter(Boolean).join(" "), { messageSource: "scene-zero-operator" });
   showState.controlSceneZero("suitcase-comment", { kind: "gincana", text: turn.text }, { source: "agent" });
   return { applied: true, state: showState.snapshot().sceneZero, turn };
 }
@@ -422,9 +699,100 @@ async function startSceneZeroInstagramTarget(targetId) {
   }
 }
 
-function applyGlitchLevel(level) {
+function clearSceneZeroFinalBlackout() {
+  const blackout = showState.snapshot().displayBlackout;
+  if (blackout?.updatedBy === "scene-zero-final" && Object.values(blackout.targets || {}).some(Boolean)) {
+    showState.controlDisplayBlackout("all", false, { source: "scene-zero-final-reset" });
+  }
+}
+
+function applyGlitchLevel(level, overrides = {}) {
   const command = sceneZeroGlitchCommand(level);
-  showState.controlGlitch(command.action, command.payload, { source: "scene-zero" });
+  showState.controlGlitch(command.action, { ...command.payload, ...overrides }, { source: "scene-zero" });
+}
+
+async function interruptSceneZeroSuitcaseFlow(detail = "") {
+  const snapshot = showState.snapshot();
+  const suitcaseGame = snapshot.sceneZero?.suitcaseGame;
+  const hasSuitcaseFlow = snapshot.sceneZero?.stage === "suitcases"
+    || Boolean(suitcaseGame?.currentSuitcase)
+    || Boolean(snapshot.suitcase?.active);
+  if (!hasSuitcaseFlow) return false;
+
+  if (snapshot.game?.active) {
+    showState.stopGame({ status: "stage_navigation", source: "scene-zero-operator" });
+  }
+
+  const controller = getExistingInstagramController();
+  if (controller) {
+    try {
+      const stopped = await controller.stopAllRoutines();
+      showState.updateInstagram({ ...controller.getStatus(), message: stopped.message });
+    } catch (error) {
+      console.error("SCENE ZERO STAGE NAVIGATION BROWSER STOP ERROR", error);
+    }
+  }
+
+  if (snapshot.suitcase?.active) {
+    showState.abortSuitcases({ source: "scene-zero-stage-navigation" });
+  }
+  showState.controlSceneZero("interrupt-suitcases", { detail }, { source: "operator" });
+  showState.controlSceneZero("set-glitch", { level: "normal" }, { source: "operator" });
+  applyGlitchLevel("normal");
+  clearSceneZeroFinalBlackout();
+  showState.setMode(SHOW_MODES.host);
+  return true;
+}
+
+async function returnToAudienceWarmup(detail = "") {
+  await interruptSceneZeroSuitcaseFlow(detail || "retorno ao aquecimento");
+  showState.controlGlitch("stop", {}, { source: "scene-zero-stage-navigation" });
+  clearSceneZeroFinalBlackout();
+  showState.setMode(SHOW_MODES.host);
+  const stage = showState.controlSceneZero("set-stage", { stage: "idle", detail }, { source: "operator" });
+  if (!stage.applied) return stage;
+  const warmup = showState.controlAudienceWarmup("resume-questions", {}, { source: "operator" });
+  if (!warmup.ok) return { applied: false, error: warmup.error, state: showState.snapshot().sceneZero };
+  return {
+    applied: true,
+    state: showState.snapshot().sceneZero,
+    audienceWarmup: showState.snapshot().audienceWarmup
+  };
+}
+
+async function returnToSoundCheck(detail = "") {
+  if (!showState.snapshot().sceneZero?.unlock?.bootComplete) {
+    return { applied: false, error: "COMPLETE BIOS BEFORE SOUND CHECK", state: showState.snapshot().sceneZero };
+  }
+  await interruptSceneZeroSuitcaseFlow(detail || "retorno à escuta de decibéis");
+  showState.controlGlitch("stop", {}, { source: "scene-zero-stage-navigation" });
+  clearSceneZeroFinalBlackout();
+  showState.setMode(SHOW_MODES.host);
+  const stage = showState.controlSceneZero("set-stage", { stage: "idle", detail }, { source: "operator" });
+  if (!stage.applied) return stage;
+  const unlock = showState.controlPlayUnlock("return-to-sound-check", {}, { source: "operator" });
+  if (!unlock.ok) return { applied: false, error: unlock.error, state: showState.snapshot().sceneZero };
+  return {
+    applied: true,
+    state: showState.snapshot().sceneZero,
+    audienceWarmup: showState.snapshot().audienceWarmup
+  };
+}
+
+async function returnToBoot(detail = "") {
+  await interruptSceneZeroSuitcaseFlow(detail || "retorno ao boot");
+  showState.controlGlitch("stop", {}, { source: "scene-zero-stage-navigation" });
+  clearSceneZeroFinalBlackout();
+  showState.setMode(SHOW_MODES.host);
+  const stage = showState.controlSceneZero("set-stage", { stage: "idle", detail }, { source: "operator" });
+  if (!stage.applied) return stage;
+  const unlock = showState.controlPlayUnlock("reset", {}, { source: "operator" });
+  if (!unlock.ok) return { applied: false, error: unlock.error, state: showState.snapshot().sceneZero };
+  return {
+    applied: true,
+    state: showState.snapshot().sceneZero,
+    audienceWarmup: showState.snapshot().audienceWarmup
+  };
 }
 
 async function researchCurrentSceneZeroParticipant() {
@@ -440,36 +808,48 @@ async function researchCurrentSceneZeroParticipant() {
 }
 
 async function enterStage(stage, detail) {
-  const changed = showState.controlSceneZero("set-stage", { stage, detail }, { source: "operator" });
+  const normalizedStage = normalizeSceneZeroStage(stage);
+  if (!normalizedStage) {
+    return { applied: false, error: "SCENE ZERO STAGE UNKNOWN", state: showState.snapshot().sceneZero };
+  }
+  if (normalizedStage !== "suitcases") {
+    await interruptSceneZeroSuitcaseFlow(detail || `retorno para ${normalizedStage}`);
+  }
+  const changed = showState.controlSceneZero("set-stage", { stage: normalizedStage, detail }, { source: "operator" });
   if (!changed.applied) return changed;
 
-  if (stage !== "suitcases") {
+  if (normalizedStage !== "suitcases") {
     const controller = getExistingInstagramController();
     if (controller?.browserMode === "person_research") {
       await controller.stopPersonResearch();
     }
   }
 
-  if (stage === "participant") {
+  if (normalizedStage === "participant") {
     const participantFlow = await startParticipantFlow({ detail });
     return { ...participantFlow, state: showState.snapshot().sceneZero };
   }
 
-  if (stage === "suitcases") {
+  if (normalizedStage === "suitcases") {
     showState.setMode(SHOW_MODES.malas);
     if (!showState.snapshot().suitcase?.active) showState.startSuitcases({ source: "scene-zero-operator" });
-    const turn = await speak(STAGE_DIRECTIONS[stage], detail);
+    const currentSuitcase = showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase;
+    if (!currentSuitcase) {
+      const selected = announceNextSuitcase({ includeRules: true });
+      return { ...selected, research: null, state: showState.snapshot().sceneZero };
+    }
+    const turn = await speak(STAGE_DIRECTIONS[normalizedStage], detail);
     return { ...changed, turn, research: null, state: showState.snapshot().sceneZero };
   }
 
-  if (stage === "cake") {
+  if (normalizedStage === "cake") {
     const game = showState.snapshot().game;
     if (!game?.active || game.id !== "verdade_ou_bolo") {
       showState.startGame({ requestedGame: "verdade-ou-bolo", source: "operator", replace: Boolean(game?.active) });
     }
   }
 
-  if (stage === "glitch") {
+  if (normalizedStage === "glitch") {
     const currentLevel = showState.snapshot().sceneZero.glitchLevel;
     const level = ["glitch-1", "glitch-2", "glitch-3", "glitch-4"].includes(currentLevel)
       ? currentLevel
@@ -480,20 +860,20 @@ async function enterStage(stage, detail) {
     applyGlitchLevel(level);
   }
 
-  if (stage === "collapse") {
+  if (normalizedStage === "collapse") {
     showState.controlSceneZero("set-glitch", { level: "collapse" }, { source: "operator" });
     applyGlitchLevel("collapse");
   }
 
-  if (stage === "airport") {
+  if (normalizedStage === "airport") {
     showState.controlGlitch("stop", {}, { source: "scene-zero" });
   }
 
-  if (stage === "collection") {
-    const intervention = await generateCollectionIntervention(STAGE_DIRECTIONS[stage], detail);
+  if (normalizedStage === "collection") {
+    const intervention = await generateCollectionIntervention(STAGE_DIRECTIONS[normalizedStage], detail);
     return { ...changed, turn: { text: intervention.text } };
   }
-  const turn = await speak(STAGE_DIRECTIONS[stage], detail);
+  const turn = await speak(STAGE_DIRECTIONS[normalizedStage], detail);
   return { ...changed, turn };
 }
 
@@ -534,6 +914,24 @@ export async function POST(request) {
       const message = snapshot.conversation.find((candidate) => candidate.id === body.messageId);
       const game = snapshot.game;
 
+      if (sceneZeroEmergenceCueForMessage(message)) {
+        const continued = completeEmergenceMessage(message.id);
+        return Response.json({
+          message: continued.applied ? "LAPSO APAGADO · FLUXO RETOMADO" : continued.error,
+          result: continued,
+          sceneZero: showState.snapshot().sceneZero
+        });
+      }
+
+      if (message?.source === "scene-zero-suitcase-choice") {
+        const selected = await startAnnouncedSuitcase(message.id);
+        return Response.json({
+          message: selected.applied ? `MALA ${selected.state.suitcaseGame.currentSuitcase} SORTEADA` : "SORTEIO JÁ INICIADO",
+          result: selected,
+          sceneZero: showState.snapshot().sceneZero
+        });
+      }
+
       if (
         message?.source === "scene-zero-cake-comment" &&
         game?.active &&
@@ -556,6 +954,36 @@ export async function POST(request) {
       const result = await enterStage(body.stage, detail);
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
       return Response.json({ message: `CENA 0 — ${result.state.stage.toUpperCase()}`, sceneZero: showState.snapshot().sceneZero });
+    }
+
+    if (action === "return-to-warmup") {
+      const result = await returnToAudienceWarmup(detail);
+      if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
+      return Response.json({
+        message: "CENA 0 — AQUECIMENTO RETOMADO",
+        sceneZero: result.state,
+        audienceWarmup: result.audienceWarmup
+      });
+    }
+
+    if (action === "return-to-sound-check") {
+      const result = await returnToSoundCheck(detail);
+      if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
+      return Response.json({
+        message: "CENA 0 — ESCUTA DE DECIBÉIS RETOMADA",
+        sceneZero: result.state,
+        audienceWarmup: result.audienceWarmup
+      });
+    }
+
+    if (action === "return-to-boot") {
+      const result = await returnToBoot(detail);
+      if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
+      return Response.json({
+        message: "CENA 0 — BOOT EM STANDBY",
+        sceneZero: result.state,
+        audienceWarmup: result.audienceWarmup
+      });
     }
 
     if (action === "set-personality-guidance") {
@@ -587,6 +1015,12 @@ export async function POST(request) {
       return Response.json({ message: `MALA ${suitcaseNumber} ATIVA — PROGRESSÃO MANUAL`, sceneZero: result.state, text: result.turn?.text });
     }
 
+    if (action === "suitcase-next") {
+      const result = announceNextSuitcase();
+      if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 409 });
+      return Response.json({ message: "ROBÔ ANUNCIOU O SORTEIO DA PRÓXIMA MALA", sceneZero: result.state, text: result.text });
+    }
+
     if (action === "suitcase-finish") {
       const result = await finishSceneZeroSuitcaseGame();
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 409 });
@@ -595,23 +1029,73 @@ export async function POST(request) {
 
     if (action === "gincana-draw") {
       if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase !== 2) {
-        return Response.json({ error: "INICIE A MALA 2 ANTES DO SORTEIO", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
+        return Response.json({ error: "INICIE A MALA 2 ANTES DO DESAFIO", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
       }
-      const result = await drawGincana();
+      if (body.challengeId && !getSceneZeroPhysicalChallenge(body.challengeId)) {
+        return Response.json({ error: "DESAFIO DA MALA 2 DESCONHECIDO", sceneZero: showState.snapshot().sceneZero }, { status: 400 });
+      }
+      const result = await drawGincana(body.challengeId);
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
-      return Response.json({ message: `GINCANA SORTEADA — ${result.durationSeconds}s`, sceneZero: result.state, text: result.turn?.text });
+      return Response.json({ message: `DESAFIO SELECIONADO — ${result.durationSeconds}s`, sceneZero: result.state, text: result.turn?.text });
     }
 
-    if (["gincana-timer-start", "gincana-timer-pause", "gincana-timer-resume", "gincana-timer-restart", "gincana-timer-cancel"].includes(action)) {
+    if (["gincana-timer-start", "gincana-timer-pause", "gincana-timer-resume", "gincana-timer-restart", "gincana-timer-add", "gincana-timer-cancel"].includes(action)) {
+      if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase !== 2) {
+        return Response.json({ error: "INICIE A MALA 2 ANTES DO CRONÔMETRO", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
+      }
       const result = showState.controlSceneZero(action, body, { source: "operator" });
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
-      return Response.json({ message: `GINCANA — ${(result.state.suitcaseGame?.gincana?.timer?.status || "idle").toUpperCase()}`, sceneZero: result.state });
+      return Response.json({ message: `DESAFIO — ${(result.state.suitcaseGame?.gincana?.timer?.status || "idle").toUpperCase()}`, sceneZero: result.state });
+    }
+
+    if (action === "hangman-configure" || action === "hangman-new") {
+      const suitcaseGame = showState.snapshot().sceneZero.suitcaseGame;
+      if (suitcaseGame?.currentSuitcase !== 3) {
+        return Response.json({ error: "INICIE A MALA 3 ANTES DA FORCA", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
+      }
+      const selectedWord = action === "hangman-new"
+        ? chooseSceneZeroHangmanWord({ excludeIds: [suitcaseGame.hangman?.wordId].filter(Boolean) })
+        : getSceneZeroHangmanWord(body.wordId);
+      if (!selectedWord) {
+        return Response.json({ error: "PALAVRA DA FORCA DESCONHECIDA", sceneZero: showState.snapshot().sceneZero }, { status: 400 });
+      }
+      const result = showState.controlSceneZero("hangman-configure", { wordId: selectedWord.id }, { source: "operator" });
+      if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
+      return Response.json({ message: "PALAVRA DA FORCA PRONTA", sceneZero: result.state });
+    }
+
+    if (["hangman-start", "hangman-guess", "hangman-error", "hangman-reveal", "hangman-win", "hangman-lose", "hangman-restart"].includes(action)) {
+      if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase !== 3) {
+        return Response.json({ error: "INICIE A MALA 3 ANTES DA FORCA", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
+      }
+      const result = showState.controlSceneZero(action, body, { source: "operator" });
+      if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
+      return Response.json({ message: `FORCA — ${(result.state.suitcaseGame?.hangman?.flightState || "ESTÁVEL").toUpperCase()}`, sceneZero: result.state });
+    }
+
+    if (action === "morel-bios-start" || action === "morel-bios-stop") {
+      if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase !== 1) {
+        return Response.json({ error: "INICIE A MALA 1 ANTES DA BIOS FINAL", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
+      }
+      const suitcaseGame = showState.snapshot().sceneZero.suitcaseGame;
+      const result = action === "morel-bios-start"
+        ? beginMorelBiosSequence(suitcaseGame.suitcaseSelectionSequence)
+        : showState.controlSceneZero(action, body, { source: "operator" });
+      if (action === "morel-bios-stop") {
+        showState.controlSceneZero("set-glitch", { level: "normal" }, { source: "operator" });
+        applyGlitchLevel("normal");
+        clearSceneZeroFinalBlackout();
+      }
+      return Response.json({
+        message: action === "morel-bios-start" ? "BIOS FINAL RECARREGADA" : "BIOS FINAL INTERROMPIDA",
+        sceneZero: action === "morel-bios-stop" ? showState.snapshot().sceneZero : result.state
+      });
     }
 
     if (action === "gincana-complete" || action === "gincana-failed") {
       const result = await finishGincana(action === "gincana-complete" ? "completed" : "failed", detail);
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
-      return Response.json({ message: action === "gincana-complete" ? "AÇÃO CONCLUÍDA — COMENTÁRIO GERADO" : "FALHA REGISTRADA — COMENTÁRIO GERADO", sceneZero: result.state, text: result.turn?.text });
+      return Response.json({ message: action === "gincana-complete" ? "DESAFIO CONCLUÍDO" : "FALHA REGISTRADA", sceneZero: result.state, text: result.turn?.text });
     }
 
     if (action === "suitcase-instagram-start") {

@@ -1,0 +1,57 @@
+# Current state
+
+Verified against the current worktree on 2026-09-14. Code wins if this snapshot drifts.
+
+## Runtime and architecture
+
+- Next.js App Router 15 with React 19 and server routes under `app/api/`.
+- Local runtime is fixed to `http://localhost:3000` by `scripts/require-port-3000.js`.
+- `lib/showState.js` owns the in-process show state: conversation, public message, Scene Zero, games, suitcases, projection windows, cues, glitch, audio, research, Instagram status, and performance events.
+- Public screens receive state through `app/api/events/route.js`; `lib/publicRealtime.js` adds revision-based reconciliation through `app/api/state/route.js`.
+- Public projection windows register through `app/api/projection/route.js`. Public routes are declared in `lib/projectionScreens.js`; private controller routes are declared in `lib/controllerSurfaces.js`.
+- Prompt composition lives in `prompts/`; curated play knowledge lives in `knowledge/`; the OpenAI boundary is `lib/openai.js`.
+
+## How to start
+
+Install with `npm install`, configure `OPENAI_API_KEY` in `.env.local` for live model calls, then run `npm run dev`. See `docs/brain/OPERATIONS.md` for show startup and validation boundaries.
+
+## Implemented
+
+- Main public chatbot at `/` and private technical hub at `/operator`.
+- Alternative `/videomapping` 2x2 presentation reuses the same `Chat`, `showState`, and realtime connection. Switching between `/` and `/videomapping` in a controlled projection window changes layout in place.
+- Scene Zero controller at `/cena-0-controller` and equivalent videomapping controller at `/videomapping-controller`. Its right-side index is operational: BOOT, ESCUTA DE DECIBÉIS, ESQUENTAR PÚBLICO, ESCOLHER PARTICIPANTE, and JOGO DAS MALAS can be re-entered from the menu. Returning to ESCUTA DE DECIBÉIS keeps the completed BIOS at 100%, resets later verification progress, and immediately reopens microphone listening. Returning from the suitcases interrupts their active game, timers, browser routine, glitch, and final blackout before restoring the selected earlier stage.
+- Scene Zero boot/BIOS, sound check measured in the controller, human-verification warmup, 100 authored prompts, manual override, one selected warmup mini game, participant selection, and suitcase flow. The opening BIOS remains stalled at 78% until the operator presses `ENCERRAR BIOS`; that command fills it to 100% before starting the sound check. The required 30-second play-dead action ends with `OBEDIENTES... ÓTIMO.` and automatically opens the first randomly selected intensity-4 provocation. For every later question, the operator records a contextual `POUCOS` or `MUITOS` result; `SORTEAR` then publishes a non-repeated authored reaction through the normal green chatbot typewriter before selecting and firing the next prompt. Finishing the questions and finishing or skipping the minigame use the same green chatbot path, and minigames start directly on their real timer without a preliminary three-second timer. The shared fixed timer projects only its number.
+- Current Scene Zero suitcase order is 2 -> 3 -> 1: physical challenge, timed hangman/flight state, then tutorial-ending Morel BIOS/glitch sequence. Participant selection displays an animated `/pensando...` while its generated sequence is prepared, then generates a named call to the center of the stage followed by the three-suitcase explanation. Each suitcase uses a five-second audible draw/reveal ending in `ABRA A MALA`; physical and hangman panels occupy the auxiliary view only while their timers are active, so result comments return to the green chatbot immediately. The object challenge always ends by telling the participant to return borrowed items. The hangman has a low procedural motif while active. The final BIOS glitch uses the full public frame, including all videomapping quadrants, and ends in global blackout.
+- The controller header intentionally exposes only Principal, Videomapping, Sound Control, Operator, Glitch, and Treino. `/sound-control` owns the shared procedural sound controls and the Scene Zero microphone-sensitivity adjustment without navigating the public projection. Other controller routes remain registered and reachable from their direct operating paths; the former global blackout tab bar is not rendered.
+- Scene 1 Queda Aviao public/controller pair with live text transport, sampler, per-sample effects, global volume, and blackout.
+- Unified Scene 2A Forca G public/controller pair for media, audio voices, G-LOC, text, shaders, presets, and stop controls. Legacy shader routes redirect to it.
+- Baralho Morbido public/controller pair with its own bounded media/timeline state.
+- Generic editable cue controllers and public cue stages for Transicao Psicodelica, Tea For Two, Piloto Videogame, and Tecnologia x Floresta.
+- Global glitch, display blackout, robot sound with shared pitch/typing controls and `ROBÔ ATUAL` / default `WINDOWS 95 / 8-BIT` PC-speaker style (including Scene Zero BIOS, draw, minigame, and hangman cues), scene-specific private notes, training UI, game director, performance overlays, and manual Instagram browser controls. Public typewriter timing defaults to 60 ms per character and remains operator-adjustable.
+- Public and private concerns are separate: controller notes and controls are not projected or sent to the model.
+
+## Partially implemented or content-dependent
+
+- Transicao Psicodelica, Tea For Two, and Piloto Videogame public routes intentionally start black and show/play only configured cues. Their controller mechanics exist; completeness depends on authored cues and media.
+- Tecnologia x Floresta has a dedicated dark public display and editable audio controller, but the code describes it as a layer rather than a finished visual scene.
+- Several editable cue defaults have empty asset paths. The controls exist, but an empty pad is not a completed show cue.
+- Live OpenAI research, model responses, browser Instagram interaction, microphone behavior, autoplay, and physical audio depend on local credentials, browser permissions, current session state, and hardware. Static checks do not prove them.
+
+## Disabled by default or constrained
+
+- Autonomous Instagram navigation is hard-disabled in `lib/research/ResearchDirector.js`; external navigation requires explicit operator action and is guarded by `lib/externalNavigationGuard.js`.
+- Performative research is off unless `CAIXA_PRETA_PERFORMATIVE_RESEARCH` is explicitly true.
+- Old `/forca-g-shaders` routes are compatibility redirects, not a separate active scene system.
+- No versioned CI or deployment workflow is present. There is no repository-backed production deployment procedure to claim as implemented.
+
+## Known operational constraints
+
+- State is process-local. Restarting Next creates a new show session; `/reset` clears the current show session.
+- The global singleton is version-gated by `STORE_VERSION` in `lib/showState.js`; stale dev processes can retain old state/code combinations.
+- Browser media and microphone paths require real browser interaction and permissions; physical output needs a separate sound check.
+- Browser checks require the expected local server and deliberate waits for SSE/timer convergence.
+- The repository contains archived `bot-old/`; it is not the current implementation.
+
+## Active worktree context
+
+The current branch is `feature-verificacao-humana-bios`. At this snapshot, Scene Zero unlock/BIOS, warmup, public projection, and videomapping files have uncommitted changes. Inspect `git status` and the relevant diff before editing those domains; do not overwrite unrelated work. Treat this paragraph as transient and replace it when that work lands or is abandoned.

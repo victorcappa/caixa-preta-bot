@@ -23,7 +23,8 @@
 .bootStandby > [role="dialog"],
 .bootStandby > [role="separator"],
 .bootStandby > aside,
-.bootStandby .chatPane > * {
+.bootStandby .layoutRegion,
+.bootStandby .publicInput {
   display: none !important;
 }
 
@@ -46,7 +47,7 @@
 }
 
 .chatPaneWithGame {
-  grid-template-columns: minmax(260px, 0.7fr) minmax(0, 1.3fr);
+  grid-template-columns: minmax(360px, 0.84fr) minmax(0, 1.16fr);
 }
 
 .chatPaneWithGame .embeddedTerminal {
@@ -54,9 +55,59 @@
   grid-row: 1;
 }
 
+.chatPaneWithGame .publicStage {
+  container-type: inline-size;
+  border-right: 1px solid var(--green-soft);
+  box-shadow: inset -24px 0 52px rgba(0, 255, 102, 0.035);
+}
+
+.chatPaneWithGame .currentMessage {
+  padding: clamp(72px, 10vh, 120px) clamp(24px, 3vw, 58px) clamp(54px, 7vh, 86px);
+}
+
+.chatPaneWithGame .messageFrame {
+  width: min(100%, 720px);
+  padding: clamp(22px, 4cqw, 40px) 0;
+  border-top: 1px solid rgba(0, 255, 102, 0.22);
+  border-bottom: 1px solid rgba(0, 255, 102, 0.22);
+}
+
+.chatPaneWithGame .currentMessage p {
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.chatPaneWithGame .machine {
+  font-size: clamp(1.6rem, 6cqw, 3.6rem);
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+}
+
+.chatPaneWithGame .machineMedium {
+  font-size: clamp(1.45rem, 5.2cqw, 3.15rem);
+}
+
+.chatPaneWithGame .machineLong {
+  font-size: clamp(1.3rem, 4.4cqw, 2.65rem);
+  line-height: 1.18;
+}
+
+.chatPaneWithGame .actionCue span {
+  font-size: clamp(1rem, 3.8cqw, 1.8rem);
+}
+
+.chatPaneWithGame .actionCue small {
+  font-size: clamp(0.65rem, 2cqw, 0.9rem);
+}
+
 .embeddedTerminal {
   width: 100%;
   height: 100%;
+}
+
+.layoutRegion,
+.quadrantCanvas {
+  display: contents;
 }
 
 .operatorDrawer {
@@ -126,7 +177,8 @@
 .currentMessage p {
   margin: 0;
   white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .messageFrame {
@@ -144,8 +196,8 @@
   font-weight: 700;
   line-height: 1.08;
   letter-spacing: -0.035em;
-  text-align: center;
-  text-wrap: balance;
+  text-align: left;
+  text-wrap: wrap;
   text-shadow: 0 0 28px rgba(0, 255, 102, 0.14);
 }
 
@@ -161,7 +213,7 @@
 .actionCue {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 10px;
   color: var(--green-dim);
   text-transform: uppercase;
@@ -174,6 +226,16 @@
 
 .actionCue small {
   font-size: clamp(.7rem, 1vw, 1rem);
+}
+
+.actionTimer {
+  min-width: 2.2em;
+  padding: .16em .34em;
+  border: 1px solid currentColor;
+  color: var(--green);
+  font-size: clamp(1rem, 1.6vw, 1.8rem);
+  line-height: 1;
+  text-align: center;
 }
 
 .publicInput {
@@ -191,6 +253,14 @@
   display: inline-block;
   margin-left: 0.08em;
   animation: introBlink 0.55s steps(2, start) infinite;
+}
+
+.machineErasing {
+  animation: selfEraseUnease 190ms steps(2, end) infinite alternate;
+}
+
+.eraseCursor {
+  animation-duration: 170ms;
 }
 
 .manualButton,
@@ -325,8 +395,8 @@
   letter-spacing: 0;
 }
 
-.introCursor span {
-  animation: introBlink 0.55s steps(2, start) 4;
+.introCursor {
+  animation: introBlink 0.55s steps(2, start) infinite;
 }
 
 .introDots {
@@ -392,8 +462,14 @@
   to { opacity: 1; transform: translateY(0); filter: blur(0); }
 }
 
+@keyframes selfEraseUnease {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(-1px); opacity: .94; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .messageFrame { animation: none; }
+  .messageFrame,
+  .machineErasing { animation: none; }
 }
 
 @media (max-width: 640px) {
@@ -462,4 +538,167 @@
     border-left: 0;
     cursor: row-resize;
   }
+
+  .chatPaneWithGame {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(320px, 0.55fr) minmax(0, 1fr);
+  }
+
+  .chatPaneWithGame .publicStage {
+    grid-column: 1;
+    grid-row: 1;
+    border-right: 0;
+    border-bottom: 1px solid var(--green-soft);
+    box-shadow: inset 0 -18px 42px rgba(0, 255, 102, 0.035);
+  }
+
+  .chatPaneWithGame .currentMessage {
+    padding: 108px clamp(28px, 8vw, 84px) 14px;
+  }
+
+  .chatPaneWithGame .messageFrame {
+    width: min(100%, 860px);
+    padding: 10px 0;
+  }
+
+  .chatPaneWithGame .machine {
+    font-size: clamp(1.35rem, 3.4cqw, 2.15rem);
+  }
+
+  .chatPaneWithGame .machineMedium {
+    font-size: clamp(1.25rem, 3cqw, 1.9rem);
+  }
+
+  .chatPaneWithGame .machineLong {
+    font-size: clamp(1.15rem, 2.6cqw, 1.65rem);
+  }
+}
+
+.chatPaneQuadrants {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: rgba(0, 255, 102, 0.32);
+  isolation: isolate;
+}
+
+.chatPaneQuadrants .layoutRegion {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: block;
+  overflow: hidden;
+  background: #000000;
+  contain: layout paint;
+}
+
+.chatPaneQuadrants .sceneZeroRegion {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.chatPaneQuadrants [data-unlock-hud] {
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.chatPaneQuadrants .sceneZeroAuxRegion {
+  z-index: 2;
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.chatPaneQuadrants .performanceRegion {
+  z-index: 1;
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.chatPaneQuadrants .contextRegion {
+  z-index: 2;
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.chatPaneQuadrants .sceneZeroAuxRegion:has([data-scene-zero-aux-active="false"]) {
+  z-index: 0;
+  pointer-events: none;
+  background: transparent;
+}
+
+.chatPaneQuadrants .contextRegion:empty {
+  z-index: 0;
+  pointer-events: none;
+  background: #000000;
+}
+
+.chatPaneQuadrants:has(.sceneZeroAuxRegion [data-scene-zero-aux-active="true"]) .performanceRegion {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.chatPaneQuadrants .quadrantCanvas {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 200%;
+  height: 200%;
+  display: block;
+  overflow: hidden;
+  transform: scale(0.5);
+  transform-origin: 0 0;
+}
+
+.chatPaneQuadrants .publicStage {
+  z-index: 1;
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  height: 100%;
+  container-type: inline-size;
+}
+
+.chatPaneQuadrants .currentMessage {
+  padding: clamp(42px, 7vh, 76px) clamp(24px, 5cqw, 58px) clamp(22px, 4vh, 46px);
+}
+
+.chatPaneQuadrants .messageFrame {
+  width: min(100%, 760px);
+  gap: clamp(9px, 1.5vh, 18px);
+}
+
+.chatPaneQuadrants .machine {
+  font-size: clamp(1.35rem, 7cqw, 3.9rem);
+  line-height: 1.1;
+}
+
+.chatPaneQuadrants .machineMedium {
+  font-size: clamp(1.2rem, 5.7cqw, 3.2rem);
+}
+
+.chatPaneQuadrants .machineLong {
+  font-size: clamp(1.05rem, 4.5cqw, 2.5rem);
+  line-height: 1.16;
+}
+
+.chatPaneQuadrants .actionCue span {
+  font-size: clamp(0.9rem, 3.2cqw, 1.45rem);
+}
+
+.chatPaneQuadrants .actionCue small,
+.chatPaneQuadrants .status {
+  font-size: clamp(0.55rem, 1.8cqw, 0.78rem);
+}
+
+.chatPaneQuadrants .publicInput {
+  display: none;
+}
+
+.chatPaneQuadrants .instagramResizeHandle {
+  display: none;
+}
+
+.chatPaneQuadrants .contextRegion > [class*="panel"] {
+  width: 100%;
+  height: 100%;
+  border-left: 0;
 }

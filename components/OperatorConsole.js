@@ -34,6 +34,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   const [glitchVideoLoop, setGlitchVideoLoop] = useState(false);
   const [projectionMenu, setProjectionMenu] = useState(null);
   const [instagramPanelClosed, setInstagramPanelClosed] = useState(false);
+  const [warmupOpen, setWarmupOpen] = useState(false);
   const scrollRef = useRef(null);
   const projectionWindowRefs = useRef(new Map());
 
@@ -520,19 +521,10 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             <span className={status === "CONNECTED" ? styles.connected : styles.disconnected}>
               {status}
             </span>
-            <span>MEMORIES: {state.memories.length}</span>
-            <span>MESSAGES: {state.conversation.length}</span>
             <span className={styles.modeBadge}>MODE: {(state.mode || "host").toUpperCase()}</span>
             <span>INTENSITY: {(state.performance?.intensity || "calm").toUpperCase()}</span>
             <span>GAME: {game.active ? `${game.id} / ${game.startSource}`.toUpperCase() : `COOLDOWN ${game.cooldownTurnsRemaining || 0}`}</span>
             <span>SUITCASE: {suitcase.active ? `${suitcase.phase} / ${suitcase.activeExperience || "none"}` : suitcase.phase}</span>
-            <span>INSTAGRAM: {instagram.status || "DISCONNECTED"}</span>
-            <span>RESEARCH: {research.researchEnabled ? research.budgetMode.toUpperCase() : "OFF"}</span>
-            <span>GLITCH: {glitch.active ? `${glitch.mode || "active"} #${glitch.sequence || 0}`.toUpperCase() : "OFF"}</span>
-            <span>ROBOT SOUND: {state.robotSound?.enabled === false ? "OFF" : (state.robotSound?.preset || "normal").toUpperCase()}</span>
-            <span>PARTICIPANTS: T{participantCounts.team} A{participantCounts.audience} S{participantCounts.session}</span>
-            <span>ACTIVITIES: {activities.length}</span>
-            <span>EVENTS: {state.performance?.events?.length || 0}</span>
             <label className={styles.modelControl}>
               MODEL:
               <select
@@ -547,17 +539,57 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
                 ))}
               </select>
             </label>
-            <span>KNOWLEDGE: {state.context?.knowledge?.loaded ? "loaded" : "not loaded"}</span>
-            <span>VARIABLES: {variableCount}</span>
-            <span>PROMPT VERSION: {state.context?.promptVersion || 1}</span>
           </div>
 
-          <AudienceWarmupController
-            disabled={pending}
-            onLog={addLog}
-            state={state.audienceWarmup}
-            unlock={state.sceneZero?.unlock}
-          />
+          <section className={styles.warmupDisclosure} id="operator-warmup">
+            <button
+              aria-expanded={warmupOpen}
+              className={styles.warmupDisclosureToggle}
+              onClick={() => setWarmupOpen((current) => !current)}
+              type="button"
+            >
+              <span>
+                <strong>ESQUENTAR PÚBLICO</strong>
+                <small>BIOS / VERIFICAÇÃO HUMANA · {state.sceneZero?.unlock?.progress || 0}%</small>
+              </span>
+              <b aria-hidden="true" />
+            </button>
+            {warmupOpen ? (
+              <div className={styles.warmupDisclosureBody}>
+                <AudienceWarmupController
+                  canFinishUnlock={state.sceneZero?.suitcaseGame?.status === "finished"}
+                  disabled={pending}
+                  onLog={addLog}
+                  state={state.audienceWarmup}
+                  unlock={state.sceneZero?.unlock}
+                />
+              </div>
+            ) : null}
+          </section>
+
+          <section className={styles.suitcasePanel} aria-labelledby="operator-suitcase-title">
+            <header>
+              <div>
+                <small>CENA 0 / CONTROLES RÁPIDOS</small>
+                <h2 id="operator-suitcase-title">JOGO DAS MALAS</h2>
+              </div>
+              <a href="/cena-0-controller#scene-zero-suitcases">ABRIR CONTROLES DETALHADOS</a>
+            </header>
+            <p className={styles.suitcaseStatus}>
+              {(suitcase.phase || "IDLE").toUpperCase()} · {suitcase.activeExperience || "SEM MALA ATIVA"} · {suitcaseGame?.id || "SEM MINI GAME"}
+            </p>
+            <div className={`${styles.controlGrid} ${styles.suitcaseControlGrid}`}>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala start", "MALA ERROR")} type="button">INICIAR JOGO DAS MALAS</button>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala 1", "MALA ERROR")} type="button">MALA 1 / NOME</button>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala 2", "MALA ERROR")} type="button">MALA 2 / INSTAGRAM</button>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala 3", "MALA ERROR")} type="button">MALA 3 / MINI GAME</button>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala next", "MALA ERROR")} type="button">PRÓXIMA PESSOA</button>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala win", "MALA ERROR")} type="button">FORÇAR VITÓRIA</button>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala lose", "MALA ERROR")} type="button">FORÇAR DERROTA</button>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala reset", "MALA ERROR")} type="button">REINICIAR</button>
+              <button className={styles.panicButton} disabled={pending} onClick={() => sendOperatorCommand("/mala abort", "MALA ERROR")} type="button">INTERROMPER</button>
+            </div>
+          </section>
 
           {!embedded && instagram.embedded && instagram.status !== "DISCONNECTED" && instagram.embeddedPanelVisible !== false && !instagramPanelClosed ? (
             <div className={styles.instagramBrowserPanel}>
@@ -576,6 +608,27 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
         </section>
 
         <aside className={styles.memoryPanel}>
+          <details className={styles.diagnostics}>
+            <summary>DIAGNÓSTICOS, MEMÓRIA E CONTROLES AVANÇADOS</summary>
+            <div className={styles.diagnosticsBody}>
+          <div className={styles.diagnosticMeta}>
+            <span>MEMORIES: {state.memories.length}</span>
+            <span>MESSAGES: {state.conversation.length}</span>
+            <span>INSTAGRAM: {instagram.status || "DISCONNECTED"}</span>
+            <span>RESEARCH: {research.researchEnabled ? research.budgetMode.toUpperCase() : "OFF"}</span>
+            <span>GLITCH: {glitch.active ? `${glitch.mode || "active"} #${glitch.sequence || 0}`.toUpperCase() : "OFF"}</span>
+            <span>
+              ROBOT SOUND: {state.robotSound?.enabled === false
+                ? "OFF"
+                : `${(state.robotSound?.soundStyle || "robot").toUpperCase()} / ${(state.robotSound?.preset || "normal").toUpperCase()}`}
+            </span>
+            <span>PARTICIPANTS: T{participantCounts.team} A{participantCounts.audience} S{participantCounts.session}</span>
+            <span>ACTIVITIES: {activities.length}</span>
+            <span>EVENTS: {state.performance?.events?.length || 0}</span>
+            <span>KNOWLEDGE: {state.context?.knowledge?.loaded ? "LOADED" : "NOT LOADED"}</span>
+            <span>VARIABLES: {variableCount}</span>
+            <span>PROMPT: V{state.context?.promptVersion || 1}</span>
+          </div>
           <h2>MEMORY BUFFER</h2>
           {latestMemories.length === 0 ? <p>EMPTY</p> : null}
           {latestMemories.map((memory) => (
@@ -746,32 +799,6 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             </button>
           </div>
           <article className={styles.memory}>
-            <strong>SUITCASE DEBUG</strong>
-            <p>
-              CURRENT EXPERIENCE: {suitcase.activeExperience || "NONE"}
-              {"\n"}CURRENT GAME: {suitcaseGame?.id || "NONE"}
-              {"\n"}CURRENT STATE: {suitcase.phase || "IDLE"}
-              {"\n"}LAST USER INPUT: {suitcase.lastUserInput || "-"}
-              {"\n"}LAST BOT INTENT: {suitcase.lastBotIntent || "-"}
-              {"\n"}QUESTION COUNT: {suitcase.guessWho?.questionCount ?? "-"}
-              {"\n"}TIMER: {suitcase.instagram?.remainingTime ?? "-"}
-              {"\n"}SELECTED PERSON: {suitcase.instagram?.selectedPerson?.name || "-"}
-              {"\n"}SELECTED WORD: {suitcaseGame?.publicState?.progress || suitcaseGame?.publicState?.scrambled || suitcaseGame?.publicState?.prompt || "-"}
-              {"\n"}GAME RESULT: {suitcase.result || "-"}
-            </p>
-          </article>
-          <div className={styles.controlGrid}>
-            <button disabled={pending} onClick={() => sendOperatorCommand("/mala start", "MALA ERROR")} type="button">START SUITCASES</button>
-            <button disabled={pending} onClick={() => sendOperatorCommand("/mala abort", "MALA ERROR")} type="button">ABORT CURRENT GAME</button>
-            <button disabled={pending} onClick={() => sendOperatorCommand("/mala reset", "MALA ERROR")} type="button">RESET GAME</button>
-            <button disabled={pending} onClick={() => sendOperatorCommand("/mala 1", "MALA ERROR")} type="button">FORCE SUITCASE 1 / NAME</button>
-            <button disabled={pending} onClick={() => sendOperatorCommand("/mala 2", "MALA ERROR")} type="button">FORCE SUITCASE 2 / INSTAGRAM</button>
-            <button disabled={pending} onClick={() => sendOperatorCommand("/mala 3", "MALA ERROR")} type="button">FORCE SUITCASE 3 / RANDOM GAME</button>
-            <button disabled={pending} onClick={() => sendOperatorCommand("/mala next", "MALA ERROR")} type="button">NEXT INSTAGRAM PERSON</button>
-            <button disabled={pending} onClick={() => sendOperatorCommand("/mala win", "MALA ERROR")} type="button">FORCE WIN</button>
-            <button disabled={pending} onClick={() => sendOperatorCommand("/mala lose", "MALA ERROR")} type="button">FORCE LOSE</button>
-          </div>
-          <article className={styles.memory}>
             <strong>GAME DIRECTOR</strong>
             <p>
               {game.id ? `${game.id} / ${game.phase} / ${game.startSource || "none"}` : "NO GAME"}
@@ -844,6 +871,8 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
               <p>{[entry.eventType, entry.activityType, entry.action, entry.text].filter(Boolean).join(" / ") || entry.eventId || "LOG"}</p>
             </article>
           ))}
+            </div>
+          </details>
         </aside>
       </div>
     </Terminal>
