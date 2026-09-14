@@ -597,6 +597,11 @@
   grid-row: 1;
 }
 
+.chatPaneQuadrants [data-unlock-hud] {
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
 .chatPaneQuadrants .sceneZeroAuxRegion {
   z-index: 2;
   grid-column: 1;

@@ -94,6 +94,41 @@ try {
   await page.waitForFunction(() => Number(getComputedStyle(document.querySelector('[aria-label="Cursor da Caixa Preta"]')).opacity) > 0.9);
   await page.screenshot({ path: "/private/tmp/caixa-preta-videomapping-pos-bios.png" });
 
+  async function postWarmup(action, payload = {}) {
+    const response = await page.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action, ...payload } });
+    const body = await response.json();
+    assert.equal(response.ok(), true, `${action}: ${body.error || "request failed"}`);
+  }
+
+  async function progressBarCenterY() {
+    await page.getByRole("progressbar", { name: /^DESBLOQUEIO DO ESPETÁCULO:/ }).waitFor();
+    return page.getByRole("progressbar", { name: /^DESBLOQUEIO DO ESPETÁCULO:/ }).evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
+      return bounds.top + (bounds.height / 2);
+    });
+  }
+
+  await postWarmup("set-manual-mode", { manualMode: true });
+  await postWarmup("unlock-start-warmup");
+  await postWarmup("manual-next");
+  await postWarmup("unlock-sound-check-skip");
+  await postWarmup("manual-next");
+  await page.waitForFunction(async () => {
+    const response = await fetch("/api/state");
+    return (await response.json()).sceneZero.unlock.status === "HUMAN_VERIFICATION";
+  });
+  const verificationBarCenterY = await progressBarCenterY();
+  await postWarmup("manual-next");
+  await page.waitForFunction(async () => {
+    const response = await fetch("/api/state");
+    return (await response.json()).audienceWarmup.phase === "questions";
+  });
+  const questionBarCenterY = await progressBarCenterY();
+  assert.ok(
+    Math.abs(questionBarCenterY - verificationBarCenterY) <= 1,
+    `a barra não pode saltar ao iniciar as perguntas: ${verificationBarCenterY} -> ${questionBarCenterY}`
+  );
+
   const occupiedAuxiliaryGeometry = await page.evaluate(() => {
     const marker = document.querySelector('[data-scene-zero-aux-active]');
     marker.setAttribute("data-scene-zero-aux-active", "true");

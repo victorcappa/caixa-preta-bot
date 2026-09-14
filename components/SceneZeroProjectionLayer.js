@@ -263,7 +263,7 @@ function PlayUnlockProjection({ unlock, now }) {
   }
 
   return (
-    <aside className={styles.unlockHud} aria-label="Progresso" aria-live="polite">
+    <aside className={styles.unlockHud} data-unlock-hud aria-label="Progresso" aria-live="polite">
       <UnlockProgressBar key="show-unlock-progress" label="DESBLOQUEIO DO ESPETÁCULO" progress={unlock.progress} />
     </aside>
   );

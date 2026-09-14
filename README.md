@@ -229,7 +229,9 @@ espetáculo aparece em `0%` e permanece visível durante o restante da Cena 0.
 
 Cada item da lista mostra texto, categoria e estado de pontuação. Toda nova
 pergunta publicada avança automaticamente `5%`; repetições da mesma pergunta e
-reações intermediárias não pontuam. Na projeção, a faixa compacta de aquecimento identifica
+reações intermediárias não pontuam. No videomapping, a barra permanece ancorada
+no centro do quadrante superior direito durante toda a transição entre a
+confirmação sonora e as perguntas. Na projeção, a faixa compacta de aquecimento identifica
 o desbloqueio do espetáculo e mantém o percentual visível.
 `DISPARAR` envia a ação e aplica os `5%` automaticamente. Um mesmo ID pontua
 somente uma vez. O feedback técnico continua registrado no
