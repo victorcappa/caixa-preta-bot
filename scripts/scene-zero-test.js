@@ -242,10 +242,11 @@ async function main() {
   assert.equal(suitcaseGame.nextSceneZeroSuitcase({ openedSuitcases: [2, 3, 1] }), null);
   assert.equal(suitcaseGame.buildSuitcaseSelectionCue(2), "2");
   assert.equal(suitcaseGame.buildSuitcaseSelectionCue(4), "");
-  assert.equal(suitcaseGame.SCENE_ZERO_SUITCASE_CUE_DURATION_MS, 10000);
+  assert.equal(suitcaseGame.SCENE_ZERO_SUITCASE_CUE_DURATION_MS, 5000);
   assert.equal(suitcaseGame.sceneZeroSuitcaseCueFrameAt(0, 2).phase, "roulette");
-  assert.equal(suitcaseGame.sceneZeroSuitcaseCueFrameAt(3200, 2).phase, "reveal");
-  assert.equal(suitcaseGame.sceneZeroSuitcaseCueFrameAt(3200, 2).number, 2);
+  assert.equal(suitcaseGame.sceneZeroSuitcaseCueFrameAt(2200, 2).phase, "reveal");
+  assert.equal(suitcaseGame.sceneZeroSuitcaseCueFrameAt(2200, 2).number, 2);
+  assert.match(suitcaseGame.SCENE_ZERO_RETURN_BORROWED_OBJECTS_INSTRUCTION, /DEVOLVA À PLATEIA/);
   assert.equal(suitcaseGame.shouldShowGincanaTimer({ status: "running" }), true);
   assert.equal(suitcaseGame.shouldShowGincanaTimer({ status: "complete" }), true);
   assert.equal(suitcaseGame.shouldShowGincanaTimer({ status: "completed" }), true);
@@ -370,6 +371,7 @@ async function main() {
   assert.equal(legacySnapshot.suitcaseGame.morelBios.status, "idle");
 
   const messageSchedule = messageTiming.sequentialMessageSchedule(["12345", "1234567890"]);
+  assert.equal(messageTiming.PUBLIC_TYPE_INTERVAL_MS, 60);
   assert.equal(messageSchedule.offsets[0], 650);
   assert(messageSchedule.offsets[1] >= 650 + (5 * messageTiming.PUBLIC_TYPE_INTERVAL_MS));
   assert(messageSchedule.totalDurationMs > messageSchedule.offsets[1]);

@@ -14,6 +14,7 @@ async function main() {
   assert.equal(initial.pitchScale, 1);
   assert.equal(initial.microphoneSensitivity, 1);
   assert.equal(initial.typingFrequency, 0.35);
+  assert.equal(initial.typingIntervalMs, 60);
   assert.equal(initial.outputResetSequence, 0);
   assert(initial.masterVolume > 0 && initial.masterVolume < 0.5);
 
@@ -80,6 +81,7 @@ async function main() {
   engine.relayEffect = () => false;
   engine.canPlay = () => true;
   engine.typingGain = { id: "typing-gain" };
+  engine.effectsGain = { id: "effects-gain" };
   engine.click = (options) => { typingClicks.push(options); };
   engine.setSettings({
     ...engine.settings,
@@ -112,9 +114,19 @@ async function main() {
   engine.setSettings({ ...engine.settings, completeEnabled: true });
   engine.complete({ localOnly: true });
   engine.countdown(0, { localOnly: true });
+  engine.gameStart({ localOnly: true });
   assert.deepEqual(system95Effects.map((entry) => entry.options.kind), [
-    "success", "error", "impact", "wake", "complete", "countdown"
+    "success", "error", "impact", "wake", "complete", "countdown", "game-start"
   ]);
+
+  engine.rouletteTick(2, { localOnly: true });
+  assert.equal(system95Blips.at(-1).destination, engine.effectsGain);
+  const hangmanTones = [];
+  engine.tone = (options) => { hangmanTones.push(options); };
+  engine.hangmanPulse(1, { localOnly: true });
+  assert.equal(hangmanTones[0].from, 196);
+  engine.stopHangmanMusic({ localOnly: true });
+  assert.equal([...engine.timers].some((timer) => timer.kind === "hangman-music"), false);
 
   const relayedCountdowns = [];
   engine.relayEffect = (effect, detail) => {

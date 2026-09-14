@@ -333,8 +333,8 @@ function announceNextSuitcase({ includeRules = false, bypassEmergence = false } 
     }
   }
   const text = includeRules
-    ? "O jogo é simples: eu escolho uma mala, você vai até ela e cumpre o desafio. Vou escolher uma mala aleatoriamente."
-    : "Vou escolher uma mala aleatoriamente.";
+    ? "O jogo é simples: eu indico uma mala. Quando o número aparecer, vá até ela, abra a mala e pegue o que estiver dentro. Depois, cumpra o desafio. Vou escolher uma mala agora."
+    : "Vou indicar outra mala. Quando o número aparecer, vá até ela e abra a mala.";
   const message = showState.addMessage("assistant", text, "scene-zero-suitcase-choice");
   const announced = showState.controlSceneZero("suitcase-choice-announce", {
     targetSuitcase: nextSuitcase,

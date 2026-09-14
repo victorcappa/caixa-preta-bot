@@ -67,7 +67,7 @@ export function sceneZeroEmergenceEraseDelay(cue, remainingLength) {
   return cue.eraseBaseMs + jitter + hesitation;
 }
 
-export function sceneZeroEmergenceDurationMs(cue, typingIntervalMs = 42) {
+export function sceneZeroEmergenceDurationMs(cue, typingIntervalMs = 60) {
   if (!cue) return 0;
   let eraseDurationMs = 0;
   for (let remaining = cue.text.length; remaining > 0; remaining -= 1) {

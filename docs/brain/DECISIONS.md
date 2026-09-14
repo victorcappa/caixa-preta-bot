@@ -84,7 +84,7 @@ The performance needs repeatable authored instructions and human control rather 
 
 ### Consequences
 
-Edit the library when changing wording. Do not silently rewrite a prompt in a renderer or model response path. Keep between-question reactions and phase-result comments in the authored warmup data files. Require a contextual `few` or `many` observation for the active prompt, never repeat an already used reaction in the same session, and select the next prompt only after that reaction has been projected.
+Edit the library when changing wording. Do not silently rewrite a prompt in a renderer or model response path. Keep between-question reactions and phase-result comments in the authored warmup data files, and publish them through the normal green chatbot typewriter rather than a parallel white overlay. Require a contextual `few` or `many` observation for the active prompt, never repeat an already used reaction in the same session, and select the next prompt only after that reaction has been projected.
 
 ## ADR-005 — External navigation requires explicit operator action
 

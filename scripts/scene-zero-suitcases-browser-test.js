@@ -81,11 +81,12 @@ try {
   assert.equal(Boolean(result.sceneZero.suitcaseGame.gincana.currentTask.mandatoryAction), false);
   await sceneAction(context.request, "gincana-draw", { challengeId: "quatro-oculos" });
   await controller.getByRole("button", { name: "+ 5 SEGUNDOS", exact: true }).waitFor();
-  await projection.getByLabel("Desafio com objeto da Mala 2").waitFor({ timeout: 12000 });
   await projection.getByText("CONSIGA 4 ÓCULOS COM AJUDA DA PLATEIA.", { exact: true }).waitFor();
+  assert.equal(await projection.getByLabel("Desafio com objeto da Mala 2").count(), 0, "a instrução verde deve aparecer antes do painel do desafio");
   assert.equal(await projection.getByText("TODOS FINJAM ESTAR MORTOS NAS CADEIRAS E NO CHÃO.", { exact: true }).count(), 0);
   result = await sceneAction(context.request, "gincana-timer-start");
   assert.equal(result.sceneZero.suitcaseGame.gincana.timer.durationSeconds, 12);
+  await projection.getByLabel("Desafio com objeto da Mala 2").waitFor();
   const physicalTimer = projection.locator("[data-scene-zero-timer]");
   await physicalTimer.waitFor();
   await projection.getByRole("complementary", { name: /Tempo: (?:1[0-2]) segundos/ }).waitFor();
@@ -112,9 +113,14 @@ try {
   );
   await projection.screenshot({ path: "/private/tmp/caixa-preta-mala-2-desafio.png" });
 
+  result = await sceneAction(context.request, "gincana-complete");
+  assert.equal(result.sceneZero.suitcaseGame.gincana.timer.status, "completed");
+  await projection.getByLabel("Desafio com objeto da Mala 2").waitFor({ state: "detached" });
+  await projection.getByText("DEVOLVA À PLATEIA TUDO O QUE VOCÊ PEGOU EMPRESTADO.", { exact: true }).waitFor();
+
   result = await sceneAction(context.request, "suitcase-three-start");
   assert.deepEqual(result.sceneZero.suitcaseGame.openedSuitcases, [2, 3]);
-  assert.equal(result.sceneZero.suitcaseGame.gincana.timer.status, "cancelled");
+  assert.equal(result.sceneZero.suitcaseGame.gincana.timer.status, "completed");
   await sceneAction(context.request, "hangman-configure", { wordId: "hangman-11" });
   let state = await waitForState(context.request, (value) => value.publicMessage?.content === SCENE_ZERO_HANGMAN_INSTRUCTION, 12000);
   assert.equal(state.sceneZero.suitcaseGame.hangman.status, "ready", "a forca deve aguardar a instrução terminar");
@@ -137,7 +143,8 @@ try {
   result = await sceneAction(context.request, "hangman-guess", { guess: "CAIXA PRETA" });
   assert.equal(result.sceneZero.suitcaseGame.hangman.status, "won");
   assert.equal(result.sceneZero.suitcaseGame.hangman.timer.status, "complete");
-  await projection.getByText("REGISTRO RECUPERADO.", { exact: true }).waitFor();
+  await projection.getByLabel("Forca da Mala 3").waitFor({ state: "detached" });
+  await projection.getByText("REGISTRO RECUPERADO. A PALAVRA ERA CAIXA PRETA.", { exact: true }).waitFor();
 
   await sceneAction(context.request, "hangman-configure", { wordId: "hangman-03" });
   await sceneAction(context.request, "hangman-start");
@@ -145,7 +152,8 @@ try {
   assert.equal(state.sceneZero.suitcaseGame.hangman.status, "lost");
   assert.equal(state.sceneZero.suitcaseGame.hangman.timer.status, "complete");
   assert.equal(state.sceneZero.suitcaseGame.hangman.timer.remainingSeconds, 0);
-  await projection.getByText("TEMPO ESGOTADO.", { exact: true }).waitFor();
+  await projection.getByLabel("Forca da Mala 3").waitFor({ state: "detached" });
+  await projection.getByText("TEMPO ESGOTADO. A PALAVRA ERA ALTITUDE.", { exact: true }).waitFor();
   await projection.screenshot({ path: "/private/tmp/caixa-preta-mala-3-tempo-esgotado.png" });
 
   result = await sceneAction(context.request, "suitcase-one-start");

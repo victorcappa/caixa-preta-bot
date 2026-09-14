@@ -287,16 +287,6 @@ export function SceneZeroStatusProjection({ sceneZero, pitchScale = 1, soundStyl
   return <PlayUnlockProjection now={now} pitchScale={pitchScale} soundStyle={soundStyle} unlock={sceneZero?.unlock} />;
 }
 
-function AudienceWarmupReactionProjection({ reaction }) {
-  if (!reaction?.text) return null;
-  return (
-    <section className={styles.warmupReactionOverlay} data-kind={reaction.kind} aria-label="Reação do chatbot" aria-live="assertive">
-      <small>{reaction.kind === "many" ? "MUITOS REAGIRAM" : "NINGUÉM REAGIU"}</small>
-      <strong>{reaction.text}</strong>
-    </section>
-  );
-}
-
 function AudienceWarmupMinigameProjection({ warmup, now }) {
   const minigame = warmup?.minigame || {};
   const game = getAudienceWarmupMinigame(minigame.selectedId);
@@ -313,6 +303,15 @@ function AudienceWarmupMinigameProjection({ warmup, now }) {
     active: Boolean(timerVisible && minigame.timer?.status === "running"),
     countdownKey: `audience-warmup:${minigame.selectedId || "draw"}:${minigame.timer?.sequence || 0}`
   });
+
+  useEffect(() => {
+    if (drawing) robotSoundEngine.rouletteTick(drawIndex);
+  }, [drawing, drawIndex]);
+
+  useEffect(() => {
+    if (minigame.status === "selected") robotSoundEngine.success();
+    if (minigame.status === "running") robotSoundEngine.gameStart();
+  }, [minigame.selectedId, minigame.status, minigame.timer?.startedAt]);
 
   if (!drawing && !selectedVisible && !timerVisible && !secondRoundReady) return null;
 
@@ -445,13 +444,14 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
     sceneZero?.suitcaseGame?.currentSuitcase === 2
     && gincana?.currentTask
     && suitcaseSelectionAge >= SCENE_ZERO_SUITCASE_CUE_DURATION_MS
+    && ["running", "paused"].includes(gincanaTimer?.status)
   );
   const physicalSeconds = timerSeconds(gincanaTimer, now);
   const physicalUrgent = gincanaTimer?.status === "running" && physicalSeconds <= 3;
   const showHangman = Boolean(
     sceneZero?.suitcaseGame?.currentSuitcase === 3
     && hangman?.activity
-    && hangman.status !== "ready"
+    && hangman.status === "active"
     && suitcaseSelectionAge >= SCENE_ZERO_SUITCASE_CUE_DURATION_MS
   );
   const hangmanSeconds = timerSeconds(hangman?.timer, now);
@@ -530,6 +530,35 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
     countdownKey: `scene-zero:hangman:${hangman?.timer?.sequence || 0}`
   });
 
+  useEffect(() => {
+    if (participantSelection.status === "roulette") robotSoundEngine.rouletteTick(rouletteIndex);
+  }, [participantSelection.status, rouletteIndex]);
+
+  useEffect(() => {
+    if (participantSelection.status === "selected") robotSoundEngine.success();
+  }, [participantSelection.sequence, participantSelection.status]);
+
+  useEffect(() => {
+    if (!showSuitcaseSelection) return;
+    if (suitcaseCueFrame.phase === "roulette") robotSoundEngine.rouletteTick(suitcaseCueFrame.number);
+    else robotSoundEngine.gameStart();
+  }, [sceneZero?.suitcaseGame?.suitcaseSelectionSequence, showSuitcaseSelection, suitcaseCueFrame.number, suitcaseCueFrame.phase]);
+
+  useEffect(() => {
+    if (hangman?.status !== "active") return undefined;
+    let step = 0;
+    robotSoundEngine.gameStart();
+    robotSoundEngine.hangmanPulse(step);
+    const interval = window.setInterval(() => {
+      step += 1;
+      robotSoundEngine.hangmanPulse(step);
+    }, 720);
+    return () => {
+      window.clearInterval(interval);
+      robotSoundEngine.stopHangmanMusic();
+    };
+  }, [hangman?.status, hangman?.timer?.startedAt]);
+
   const hangmanResultSoundRef = useRef(null);
   useEffect(() => {
     if (!["won", "lost"].includes(hangman?.status)) return;
@@ -545,7 +574,6 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
       <span data-scene-zero-aux-active={auxiliaryActive ? "true" : "false"} hidden />
       <audio preload="auto" ref={teaAudioRef} src={TEA_FOR_TWO_AUDIO} />
       <audio preload="auto" ref={evidenciasAudioRef} src={EVIDENCIAS_KARAOKE_AUDIO} />
-      <AudienceWarmupReactionProjection reaction={audienceWarmup?.reaction} />
       <AudienceWarmupMinigameProjection now={now} warmup={audienceWarmup} />
       <AudienceWarmupActionCountdownSound now={now} warmup={audienceWarmup} />
       {collapse ? (
@@ -569,7 +597,7 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
       ) : null}
       {showSuitcaseSelection ? (
         <div className={styles.suitcaseCueOverlay} key={sceneZero.suitcaseGame.suitcaseSelectionSequence} aria-label={`Mala indicada: ${sceneZero.suitcaseGame.currentSuitcase}`} aria-live="assertive">
-          <span>{suitcaseCueFrame.phase === "reveal" ? "MALA" : ""}</span>
+          <span>{suitcaseCueFrame.phase === "reveal" ? "ABRA A MALA" : ""}</span>
           <strong key={`${suitcaseCueFrame.phase}-${suitcaseCueFrame.number}`}>{suitcaseCueFrame.number}</strong>
         </div>
       ) : null}
