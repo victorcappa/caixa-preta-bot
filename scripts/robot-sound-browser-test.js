@@ -93,8 +93,12 @@ async function main() {
     const operatorInput = page.getByLabel("Comando do operator");
     await operatorInput.fill("/reset");
     await operatorInput.press("Enter");
-    await page.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.activeSources?.size > 0, null, { timeout: 6500 });
-    await page.getByText("TEM ALGUEM AI?", { exact: false }).waitFor({ timeout: 7000 });
+    await page.waitForFunction(async () => {
+      const response = await fetch("/api/state");
+      return (await response.json()).sceneZero.unlock.status === "STANDBY";
+    });
+    await page.getByText("> _", { exact: true }).waitFor({ timeout: 7000 });
+    assert.equal(await page.getByText("TEM ALGUEM AI?", { exact: false }).count(), 0);
 
     await page.evaluate(async () => {
       const sound = window.__caixaPretaRobotSoundEngine;
@@ -141,7 +145,7 @@ async function main() {
 
     const projectionPage = await context.newPage();
     await projectionPage.goto("http://localhost:3000", { waitUntil: "domcontentloaded" });
-    await projectionPage.getByText("CONNECTED", { exact: true }).first().waitFor({ timeout: 10000 });
+    await projectionPage.getByText("> _", { exact: true }).waitFor({ timeout: 10000 });
     await projectionPage.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.lastRelaySinkAt > 0);
 
     const secondOperatorPage = await context.newPage();

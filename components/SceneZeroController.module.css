@@ -1,5 +1,21 @@
 .controller { box-sizing: border-box; min-height: 100%; padding: 24px 238px calc(24px + env(safe-area-inset-bottom)) 24px; color: #f4f4f4; background: #080808; font-family: var(--font-mono, monospace); }
 .controller > [id], .block[id] { scroll-margin-top: 18px; }
+.operatorModeBar { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(170px, .6fr) minmax(190px, .65fr); gap: 14px; align-items: center; margin-bottom: 14px; padding: 11px 14px; color: #9aa9a0; background: #0b0d0c; border: 1px solid #343936; }
+.operatorModeBar[data-active="true"] { color: #001c0c; background: #00ff66; border-color: #fff; box-shadow: 0 0 24px rgba(0,255,102,.22); }
+.operatorModeBar label { display: flex; align-items: center; gap: 11px; cursor: pointer; }
+.operatorModeBar input { width: 22px; height: 22px; accent-color: #00a844; }
+.operatorModeBar label span { display: grid; gap: 2px; }
+.operatorModeBar label strong { font-size: 14px; letter-spacing: .13em; }
+.operatorModeBar label small { font-size: 10px; letter-spacing: .08em; }
+.operatorModeBar > div { min-width: 0; display: grid; gap: 3px; justify-items: end; text-align: right; }
+.operatorModeBar > div span { font-size: 9px; letter-spacing: .12em; opacity: .72; }
+.operatorModeBar > div strong { max-width: 100%; overflow: hidden; font-size: 11px; letter-spacing: .07em; text-overflow: ellipsis; white-space: nowrap; }
+.operatorModeBar .microphonePermission { justify-items: start; text-align: left; }
+.microphonePermission[data-status="ready"] strong { color: #00ff66; }
+.operatorModeBar[data-active="true"] .microphonePermission[data-status="ready"] strong { color: #003d19; }
+.microphonePermission[data-status="suspended"] strong { color: #d7ff41; }
+.microphonePermission[data-status="blocked"] strong, .microphonePermission[data-status="insecure"] strong, .microphonePermission[data-status="unavailable"] strong { color: #ffb52d; }
+.microphonePermission button { margin-top: 3px; padding: 4px 7px; color: inherit; background: transparent; border: 1px solid currentColor; font: inherit; font-size: 9px; font-weight: 850; letter-spacing: .06em; cursor: pointer; }
 .indexNav { position: fixed; z-index: 4; top: 100px; right: 14px; display: grid; gap: 8px; width: 196px; max-height: calc(100vh - 118px); padding: 13px; overflow: auto; color: #d7d7d7; background: rgba(5, 8, 6, .97); border: 1px solid #2d513b; box-shadow: 0 14px 36px rgba(0, 0, 0, .4); }
 .indexNav > strong { color: #00ff66; font-size: 13px; letter-spacing: .12em; }
 .indexNav > span { overflow: hidden; color: #7c9a88; font-size: 10px; letter-spacing: .08em; text-overflow: ellipsis; white-space: nowrap; }
@@ -9,6 +25,11 @@
 .indexNav a b { color: #52665a; font-size: 9px; font-weight: 500; }
 .indexNav .activeIndexLink { color: #001c0c; background: #00ff66; border-left-color: #00ff66; font-weight: 800; }
 .indexNav .activeIndexLink b { color: #13592e; }
+.reactionControls { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid #2d513b; }
+.reactionControls small { color: #7c9a88; font-size: 9px; letter-spacing: .1em; }
+.reactionControls button { min-height: 38px; padding: 7px; color: #d7ff41; background: #11150f; border: 1px solid #586827; font: inherit; font-size: 10px; font-weight: 850; letter-spacing: .04em; cursor: pointer; }
+.reactionControls button:last-child { color: #00ff66; border-color: #237c45; }
+.reactionControls button:disabled { opacity: .3; cursor: default; }
 .header { display: grid; grid-template-columns: minmax(220px, .65fr) 1.35fr; gap: 18px; align-items: end; padding-bottom: 14px; border-bottom: 1px solid #303030; }
 .header p, .header h1, .memoryPanel h2, .personalityPanel h2, .stagePanel h2, .block h2 { margin: 0; }
 .header p { color: #00ff66; letter-spacing: .18em; }
@@ -149,4 +170,4 @@
 @media (max-width: 1280px) { .suitcaseGrid { grid-template-columns: 1fr; } }
 @media (max-width: 1000px) { .controller { padding-right: 190px; } .indexNav { right: 8px; width: 154px; } .header, .personalityPanel { grid-template-columns: 1fr; } .personalityQuickGrid { grid-column: auto; grid-template-columns: repeat(2, minmax(0, 1fr)); } .personalityPanel .readout { grid-column: auto; } .stageGrid { grid-template-columns: repeat(2, 1fr); } .blocks { grid-template-columns: 1fr; } .wide { grid-column: auto; } .levels { grid-template-columns: repeat(2, 1fr); } .quickGrid { grid-template-columns: repeat(3, 1fr); } .glitchVideoConfig, .browserQuickCommands { grid-template-columns: 1fr; } .glitchDurationPresets { grid-column: auto; } }
 @media (max-width: 520px) { .memoryHeading { display: grid; } .memoryComposer, .browserQuickField { grid-template-columns: 1fr; } .browserQuickField input, .browserQuickField button { grid-column: 1; grid-row: auto; } }
-@media (max-width: 700px) { .controller { padding: 18px 18px 178px; } .bootPanel { grid-template-columns: 1fr auto; } .bootActions { grid-column: 1 / -1; } .warmupDisclosureToggle { grid-template-columns: 1fr auto; } .warmupDisclosureStatus { grid-column: 1 / -1; grid-row: 2; white-space: normal; } .warmupDisclosureAction { grid-column: 2; grid-row: 1; } .indexNav { top: auto; right: 10px; bottom: 10px; left: 10px; width: auto; max-height: 142px; } .indexNav > span { display: none; } .indexNav nav { grid-template-columns: repeat(3, minmax(0, 1fr)); } .indexNav a { grid-template-columns: 20px minmax(0, 1fr); min-height: 26px; font-size: 9px; } }
+@media (max-width: 700px) { .controller { padding: 18px 18px 178px; } .operatorModeBar { grid-template-columns: 1fr; } .operatorModeBar > div { justify-items: start; text-align: left; } .bootPanel { grid-template-columns: 1fr auto; } .bootActions { grid-column: 1 / -1; } .warmupDisclosureToggle { grid-template-columns: 1fr auto; } .warmupDisclosureStatus { grid-column: 1 / -1; grid-row: 2; white-space: normal; } .warmupDisclosureAction { grid-column: 2; grid-row: 1; } .indexNav { top: auto; right: 10px; bottom: 10px; left: 10px; width: auto; max-height: 170px; } .indexNav > span { display: none; } .indexNav nav { grid-template-columns: repeat(3, minmax(0, 1fr)); } .indexNav a { grid-template-columns: 20px minmax(0, 1fr); min-height: 26px; font-size: 9px; } .reactionControls { grid-template-columns: repeat(2, minmax(0, 1fr)); } .reactionControls small { grid-column: 1 / -1; } }

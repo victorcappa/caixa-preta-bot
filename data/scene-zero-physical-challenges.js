@@ -1,17 +1,10 @@
-export const SCENE_ZERO_MANDATORY_DEAD_ACTION = {
-  text: "TODOS FINJAM ESTAR MORTOS NAS CADEIRAS E NO CHÃO.",
-  duration: 30
-};
-
 function objectChallenge(id, text, target, objectDuration = 15, options = {}) {
   return {
     id,
     text,
     target,
     objectDuration,
-    mandatoryAction: SCENE_ZERO_MANDATORY_DEAD_ACTION.text,
-    mandatoryDuration: SCENE_ZERO_MANDATORY_DEAD_ACTION.duration,
-    duration: objectDuration + SCENE_ZERO_MANDATORY_DEAD_ACTION.duration,
+    duration: objectDuration,
     category: "objetos / plateia",
     intensity: options.intensity || "média",
     successMessage: options.successMessage || "DESAFIO CONCLUÍDO.",

@@ -5,7 +5,8 @@ import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
 import {
   normalizeRobotSoundSettings,
   ROBOT_SOUND_DEFAULTS,
-  ROBOT_SOUND_PRESET_NAMES
+  ROBOT_SOUND_PRESET_NAMES,
+  robotTypingIntervalMs
 } from "@/lib/robot-sound/state";
 import styles from "./RobotSoundControls.module.css";
 
@@ -108,7 +109,7 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
         const timer = window.setTimeout(() => {
           testTimersRef.current.delete(timer);
           robotSoundEngine.typing(character, { force: true });
-        }, index * 42);
+        }, index * robotTypingIntervalMs(draft));
         testTimersRef.current.add(timer);
       }
       return;
@@ -189,6 +190,20 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
           step="0.01"
           type="range"
           value={draft.typingVolume}
+        />
+      </label>
+
+      <label className={styles.field}>
+        <span>VELOCIDADE DA DIGITAÇÃO</span>
+        <output>{Math.round(1000 / draft.typingIntervalMs)} caracteres/s</output>
+        <input
+          aria-label="Velocidade da digitação do robô"
+          max="60"
+          min="5"
+          onChange={(event) => commit({ typingIntervalMs: 1000 / Number(event.target.value) }, 120)}
+          step="1"
+          type="range"
+          value={Math.round(1000 / draft.typingIntervalMs)}
         />
       </label>
 

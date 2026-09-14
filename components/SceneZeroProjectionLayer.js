@@ -13,7 +13,6 @@ import { SCENE_ZERO_MOREL_BIOS_DURATION_MS, SCENE_ZERO_MOREL_BIOS_LINES, SCENE_Z
 import { SCENE_ZERO_SUITCASE_CUE_DURATION_MS, sceneZeroSuitcaseCueFrameAt } from "@/lib/scene-zero/suitcaseGame";
 import { AUDIENCE_WARMUP_MINIGAMES, getAudienceWarmupMinigame } from "@/data/audience-warmup-minigames";
 import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
-import BlinkingCursor from "./BlinkingCursor";
 import useCountdownSound from "./useCountdownSound";
 import styles from "./SceneZeroProjectionLayer.module.css";
 
@@ -83,19 +82,75 @@ function EvidenciasKaraoke({ timer, now, seconds }) {
   );
 }
 
-function UnlockProgressBar({ progress, showValue = true }) {
+function UnlockProgressBar({ progress, label, showValue = true }) {
   const value = Math.max(0, Math.min(100, Number(progress) || 0));
   return (
-    <div className={styles.unlockBar}>
-      <div
-        aria-label={`Progresso: ${value}%`}
-        aria-valuemax={100}
-        aria-valuemin={0}
-        aria-valuenow={value}
-        className={styles.unlockTrack}
-        role="progressbar"
-      ><span style={{ width: `${value}%` }} /></div>
-      {showValue ? <strong>{value}%</strong> : null}
+    <div className={styles.progressGroup}>
+      {label ? <small className={styles.progressLabel}>{label}</small> : null}
+      <div className={styles.unlockBar}>
+        <div
+          aria-label={`${label || "Progresso"}: ${value}%`}
+          aria-valuemax={100}
+          aria-valuemin={0}
+          aria-valuenow={value}
+          className={styles.unlockTrack}
+          role="progressbar"
+        ><span style={{ width: `${value}%` }} /></div>
+        {showValue ? <strong>{value}%</strong> : null}
+      </div>
+    </div>
+  );
+}
+
+function AudienceSoundCheck({ unlock }) {
+  const soundCheck = unlock?.soundCheck || {};
+  const phase = soundCheck.phase;
+
+  if (phase === "greeting") {
+    return null;
+  }
+
+  if (phase === "confirmed") {
+    return (
+      <div className={styles.soundCheckConfirmed} aria-live="assertive">
+        <div className={styles.soundMeter} data-complete="true">
+          <span style={{ width: "100%" }} />
+        </div>
+        <small>SINAL DE VIDA · CONFIRMADO</small>
+      </div>
+    );
+  }
+
+  const levelPercent = Math.max(0, Math.min(100, Math.round(Number(soundCheck.liveLevel) || 0)));
+  const holdProgress = Math.max(0, Math.min(100, Math.round(Number(soundCheck.holdProgress) || 0)));
+  const microphoneUnavailable = soundCheck.microphoneStatus === "unavailable";
+  return (
+    <div className={styles.soundCheckListening}>
+      <div className={styles.soundMeterGroup}>
+        <div
+          aria-label={`Nível sonoro: ${levelPercent}%`}
+          aria-valuemax={100}
+          aria-valuemin={0}
+          aria-valuenow={levelPercent}
+          className={styles.soundMeter}
+          role="progressbar"
+        >
+          <span style={{ width: `${levelPercent}%` }} />
+          <i aria-hidden="true" style={{ left: `${PLAY_UNLOCK_CONFIG.soundCheck.thresholdPercent}%` }} />
+          <b style={{ left: `${PLAY_UNLOCK_CONFIG.soundCheck.thresholdPercent}%` }}>META</b>
+        </div>
+        <div className={styles.soundMeterReadout}>
+          <span>NÍVEL {levelPercent}%</span>
+          <span>SINAL MANTIDO {holdProgress}%</span>
+        </div>
+      </div>
+      <small className={microphoneUnavailable ? styles.soundCheckError : styles.soundCheckStatus}>
+        {microphoneUnavailable
+          ? "MICROFONE INDISPONÍVEL · USE O CONTROLE MANUAL DO OPERADOR"
+          : soundCheck.microphoneStatus === "listening"
+            ? "ESCUTANDO A SALA..."
+            : "AGUARDANDO MICROFONE DO CONTROLLER..."}
+      </small>
     </div>
   );
 }
@@ -103,7 +158,7 @@ function UnlockProgressBar({ progress, showValue = true }) {
 function PlayUnlockProjection({ unlock, now }) {
   const soundSequenceRef = useRef(null);
   const status = unlock?.status;
-  const hidden = !status || [PLAY_UNLOCK_STATES.STANDBY, PLAY_UNLOCK_STATES.UNLOCKED].includes(status);
+  const hidden = !status || status === PLAY_UNLOCK_STATES.STANDBY;
   const showStalledTerminal = status === PLAY_UNLOCK_STATES.BOOT_FAILED
     && Date.parse(unlock.handoffUntil || "") > now;
 
@@ -116,6 +171,8 @@ function PlayUnlockProjection({ unlock, now }) {
       if (!context) return;
       const soundId = status === PLAY_UNLOCK_STATES.UNLOCKING
         ? "unlock"
+        : status === PLAY_UNLOCK_STATES.SOUND_CHECK
+          ? (unlock.soundCheck?.phase === "confirmed" ? "progress" : "tick")
         : status === PLAY_UNLOCK_STATES.HUMAN_VERIFICATION
           ? "verification"
           : status === PLAY_UNLOCK_STATES.BOOT_FAILED
@@ -139,7 +196,7 @@ function PlayUnlockProjection({ unlock, now }) {
     } catch {
       // Browsers may block boot audio before a physical interaction.
     }
-  }, [status, unlock?.bootStep, unlock?.soundEnabled, unlock?.soundSequence, hidden]);
+  }, [status, unlock?.bootStep, unlock?.soundCheck?.phase, unlock?.soundEnabled, unlock?.soundSequence, hidden]);
 
   if (hidden) return null;
 
@@ -154,7 +211,7 @@ function PlayUnlockProjection({ unlock, now }) {
           <div className={styles.biosLines}>
             {lines.map((line, index) => <p key={`${index}-${line}`}>{line || "\u00a0"}</p>)}
           </div>
-          <UnlockProgressBar progress={unlock.progress} />
+          <UnlockProgressBar key="bios-progress" label="CARREGAMENTO DA BIOS" progress={unlock.bootProgress} />
           {unlock.bootPaused ? <p className={styles.biosPaused}>BIOS PAUSADA PELO OPERADOR</p> : null}
         </div>
       </section>
@@ -164,7 +221,17 @@ function PlayUnlockProjection({ unlock, now }) {
   if (status === PLAY_UNLOCK_STATES.BOOT_FAILED) {
     return (
       <section className={`${styles.biosOverlay} ${styles.waitingCursorOverlay}`} aria-label="Aguardando início do aquecimento">
-        <BlinkingCursor />
+        <div className={styles.waitingUnlock}>
+          <UnlockProgressBar key="show-unlock-progress" label="DESBLOQUEIO DO ESPETÁCULO" progress={unlock.progress} />
+        </div>
+      </section>
+    );
+  }
+
+  if (status === PLAY_UNLOCK_STATES.SOUND_CHECK) {
+    return (
+      <section className={`${styles.biosOverlay} ${styles.soundCheckOverlay}`} aria-label="Verificação sonora da plateia">
+        <AudienceSoundCheck unlock={unlock} />
       </section>
     );
   }
@@ -173,8 +240,8 @@ function PlayUnlockProjection({ unlock, now }) {
     return (
       <section className={`${styles.biosOverlay} ${styles.verificationOverlay}`} aria-label="Protocolo de verificação humana" aria-live="assertive">
         <div className={styles.verificationTitle} key={unlock.verificationTitleSequence}>
-          <strong>{PLAY_UNLOCK_CONFIG.verificationTitle}</strong>
-          <UnlockProgressBar progress={unlock.progress} />
+          {PLAY_UNLOCK_CONFIG.verificationTitle ? <strong>{PLAY_UNLOCK_CONFIG.verificationTitle}</strong> : null}
+          <UnlockProgressBar key="show-unlock-progress" label="DESBLOQUEIO DO ESPETÁCULO" progress={unlock.progress} />
         </div>
       </section>
     );
@@ -184,7 +251,7 @@ function PlayUnlockProjection({ unlock, now }) {
     return (
       <section className={`${styles.biosOverlay} ${styles.unlockingOverlay}`} aria-label="Sequência de desbloqueio da peça" aria-live="assertive">
         <div className={styles.biosTerminal}>
-          <UnlockProgressBar progress={100} />
+          <UnlockProgressBar key="show-unlock-progress" label="DESBLOQUEIO DO ESPETÁCULO" progress={unlock.progress} />
           <div className={styles.unlockLines}>
             {playUnlockSequenceLines(unlock.unlockSequenceSource)
               .slice(0, Number(unlock.unlockSequenceIndex ?? -1) + 1)
@@ -197,8 +264,29 @@ function PlayUnlockProjection({ unlock, now }) {
 
   return (
     <aside className={styles.unlockHud} aria-label="Progresso" aria-live="polite">
-      <UnlockProgressBar progress={unlock.progress} showValue={false} />
+      <UnlockProgressBar key="show-unlock-progress" label="DESBLOQUEIO DO ESPETÁCULO" progress={unlock.progress} />
     </aside>
+  );
+}
+
+export function SceneZeroStatusProjection({ sceneZero }) {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setNow(Date.now()), 100);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  return <PlayUnlockProjection now={now} unlock={sceneZero?.unlock} />;
+}
+
+function AudienceWarmupReactionProjection({ reaction }) {
+  if (!reaction?.text) return null;
+  return (
+    <section className={styles.warmupReactionOverlay} data-kind={reaction.kind} aria-label="Reação do chatbot" aria-live="assertive">
+      <small>{reaction.kind === "many" ? "MUITOS REAGIRAM" : "NINGUÉM REAGIU"}</small>
+      <strong>{reaction.text}</strong>
+    </section>
   );
 }
 
@@ -356,8 +444,6 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
   );
   const physicalSeconds = timerSeconds(gincanaTimer, now);
   const physicalUrgent = gincanaTimer?.status === "running" && physicalSeconds <= 3;
-  const physicalMandatory = gincanaTimer?.status === "running"
-    && physicalSeconds <= Number(gincana?.currentTask?.mandatoryDuration || 30);
   const showHangman = Boolean(
     sceneZero?.suitcaseGame?.currentSuitcase === 3
     && hangman?.activity
@@ -385,6 +471,20 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
     : [];
   const visibleMorelLines = allVisibleMorelLines.slice(-10);
   const visibleMorelStartIndex = Math.max(0, allVisibleMorelLines.length - visibleMorelLines.length);
+  const warmupMinigameVisible = ["drawing", "selected", "countdown", "running", "paused", "exchange", "ready_round_two"].includes(audienceWarmup?.minigame?.status);
+  const warmupActionVisible = audienceWarmup?.phase === "questions" && audienceWarmup?.actionTimer?.status === "running";
+  const auxiliaryActive = Boolean(
+    collapse
+    || airport
+    || showTimer
+    || showSuitcaseSelection
+    || showPhysicalChallenge
+    || showHangman
+    || showMorelBios
+    || showParticipantSelection
+    || warmupMinigameVisible
+    || warmupActionVisible
+  );
 
   useCountdownSound(seconds, {
     active: Boolean(showTimer && !showEvidenciasKaraoke && ["running", "complete"].includes(visibleTimer?.status)),
@@ -415,9 +515,10 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
 
   return (
     <>
+      <span data-scene-zero-aux-active={auxiliaryActive ? "true" : "false"} hidden />
       <audio preload="auto" ref={teaAudioRef} src={TEA_FOR_TWO_AUDIO} />
       <audio preload="auto" ref={evidenciasAudioRef} src={EVIDENCIAS_KARAOKE_AUDIO} />
-      <PlayUnlockProjection now={now} unlock={sceneZero?.unlock} />
+      <AudienceWarmupReactionProjection reaction={audienceWarmup?.reaction} />
       <AudienceWarmupMinigameProjection now={now} warmup={audienceWarmup} />
       <AudienceWarmupActionTimer now={now} warmup={audienceWarmup} />
       {collapse ? (
@@ -451,17 +552,13 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
           <header><span>MALA 2</span><b>DESAFIO COM OBJETO</b></header>
           <div className={styles.physicalChallengeBody}>
             <div className={styles.physicalChallengeSteps}>
-              <article data-active={!physicalMandatory}>
-                <small>01 · OBJETOS · {gincana.currentTask.objectDuration || 15}s</small>
+              <article data-active="true">
+                <small>OBJETOS · {gincana.currentTask.objectDuration || 15}s</small>
                 <p>{gincana.currentTask.text || gincana.currentTask.instruction}</p>
-              </article>
-              <article data-active={physicalMandatory}>
-                <small>02 · TODOS · {gincana.currentTask.mandatoryDuration || 30}s</small>
-                <p>{gincana.currentTask.mandatoryAction}</p>
               </article>
             </div>
             <div className={styles.physicalChallengeReadout}>
-              <span>{physicalMandatory ? "ETAPA" : "ALVO"}<strong>{physicalMandatory ? "02" : gincana.currentTask.target}</strong></span>
+              <span>ALVO<strong>{gincana.currentTask.target}</strong></span>
               <time>{physicalSeconds}</time>
             </div>
           </div>

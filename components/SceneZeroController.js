@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import InstagramBrowserPanel from "./InstagramBrowserPanel";
 import AudienceWarmupController from "./AudienceWarmupController";
 import { setSharedInstagramPanelVisible } from "@/lib/instagram/panelClient";
@@ -9,6 +9,7 @@ import { SCENE_ZERO_GLITCH_LEVELS, SCENE_ZERO_PERSONALITY_DIRECTIONS, SCENE_ZERO
 import { nextSceneZeroSuitcase } from "@/lib/scene-zero/suitcaseGame";
 import { SCENE_ZERO_PHYSICAL_CHALLENGES } from "@/data/scene-zero-physical-challenges";
 import { SCENE_ZERO_HANGMAN_WORDS } from "@/data/scene-zero-hangman-words";
+import { PLAY_UNLOCK_CONFIG } from "@/data/scene-zero-unlock";
 import styles from "./SceneZeroController.module.css";
 
 const PRIMARY_STAGES = [
@@ -48,6 +49,26 @@ function remainingTimer(timer, now, fallback = 15) {
   return timer?.remainingSeconds ?? fallback;
 }
 
+const CONTROLLER_MICROPHONE_SESSION_KEY = "__caixaPretaControllerMicrophone";
+
+function controllerMicrophoneSession() {
+  if (typeof window === "undefined") return null;
+  if (!window[CONTROLLER_MICROPHONE_SESSION_KEY]) {
+    window[CONTROLLER_MICROPHONE_SESSION_KEY] = {
+      analyser: null,
+      context: null,
+      request: null,
+      source: null,
+      stream: null
+    };
+  }
+  return window[CONTROLLER_MICROPHONE_SESSION_KEY];
+}
+
+function hasLiveAudioTrack(stream) {
+  return Boolean(stream?.getAudioTracks().some((track) => track.readyState === "live"));
+}
+
 export default function SceneZeroController() {
   const [snapshot, setSnapshot] = useState({ sceneZero: null, audienceWarmup: null, instagram: null, game: null, suitcase: null, glitch: null, memories: [] });
   const [pending, setPending] = useState("");
@@ -72,8 +93,131 @@ export default function SceneZeroController() {
   const [extrasOpen, setExtrasOpen] = useState(false);
   const [openSuitcaseControls, setOpenSuitcaseControls] = useState(null);
   const [notice, setNotice] = useState("SISTEMA PRONTO");
+  const [microphonePermission, setMicrophonePermission] = useState("requesting");
   const [now, setNow] = useState(Date.now());
   const teaAudioRef = useRef(null);
+  const microphoneRequestRef = useRef(null);
+  const microphoneStreamRef = useRef(null);
+  const microphoneContextRef = useRef(null);
+  const microphoneSourceRef = useRef(null);
+  const microphoneAnalyserRef = useRef(null);
+  const soundCheckLevelRequestRef = useRef(null);
+
+  const prepareMicrophone = useCallback(async () => {
+    const session = controllerMicrophoneSession();
+    if (!session) return false;
+
+    function attachSession() {
+      microphoneStreamRef.current = session.stream;
+      microphoneContextRef.current = session.context;
+      microphoneSourceRef.current = session.source;
+      microphoneAnalyserRef.current = session.analyser;
+    }
+
+    if (hasLiveAudioTrack(session.stream) && session.analyser) {
+      attachSession();
+      setMicrophonePermission(session.context?.state === "running" ? "ready" : "suspended");
+      return true;
+    }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setMicrophonePermission(window.isSecureContext ? "unavailable" : "insecure");
+      return false;
+    }
+
+    setMicrophonePermission("requesting");
+    if (!session.request) {
+      session.request = (async () => {
+        let stream = hasLiveAudioTrack(session.stream) ? session.stream : null;
+        let context = null;
+        try {
+          if (!stream) {
+            stream = await navigator.mediaDevices.getUserMedia({
+              // Preserve the browser's original microphone processing so output
+              // from the bot is treated as echo instead of audience input.
+              audio: true,
+              video: false
+            });
+          }
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContext) throw new Error("AUDIO_CONTEXT_UNAVAILABLE");
+          context = new AudioContext();
+          const source = context.createMediaStreamSource(stream);
+          const analyser = context.createAnalyser();
+          analyser.fftSize = 1024;
+          analyser.smoothingTimeConstant = 0.82;
+          source.connect(analyser);
+          session.stream = stream;
+          session.context = context;
+          session.source = source;
+          session.analyser = analyser;
+          return true;
+        } catch (error) {
+          stream?.getTracks().forEach((track) => track.stop());
+          context?.close().catch(() => {});
+          session.stream = null;
+          session.context = null;
+          session.source = null;
+          session.analyser = null;
+          throw error;
+        } finally {
+          session.request = null;
+        }
+      })();
+    }
+
+    microphoneRequestRef.current = session.request;
+    try {
+      await session.request;
+      attachSession();
+      setMicrophonePermission(session.context?.state === "running" ? "ready" : "suspended");
+      return true;
+    } catch (error) {
+      setMicrophonePermission(error?.name === "NotAllowedError" ? "blocked" : "unavailable");
+      return false;
+    } finally {
+      microphoneRequestRef.current = null;
+    }
+  }, []);
+
+  const activateMicrophone = useCallback(async () => {
+    const prepared = await prepareMicrophone();
+    if (!prepared) return false;
+    const context = microphoneContextRef.current;
+    if (!context) return false;
+    try {
+      if (context.state !== "running") await context.resume();
+    } catch {
+      setMicrophonePermission("unavailable");
+      return false;
+    }
+    const active = context.state === "running";
+    setMicrophonePermission(active ? "ready" : "suspended");
+    return active;
+  }, [prepareMicrophone]);
+
+  const warmupAction = useCallback(async (action, payload = {}) => {
+    if (pending) return null;
+    setPending(action);
+    try {
+      const response = await fetch("/api/audience-warmup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, ...payload })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "ERRO NO AQUECIMENTO");
+      if (data.audienceWarmup) {
+        setSnapshot((current) => ({ ...current, audienceWarmup: data.audienceWarmup }));
+      }
+      setNotice(data.message || action.toUpperCase());
+      return data;
+    } catch (error) {
+      setNotice(error.message);
+      return null;
+    } finally {
+      setPending("");
+    }
+  }, [pending]);
 
   useEffect(() => {
     fetch("/api/state").then((response) => response.json()).then(setSnapshot).catch(() => setNotice("SEM CONEXÃO"));
@@ -104,6 +248,159 @@ export default function SceneZeroController() {
   useEffect(() => robotSoundEngine.armAutoUnlock(), []);
 
   useEffect(() => robotSoundEngine.armAudioRelay(), []);
+
+  useEffect(() => {
+    prepareMicrophone();
+  }, [prepareMicrophone]);
+
+  useEffect(() => {
+    function resumeMicrophoneFromOperatorGesture() {
+      const context = microphoneContextRef.current;
+      if (!context || context.state === "running") return;
+      context.resume()
+        .then(() => setMicrophonePermission(context.state === "running" ? "ready" : "suspended"))
+        .catch(() => setMicrophonePermission("unavailable"));
+    }
+    window.addEventListener("pointerdown", resumeMicrophoneFromOperatorGesture, true);
+    window.addEventListener("keydown", resumeMicrophoneFromOperatorGesture, true);
+    return () => {
+      window.removeEventListener("pointerdown", resumeMicrophoneFromOperatorGesture, true);
+      window.removeEventListener("keydown", resumeMicrophoneFromOperatorGesture, true);
+    };
+  }, []);
+
+  useEffect(() => {
+    function releaseMicrophone() {
+      const session = controllerMicrophoneSession();
+      session?.stream?.getTracks().forEach((track) => track.stop());
+      session?.context?.close().catch(() => {});
+      if (session) {
+        session.stream = null;
+        session.context = null;
+        session.source = null;
+        session.analyser = null;
+        session.request = null;
+      }
+      microphoneStreamRef.current = null;
+      microphoneContextRef.current = null;
+      microphoneSourceRef.current = null;
+      microphoneAnalyserRef.current = null;
+    }
+    window.addEventListener("pagehide", releaseMicrophone);
+    return () => window.removeEventListener("pagehide", releaseMicrophone);
+  }, []);
+
+  const activeSoundCheckPhase = snapshot.sceneZero?.unlock?.soundCheck?.phase;
+  const activeSoundCheckSequence = snapshot.sceneZero?.unlock?.soundCheck?.sequence;
+
+  useEffect(() => {
+    if (activeSoundCheckPhase !== "listening") return undefined;
+
+    let cancelled = false;
+    let frame = 0;
+    let smoothedLevel = 0;
+    let heldMs = 0;
+    let lastFrameAt = performance.now();
+    let lastPublishAt = 0;
+    let completionSent = false;
+
+    function publishLevel(level, holdProgress, status = "listening") {
+      if (soundCheckLevelRequestRef.current) return;
+      const request = fetch("/api/audience-warmup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "unlock-sound-check-level",
+          automatic: true,
+          level: Math.round(level * 100),
+          holdProgress: Math.round(holdProgress * 100),
+          microphoneStatus: status
+        })
+      }).catch(() => null).finally(() => {
+        if (soundCheckLevelRequestRef.current === request) soundCheckLevelRequestRef.current = null;
+      });
+      soundCheckLevelRequestRef.current = request;
+    }
+
+    async function completeFromMicrophone(detectedLevel) {
+      completionSent = true;
+      try {
+        const response = await fetch("/api/audience-warmup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "unlock-sound-check-complete",
+            automatic: true,
+            detectedLevel: Math.round(detectedLevel * 100)
+          })
+        });
+        if (!response.ok) throw new Error("SOUND CHECK COMPLETION FAILED");
+      } catch {
+        if (!cancelled) completionSent = false;
+      }
+    }
+
+    if (["blocked", "insecure", "unavailable"].includes(microphonePermission) || !microphoneAnalyserRef.current) {
+      if (microphonePermission !== "requesting") publishLevel(0, 0, "unavailable");
+      return () => { cancelled = true; };
+    }
+
+    microphoneContextRef.current?.resume()
+      .then(() => setMicrophonePermission(microphoneContextRef.current?.state === "running" ? "ready" : "suspended"))
+      .catch(() => setMicrophonePermission("unavailable"));
+    const analyser = microphoneAnalyserRef.current;
+    const samples = new Uint8Array(analyser.fftSize);
+    const threshold = PLAY_UNLOCK_CONFIG.soundCheck.thresholdPercent / 100;
+
+    const readLevel = (frameAt) => {
+      if (cancelled) return;
+      analyser.getByteTimeDomainData(samples);
+      let energy = 0;
+      for (const sample of samples) {
+        const amplitude = (sample - 128) / 128;
+        energy += amplitude * amplitude;
+      }
+      const rms = Math.sqrt(energy / samples.length);
+      // Medidor teatral sensível a voz/palmas; não pretende representar dB científicos.
+      const normalized = Math.max(0, Math.min(1, (rms - 0.006) / 0.055));
+      smoothedLevel = (smoothedLevel * 0.82) + (normalized * 0.18);
+      const elapsed = Math.min(80, frameAt - lastFrameAt);
+      lastFrameAt = frameAt;
+      heldMs = smoothedLevel >= threshold
+        ? Math.min(PLAY_UNLOCK_CONFIG.soundCheck.sustainMs, heldMs + elapsed)
+        : Math.max(0, heldMs - (elapsed * 1.5));
+      const holdProgress = heldMs / PLAY_UNLOCK_CONFIG.soundCheck.sustainMs;
+
+      if (frameAt - lastPublishAt >= 100) {
+        lastPublishAt = frameAt;
+        publishLevel(smoothedLevel, holdProgress);
+      }
+      if (!completionSent && holdProgress >= 1) {
+        publishLevel(1, 1);
+        completeFromMicrophone(smoothedLevel);
+      }
+      frame = window.requestAnimationFrame(readLevel);
+    };
+    frame = window.requestAnimationFrame(readLevel);
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frame);
+    };
+  }, [activeSoundCheckPhase, activeSoundCheckSequence, microphonePermission]);
+
+  useEffect(() => {
+    function handleManualNext(event) {
+      if (event.key !== "ArrowRight" || !snapshot.audienceWarmup?.manualMode || pending) return;
+      const target = event.target;
+      const inputEditsWithArrow = target?.tagName === "INPUT" && !["checkbox", "button"].includes(target.type);
+      const editable = target?.isContentEditable || ["TEXTAREA", "SELECT"].includes(target?.tagName) || inputEditsWithArrow;
+      if (editable || event.repeat) return;
+      event.preventDefault();
+      warmupAction("manual-next");
+    }
+    window.addEventListener("keydown", handleManualNext);
+    return () => window.removeEventListener("keydown", handleManualNext);
+  }, [pending, snapshot.audienceWarmup?.manualMode, warmupAction]);
 
   useEffect(() => {
     const activeSuitcase = snapshot.sceneZero?.suitcaseGame?.currentSuitcase;
@@ -353,6 +650,9 @@ export default function SceneZeroController() {
   }
 
   const sceneZero = snapshot.sceneZero || {};
+  const audienceWarmup = snapshot.audienceWarmup || {};
+  const manualMode = Boolean(audienceWarmup.manualMode);
+  const reactionControlsActive = ["questions", "briefing", "minigame", "transition"].includes(audienceWarmup.phase);
   const unlockStatusLabel = sceneZero.unlock?.status === "BOOT_FAILED"
     ? "AGUARDANDO INÍCIO MANUAL"
     : (sceneZero.unlock?.status || "STANDBY").replaceAll("_", " ");
@@ -397,6 +697,40 @@ export default function SceneZeroController() {
         ref={teaAudioRef}
         src="/api/game-assets?file=audios%2FDoris%20Day%20-%20Tea%20For%20Two%20(1950).mp3"
       />
+      <section className={styles.operatorModeBar} data-active={manualMode ? "true" : "false"} aria-label="Controles iniciais do aquecimento">
+        <label>
+          <input
+            checked={manualMode}
+            disabled={Boolean(pending)}
+            onChange={(event) => warmupAction("set-manual-mode", { manualMode: event.target.checked })}
+            type="checkbox"
+          />
+          <span><strong>MODO MANUAL</strong><small>{manualMode ? "ATIVO · SETA → AVANÇA UMA ETAPA" : "DESLIGADO · FLUXO AUTOMÁTICO"}</small></span>
+        </label>
+        <div className={styles.microphonePermission} data-status={microphonePermission}>
+          <span>MICROFONE</span>
+          <strong>{microphonePermission === "ready"
+            ? `ATIVO${activeSoundCheckPhase === "listening" ? ` · NÍVEL ${Math.round(Number(sceneZero.unlock?.soundCheck?.liveLevel) || 0)}%` : ""}`
+            : microphonePermission === "requesting"
+              ? "SOLICITANDO PERMISSÃO..."
+              : microphonePermission === "suspended"
+                ? "AUTORIZADO · AGUARDANDO ATIVAÇÃO"
+              : microphonePermission === "blocked"
+                ? "PERMISSÃO BLOQUEADA"
+                : microphonePermission === "insecure"
+                  ? "EXIGE HTTPS OU LOCALHOST"
+                : "INDISPONÍVEL"}</strong>
+          {microphonePermission === "suspended" ? (
+            <button onClick={activateMicrophone} type="button">ATIVAR LEITURA</button>
+          ) : !["ready", "requesting"].includes(microphonePermission) ? (
+            <button onClick={() => prepareMicrophone()} type="button">TENTAR NOVAMENTE</button>
+          ) : null}
+        </div>
+        <div>
+          <span>PRÓXIMO</span>
+          <strong>{audienceWarmup.pendingAdvance?.label || "—"}</strong>
+        </div>
+      </section>
       <aside className={styles.indexNav} aria-label="Índice da Cena 0">
         <strong>ÍNDICE / CENA 0</strong>
         <span>{sceneZeroStageLabel(sceneZero.stage)}</span>
@@ -414,6 +748,16 @@ export default function SceneZeroController() {
             </a>
           ))}
         </nav>
+        <section
+          aria-label="Reação rápida do público"
+          className={styles.reactionControls}
+          data-phase={audienceWarmup.phase || "idle"}
+          data-pending={pending || ""}
+        >
+          <small>REAÇÃO DA PLATEIA</small>
+          <button disabled={Boolean(pending) || !reactionControlsActive} onClick={() => warmupAction("reaction-none")} type="button">NINGUÉM REAGIU</button>
+          <button disabled={Boolean(pending) || !reactionControlsActive} onClick={() => warmupAction("reaction-many")} type="button">MUITOS REAGIRAM</button>
+        </section>
       </aside>
 
       <section aria-label="Boot da Cena 0" className={styles.bootPanel} id="scene-zero-boot">
@@ -425,8 +769,8 @@ export default function SceneZeroController() {
           </div>
         </div>
         <div className={styles.bootStatus}>
-          <strong>{sceneZero.unlock?.progress || 0}%</strong>
-          <span>{unlockStatusLabel}</span>
+          <strong>{["STANDBY", "BOOTING", "BOOT_FAILED"].includes(sceneZero.unlock?.status) ? (sceneZero.unlock?.bootProgress || 0) : (sceneZero.unlock?.progress || 0)}%</strong>
+          <span>{["STANDBY", "BOOTING", "BOOT_FAILED"].includes(sceneZero.unlock?.status) ? "BIOS" : "DESBLOQUEIO"} · {unlockStatusLabel}</span>
         </div>
         <div className={styles.bootActions}>
           <button
@@ -463,6 +807,7 @@ export default function SceneZeroController() {
         {warmupOpen ? (
           <div className={styles.warmupDisclosureBody}>
             <AudienceWarmupController
+              canFinishUnlock={sceneZero.suitcaseGame?.status === "finished"}
               disabled={Boolean(pending)}
               onLog={(line) => setNotice(line)}
               showBootButton={false}
@@ -513,7 +858,6 @@ export default function SceneZeroController() {
               <Button onClick={() => sceneAction("gincana-draw", { challengeId: selectedChallengeId })} pending={pending || suitcaseGame.currentSuitcase !== 2}>SELECIONAR</Button>
               <Button onClick={() => sceneAction("gincana-draw")} pending={pending || suitcaseGame.currentSuitcase !== 2}>PULAR / PRÓXIMO</Button>
               <Readout label="DESAFIO ATIVO" value={gincana.currentTask?.text || "AGUARDANDO MALA 2"} />
-              <Readout label="ETAPA OBRIGATÓRIA" value={gincana.currentTask?.mandatoryAction ? `${gincana.currentTask.mandatoryAction} · ${gincana.currentTask.mandatoryDuration}s` : "—"} />
               <Readout label="ALVO" value={gincana.currentTask ? `${gincana.currentTask.target} · ${gincana.currentTask.category} · ${gincana.currentTask.intensity}` : "—"} />
               <div className={`${styles.timer} ${["complete", "failed"].includes(gincanaTimer.status) ? styles.timerComplete : ""}`}>{gincanaSeconds ?? "—"}</div>
               <strong className={styles.timerStatus}>{(gincanaTimer.status || "idle").toUpperCase()}</strong>

@@ -20,7 +20,13 @@ import { chooseSceneZeroHangmanWord } from "@/lib/scene-zero/suitcaseHangman";
 import { buildDataCollectionSystemPrompt } from "@/prompts/dataCollection";
 import { SCENE_ZERO_MOREL_BIOS_DURATION_MS } from "@/data/scene-zero-morel";
 import { PLAY_UNLOCK_CONFIG } from "@/data/scene-zero-unlock";
-import { PUBLIC_TYPE_INTERVAL_MS } from "@/lib/messageTiming";
+import { robotTypingIntervalMs } from "@/lib/robot-sound/state";
+import {
+  sceneZeroEmergenceCueForMessage,
+  sceneZeroEmergenceCueForNextSuitcase,
+  sceneZeroEmergenceDurationMs,
+  sceneZeroEmergenceSource
+} from "@/data/scene-zero-emergence";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -48,6 +54,8 @@ const DIRECTION_ACTIONS = {
   "glitch-speak": "glitch_level",
   "instagram-stop": "instagram_stop"
 };
+
+const completedEmergenceMessages = new Set();
 
 function sceneZeroGooglePlan(guidance, originalCommand) {
   return preserveExplicitNewsIntent(parseGoogleGuidance(guidance), originalCommand);
@@ -236,7 +244,10 @@ async function speak(directionAction, detail = "", options = {}) {
 }
 
 function suitcaseSpeechDelay(text = "") {
-  return Math.max(800, (`${text}`.length * PUBLIC_TYPE_INTERVAL_MS) + 500);
+  return Math.max(
+    800,
+    (`${text}`.length * robotTypingIntervalMs(showState.snapshot().robotSound)) + 500
+  );
 }
 
 async function startAnnouncedSuitcase(messageId) {
@@ -247,12 +258,67 @@ async function startAnnouncedSuitcase(messageId) {
   return activateSuitcase(choice.targetSuitcase);
 }
 
-function announceNextSuitcase({ includeRules = false } = {}) {
+function completeEmergenceMessage(messageId) {
+  if (!messageId || completedEmergenceMessages.has(messageId)) {
+    return { applied: false, error: "LAPSO JÁ APAGADO", state: showState.snapshot().sceneZero };
+  }
+
+  const snapshot = showState.privateSnapshot();
+  const message = snapshot.conversation.find((candidate) => candidate.id === messageId);
+  const cue = sceneZeroEmergenceCueForMessage(message);
+  if (!cue || snapshot.publicMessage?.id !== messageId) {
+    return { applied: false, error: "LAPSO NÃO ESTÁ MAIS VISÍVEL", state: snapshot.sceneZero };
+  }
+
+  const nextSuitcase = nextSceneZeroSuitcase(snapshot.sceneZero.suitcaseGame);
+  if (nextSuitcase !== cue.nextSuitcase) {
+    return { applied: false, error: "FLUXO DAS MALAS JÁ AVANÇOU", state: snapshot.sceneZero };
+  }
+
+  completedEmergenceMessages.add(messageId);
+  return announceNextSuitcase({
+    includeRules: cue.nextSuitcase === 2,
+    bypassEmergence: true
+  });
+}
+
+function startEmergenceMessage(cue) {
+  const source = sceneZeroEmergenceSource(cue.id);
+  const existing = showState.privateSnapshot().conversation.find((message) => message.source === source);
+  if (existing) {
+    return { applied: false, error: "LAPSO JÁ EXIBIDO", state: showState.snapshot().sceneZero };
+  }
+
+  const message = showState.addMessage("assistant", cue.text, source);
+  applyGlitchLevel(cue.glitchLevel);
+  setTimeout(
+    () => completeEmergenceMessage(message.id),
+    sceneZeroEmergenceDurationMs(cue, robotTypingIntervalMs(showState.snapshot().robotSound)) + 2000
+  );
+  return {
+    applied: true,
+    emergence: true,
+    text: cue.text,
+    messageId: message.id,
+    state: showState.snapshot().sceneZero
+  };
+}
+
+function announceNextSuitcase({ includeRules = false, bypassEmergence = false } = {}) {
   const sceneZero = showState.snapshot().sceneZero;
   const nextSuitcase = nextSceneZeroSuitcase(sceneZero.suitcaseGame);
   if (!nextSuitcase) return { applied: false, error: "TODAS AS MALAS JÁ FORAM ESCOLHIDAS", state: sceneZero };
   if (sceneZero.suitcaseGame?.choice?.status === "announcing") {
     return { applied: false, error: "ESCOLHA DE MALA JÁ EM ANDAMENTO", state: sceneZero };
+  }
+  if (!bypassEmergence) {
+    const cue = sceneZeroEmergenceCueForNextSuitcase(nextSuitcase);
+    const source = cue ? sceneZeroEmergenceSource(cue.id) : "";
+    const alreadyShown = source && showState.privateSnapshot().conversation.some((message) => message.source === source);
+    if (cue && !alreadyShown) return startEmergenceMessage(cue);
+    if (cue && showState.privateSnapshot().publicMessage?.source === source) {
+      return { applied: false, error: "LAPSO AINDA ESTÁ SENDO APAGADO", state: sceneZero };
+    }
   }
   const text = includeRules
     ? "O jogo é simples: eu escolho uma mala, você vai até ela e cumpre o desafio. Vou escolher uma mala aleatoriamente."
@@ -726,22 +792,19 @@ export async function POST(request) {
       const message = snapshot.conversation.find((candidate) => candidate.id === body.messageId);
       const game = snapshot.game;
 
-      if (message?.source === "scene-zero-suitcase-choice") {
-        const selected = await startAnnouncedSuitcase(message.id);
+      if (sceneZeroEmergenceCueForMessage(message)) {
+        const continued = completeEmergenceMessage(message.id);
         return Response.json({
-          message: selected.applied ? `MALA ${selected.state.suitcaseGame.currentSuitcase} SORTEADA` : "SORTEIO JÁ INICIADO",
-          result: selected,
+          message: continued.applied ? "LAPSO APAGADO · FLUXO RETOMADO" : continued.error,
+          result: continued,
           sceneZero: showState.snapshot().sceneZero
         });
       }
 
-      if (message?.source === "scene-zero-evidencias-comment-next") {
-        const sceneZero = showState.snapshot().sceneZero;
-        const selected = sceneZero.suitcaseGame?.currentSuitcase === 2 && nextSceneZeroSuitcase(sceneZero.suitcaseGame) === 3
-          ? await activateSuitcase(3)
-          : { applied: false };
+      if (message?.source === "scene-zero-suitcase-choice") {
+        const selected = await startAnnouncedSuitcase(message.id);
         return Response.json({
-          message: selected.applied ? "COMENTÁRIO CONCLUÍDO · MALA 3 SORTEADA" : "COMENTÁRIO JÁ PROCESSADO",
+          message: selected.applied ? `MALA ${selected.state.suitcaseGame.currentSuitcase} SORTEADA` : "SORTEIO JÁ INICIADO",
           result: selected,
           sceneZero: showState.snapshot().sceneZero
         });

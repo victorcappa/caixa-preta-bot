@@ -34,7 +34,7 @@ function buildSlices(count, strength) {
   });
 }
 
-export default function GlitchOverlay({ children, glitch = DEFAULT_GLITCH, preview = false }) {
+export default function GlitchOverlay({ children, glitch = DEFAULT_GLITCH, preview = false, publicLayout = "principal" }) {
   const params = useMemo(() => glitch?.params || {}, [glitch?.params]);
   const active = Boolean(glitch?.active || preview);
   const video = glitch?.video || {};
@@ -158,6 +158,7 @@ export default function GlitchOverlay({ children, glitch = DEFAULT_GLITCH, previ
   const wrapperClass = [
     styles.wrapper,
     preview ? styles.preview : "",
+    publicLayout === "quadrants" ? styles.quadrants : "",
     active ? styles.active : "",
     videoEstablished ? styles.videoEstablished : "",
     glitch?.mode === "continuous" ? styles.continuous : "",

@@ -11,6 +11,7 @@ async function main() {
   const hangmanWords = await import("../data/scene-zero-hangman-words.js");
   const legacySuitcases = await import("../data/archive/scene-zero-suitcases-legacy.js");
   const suitcaseGame = await import("../lib/scene-zero/suitcaseGame.js");
+  const emergence = await import("../data/scene-zero-emergence.js");
   const suitcaseHangman = await import("../lib/scene-zero/suitcaseHangman.js");
   const morelBios = await import("../data/scene-zero-morel.js");
   const messageTiming = await import("../lib/messageTiming.js");
@@ -257,13 +258,12 @@ async function main() {
     assert(challenge.id && challenge.text && challenge.target && challenge.duration && challenge.category && challenge.intensity);
     assert(challenge.successMessage && challenge.failureMessage);
     assert.match(challenge.text, /AJUDA DA PLATEIA/);
-    assert.match(challenge.mandatoryAction, /MORTOS NAS CADEIRAS E NO CHÃO/);
-    assert.equal(challenge.mandatoryDuration, 30);
   }
+  assert.doesNotMatch(JSON.stringify(physicalChallenges.SCENE_ZERO_PHYSICAL_CHALLENGES), /MORTOS NAS CADEIRAS E NO CHÃO/, "a ação dos mortos não pertence à Mala 2");
   assert.equal(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE.id, "seis-sapatos");
-  assert.equal(suitcaseGame.sceneZeroGincanaDuration(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE), 45);
+  assert.equal(suitcaseGame.sceneZeroGincanaDuration(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE), 15);
   assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE), /6 SAPATOS/);
-  assert.match(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE), /30 SEGUNDOS.*MORTOS/);
+  assert.doesNotMatch(suitcaseGame.buildGincanaPresentation(suitcaseGame.SCENE_ZERO_FIRST_CHALLENGE), /MORTOS/);
   assert.equal(suitcaseGame.sceneZeroSuitcaseChallenge(1), null);
   assert.equal(suitcaseGame.sceneZeroSuitcaseChallenge(2, [], () => 0).id, "seis-sapatos");
   assert.equal(suitcaseGame.sceneZeroSuitcaseChallenge(2, ["seis-sapatos"], () => 0).id, "oito-objetos-vermelhos");
@@ -271,6 +271,22 @@ async function main() {
   assert.equal(suitcaseGame.SCENE_ZERO_SUITCASES[1].game, "tutorial_end");
   assert.equal(suitcaseGame.SCENE_ZERO_SUITCASES[2].game, "physical_challenge");
   assert.equal(suitcaseGame.SCENE_ZERO_SUITCASES[3].game, "hangman");
+  assert.deepEqual(
+    [2, 3, 1].map((number) => emergence.sceneZeroEmergenceCueForNextSuitcase(number).glitchLevel),
+    ["glitch-1", "glitch-2", "glitch-3"]
+  );
+  const finalEmergenceCue = emergence.sceneZeroEmergenceCueForNextSuitcase(1);
+  assert.match(finalEmergenceCue.text, /lado de fora/i);
+  assert.equal(
+    emergence.sceneZeroEmergenceCueForMessage({ source: emergence.sceneZeroEmergenceSource(finalEmergenceCue.id) }),
+    finalEmergenceCue
+  );
+  assert(
+    emergence.sceneZeroEmergenceEraseDelay(finalEmergenceCue, 18)
+      > emergence.sceneZeroEmergenceEraseDelay(finalEmergenceCue, 17),
+    "o apagamento deve incluir hesitações determinísticas"
+  );
+  assert(emergence.sceneZeroEmergenceDurationMs(finalEmergenceCue) > finalEmergenceCue.holdMs);
 
   assert.deepEqual(legacySuitcases.LEGACY_SCENE_ZERO_SUITCASE_ORDER, [2, 3, 1]);
   assert.equal(legacySuitcases.LEGACY_SCENE_ZERO_SUITCASES[2].game, "gincana");

@@ -42,14 +42,12 @@ export const AUDIENCE_WARMUP_INTERACTION_TYPES = [
   "competition", "confession", "object", "movement", "sequence"
 ];
 
-const ACTION_PROGRESS = Object.fromEntries(AUDIENCE_WARMUP_ACTIONS.map((action) => [action.id, action.progressValue]));
-
 function prompt(id, text, action, category, intensity, interactionType, tags, options = {}) {
   const surpriseLevel = Math.max(0, AUDIENCE_WARMUP_INTENSITIES.findIndex((level) => level.id === intensity));
   return {
     id, text, action, category, intensity, interactionType, tags,
     surpriseLevel,
-    progressValue: ACTION_PROGRESS[action] ?? 0,
+    progressValue: 5,
     repeatableProgress: false,
     reaction: false,
     ...options
@@ -60,6 +58,8 @@ function step(text, action, options = {}) {
   return { text, action, ...options };
 }
 
+export const AUDIENCE_WARMUP_REQUIRED_PROMPT_ID = "play-dead-30";
+
 // O texto abaixo é a fonte de verdade. Nenhuma camada de modelo pode reconstruí-lo.
 export const AUDIENCE_WARMUP_PROMPTS = [
   // 1 · PLAY — corpo, ritmo, absurdo e energia de auditório.
@@ -69,7 +69,7 @@ export const AUDIENCE_WARMUP_PROMPTS = [
   prompt("play-04", "FAÇAM CARA DE FOTO 3X4.", "pose", "corpo / absurdo", "play", "collective", ["rosto", "pose"]),
   prompt("play-05", "TODO MUNDO DÁ UM GRITO EM 3, 2, 1.", "scream", "ritmo / som", "play", "chorus", ["grito", "coro"]),
   prompt("play-06", "FAÇAM O SOM DE UMA TURBINA.", "sound", "avião", "play", "chorus", ["avião", "som"]),
-  prompt("play-07", "FIQUEM COMPLETAMENTE IMÓVEIS POR 7 SEGUNDOS.", "freeze", "corpo / absurdo", "play", "collective", ["corpo", "imobilidade"], { durationSeconds: 7 }),
+  prompt(AUDIENCE_WARMUP_REQUIRED_PROMPT_ID, "TODOS FINJAM ESTAR MORTOS NAS CADEIRAS E NO CHÃO.", "sleep", "corpo / absurdo", "play", "collective", ["corpo", "imobilidade", "morte"], { durationSeconds: 30, requiredEverySession: true }),
   prompt("play-08", "FAÇAM UMA POSE DE FISICULTURISTA.", "pose", "corpo / absurdo", "play", "mime", ["corpo", "pose"]),
   prompt("play-09", "FECHEM OS OLHOS POR 5 SEGUNDOS.", "eyes", "corpo / atenção", "play", "sequence", ["olhos", "atenção"], { steps: [step("FECHEM OS OLHOS POR 5 SEGUNDOS.", "eyes", { durationSeconds: 5 }), step("ABRAM.", "eyes")] }),
   prompt("play-10", "PISQUEM O MAIS RÁPIDO POSSÍVEL POR 5 SEGUNDOS.", "eyes", "corpo / absurdo", "play", "competition", ["olhos", "velocidade"], { durationSeconds: 5 }),

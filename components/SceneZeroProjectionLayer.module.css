@@ -1,26 +1,47 @@
-.airport, .airportContamination, .timerOverlay, .karaokeOverlay, .suitcaseCueOverlay, .physicalChallengeOverlay, .suitcaseHangmanOverlay, .morelBiosOverlay, .warmupMinigameOverlay { position: absolute; inset: 0; pointer-events: none; }
+.airport, .airportContamination, .timerOverlay, .karaokeOverlay, .suitcaseCueOverlay, .physicalChallengeOverlay, .suitcaseHangmanOverlay, .morelBiosOverlay, .warmupMinigameOverlay, .warmupReactionOverlay { position: absolute; inset: 0; pointer-events: none; }
 .biosOverlay { position: absolute; z-index: 125; inset: 0; display: grid; place-items: center; padding: clamp(20px, 3vw, 56px); pointer-events: none; color: #00ff66; background: #000; font-family: var(--font-mono, monospace); }
 .biosTerminal { width: min(1180px, 92vw); display: grid; gap: clamp(10px, 1.5vh, 20px); }
 .biosLines { overflow: visible; }
 .biosLines p, .unlockLines p { margin: 0 0 clamp(2px, .38vh, 5px); white-space: pre-wrap; line-height: 1.12; letter-spacing: .035em; text-shadow: 0 0 16px rgba(0,255,102,.2); animation: terminalLineIn 150ms steps(2) both; }
 .biosLines p { margin-bottom: clamp(1px, .18vh, 3px); font-size: clamp(10px, min(1vw, 1.55vh), 18px); line-height: 1.06; }
+.progressGroup { display: grid; gap: clamp(6px, .8vh, 10px); }
+.progressLabel { color: #00ff66; font-size: clamp(11px, 1.15vw, 18px); font-weight: 900; letter-spacing: .14em; }
 .unlockBar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: clamp(12px, 2vw, 28px); align-items: center; }
 .unlockBar > strong { min-width: 4ch; color: #dffff0; font-size: clamp(18px, 2.2vw, 34px); text-align: right; }
 .unlockTrack { height: clamp(18px, 2.3vw, 34px); overflow: hidden; border: 1px solid #00ff66; background: repeating-linear-gradient(90deg, rgba(0,255,102,.035) 0 15px, transparent 15px 20px); }
 .unlockTrack span { display: block; height: 100%; background: repeating-linear-gradient(90deg, #00ff66 0 15px, transparent 15px 20px); filter: drop-shadow(0 0 8px rgba(0,255,102,.5)); transition: width 700ms cubic-bezier(.2,.75,.18,1); }
 .biosPaused { margin: 0; color: #ffb52d; font-size: clamp(14px, 1.3vw, 22px); letter-spacing: .12em; }
-.waitingCursorOverlay { place-items: center; font-size: clamp(38px, 5vw, 76px); }
+.waitingCursorOverlay { place-items: end center; padding-bottom: clamp(42px, 10vh, 112px); background: transparent; }
+.waitingUnlock { width: min(1040px, calc(100% - 64px)); display: grid; }
+.soundCheckOverlay { place-items: end center; padding-bottom: clamp(42px, 8vh, 96px); background: transparent; }
+.soundCheckListening, .soundCheckConfirmed { width: min(1120px, 92vw); display: grid; justify-items: stretch; gap: clamp(18px, 3vh, 34px); text-align: center; }
+.soundMeterGroup { display: grid; gap: 12px; }
+.soundMeter { position: relative; height: clamp(54px, 7.5vw, 108px); border: 2px solid #00ff66; overflow: visible; background: repeating-linear-gradient(90deg, rgba(0,255,102,.05) 0 22px, transparent 22px 29px); box-shadow: inset 0 0 24px rgba(0,0,0,.9), 0 0 24px rgba(0,255,102,.09); }
+.soundMeter > span { position: absolute; inset: 0 auto 0 0; display: block; max-width: 100%; background: repeating-linear-gradient(90deg, #00ff66 0 22px, #081b10 22px 29px); filter: drop-shadow(0 0 11px rgba(0,255,102,.7)); transition: width 90ms linear; }
+.soundMeter > i { position: absolute; z-index: 2; top: -12px; bottom: -12px; width: 3px; background: #fff; box-shadow: 0 0 12px #fff; transform: translateX(-50%); }
+.soundMeter > b { position: absolute; z-index: 3; top: -31px; color: #fff; font-size: clamp(10px, 1.1vw, 16px); letter-spacing: .12em; transform: translateX(-50%); }
+.soundMeter[data-complete="true"] { overflow: hidden; border-color: #fff; }
+.soundMeter[data-complete="true"] > span { background: repeating-linear-gradient(90deg, #fff 0 22px, #00b648 22px 29px); animation: soundCheckComplete .42s steps(3) both; }
+.soundMeterReadout { display: flex; justify-content: space-between; gap: 18px; color: #85d49f; font-size: clamp(12px, 1.35vw, 20px); font-weight: 900; letter-spacing: .1em; }
+.soundCheckStatus, .soundCheckError { font-size: clamp(13px, 1.4vw, 21px); font-weight: 850; letter-spacing: .12em; }
+.soundCheckStatus { color: #00ff66; }
+.soundCheckError { color: #ffb52d; }
+.soundCheckConfirmed { gap: clamp(18px, 4vh, 42px); }
+.soundCheckConfirmed > small { color: #00ff66; font-size: clamp(15px, 1.8vw, 26px); font-weight: 900; letter-spacing: .16em; }
 .verificationOverlay { background: radial-gradient(circle at center, rgba(0,255,102,.075), transparent 48%), #000; }
 .verificationTitle { width: min(1180px, 92vw); display: grid; gap: clamp(48px, 9vh, 100px); text-align: center; }
 .verificationTitle > strong { color: #fff; font-size: clamp(34px, 6vw, 94px); line-height: .95; letter-spacing: .08em; text-shadow: 0 0 18px rgba(0,255,102,.28); animation: verificationTitleIn 700ms steps(5) both; }
-.unlockHud { position: absolute; z-index: 120; top: clamp(18px, 3vh, 42px); left: 50%; width: min(1040px, calc(100% - 64px)); transform: translateX(-50%); display: grid; gap: 9px; padding: 13px 17px; pointer-events: none; color: #00ff66; border: 1px solid rgba(0,255,102,.5); background: rgba(0,0,0,.88); box-shadow: 0 0 30px rgba(0,255,102,.08); font-family: var(--font-mono, monospace); }
-.unlockHud .unlockBar { grid-template-columns: minmax(0, 1fr); }
+.unlockHud { position: absolute; z-index: 140; top: clamp(18px, 3vh, 42px); left: 50%; width: min(1040px, calc(100% - 64px)); transform: translateX(-50%); display: grid; gap: 9px; padding: 13px 17px; pointer-events: none; color: #00ff66; border: 1px solid rgba(0,255,102,.5); background: rgba(0,0,0,.88); box-shadow: 0 0 30px rgba(0,255,102,.08); font-family: var(--font-mono, monospace); }
 .unlockHud .unlockTrack { height: clamp(12px, 1.2vw, 18px); }
 .unlockingOverlay { background: radial-gradient(circle at center, rgba(0,255,102,.08), transparent 55%), #000; }
 .unlockLines { display: grid; gap: 5px; }
 .unlockLines p { font-size: clamp(14px, 1.65vw, 27px); }
 .unlockLines p:last-child { color: #fff; font-size: clamp(22px, 3vw, 48px); font-weight: 900; }
 .warmupMinigameOverlay { z-index: 119; display: grid; place-items: center; padding: clamp(72px, 12vh, 138px) clamp(28px, 5vw, 76px) clamp(30px, 5vh, 60px); color: #fff; background: radial-gradient(circle at center, rgba(0,255,102,.08), transparent 56%), #020302; font-family: var(--font-mono, monospace); }
+.warmupReactionOverlay { z-index: 124; display: grid; place-content: center; justify-items: center; gap: clamp(16px, 3vh, 34px); padding: clamp(30px, 6vw, 90px); color: #fff; background: radial-gradient(circle at center, rgba(0,255,102,.11), transparent 54%), rgba(0,0,0,.97); font-family: var(--font-mono, monospace); text-align: center; }
+.warmupReactionOverlay small { color: #00ff66; font-size: clamp(14px, 1.8vw, 27px); font-weight: 900; letter-spacing: .17em; }
+.warmupReactionOverlay strong { max-width: 1180px; font-size: clamp(42px, 7vw, 108px); line-height: .96; text-wrap: balance; text-shadow: 0 0 22px rgba(0,255,102,.25); animation: verificationTitleIn 420ms steps(4) both; }
+.warmupReactionOverlay[data-kind="none"] small { color: #ffb52d; }
 .warmupGameDraw, .warmupGameSelected, .warmupGameTimer { width: min(1100px, 90vw); display: grid; justify-items: center; gap: clamp(16px, 3vh, 34px); text-align: center; }
 .warmupGameDraw > span, .warmupGameSelected > span, .warmupGameTimer header { color: #00ff66; font-size: clamp(17px, 2.3vw, 34px); font-weight: 900; letter-spacing: .14em; }
 .warmupGameDraw .rouletteWindow { height: clamp(160px, 25vh, 260px); }
@@ -63,7 +84,7 @@
 .physicalChallengeOverlay > * { position: relative; }
 .physicalChallengeOverlay header { display: flex; justify-content: space-between; gap: 20px; color: #00ff66; font-size: clamp(16px, 2vw, 30px); letter-spacing: .12em; }
 .physicalChallengeBody { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(210px, 25vw); gap: clamp(22px, 4vw, 64px); align-items: stretch; }
-.physicalChallengeSteps { min-height: 0; display: grid; grid-template-rows: repeat(2, minmax(0, 1fr)); gap: clamp(12px, 2vh, 24px); }
+.physicalChallengeSteps { min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr); gap: clamp(12px, 2vh, 24px); }
 .physicalChallengeSteps article { min-height: 0; display: grid; align-content: center; gap: clamp(8px, 1.2vh, 14px); padding: clamp(16px, 2.2vw, 30px); border: 1px solid #274d35; background: rgba(0, 20, 8, .72); opacity: .48; }
 .physicalChallengeSteps article[data-active="true"] { border-color: #00ff66; opacity: 1; box-shadow: inset 5px 0 0 #00ff66; }
 .physicalChallengeSteps small { color: #00ff66; font-size: clamp(13px, 1.25vw, 20px); font-weight: 900; letter-spacing: .12em; }
@@ -114,6 +135,8 @@
 .complete { animation: endFlash .5s steps(2) infinite; }
 @keyframes terminalLineIn { from { opacity: 0; transform: translateY(3px); } }
 @keyframes verificationTitleIn { 0% { opacity: 0; filter: blur(8px); } 40% { opacity: 1; filter: blur(0); } 48% { opacity: .25; } 56%, 100% { opacity: 1; } }
+@keyframes soundCheckBlink { 0%, 48% { opacity: 1; } 49%, 100% { opacity: 0; } }
+@keyframes soundCheckComplete { 0% { opacity: .4; transform: scaleX(.94); transform-origin: left; } 60% { opacity: 1; } 100% { transform: scaleX(1); } }
 .selectionOverlay { position: absolute; inset: 0; z-index: 115; display: grid; place-items: center; pointer-events: none; color: #fff; background: #030303; font-family: var(--font-mono, monospace); }
 .volunteerCountdown, .roulette, .selectedParticipant { width: min(1100px, 90vw); display: grid; justify-items: center; gap: 20px; text-align: center; }
 .volunteerCountdown { transform: translateY(clamp(22px, 5vh, 64px)); }

@@ -569,6 +569,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             {warmupOpen ? (
               <div className={styles.warmupDisclosureBody}>
                 <AudienceWarmupController
+                  canFinishUnlock={state.sceneZero?.suitcaseGame?.status === "finished"}
                   disabled={pending}
                   onLog={addLog}
                   state={state.audienceWarmup}

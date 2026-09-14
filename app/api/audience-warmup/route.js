@@ -12,7 +12,11 @@ export async function POST(request) {
   try {
     const body = await request.json();
     if (`${body.action || ""}`.startsWith("unlock-")) {
-      const result = showState.controlPlayUnlock(body.action.slice("unlock-".length), body, { source: "operator" });
+      const unlockAction = body.action.slice("unlock-".length);
+      const source = ["sound-check-complete", "sound-check-level"].includes(unlockAction) && body.automatic === true
+        ? "microphone"
+        : "operator";
+      const result = showState.controlPlayUnlock(unlockAction, body, { source });
       if (!result.ok) return Response.json({ error: result.error }, { status: 400 });
       if (body.action === "unlock-boot") {
         showState.controlSceneZero("collection-local-context-loading", {}, { source: "system" });

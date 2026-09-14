@@ -43,9 +43,14 @@ async function unlockProjection(request) {
   }
   assert.equal(unlock.status, "BOOT_FAILED");
   await unlockAction(request, "start-warmup");
-  await waitForState(request, (state) => state.sceneZero.unlock.status === "WAITING_FOR_AUDIENCE", 7000);
-  await unlockAction(request, "unlock-now");
-  await waitForState(request, (state) => state.sceneZero.unlock.status === "UNLOCKED", 10000);
+  await unlockAction(request, "sound-check-skip");
+  const state = await waitForState(
+    request,
+    (candidate) => candidate.audienceWarmup.phase === "questions" && candidate.sceneZero.unlock.status === "WARMING_AUDIENCE",
+    15000
+  );
+  assert.equal(state.sceneZero.unlock.bootProgress, 100);
+  assert.equal(state.sceneZero.unlock.progress, 10, "prova sonora e primeira pergunta devem preparar 10% antes das malas");
 }
 
 const browser = await chromium.launch({ headless: true });
@@ -68,14 +73,14 @@ try {
   let result = await sceneAction(context.request, "suitcase-two-start");
   assert.deepEqual(result.sceneZero.suitcaseGame.openedSuitcases, [2]);
   assert.match(result.sceneZero.suitcaseGame.gincana.currentTask.text, /AJUDA DA PLATEIA/);
-  assert.equal(result.sceneZero.suitcaseGame.gincana.currentTask.mandatoryDuration, 30);
+  assert.equal(Boolean(result.sceneZero.suitcaseGame.gincana.currentTask.mandatoryAction), false);
   await sceneAction(context.request, "gincana-draw", { challengeId: "quatro-oculos" });
   await controller.getByRole("button", { name: "+ 5 SEGUNDOS", exact: true }).waitFor();
   await projection.getByLabel("Desafio com objeto da Mala 2").waitFor({ timeout: 12000 });
   await projection.getByText("CONSIGA 4 ÓCULOS COM AJUDA DA PLATEIA.", { exact: true }).waitFor();
-  await projection.getByText("TODOS FINJAM ESTAR MORTOS NAS CADEIRAS E NO CHÃO.", { exact: true }).waitFor();
+  assert.equal(await projection.getByText("TODOS FINJAM ESTAR MORTOS NAS CADEIRAS E NO CHÃO.", { exact: true }).count(), 0);
   result = await sceneAction(context.request, "gincana-timer-start");
-  assert.equal(result.sceneZero.suitcaseGame.gincana.timer.durationSeconds, 42);
+  assert.equal(result.sceneZero.suitcaseGame.gincana.timer.durationSeconds, 12);
   await projection.screenshot({ path: "/private/tmp/caixa-preta-mala-2-desafio.png" });
 
   result = await sceneAction(context.request, "suitcase-three-start");
@@ -111,11 +116,16 @@ try {
   await tutorialEnd.waitFor({ timeout: 14000 });
   state = await snapshot(context.request);
   assert.equal(state.sceneZero.suitcaseGame.status, "finished");
+  assert.equal(state.sceneZero.unlock.progress, 100, "a última mala deve ser a única conclusão da barra");
+  assert.equal(state.sceneZero.unlock.unlockSequenceSource, "suitcases-finished");
   assert.notEqual(state.sceneZero.suitcaseGame.morelBios.status, "running", "glitch não pode começar enquanto FIM DO TUTORIAL está visível");
   await projection.screenshot({ path: "/private/tmp/caixa-preta-mala-1-fim-tutorial.png" });
   state = await waitForState(context.request, (value) => value.sceneZero.suitcaseGame.morelBios.status === "running", 5000);
   assert.equal(state.sceneZero.suitcaseGame.currentSuitcase, 1);
+  assert.equal(state.sceneZero.unlock.status, "UNLOCKED");
+  assert.equal(state.sceneZero.unlock.progress, 100);
   await projection.getByLabel("Nova BIOS corrompida").waitFor();
+  await projection.getByRole("progressbar", { name: "DESBLOQUEIO DO ESPETÁCULO: 100%" }).waitFor();
   await projection.screenshot({ path: "/private/tmp/caixa-preta-mala-1-bios.png" });
 
   await context.request.post(`${BASE_URL}/api/operator`, { data: { command: "/reset" } });
