@@ -111,12 +111,13 @@ async function main() {
   engine.error({ localOnly: true });
   engine.impact({ localOnly: true });
   engine.wake({ localOnly: true });
+  engine.attention({ localOnly: true });
   engine.setSettings({ ...engine.settings, completeEnabled: true });
   engine.complete({ localOnly: true });
   engine.countdown(0, { localOnly: true });
   engine.gameStart({ localOnly: true });
   assert.deepEqual(system95Effects.map((entry) => entry.options.kind), [
-    "success", "error", "impact", "wake", "complete", "countdown", "game-start"
+    "success", "error", "impact", "wake", "attention", "complete", "countdown", "game-start"
   ]);
 
   engine.rouletteTick(2, { localOnly: true });
@@ -155,6 +156,15 @@ async function main() {
     relaySink.handleRelayMessage(relayedMessages[0]);
   }
   assert.equal(sinkPlayCount, 1);
+
+  let relayedAttentionCount = 0;
+  const attentionSink = new engineModule.RobotSoundEngine();
+  attentionSink.relaySinkId = "sink-a";
+  attentionSink.relaySinkUsers = 1;
+  attentionSink.context = { state: "running" };
+  attentionSink.attention = () => { relayedAttentionCount += 1; };
+  attentionSink.handleRelayMessage({ type: "play", targetSinkId: "sink-a", effect: "attention" });
+  assert.equal(relayedAttentionCount, 1);
 
   let ghostClicks = 0;
   engine.typing = () => { ghostClicks += 1; };

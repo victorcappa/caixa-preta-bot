@@ -16,6 +16,7 @@ async function main() {
   const morelBios = await import("../data/scene-zero-morel.js");
   const messageTiming = await import("../lib/messageTiming.js");
   const dataCollectionPrompt = await import("../prompts/dataCollection.js");
+  const sceneZeroControllerSource = fs.readFileSync(path.join(process.cwd(), "components", "SceneZeroController.js"), "utf8");
   const initial = sceneZero.createInitialSceneZeroState();
 
   assert.equal(initial.stage, "idle");
@@ -30,6 +31,8 @@ async function main() {
   assert.equal(initial.suitcaseGame.morelBios.status, "idle");
   assert.equal(initial.suitcaseGame.instagram.maxPosts, 10);
   assert.equal(initial.collection.obedience.anticipated, 0);
+  assert.match(sceneZeroControllerSource, /armAudioRelay\(\{ sink: true \}\)/, "o controller da Cena 0 deve ser uma saída de áudio sem depender da aba Sound Control");
+  assert.match(sceneZeroControllerSource, /CHAMAR ATENÇÃO/, "o índice lateral deve expor o sinal de atenção");
   assert.equal(initial.personalityGuidance.text, "");
   assert.deepEqual(initial.personalityGuidance.quickDirections, []);
   assert(initial.sessionStartedAt);
@@ -310,6 +313,7 @@ async function main() {
   assert.equal(hangmanWords.SCENE_ZERO_HANGMAN_WORDS.length, 24);
   let hangman = suitcaseHangman.configureSceneZeroHangman(undefined, "hangman-11", { start: true });
   assert.equal(hangman.status, "active");
+  assert.equal(hangman.theme, "arquivo");
   assert.equal(hangman.timer.durationSeconds, 60);
   assert.equal(hangman.timer.status, "running");
   assert.equal(hangman.activity.publicState.progress.includes("   "), true, "expressão deve preservar separação entre palavras");
@@ -322,6 +326,7 @@ async function main() {
   assert.equal(hangman.status, "lost");
   assert.equal(hangman.flightState, "IMPACTO");
   assert.equal(hangman.revealedWord, "CAIXA PRETA");
+  assert.equal(suitcaseHangman.publicSceneZeroHangman(hangman).theme, "arquivo");
   const restartedHangman = suitcaseHangman.configureSceneZeroHangman(hangman, "hangman-20", { start: true });
   const wonHangman = suitcaseHangman.winSceneZeroHangman(restartedHangman);
   assert.equal(wonHangman.status, "won");

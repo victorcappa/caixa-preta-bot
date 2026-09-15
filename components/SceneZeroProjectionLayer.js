@@ -649,6 +649,7 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
         >
           <div className={styles.hangmanInterference} aria-hidden="true" />
           <header><span>MALA 3 / FORCA</span><strong>{hangman.flightState || "ESTÁVEL"}</strong></header>
+          <p className={styles.hangmanTheme}>TEMA <strong>{(hangman.theme || "NÃO INFORMADO").toUpperCase()}</strong></p>
           <p className={styles.hangmanWord}>{hangmanPublic.progress || "_ _ _"}</p>
           <div className={styles.hangmanFlight} aria-hidden="true">
             <span>✈</span><i />

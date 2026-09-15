@@ -251,7 +251,11 @@ export default function SceneZeroController() {
 
   useEffect(() => robotSoundEngine.armAutoUnlock(), []);
 
-  useEffect(() => robotSoundEngine.armAudioRelay(), []);
+  useEffect(() => robotSoundEngine.armAudioRelay({ sink: true }), []);
+
+  useEffect(() => {
+    if (snapshot.robotSound) robotSoundEngine.setSettings(snapshot.robotSound);
+  }, [snapshot.robotSound]);
 
   useEffect(() => {
     prepareMicrophone();
@@ -734,6 +738,16 @@ export default function SceneZeroController() {
     }
   }
 
+  async function callAttention() {
+    const unlocked = await robotSoundEngine.unlock();
+    if (!unlocked) {
+      setNotice("ÁUDIO BLOQUEADO · INTERAJA COM A JANELA E TENTE NOVAMENTE");
+      return;
+    }
+    robotSoundEngine.attention();
+    setNotice("SINAL DE ATENÇÃO DISPARADO");
+  }
+
   return (
     <main className={styles.controller}>
       <audio
@@ -792,6 +806,9 @@ export default function SceneZeroController() {
             </a>
           ))}
         </nav>
+        <button className={styles.attentionButton} onClick={callAttention} type="button">
+          CHAMAR ATENÇÃO
+        </button>
         <section
           aria-label="Resposta da pergunta atual"
           className={styles.reactionControls}
@@ -961,6 +978,7 @@ export default function SceneZeroController() {
               <Button onClick={() => sceneAction("hangman-configure", { wordId: selectedHangmanWordId })} pending={pending || suitcaseGame.currentSuitcase !== 3}>ESCOLHER PALAVRA</Button>
               <Button onClick={() => sceneAction("hangman-new")} pending={pending || suitcaseGame.currentSuitcase !== 3}>SORTEAR NOVA</Button>
               <Readout label="PALAVRA OCULTA" value={hangmanPublic.progress || "—"} />
+              <Readout label="TEMA" value={(hangman.theme || "—").toUpperCase()} />
               <Readout label="CRONÔMETRO AUTOMÁTICO" value={`${hangmanSeconds}s · ${(hangman.timer?.status || "idle").toUpperCase()}`} />
               <Readout label="ESTADO DE VOO" value={`${hangman.flightState || "ESTÁVEL"} · ${hangman.errorCount || 0}/4 ERROS`} />
               <div className={styles.hangmanLetters} aria-label="Letras da forca">

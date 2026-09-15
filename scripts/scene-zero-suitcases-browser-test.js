@@ -68,8 +68,27 @@ try {
   await projection.goto(`${BASE_URL}/videomapping?projectionWindow=${PROJECTION_WINDOW_ID}`, { waitUntil: "domcontentloaded" });
   await projection.waitForSelector('[data-public-layout="quadrants"]');
   const controller = await context.newPage();
+  const controllerErrors = [];
+  controller.on("pageerror", (error) => controllerErrors.push(error.message));
   await controller.setViewportSize({ width: 1440, height: 1100 });
   await controller.goto(`${BASE_URL}/videomapping-controller`, { waitUntil: "domcontentloaded" });
+  await controller.waitForFunction(() => typeof window.__caixaPretaRobotSoundEngine?.attention === "function");
+
+  const attentionButton = controller.getByRole("button", { name: "CHAMAR ATENÇÃO", exact: true });
+  await attentionButton.waitFor();
+  await controller.evaluate(() => {
+    window.__sceneZeroAttentionOscillators = 0;
+    const originalCreateOscillator = window.AudioContext.prototype.createOscillator;
+    window.AudioContext.prototype.createOscillator = function createAttentionOscillator(...args) {
+      window.__sceneZeroAttentionOscillators += 1;
+      return originalCreateOscillator.apply(this, args);
+    };
+  });
+  await attentionButton.click();
+  const attentionNotice = controller.locator("footer");
+  await attentionNotice.filter({ hasText: /SINAL DE ATENÇÃO|ÁUDIO BLOQUEADO/ }).waitFor({ timeout: 5000 });
+  assert.equal(await attentionNotice.textContent(), "SINAL DE ATENÇÃO DISPARADO", `falha ao disparar atenção: ${controllerErrors.join(" | ")}`);
+  await controller.waitForFunction(() => window.__sceneZeroAttentionOscillators >= 4);
 
   await controller.getByRole("heading", { name: "MALA 2 / DESAFIO COM OBJETO" }).waitFor();
   await controller.getByRole("heading", { name: "MALA 3 / FORCA — 60s" }).waitFor();
@@ -128,9 +147,13 @@ try {
   state = await waitForState(context.request, (value) => value.sceneZero.suitcaseGame.hangman.status === "active", 7000);
   assert.equal(state.sceneZero.suitcaseGame.hangman.timer.durationSeconds, 60);
   assert.equal(state.sceneZero.suitcaseGame.hangman.timer.status, "running");
+  assert.equal(state.sceneZero.suitcaseGame.hangman.theme, "arquivo");
   assert(Date.parse(state.sceneZero.suitcaseGame.hangman.timer.endsAt) > Date.now());
   assert.equal(state.publicMessage.content, SCENE_ZERO_HANGMAN_INSTRUCTION);
+  const hangmanCard = controller.getByRole("heading", { name: "MALA 3 / FORCA — 60s" }).locator("..");
   await projection.getByLabel("Forca da Mala 3").waitFor();
+  await projection.getByText("TEMA ARQUIVO", { exact: true }).waitFor();
+  await hangmanCard.getByText("ARQUIVO", { exact: true }).waitFor();
   const hangmanTimerCenter = await projection.locator("[data-scene-zero-timer]").evaluate((element) => {
     const bounds = element.getBoundingClientRect();
     return { x: bounds.left + (bounds.width / 2), y: bounds.top + (bounds.height / 2) };
@@ -138,7 +161,6 @@ try {
   assert.ok(Math.abs(hangmanTimerCenter.x - physicalTimerCenter.x) <= 1, "a forca deve manter a mesma posição horizontal do temporizador");
   assert.ok(Math.abs(hangmanTimerCenter.y - physicalTimerCenter.y) <= 1, "a forca deve manter a mesma posição vertical do temporizador");
   await controller.getByRole("button", { name: "MARCAR ERRO", exact: true }).waitFor();
-  const hangmanCard = controller.getByRole("heading", { name: "MALA 3 / FORCA — 60s" }).locator("..");
   assert.equal(await hangmanCard.getByRole("button", { name: "INICIAR", exact: true }).count(), 0, "a forca não deve depender de início manual");
   result = await sceneAction(context.request, "hangman-guess", { guess: "CAIXA PRETA" });
   assert.equal(result.sceneZero.suitcaseGame.hangman.status, "won");
