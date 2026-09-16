@@ -71,7 +71,7 @@ export const AUDIENCE_WARMUP_PROMPTS = [
   prompt("play-04", "FAÇAM CARA DE FOTO 3X4.", "pose", "corpo / absurdo", "play", "collective", ["rosto", "pose"]),
   prompt("play-05", "TODO MUNDO DÁ UM GRITO EM 3, 2, 1.", "scream", "ritmo / som", "play", "chorus", ["grito", "coro"]),
   prompt("play-06", "FAÇAM O SOM DE UMA TURBINA.", "sound", "avião", "play", "chorus", ["avião", "som"]),
-  prompt(AUDIENCE_WARMUP_REQUIRED_PROMPT_ID, "TODOS FINJAM ESTAR MORTOS NAS CADEIRAS E NO CHÃO.", "sleep", "corpo / absurdo", "play", "collective", ["corpo", "imobilidade", "morte"], { durationSeconds: 30, requiredEverySession: true }),
+  prompt(AUDIENCE_WARMUP_REQUIRED_PROMPT_ID, "TODOS FINJAM ESTAR MORTOS NAS CADEIRAS E NO CHÃO.", "sleep", "corpo / absurdo", "play", "collective", ["corpo", "imobilidade", "morte"], { durationSeconds: 20, requiredEverySession: true }),
   prompt("play-08", "FAÇAM UMA POSE DE FISICULTURISTA.", "pose", "corpo / absurdo", "play", "mime", ["corpo", "pose"]),
   prompt("play-09", "FECHEM OS OLHOS POR 5 SEGUNDOS.", "eyes", "corpo / atenção", "play", "sequence", ["olhos", "atenção"], { steps: [step("FECHEM OS OLHOS POR 5 SEGUNDOS.", "eyes", { durationSeconds: 5 }), step("ABRAM.", "eyes")] }),
   prompt("play-10", "PISQUEM O MAIS RÁPIDO POSSÍVEL POR 5 SEGUNDOS.", "eyes", "corpo / absurdo", "play", "competition", ["olhos", "velocidade"], { durationSeconds: 5 }),

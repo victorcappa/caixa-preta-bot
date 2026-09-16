@@ -2,6 +2,20 @@
 
 Each entry records a reproduced problem, its cause, the working response, and a regression guard.
 
+## Suitcase explanation must finish before its draw
+
+- Problem: the suitcase draw replaced the robot's green explanation before the audience could read it.
+- Cause: `scene-zero-suitcase-choice` lacked a typewriter-completion acknowledgement, and a server timeout estimated the speaking duration then immediately activated the suitcase.
+- Working response: have `Chat` acknowledge the exact message ID, mark the choice ready, require `→` in manual mode, and hold at least 2.5 seconds after acknowledgement in automatic mode. Keep a generous fallback only for missing acknowledgements.
+- Prevent regression: validate the `announcing → ready → starting` statuses, prevent duplicate activation, and preserve the main controller's manual continuation.
+
+## Manual suitcase reveal needs two operator gates
+
+- Problem: the suitcase number, `ABRA A MALA`, and the next activity ran together even when the operator selected manual mode.
+- Cause: the projection and activity start were both derived from elapsed time after `suitcase-select`.
+- Working response: retain the automatic timed path, but in manual mode hold the selected number, require `→` for `ABRA A MALA`, and require another `→` before starting the suitcase content. Tie each action to the current selection sequence so a stale timer or click cannot advance a later suitcase.
+- Prevent regression: check the `drawing → selected → open → complete` cue phases and verify that the challenge, hangman, and tutorial wait until `complete`.
+
 ## Port 3000 must belong to the intended checkout
 
 - Problem: local startup fails or tests hit stale code.

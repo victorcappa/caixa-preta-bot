@@ -353,7 +353,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
         }
         typingTimersRef.current.delete(message.id);
         robotSoundEngine.success();
-        if (["scene-zero-collection", "scene-zero-roulette", "scene-zero-cake-comment"].includes(message.source)) {
+        if (["scene-zero-collection", "scene-zero-roulette", "scene-zero-cake-comment", "scene-zero-suitcase-choice"].includes(message.source)) {
           notifySceneZeroMessageTyped(message.id);
         }
         drainTypingQueueRef.current?.();
@@ -443,6 +443,9 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
         : null,
       sceneZero?.collection?.activeCountdown?.status === "awaiting_message"
         ? sceneZero.collection.activeCountdown.messageId
+        : null,
+      sceneZero?.suitcaseGame?.choice?.status === "announcing"
+        ? sceneZero.suitcaseGame.choice.messageId
         : null,
       game?.id === "verdade_ou_bolo" && ["REVEAL", "ROUND_RESULT"].includes(game?.data?.state)
         ? [...messages].reverse().find((message) => message.source === "scene-zero-cake-comment")?.id

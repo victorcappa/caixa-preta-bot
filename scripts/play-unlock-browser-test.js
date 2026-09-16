@@ -123,7 +123,7 @@ try {
   const unlockPanel = operator.getByLabel("Desbloqueio da peça");
   await unlockPanel.waitFor();
   assert.equal(await unlockPanel.getByRole("button", { name: "BOOT", exact: true }).count(), 0, "BOOT deve permanecer apenas no painel principal");
-  await bootButton.click();
+  await operator.keyboard.press("ArrowRight");
   snapshot = await waitForUnlock(context.request, (value) => value.status === "BOOTING");
   await restartButton.click();
   snapshot = await waitForUnlock(context.request, (value) => value.status === "STANDBY");
@@ -136,6 +136,8 @@ try {
 
   await bootButton.click();
   snapshot = await waitForUnlock(context.request, (value) => value.status === "BOOTING");
+  await unlock(context.request, "advance-boot");
+  await unlock(context.request, "advance-boot");
 
   await unlock(context.request, "pause-boot");
   snapshot = await state(context.request);
@@ -144,6 +146,12 @@ try {
   await new Promise((resolve) => setTimeout(resolve, 750));
   snapshot = await state(context.request);
   assert.equal(snapshot.sceneZero.unlock.bootProgress, pausedProgress, "BIOS pausada não deve avançar sozinha");
+
+  await operator.keyboard.press("ArrowLeft");
+  snapshot = await waitForUnlock(context.request, (value) => value.status === "BOOTING" && value.bootProgress < pausedProgress);
+  assert.equal(snapshot.sceneZero.unlock.bootPaused, true, "voltar uma etapa da BIOS deve impedir novo avanço automático");
+  await operator.keyboard.press("ArrowRight");
+  snapshot = await waitForUnlock(context.request, (value) => value.bootProgress === pausedProgress);
 
   for (let index = 0; index < 12 && snapshot.sceneZero.unlock.status === "BOOTING"; index += 1) {
     await unlock(context.request, "advance-boot");
@@ -154,6 +162,13 @@ try {
   assert.equal(snapshot.sceneZero.unlock.bootComplete, false);
   assert.equal(snapshot.sceneZero.unlock.progress, 0);
   assert.equal(snapshot.publicMessage, null, "o erro da BIOS não deve criar fala do chatbot");
+  await operator.keyboard.press("ArrowLeft");
+  snapshot = await waitForUnlock(context.request, (value) => value.status === "BOOTING" && value.bootProgress === 70);
+  assert.equal(snapshot.sceneZero.unlock.bootPaused, true, "voltar de 78% deve parar em 70% sem reiniciar a BIOS");
+  await operator.keyboard.press("ArrowRight");
+  snapshot = await waitForUnlock(context.request, (value) => value.bootProgress === PLAY_UNLOCK_CONFIG.bootStallProgress);
+  await operator.keyboard.press("ArrowRight");
+  snapshot = await waitForUnlock(context.request, (value) => value.status === "BOOT_FAILED");
   await display.getByLabel("BIOS da Cena 0").waitFor();
   await display.getByText("AÇÃO COLETIVA", { exact: true }).waitFor();
   await new Promise((resolve) => setTimeout(resolve, 800));
@@ -165,8 +180,10 @@ try {
   assert.equal(snapshot.publicMessage, null);
   await display.getByRole("progressbar", { name: `CARREGAMENTO DA BIOS: ${PLAY_UNLOCK_CONFIG.bootStallProgress}%` }).waitFor();
 
-  const endBiosButton = unlockPanel.getByRole("button", { name: "ENCERRAR BIOS", exact: true });
-  await endBiosButton.click();
+  assert.equal(await unlockPanel.getByRole("button", { name: "ENCERRAR BIOS", exact: true }).count(), 0, "ENCERRAR BIOS não deve ficar dentro do aquecimento");
+  const endBiosButton = bootPanel.getByRole("button", { name: "ENCERRAR BIOS", exact: true });
+  await endBiosButton.waitFor();
+  await operator.keyboard.press("ArrowRight");
   snapshot = await waitForUnlock(context.request, (value) => value.status === "SOUND_CHECK" && value.bootComplete);
   assert.equal(snapshot.sceneZero.unlock.bootProgress, 100, "ENCERRAR BIOS deve completar a barra antes da próxima etapa");
   await display.getByRole("progressbar", { name: "CARREGAMENTO DA BIOS: 100%" }).waitFor();
@@ -207,12 +224,17 @@ try {
   await display.getByText(snapshot.sceneZero.unlock.soundCheck.comment, { exact: true }).waitFor();
   await new Promise((resolve) => setTimeout(resolve, 500));
   await display.screenshot({ path: "/private/tmp/caixa-preta-sound-check-confirmed.png" });
-  await display.getByLabel("Protocolo de verificação humana").waitFor({ timeout: 7000 });
+  const verificationProgress = display.getByRole("complementary", { name: "Progresso" });
+  await verificationProgress.waitFor({ timeout: 7000 });
   snapshot = await state(context.request);
   assert.equal(snapshot.sceneZero.unlock.status, "HUMAN_VERIFICATION");
   assert.equal(snapshot.publicMessage.content, PLAY_UNLOCK_CONFIG.questionsIntroduction, "o bot deve apresentar a série de perguntas depois dos decibéis");
+  const introduction = display.locator('[aria-label="Fala atual da Caixa Preta"] p').filter({ hasText: /Agora teremos uma série de perguntas/ });
+  await introduction.waitFor();
+  const progressBox = await verificationProgress.boundingBox();
+  const introductionBox = await introduction.boundingBox();
+  assert(progressBox && introductionBox && introductionBox.y >= progressBox.y + progressBox.height, "fala de introdução deve ficar abaixo da barra, sem sobreposição");
   await display.getByText(PLAY_UNLOCK_CONFIG.questionsIntroduction, { exact: true }).waitFor();
-  await new Promise((resolve) => setTimeout(resolve, 900));
   await display.screenshot({ path: "/private/tmp/caixa-preta-human-verification-title.png" });
 
   snapshot = await waitForState(context.request, (value) => value.audienceWarmup.phase === "questions", 7000);

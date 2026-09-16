@@ -243,7 +243,7 @@ function PlayUnlockProjection({ unlock, now, pitchScale = 1, soundStyle = "robot
     );
   }
 
-  if (status === PLAY_UNLOCK_STATES.HUMAN_VERIFICATION) {
+  if (status === PLAY_UNLOCK_STATES.HUMAN_VERIFICATION && PLAY_UNLOCK_CONFIG.verificationTitle) {
     return (
       <section className={`${styles.biosOverlay} ${styles.verificationOverlay}`} aria-label="Protocolo de verificação humana" aria-live="assertive">
         <div className={styles.verificationTitle} key={unlock.verificationTitleSequence}>
@@ -434,16 +434,18 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
     : null;
   const suitcaseSelectionAge = now - Date.parse(sceneZero?.suitcaseGame?.suitcaseSelectedAt || "");
   const suitcaseCueFrame = sceneZeroSuitcaseCueFrameAt(suitcaseSelectionAge, sceneZero?.suitcaseGame?.currentSuitcase);
+  const suitcaseCuePhase = sceneZero?.suitcaseGame?.cuePhase || "idle";
+  const manualSuitcaseCue = ["drawing", "selected", "open"].includes(suitcaseCuePhase);
   const showSuitcaseSelection = Boolean(
     sceneZero?.suitcaseGame?.currentSuitcase
     && suitcaseSelectionAge >= 0
-    && suitcaseSelectionAge < SCENE_ZERO_SUITCASE_CUE_DURATION_MS
+    && (manualSuitcaseCue || suitcaseSelectionAge < SCENE_ZERO_SUITCASE_CUE_DURATION_MS && suitcaseCuePhase === "automatic")
     && !showTimer
   );
   const showPhysicalChallenge = Boolean(
     sceneZero?.suitcaseGame?.currentSuitcase === 2
     && gincana?.currentTask
-    && suitcaseSelectionAge >= SCENE_ZERO_SUITCASE_CUE_DURATION_MS
+    && (suitcaseCuePhase === "complete" || suitcaseSelectionAge >= SCENE_ZERO_SUITCASE_CUE_DURATION_MS)
     && ["running", "paused"].includes(gincanaTimer?.status)
   );
   const physicalSeconds = timerSeconds(gincanaTimer, now);
@@ -452,7 +454,7 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
     sceneZero?.suitcaseGame?.currentSuitcase === 3
     && hangman?.activity
     && hangman.status === "active"
-    && suitcaseSelectionAge >= SCENE_ZERO_SUITCASE_CUE_DURATION_MS
+    && (suitcaseCuePhase === "complete" || suitcaseSelectionAge >= SCENE_ZERO_SUITCASE_CUE_DURATION_MS)
   );
   const hangmanSeconds = timerSeconds(hangman?.timer, now);
   const morelBiosAge = now - Date.parse(morelBios?.startedAt || "");
@@ -597,7 +599,7 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
       ) : null}
       {showSuitcaseSelection ? (
         <div className={styles.suitcaseCueOverlay} key={sceneZero.suitcaseGame.suitcaseSelectionSequence} aria-label={`Mala indicada: ${sceneZero.suitcaseGame.currentSuitcase}`} aria-live="assertive">
-          <span>{suitcaseCueFrame.phase === "reveal" ? "ABRA A MALA" : ""}</span>
+          <span>{manualSuitcaseCue ? suitcaseCuePhase === "open" ? "ABRA A MALA" : "" : suitcaseCueFrame.phase === "reveal" ? "ABRA A MALA" : ""}</span>
           <strong key={`${suitcaseCueFrame.phase}-${suitcaseCueFrame.number}`}>{suitcaseCueFrame.number}</strong>
         </div>
       ) : null}

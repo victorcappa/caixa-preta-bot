@@ -24,7 +24,7 @@ export const AUDIENCE_WARMUP_MINIGAMES = [
   {
     id: "piscada",
     name: "PISCADA",
-    defaultDurationSeconds: 60,
+    defaultDurationSeconds: 25,
     rules: [
       "PISCADA.",
       "OLHE NOS OLHOS DA SUA DUPLA.",
@@ -36,7 +36,7 @@ export const AUDIENCE_WARMUP_MINIGAMES = [
   {
     id: "serinho",
     name: "SERINHO",
-    defaultDurationSeconds: 60,
+    defaultDurationSeconds: 25,
     rules: [
       "SERINHO.",
       "OLHE PARA SUA DUPLA.",

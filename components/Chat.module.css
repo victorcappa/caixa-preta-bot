@@ -174,6 +174,15 @@
   overflow: hidden;
 }
 
+.chatPane:not(.chatPaneQuadrants):has([data-unlock-hud]) .publicStage {
+  padding-top: clamp(112px, 15vh, 150px);
+}
+
+.chatPane:not(.chatPaneQuadrants):has([data-unlock-hud]) .currentMessage {
+  padding-top: clamp(20px, 4vh, 48px);
+  padding-bottom: clamp(20px, 4vh, 48px);
+}
+
 .currentMessage p {
   margin: 0;
   white-space: pre-wrap;

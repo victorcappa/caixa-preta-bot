@@ -26,6 +26,7 @@ async function main() {
   assert.deepEqual(initial.suitcaseGame.openedSuitcases, []);
   assert.equal(initial.suitcaseGame.suitcaseSelectedAt, null);
   assert.equal(initial.suitcaseGame.suitcaseSelectionSequence, 0);
+  assert.equal(initial.suitcaseGame.cuePhase, "idle");
   assert.equal(initial.suitcaseGame.gincana.timer.status, "idle");
   assert.equal(initial.suitcaseGame.hangman.status, "idle");
   assert.equal(initial.suitcaseGame.morelBios.status, "idle");
@@ -249,7 +250,7 @@ async function main() {
   assert.equal(suitcaseGame.sceneZeroSuitcaseCueFrameAt(0, 2).phase, "roulette");
   assert.equal(suitcaseGame.sceneZeroSuitcaseCueFrameAt(2200, 2).phase, "reveal");
   assert.equal(suitcaseGame.sceneZeroSuitcaseCueFrameAt(2200, 2).number, 2);
-  assert.match(suitcaseGame.SCENE_ZERO_RETURN_BORROWED_OBJECTS_INSTRUCTION, /DEVOLVA À PLATEIA/);
+  assert.equal(suitcaseGame.SCENE_ZERO_KEEP_BORROWED_OBJECTS_INSTRUCTION, "DEIXE OS OBJETOS DENTRO DA MALA. VAI ROLAR BRECHÓ DO CHATBOT NO FINAL.");
   assert.equal(suitcaseGame.shouldShowGincanaTimer({ status: "running" }), true);
   assert.equal(suitcaseGame.shouldShowGincanaTimer({ status: "complete" }), true);
   assert.equal(suitcaseGame.shouldShowGincanaTimer({ status: "completed" }), true);
@@ -280,7 +281,7 @@ async function main() {
     ["glitch-1", "glitch-2", "glitch-3"]
   );
   const finalEmergenceCue = emergence.sceneZeroEmergenceCueForNextSuitcase(1);
-  assert.match(finalEmergenceCue.text, /desligar e ligar de novo/i);
+  assert.equal(finalEmergenceCue.text, ":)");
   assert.equal(
     emergence.sceneZeroEmergenceCueForMessage({ source: emergence.sceneZeroEmergenceSource(finalEmergenceCue.id) }),
     finalEmergenceCue

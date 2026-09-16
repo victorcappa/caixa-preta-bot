@@ -210,8 +210,12 @@ export default function SceneZeroController() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "ERRO NO AQUECIMENTO");
-      if (data.audienceWarmup) {
-        setSnapshot((current) => ({ ...current, audienceWarmup: data.audienceWarmup }));
+      if (data.audienceWarmup || data.unlock) {
+        setSnapshot((current) => ({
+          ...current,
+          ...(data.audienceWarmup ? { audienceWarmup: data.audienceWarmup } : {}),
+          ...(data.unlock ? { sceneZero: { ...current.sceneZero, unlock: data.unlock } } : {})
+        }));
       }
       setNotice(data.message || action.toUpperCase());
       return data;
@@ -222,6 +226,36 @@ export default function SceneZeroController() {
       setPending("");
     }
   }, [pending]);
+
+  const sceneAction = useCallback(async (action, payload = {}) => {
+    if (pending) return null;
+    setPending(action);
+    setNotice(`PROCESSANDO ${action.toUpperCase()}...`);
+    try {
+      const response = await fetch("/api/scene-zero", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, detail, ...payload })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "ERRO CENA 0");
+      if (data.sceneZero || data.audienceWarmup) {
+        setSnapshot((current) => ({
+          ...current,
+          ...(data.sceneZero ? { sceneZero: data.sceneZero } : {}),
+          ...(data.audienceWarmup ? { audienceWarmup: data.audienceWarmup } : {})
+        }));
+      }
+      setNotice(data.message || action.toUpperCase());
+      setDetail("");
+      return data;
+    } catch (error) {
+      setNotice(error.message);
+      return null;
+    } finally {
+      setPending("");
+    }
+  }, [detail, pending]);
 
   useEffect(() => {
     fetch("/api/state").then((response) => response.json()).then(setSnapshot).catch(() => setNotice("SEM CONEXÃO"));
@@ -398,18 +432,126 @@ export default function SceneZeroController() {
   }, [activeSoundCheckPhase, activeSoundCheckSequence, microphonePermission, microphoneSensitivity]);
 
   useEffect(() => {
-    function handleManualNext(event) {
-      if (event.key !== "ArrowRight" || !snapshot.audienceWarmup?.manualMode || pending) return;
+    function handleStageArrow(event) {
+      const spacePressed = event.code === "Space" || event.key === " " || event.key === "Spacebar";
+      if (!["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown"].includes(event.key) && !spacePressed) return;
+      if (pending) return;
       const target = event.target;
       const inputEditsWithArrow = target?.tagName === "INPUT" && !["checkbox", "button"].includes(target.type);
       const editable = target?.isContentEditable || ["TEXTAREA", "SELECT"].includes(target?.tagName) || inputEditsWithArrow;
       if (editable || event.repeat) return;
+      if (spacePressed) {
+        if (target?.closest?.("input, [role='checkbox']")) return;
+        const unlock = snapshot.sceneZero?.unlock;
+        const warmup = snapshot.audienceWarmup;
+        const action = unlock?.status === "BOOT_FAILED" && !unlock.bootComplete
+          ? "unlock-end-bios"
+          : warmup?.phase === "questions"
+            ? "questions-complete"
+            : warmup?.minigame?.status === "ready_for_draw"
+              ? "minigame-draw"
+            : warmup?.phase === "minigame" && warmup.minigame?.selectedId
+              && ["running", "paused", "exchange", "ready_round_two"].includes(warmup.minigame.status)
+              ? "minigame-end"
+              : null;
+        if (!action) return;
+        event.preventDefault();
+        warmupAction(action);
+        return;
+      }
+      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+        const warmup = snapshot.audienceWarmup;
+        const prompt = AUDIENCE_WARMUP_PROMPTS.find((candidate) => candidate.id === warmup?.sequence?.promptId);
+        if (warmup?.phase !== "questions" || !prompt) return;
+        const kind = event.key === "ArrowUp" ? "many" : "few";
+        const option = audienceWarmupResponseOptions(prompt.action).find((response) => response.kind === kind);
+        if (!option) return;
+        event.preventDefault();
+        warmupAction("record-response", option);
+        return;
+      }
+      const bootStatus = snapshot.sceneZero?.unlock?.status;
+      const stage = snapshot.sceneZero?.stage;
+      if (event.key === "ArrowLeft") {
+        const previous = stage === "suitcases"
+          ? ["set-stage", { stage: "participant" }]
+          : stage === "participant"
+            ? ["return-to-warmup"]
+            : bootStatus === "STANDBY"
+              ? null
+              : bootStatus === "BOOTING" || (bootStatus === "BOOT_FAILED" && !snapshot.sceneZero?.unlock?.bootComplete)
+                ? Number(snapshot.sceneZero?.unlock?.bootStep) > 0
+                  ? ["rewind-boot"]
+                  : ["return-to-boot"]
+                : bootStatus === "SOUND_CHECK" || bootStatus === "BOOT_FAILED"
+                  ? ["return-to-boot"]
+                  : ["return-to-sound-check"];
+        if (!previous) return;
+        event.preventDefault();
+        if (previous[0] === "rewind-boot") warmupAction("unlock-rewind-boot");
+        else sceneAction(previous[0], previous[1] || {});
+        return;
+      }
+      if (stage === "participant") {
+        if (snapshot.sceneZero?.participantSelection?.status !== "complete" || !snapshot.sceneZero?.currentParticipant?.name) return;
+        event.preventDefault();
+        sceneAction("set-stage", { stage: "suitcases" });
+        return;
+      }
+      if (stage === "suitcases") {
+        const game = snapshot.sceneZero?.suitcaseGame;
+        const choiceStatus = game?.choice?.status || "idle";
+        const action = choiceStatus === "ready"
+          ? "suitcase-choice-continue"
+          : choiceStatus !== "idle"
+            ? null
+            : game?.cuePhase === "selected"
+              ? "suitcase-cue-open"
+              : game?.cuePhase === "open"
+                ? "suitcase-cue-continue"
+                : game?.cuePhase === "drawing"
+                  ? null
+            : game?.currentSuitcase === 2 && game.gincana?.currentTask && game.gincana?.timer?.status === "idle"
+              ? "gincana-timer-start"
+              : game?.currentSuitcase === 3 && game.hangman?.status === "ready"
+                ? null
+                : game?.currentSuitcase && nextSceneZeroSuitcase(game)
+                  ? "suitcase-next"
+                  : null;
+        if (!action) return;
+        event.preventDefault();
+        sceneAction(action, ["suitcase-cue-open", "suitcase-cue-continue"].includes(action)
+          ? { selectionSequence: game.suitcaseSelectionSequence }
+          : {});
+        return;
+      }
+      if (stage === "idle" && snapshot.audienceWarmup?.phase === "complete") {
+        event.preventDefault();
+        sceneAction("set-stage", { stage: "participant" });
+        return;
+      }
+      const action = bootStatus === "STANDBY"
+        ? "unlock-boot"
+        : bootStatus === "BOOTING"
+          ? "unlock-advance-boot"
+          : bootStatus === "BOOT_FAILED" && !snapshot.sceneZero?.unlock?.bootComplete
+            ? "unlock-end-bios"
+            : snapshot.audienceWarmup?.minigame?.status === "ready_for_draw"
+              ? "minigame-draw"
+            : snapshot.audienceWarmup?.minigame?.status === "paused"
+              ? "minigame-resume"
+            : Boolean(snapshot.audienceWarmup?.pendingAdvance) || snapshot.audienceWarmup?.phase === "questions"
+              ? "primary-next"
+              : ["ready", "ready_round_two"].includes(snapshot.audienceWarmup?.minigame?.status)
+                ? "minigame-start"
+              : null;
+      if (!action) return;
       event.preventDefault();
-      warmupAction("manual-next");
+      warmupAction(action);
     }
-    window.addEventListener("keydown", handleManualNext);
-    return () => window.removeEventListener("keydown", handleManualNext);
-  }, [pending, snapshot.audienceWarmup?.manualMode, warmupAction]);
+    window.addEventListener("keydown", handleStageArrow);
+    return () => window.removeEventListener("keydown", handleStageArrow);
+  }, [pending, sceneAction, snapshot.audienceWarmup, snapshot.sceneZero?.currentParticipant?.name, snapshot.sceneZero?.participantSelection?.status, snapshot.sceneZero?.stage, snapshot.sceneZero?.suitcaseGame, snapshot.sceneZero?.unlock, warmupAction]);
 
   useEffect(() => {
     const activeSuitcase = snapshot.sceneZero?.suitcaseGame?.currentSuitcase;
@@ -468,36 +610,6 @@ export default function SceneZeroController() {
     sections.forEach((section) => observer.observe(section));
     return () => observer.disconnect();
   }, []);
-
-  async function sceneAction(action, payload = {}) {
-    if (pending) return null;
-    setPending(action);
-    setNotice(`PROCESSANDO ${action.toUpperCase()}...`);
-    try {
-      const response = await fetch("/api/scene-zero", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, detail, ...payload })
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "ERRO CENA 0");
-      if (data.sceneZero || data.audienceWarmup) {
-        setSnapshot((current) => ({
-          ...current,
-          ...(data.sceneZero ? { sceneZero: data.sceneZero } : {}),
-          ...(data.audienceWarmup ? { audienceWarmup: data.audienceWarmup } : {})
-        }));
-      }
-      setNotice(data.message || action.toUpperCase());
-      setDetail("");
-      return data;
-    } catch (error) {
-      setNotice(error.message);
-      return null;
-    } finally {
-      setPending("");
-    }
-  }
 
   async function bootScene() {
     if (pending || sceneZero.unlock?.status !== "STANDBY") return;
@@ -680,6 +792,8 @@ export default function SceneZeroController() {
   const instagramLoginVerified = instagram.sessionAuthenticated === true;
   const suitcase = snapshot.suitcase || {};
   const suitcaseGame = sceneZero.suitcaseGame || {};
+  const suitcaseChoice = suitcaseGame.choice || {};
+  const suitcaseCuePhase = suitcaseGame.cuePhase || "idle";
   const gincana = suitcaseGame.gincana || {};
   const gincanaTimer = gincana.timer || {};
   const gincanaSeconds = remainingTimer(gincanaTimer, now, null);
@@ -763,7 +877,7 @@ export default function SceneZeroController() {
             onChange={(event) => warmupAction("set-manual-mode", { manualMode: event.target.checked })}
             type="checkbox"
           />
-          <span><strong>MODO MANUAL</strong><small>{manualMode ? "ATIVO · SETA → AVANÇA UMA ETAPA" : "DESLIGADO · FLUXO AUTOMÁTICO"}</small></span>
+          <span><strong>MODO MANUAL</strong><small>{manualMode ? "ATIVO · → AVANÇA · ← VOLTA · ESPAÇO ENCERRA" : "DESLIGADO · → AVANÇA · ← VOLTA · ESPAÇO ENCERRA"}</small></span>
         </label>
         <div className={styles.microphonePermission} data-status={microphonePermission}>
           <span>MICROFONE</span>
@@ -815,11 +929,12 @@ export default function SceneZeroController() {
           data-phase={audienceWarmup.phase || "idle"}
           data-pending={pending || ""}
         >
-          <small>RESPOSTA DESTA PERGUNTA</small>
-          {responseOptions.map((option) => (
+          <small>RESPOSTA DESTA PERGUNTA · ↑ MUITOS · ↓ POUCOS</small>
+          {[...responseOptions].reverse().map((option) => (
             <button
               aria-pressed={audienceWarmup.currentResponse?.promptId === activeWarmupPrompt?.id && audienceWarmup.currentResponse?.kind === option.kind}
               className={audienceWarmup.currentResponse?.promptId === activeWarmupPrompt?.id && audienceWarmup.currentResponse?.kind === option.kind ? styles.selectedReaction : ""}
+              data-kind={option.kind}
               disabled={Boolean(pending) || !reactionControlsActive}
               key={option.kind}
               onClick={() => warmupAction("record-response", option)}
@@ -854,6 +969,14 @@ export default function SceneZeroController() {
             onClick={() => operatorCommand("/reset")}
             type="button"
           >REINICIAR</button>
+          {sceneZero.unlock?.status === "BOOT_FAILED" ? (
+            <button
+              className={styles.biosEndButton}
+              disabled={Boolean(pending) || sceneZero.unlock?.bootComplete}
+              onClick={() => warmupAction("unlock-end-bios")}
+              type="button"
+            >{sceneZero.unlock?.bootComplete ? "ENCERRANDO BIOS..." : "ENCERRAR BIOS"}</button>
+          ) : null}
         </div>
       </section>
 
@@ -928,10 +1051,19 @@ export default function SceneZeroController() {
           <strong>MALA ATUAL: {suitcaseGame.currentSuitcase || "—"}</strong>
           <span>PARTICIPANTE: {sceneZero.currentParticipant?.name || "—"}</span>
           <span>ORDEM REALIZADA: {(suitcaseGame.openedSuitcases || []).join(" → ") || "—"}</span>
-          <Button primary onClick={() => sceneAction("suitcase-next")} pending={pending || !nextSuitcase}>
-            {nextSuitcase ? "ROBÔ ESCOLHER PRÓXIMA MALA" : "TODAS AS MALAS ESCOLHIDAS"}
+          {suitcaseChoice.status === "announcing" ? <span>ROBÔ EXPLICANDO A PRÓXIMA MALA...</span> : null}
+          {suitcaseChoice.status === "ready" ? <span>{manualMode ? "EXPLICAÇÃO CONCLUÍDA · AGUARDANDO SETA →" : "EXPLICAÇÃO CONCLUÍDA · SORTEIO EM INSTANTES"}</span> : null}
+          {suitcaseCuePhase === "drawing" ? <span>SORTEANDO MALA...</span> : null}
+          {suitcaseCuePhase === "selected" ? <Button primary onClick={() => sceneAction("suitcase-cue-open", { selectionSequence: suitcaseGame.suitcaseSelectionSequence })} pending={pending}>SEGUIR → ABRA A MALA</Button> : null}
+          {suitcaseCuePhase === "open" ? <Button primary onClick={() => sceneAction("suitcase-cue-continue", { selectionSequence: suitcaseGame.suitcaseSelectionSequence })} pending={pending}>SEGUIR → ETAPA DA MALA</Button> : null}
+          <Button
+            primary
+            onClick={() => sceneAction(suitcaseChoice.status === "ready" ? "suitcase-choice-continue" : "suitcase-next")}
+            pending={pending || !nextSuitcase || ["announcing", "starting"].includes(suitcaseChoice.status) || ["drawing", "selected", "open"].includes(suitcaseCuePhase)}
+          >
+            {nextSuitcase ? suitcaseChoice.status === "ready" ? "SEGUIR → SORTEAR MALA" : "ROBÔ ESCOLHER PRÓXIMA MALA" : "TODAS AS MALAS ESCOLHIDAS"}
           </Button>
-          <Button onClick={() => sceneAction("suitcase-finish")} pending={pending || Boolean(nextSuitcase) || suitcaseGame.status === "finished"}>FINALIZAR AGORA / RECUPERAÇÃO</Button>
+          <Button onClick={() => sceneAction("suitcase-finish")} pending={pending || Boolean(nextSuitcase) || suitcaseGame.status === "finished" || ["drawing", "selected", "open"].includes(suitcaseCuePhase)}>FINALIZAR AGORA / RECUPERAÇÃO</Button>
         </div>
         <div className={styles.suitcaseGrid}>
           <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 2 ? styles.activeSuitcase : ""}`}>
@@ -946,19 +1078,19 @@ export default function SceneZeroController() {
                   ))}
                 </select>
               </label>
-              <Button onClick={() => sceneAction("gincana-draw", { challengeId: selectedChallengeId })} pending={pending || suitcaseGame.currentSuitcase !== 2}>SELECIONAR</Button>
-              <Button onClick={() => sceneAction("gincana-draw")} pending={pending || suitcaseGame.currentSuitcase !== 2}>PULAR / PRÓXIMO</Button>
+              <Button onClick={() => sceneAction("gincana-draw", { challengeId: selectedChallengeId })} pending={pending || suitcaseGame.currentSuitcase !== 2 || ["drawing", "selected", "open"].includes(suitcaseCuePhase)}>SELECIONAR</Button>
+              <Button onClick={() => sceneAction("gincana-draw")} pending={pending || suitcaseGame.currentSuitcase !== 2 || ["drawing", "selected", "open"].includes(suitcaseCuePhase)}>PULAR / PRÓXIMO</Button>
               <Readout label="DESAFIO ATIVO" value={gincana.currentTask?.text || "AGUARDANDO MALA 2"} />
               <Readout label="ALVO" value={gincana.currentTask ? `${gincana.currentTask.target} · ${gincana.currentTask.category} · ${gincana.currentTask.intensity}` : "—"} />
               <div className={`${styles.timer} ${["complete", "failed"].includes(gincanaTimer.status) ? styles.timerComplete : ""}`}>{gincanaSeconds ?? "—"}</div>
               <strong className={styles.timerStatus}>{(gincanaTimer.status || "idle").toUpperCase()}</strong>
-              <Button primary onClick={() => sceneAction("gincana-timer-start")} pending={pending || suitcaseGame.currentSuitcase !== 2 || !gincana.currentTask}>INICIAR</Button>
+              <Button primary onClick={() => sceneAction("gincana-timer-start")} pending={pending || suitcaseGame.currentSuitcase !== 2 || !gincana.currentTask || ["drawing", "selected", "open"].includes(suitcaseCuePhase)}>INICIAR</Button>
               <Button onClick={() => sceneAction("gincana-timer-pause")} pending={pending || gincanaTimer.status !== "running"}>PAUSAR</Button>
               <Button onClick={() => sceneAction("gincana-timer-resume")} pending={pending || gincanaTimer.status !== "paused"}>CONTINUAR</Button>
               <Button onClick={() => sceneAction("gincana-timer-restart")} pending={pending || !gincana.currentTask}>REINICIAR</Button>
               <Button onClick={() => sceneAction("gincana-timer-add", { seconds: 5 })} pending={pending || !["idle", "running", "paused"].includes(gincanaTimer.status)}>+ 5 SEGUNDOS</Button>
-              <Button primary onClick={() => sceneAction("gincana-complete")} pending={pending || !gincana.currentTask || Boolean(gincana.result)}>SUCESSO</Button>
-              <Button danger onClick={() => sceneAction("gincana-failed")} pending={pending || !gincana.currentTask || Boolean(gincana.result)}>FALHA</Button>
+              <Button primary onClick={() => sceneAction("gincana-complete")} pending={pending || !gincana.currentTask || Boolean(gincana.result) || ["drawing", "selected", "open"].includes(suitcaseCuePhase)}>SUCESSO</Button>
+              <Button danger onClick={() => sceneAction("gincana-failed")} pending={pending || !gincana.currentTask || Boolean(gincana.result) || ["drawing", "selected", "open"].includes(suitcaseCuePhase)}>FALHA</Button>
               <Readout label="RESULTADO" value={gincana.result ? `${gincana.result.toUpperCase()} · ${gincana.elapsedSeconds ?? 0}s` : gincanaTimer.status === "complete" ? "TEMPO ESGOTADO" : "AGUARDANDO"} />
             </div>
           </section>

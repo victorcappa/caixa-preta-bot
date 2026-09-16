@@ -127,8 +127,8 @@ try {
   state = await waitFor(
     context.request,
     (candidate) => candidate.publicMessage?.content === AUDIENCE_WARMUP_REQUIRED_ACKNOWLEDGEMENT,
-    "reconhecimento depois dos 30 segundos de mortos",
-    35000
+    "reconhecimento depois dos 20 segundos de mortos",
+    25000
   );
   await display.getByText(AUDIENCE_WARMUP_REQUIRED_ACKNOWLEDGEMENT, { exact: true }).waitFor();
   state = await waitFor(
@@ -142,23 +142,26 @@ try {
 
   const promptBeforeReaction = state.audienceWarmup.previewPromptId;
   const progressBeforeReaction = state.sceneZero.unlock.progress;
-  const fewResponseButton = responseControls.getByRole("button").first();
-  const manyResponseButton = responseControls.getByRole("button").last();
+  const manyResponseButton = responseControls.getByRole("button").first();
+  const fewResponseButton = responseControls.getByRole("button").last();
   assert.match(await fewResponseButton.textContent(), /^POUCOS /);
   assert.match(await manyResponseButton.textContent(), /^MUITOS /);
+  assert((await fewResponseButton.boundingBox()).y > (await manyResponseButton.boundingBox()).y, "POUCOS deve ficar abaixo de MUITOS");
   if (!(await fewResponseButton.isEnabled())) {
     throw new Error(`controles de reação desabilitados: ${JSON.stringify({
       phase: await responseControls.getAttribute("data-phase"),
       pending: await responseControls.getAttribute("data-pending")
     })}`);
   }
-  await fewResponseButton.click();
+  await sceneOperator.keyboard.press("ArrowDown");
   state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.currentResponse?.kind === "few", "registro de poucos");
+  await sceneOperator.waitForFunction(() => document.querySelector('section[aria-label="Resposta da pergunta atual"] button[aria-pressed="true"]')?.textContent?.startsWith("POUCOS"));
   assert.equal(state.audienceWarmup.previewPromptId, promptBeforeReaction, "registrar resposta não pode trocar a pergunta");
   assert.equal(state.publicMessage.content, state.audienceWarmup.preview, "registrar resposta não pode falar antes de SORTEAR");
   assert.equal(state.sceneZero.unlock.progress, progressBeforeReaction, "registrar resposta não pode pontuar");
-  await manyResponseButton.click();
+  await sceneOperator.keyboard.press("ArrowUp");
   state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.currentResponse?.kind === "many", "registro de muitos");
+  await sceneOperator.waitForFunction(() => document.querySelector('section[aria-label="Resposta da pergunta atual"] button[aria-pressed="true"]')?.textContent?.startsWith("MUITOS"));
   assert.equal(state.audienceWarmup.responseHistory.at(-1).promptId, promptBeforeReaction);
 
   const literalCases = [
@@ -196,32 +199,49 @@ try {
   assert.match(state.audienceWarmup.previewPromptId, /^social-/, "sortear deve escolher uma ação da intensidade selecionada");
   assert.equal(state.publicMessage.content, state.audienceWarmup.preview, "SORTEAR deve publicar o texto exato sorteado");
 
+  const promptBeforeArrow = state.audienceWarmup.previewPromptId;
+  await post(context.request, "record-response", { kind: "few" });
+  await sceneOperator.keyboard.press("ArrowRight");
+  state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.reaction?.kind === "few", "reação iniciada pela seta direita");
+  assert.equal(state.audienceWarmup.previewPromptId, promptBeforeArrow, "seta deve publicar a reação antes de trocar a pergunta");
+  state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.previewPromptId?.startsWith("provocative-") && candidate.publicMessage?.content === candidate.audienceWarmup.preview, "sorteio de intensidade 4 pela seta direita");
+  assert.equal(state.audienceWarmup.intensity, AUDIENCE_WARMUP_FIRST_QUESTION_INTENSITY, "seta deve usar intensidade 4 por padrão");
+
   await post(context.request, "minigame-draw", {}, false);
-  await post(context.request, "questions-complete");
+  await sceneOperator.keyboard.press("Space");
   state = await waitFor(context.request, (candidate) => candidate.publicMessage?.content === AUDIENCE_WARMUP_QUESTIONS_RESULT_COMMENT, "comentário final das perguntas");
   await display.getByText(AUDIENCE_WARMUP_QUESTIONS_RESULT_COMMENT, { exact: true }).waitFor();
   state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "ready_for_draw", "briefing depois das perguntas", 40000);
   const briefing = state.audienceWarmup.history.map((entry) => entry.text);
   assert.deepEqual(briefing.slice(-5), [AUDIENCE_WARMUP_QUESTIONS_RESULT_COMMENT, "PERGUNTAS CONCLUÍDAS. AGORA, UM TESTE.", "ESCOLHA A PESSOA AO SEU LADO E FORME UMA DUPLA.", "UM JOGO SERÁ SORTEADO.", "SIGAM AS INSTRUÇÕES."]);
   assert.equal(briefing.some((line) => /NÃO COMPLIQUEM/.test(line)), false);
-  await post(context.request, "minigame-draw");
+  await post(context.request, "set-manual-mode", { manualMode: true });
+  await waitFor(context.request, (candidate) => candidate.audienceWarmup.manualMode === true, "modo manual antes do sorteio");
+  await sceneOperator.keyboard.press("Space");
+  state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "drawing" && candidate.audienceWarmup.pendingAdvance?.kind === "minigame-reveal", "sorteio de jogo pela barra de espaço");
   await display.getByText("SORTEANDO TESTE", { exact: true }).waitFor();
   await display.screenshot({ path: "/private/tmp/caixa-preta-warmup-draw.png" });
+  await sceneOperator.waitForFunction(() => document.querySelector('[aria-label="Minigame em dupla"]')?.textContent?.includes("DRAWING"));
+  await sceneOperator.keyboard.press("ArrowRight");
+  state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "selected", "revelação manual do jogo pela seta direita");
+  await post(context.request, "set-manual-mode", { manualMode: false });
   await post(context.request, "minigame-draw", {}, false);
   await post(context.request, "minigame-set-duration", { gameId: "tapao", seconds: 60 }, false);
   await post(context.request, "minigame-select", { gameId: "tapao" });
   await display.getByText("JOGO SELECIONADO", { exact: true }).waitFor();
   state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "ready", "regras do TAPÃO", 35000);
   assert.equal(state.publicMessage.content, "PRIMEIRO TURNO: 10 SEGUNDOS.");
-  await post(context.request, "minigame-start");
+  await sceneOperator.waitForFunction(() => document.querySelector('[aria-label="Minigame em dupla"] p')?.textContent?.startsWith("ESTADO: READY ·"));
+  await sceneOperator.keyboard.press("ArrowRight");
   await display.getByLabel("Minigame do aquecimento").waitFor();
   await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "running", "primeiro turno do TAPÃO");
   await post(context.request, "minigame-tapao-swap");
   await display.getByText("INVERTAM OS PAPÉIS", { exact: true }).waitFor();
   await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "ready_round_two", "troca do TAPÃO");
-  await post(context.request, "minigame-start");
+  await sceneOperator.waitForFunction(() => document.querySelector('[aria-label="Minigame em dupla"] p')?.textContent?.startsWith("ESTADO: READY ROUND TWO ·"));
+  await sceneOperator.keyboard.press("ArrowRight");
   await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "running" && candidate.audienceWarmup.minigame.round === 2, "segundo turno do TAPÃO");
-  await post(context.request, "minigame-end");
+  await sceneOperator.keyboard.press("Space");
   state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.phase === "complete", "fim do aquecimento depois do TAPÃO", 20000);
   assert.equal(state.audienceWarmup.minigame.status, "completed");
   assert(state.audienceWarmup.history.some((entry) => entry.text === AUDIENCE_WARMUP_MINIGAME_RESULT_COMMENTS.tapao));
@@ -244,11 +264,14 @@ try {
   state = await snapshot(context.request);
   assert.equal(state.audienceWarmup.minigame.status, "running", "reação não pode antecipar o fim do cronômetro");
   await post(context.request, "minigame-pause");
+  state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "paused" && !candidate.audienceWarmup.pendingAdvance, "PISCADA pausada sem encerramento pendente");
   const paused = (await snapshot(context.request)).audienceWarmup.minigame.timer.remainingSeconds;
   await post(context.request, "minigame-adjust-time", { deltaSeconds: 5 });
   state = await snapshot(context.request);
   assert.equal(state.audienceWarmup.minigame.timer.remainingSeconds, paused + 5);
-  await post(context.request, "minigame-resume");
+  await sceneOperator.waitForFunction(() => document.querySelector('[aria-label="Minigame em dupla"] p')?.textContent?.startsWith("ESTADO: PAUSED ·"));
+  await sceneOperator.keyboard.press("ArrowRight");
+  await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "running", "PISCADA retomada pela seta direita");
   await post(context.request, "minigame-end");
   state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.phase === "complete", "fim do aquecimento depois da PISCADA", 20000);
   assert(state.audienceWarmup.history.some((entry) => entry.text === AUDIENCE_WARMUP_MINIGAME_RESULT_COMMENTS.piscada));

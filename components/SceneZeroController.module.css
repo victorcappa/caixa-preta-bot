@@ -30,7 +30,7 @@
 .reactionControls { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid #2d513b; }
 .reactionControls small { color: #7c9a88; font-size: 9px; letter-spacing: .1em; }
 .reactionControls button { min-height: 38px; padding: 7px; color: #d7ff41; background: #11150f; border: 1px solid #586827; font: inherit; font-size: 10px; font-weight: 850; letter-spacing: .04em; cursor: pointer; }
-.reactionControls button:last-child { color: #00ff66; border-color: #237c45; }
+.reactionControls button[data-kind="many"] { color: #00ff66; border-color: #237c45; }
 .reactionControls button.selectedReaction { color: #001c0c; background: #d7ff41; border-color: #fff; }
 .reactionControls button:disabled { opacity: .3; cursor: default; }
 .header { display: grid; grid-template-columns: minmax(220px, .65fr) 1.35fr; gap: 18px; align-items: end; padding-bottom: 14px; border-bottom: 1px solid #303030; }
@@ -51,10 +51,11 @@
 .bootStatus strong { color: #00ff66; font-size: 20px; }
 .bootStatus span { color: #82a98f; font-size: 10px; letter-spacing: .08em; }
 .bootActions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.bootPrimary, .bootReset { min-height: 50px; padding: 10px 16px; font: inherit; font-size: 15px; font-weight: 950; letter-spacing: .1em; cursor: pointer; }
+.bootPrimary, .bootReset, .biosEndButton { min-height: 50px; padding: 10px 16px; font: inherit; font-size: 15px; font-weight: 950; letter-spacing: .1em; cursor: pointer; }
 .bootPrimary { color: #001c0c; background: #00ff66; border: 1px solid #00ff66; }
 .bootReset { color: #ff708b; background: #16090c; border: 1px solid #8a3042; }
-.bootPrimary:disabled, .bootReset:disabled { opacity: .45; cursor: default; }
+.biosEndButton { grid-column: 1 / -1; color: #001c0c; background: #00ff66; border: 1px solid #00ff66; }
+.bootPrimary:disabled, .bootReset:disabled, .biosEndButton:disabled { opacity: .45; cursor: default; }
 .soundCheckReturnPanel { margin-top: 10px; border-color: #39704e; background: #09100b; }
 .soundCheckReturnPanel .bootActions { grid-template-columns: 1fr; }
 .warmupDisclosure { margin-top: 10px; border: 1px solid #39704e; background: #07100a; }
@@ -175,4 +176,4 @@
 @media (max-width: 1280px) { .suitcaseGrid { grid-template-columns: 1fr; } }
 @media (max-width: 1000px) { .controller { padding-right: 190px; } .indexNav { right: 8px; width: 154px; } .header, .personalityPanel { grid-template-columns: 1fr; } .personalityQuickGrid { grid-column: auto; grid-template-columns: repeat(2, minmax(0, 1fr)); } .personalityPanel .readout { grid-column: auto; } .stageGrid { grid-template-columns: repeat(2, 1fr); } .blocks { grid-template-columns: 1fr; } .wide { grid-column: auto; } .levels { grid-template-columns: repeat(2, 1fr); } .quickGrid { grid-template-columns: repeat(3, 1fr); } .glitchVideoConfig, .browserQuickCommands { grid-template-columns: 1fr; } .glitchDurationPresets { grid-column: auto; } }
 @media (max-width: 520px) { .memoryHeading { display: grid; } .memoryComposer, .browserQuickField { grid-template-columns: 1fr; } .browserQuickField input, .browserQuickField button { grid-column: 1; grid-row: auto; } }
-@media (max-width: 700px) { .controller { padding: 18px 18px 178px; } .operatorModeBar { grid-template-columns: 1fr; } .operatorModeBar > div { justify-items: start; text-align: left; } .bootPanel { grid-template-columns: 1fr auto; } .bootActions { grid-column: 1 / -1; } .warmupDisclosureToggle { grid-template-columns: 1fr auto; } .warmupDisclosureStatus { grid-column: 1 / -1; grid-row: 2; white-space: normal; } .warmupDisclosureAction { grid-column: 2; grid-row: 1; } .indexNav { top: auto; right: 10px; bottom: 10px; left: 10px; width: auto; max-height: 170px; } .indexNav > span { display: none; } .indexNav nav { grid-template-columns: repeat(3, minmax(0, 1fr)); } .indexNav a { grid-template-columns: 20px minmax(0, 1fr); min-height: 26px; font-size: 9px; } .reactionControls { grid-template-columns: repeat(2, minmax(0, 1fr)); } .reactionControls small { grid-column: 1 / -1; } }
+@media (max-width: 700px) { .controller { padding: 18px 18px 178px; } .operatorModeBar { grid-template-columns: 1fr; } .operatorModeBar > div { justify-items: start; text-align: left; } .bootPanel { grid-template-columns: 1fr auto; } .bootActions { grid-column: 1 / -1; } .warmupDisclosureToggle { grid-template-columns: 1fr auto; } .warmupDisclosureStatus { grid-column: 1 / -1; grid-row: 2; white-space: normal; } .warmupDisclosureAction { grid-column: 2; grid-row: 1; } .indexNav { top: auto; right: 10px; bottom: 10px; left: 10px; width: auto; max-height: 170px; } .indexNav > span { display: none; } .indexNav nav { grid-template-columns: repeat(3, minmax(0, 1fr)); } .indexNav a { grid-template-columns: 20px minmax(0, 1fr); min-height: 26px; font-size: 9px; } .reactionControls { grid-template-columns: 1fr; } .reactionControls small { grid-column: 1 / -1; } }
