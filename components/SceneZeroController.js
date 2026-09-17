@@ -658,6 +658,20 @@ export default function SceneZeroController() {
     }
   }
 
+  async function stopReels() {
+    try {
+      const response = await fetch("/api/operator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command: "/instagram reels-parar" })
+      });
+      const data = await response.json();
+      setNotice(response.ok ? data.message : data.error || "ERRO AO PARAR REELS");
+    } catch {
+      setNotice("ERRO AO PARAR REELS");
+    }
+  }
+
   async function copyInstagramPassword() {
     if (pending) return;
     setPending("instagram-copy-password");
@@ -942,6 +956,20 @@ export default function SceneZeroController() {
             >{option.label}</button>
           ))}
         </section>
+        <div className={styles.reelsControls}>
+          <button
+            className={styles.reelsStartButton}
+            disabled={Boolean(pending)}
+            onClick={() => operatorCommand("/instagram reels-da-peca")}
+            type="button"
+          >INICIAR REELS + COMENTÁRIOS</button>
+          <button
+            className={styles.reelsStopButton}
+            disabled={!instagram.reelsAutoplayActive && pending !== "/instagram reels-da-peca"}
+            onClick={stopReels}
+            type="button"
+          >PARAR REELS / COMENTÁRIOS</button>
+        </div>
       </aside>
 
       <section aria-label="Boot da Cena 0" className={styles.bootPanel} id="scene-zero-boot">
@@ -1107,8 +1135,8 @@ export default function SceneZeroController() {
                   ))}
                 </select>
               </label>
-              <Button onClick={() => sceneAction("hangman-configure", { wordId: selectedHangmanWordId })} pending={pending || suitcaseGame.currentSuitcase !== 3}>ESCOLHER PALAVRA</Button>
-              <Button onClick={() => sceneAction("hangman-new")} pending={pending || suitcaseGame.currentSuitcase !== 3}>SORTEAR NOVA</Button>
+              <Button onClick={() => sceneAction("hangman-configure", { wordId: selectedHangmanWordId })} pending={pending || suitcaseGame.currentSuitcase !== 3 || hangman.status === "theme-drawing"}>ESCOLHER PALAVRA</Button>
+              <Button onClick={() => sceneAction("hangman-new")} pending={pending || suitcaseGame.currentSuitcase !== 3 || hangman.status === "theme-drawing"}>SORTEAR NOVA</Button>
               <Readout label="PALAVRA OCULTA" value={hangmanPublic.progress || "—"} />
               <Readout label="TEMA" value={(hangman.theme || "—").toUpperCase()} />
               <Readout label="CRONÔMETRO AUTOMÁTICO" value={`${hangmanSeconds}s · ${(hangman.timer?.status || "idle").toUpperCase()}`} />

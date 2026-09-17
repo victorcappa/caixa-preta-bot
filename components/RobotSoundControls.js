@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
 import {
   normalizeRobotSoundSettings,
+  ROBOT_DISPLAY_FONTS,
+  ROBOT_DISPLAY_FONT_NAMES,
   ROBOT_SOUND_DEFAULTS,
   ROBOT_SOUND_PRESET_NAMES,
   ROBOT_SOUND_STYLES,
@@ -33,7 +35,7 @@ async function postSettings(settings) {
   return data.robotSound;
 }
 
-export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, onLog = () => {}, relaySink = false }) {
+export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, onLog = () => {}, relaySink = false, typingOnly = false }) {
   const [draft, setDraft] = useState(() => normalizeRobotSoundSettings(settings));
   const draftRef = useRef(normalizeRobotSoundSettings(settings));
   const [audioStatus, setAudioStatus] = useState("LOCKED");
@@ -180,6 +182,62 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
     robotSoundEngine[effect]?.({ localOnly: true });
   }
 
+  const typingControls = (
+    <>
+      <label className={styles.selectField}>
+        <span>FONTE DO CHATBOT</span>
+        <select
+          aria-label="Fonte do texto projetado do bot"
+          onChange={(event) => commit({ displayFont: event.target.value })}
+          value={draft.displayFont}
+        >
+          {ROBOT_DISPLAY_FONT_NAMES.map((font) => (
+            <option key={font} value={font}>{ROBOT_DISPLAY_FONTS[font]}</option>
+          ))}
+        </select>
+      </label>
+
+      <label className={styles.field}>
+        <span>VELOCIDADE DA DIGITAÇÃO</span>
+        <output>{Math.round(1000 / draft.typingIntervalMs)} caracteres/s</output>
+        <input
+          aria-label="Velocidade da digitação do robô"
+          max="60"
+          min="5"
+          onChange={(event) => commit({ typingIntervalMs: 1000 / Number(event.target.value) }, 120)}
+          step="1"
+          type="range"
+          value={Math.round(1000 / draft.typingIntervalMs)}
+        />
+      </label>
+
+      <label className={styles.field}>
+        <span>FREQUÊNCIA DOS CLIQUES</span>
+        <output>{Math.round(draft.typingFrequency * 100)}%</output>
+        <input
+          aria-label="Frequência do som de digitação do robô"
+          max="1"
+          min="0"
+          onChange={(event) => commit({ typingFrequency: Number(event.target.value) }, 120)}
+          step="0.05"
+          type="range"
+          value={draft.typingFrequency}
+        />
+      </label>
+    </>
+  );
+
+  if (typingOnly) {
+    return (
+      <section aria-label="Tipografia e digitação do bot" className={`${styles.panel} ${styles.typingPanel}`}>
+        <header className={styles.header}><strong>TEXTO DO BOT</strong><span>PROJEÇÃO AO VIVO</span></header>
+        <output className={styles.typingPreview} data-bot-font={draft.displayFont}>CAIXA PRETA_</output>
+        {typingControls}
+        <small className={styles.note}>Fonte e ritmo compartilhados entre Principal e Videomapping.</small>
+      </section>
+    );
+  }
+
   return (
     <section className={styles.panel} aria-label="Robot Sound Engine">
       <header className={styles.header}>
@@ -276,33 +334,7 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
         />
       </label>
 
-      <label className={styles.field}>
-        <span>VELOCIDADE DA DIGITAÇÃO</span>
-        <output>{Math.round(1000 / draft.typingIntervalMs)} caracteres/s</output>
-        <input
-          aria-label="Velocidade da digitação do robô"
-          max="60"
-          min="5"
-          onChange={(event) => commit({ typingIntervalMs: 1000 / Number(event.target.value) }, 120)}
-          step="1"
-          type="range"
-          value={Math.round(1000 / draft.typingIntervalMs)}
-        />
-      </label>
-
-      <label className={styles.field}>
-        <span>FREQUÊNCIA DOS CLIQUES</span>
-        <output>{Math.round(draft.typingFrequency * 100)}%</output>
-        <input
-          aria-label="Frequência do som de digitação do robô"
-          max="1"
-          min="0"
-          onChange={(event) => commit({ typingFrequency: Number(event.target.value) }, 120)}
-          step="0.05"
-          type="range"
-          value={draft.typingFrequency}
-        />
-      </label>
+      {typingControls}
 
       <label className={styles.selectField}>
         <span>PRESET DIGITAÇÃO</span>

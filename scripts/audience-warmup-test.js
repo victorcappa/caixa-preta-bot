@@ -39,7 +39,7 @@ import { assertBotCannotNavigateExternal, blockedAutonomousInstagramResult } fro
 import { createInitialResearchState, getResearchTools, updateResearchSettings } from "../lib/research/ResearchDirector.js";
 import { controllerNavigationSurfaces } from "../lib/controllerSurfaces.js";
 import { executeAutonomousInstagramTool } from "../lib/instagram/autonomousTools.js";
-import { PLAY_UNLOCK_CONFIG, PLAY_UNLOCK_STATES, playUnlockSequenceLines } from "../data/scene-zero-unlock.js";
+import { PLAY_UNLOCK_CONFIG, PLAY_UNLOCK_STATES, playUnlockSequenceLines, shuffledSoundCheckCommentOrder } from "../data/scene-zero-unlock.js";
 import {
   adjustPlayUnlockProgress,
   advancePlayUnlockBoot,
@@ -123,6 +123,14 @@ for (let index = 1; index < thirtyPromptSequence.length; index += 1) {
   assert.notEqual(current.interactionType, previous.interactionType, `interactionType repetido em ${index + 1}`);
   assert.notEqual(current.category, previous.category, `categoria repetida em ${index + 1}`);
 }
+
+const provocativeHistory = [];
+for (let index = 0; index < 20; index += 1) {
+  const selected = chooseAudienceWarmupPrompt({ intensity: "provocative", recentPromptIds: provocativeHistory, random: diversityRandom });
+  assert(!provocativeHistory.includes(selected.id), `pergunta provocativa repetida antes de esgotar o repertório: ${selected.id}`);
+  provocativeHistory.push(selected.id);
+}
+assert.equal(new Set(provocativeHistory).size, 20);
 
 const exactLibraryCases = {
   "public-07": "QUEM VOTOU NO LULA FICA DE PÉ.",
@@ -235,6 +243,24 @@ assert(
   "a sequência deve conservar o comentário de espera contínua"
 );
 assert(PLAY_UNLOCK_CONFIG.soundCheck.waitingComments.every((comment) => comment.text && comment.delayMs > 0));
+const soundOrderA = shuffledSoundCheckCommentOrder(() => 0);
+const soundOrderB = shuffledSoundCheckCommentOrder(() => 0.75);
+const soundCommentCount = PLAY_UNLOCK_CONFIG.soundCheck.waitingComments.length;
+for (const order of [soundOrderA, soundOrderB]) {
+  assert.equal(order[0], 0, "a saudação da prova sonora deve abrir a escuta");
+  assert.deepEqual([...order].sort((a, b) => a - b), Array.from({ length: soundCommentCount }, (_, index) => index));
+  for (const [opening, length] of [
+    ["Vou contar até três. O algoritmo adora ameaças simples.", 5],
+    ["Vamos simplificar ainda mais: façam 'aaaa'.", 4],
+    ["Estou a poucos segundos de começar uma palestra motivacional.", 5]
+  ]) {
+    const start = PLAY_UNLOCK_CONFIG.soundCheck.waitingComments.findIndex((comment) => comment.text === opening);
+    assert(start >= 0);
+    const position = order.indexOf(start);
+    assert.deepEqual(order.slice(position, position + length), Array.from({ length }, (_, index) => start + index));
+  }
+}
+assert.notDeepEqual(soundOrderA, soundOrderB, "a ordem da escuta deve variar entre sessões");
 assert.equal(PLAY_UNLOCK_CONFIG.verificationTitle, "");
 assert.equal(PLAY_UNLOCK_CONFIG.questionsIntroduction, "Agora teremos uma série de perguntas para eu conhecer melhor este público.");
 assert.equal(PLAY_UNLOCK_CONFIG.unlockLines.includes("PEÇA DESBLOQUEADA."), true);

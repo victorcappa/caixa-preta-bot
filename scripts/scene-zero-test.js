@@ -312,6 +312,17 @@ async function main() {
   assert.deepEqual(gincanaBank.sceneZeroEvidenciasFrameAt(24), { phase: "complete", lineIndex: 6, lineProgress: 1 });
   assert.equal(fs.existsSync(path.join(process.cwd(), "assets", gincanaBank.SCENE_ZERO_EVIDENCIAS_AUDIO_FILE)), true);
   assert.equal(hangmanWords.SCENE_ZERO_HANGMAN_WORDS.length, 24);
+  assert(hangmanWords.SCENE_ZERO_HANGMAN_THEMES.length > 1);
+  const themeDraw = suitcaseHangman.startSceneZeroHangmanThemeDraw();
+  assert.equal(themeDraw.status, "theme-drawing");
+  assert.equal(themeDraw.wordId, null, "a palavra só deve ser escolhida após o sorteio do tema");
+  const selectedTheme = suitcaseHangman.chooseSceneZeroHangmanTheme({ random: () => 0 });
+  const themedWord = suitcaseHangman.chooseSceneZeroHangmanWord({ theme: selectedTheme, random: () => 0 });
+  assert.equal(themedWord.category, selectedTheme);
+  const configuredAfterDraw = suitcaseHangman.configureSceneZeroHangman(themeDraw, themedWord.id);
+  assert.equal(configuredAfterDraw.themeDraw.status, "selected");
+  assert.equal(configuredAfterDraw.theme, selectedTheme);
+  assert.equal(suitcaseHangman.cancelSceneZeroHangman(themeDraw).themeDraw.status, "cancelled");
   let hangman = suitcaseHangman.configureSceneZeroHangman(undefined, "hangman-11", { start: true });
   assert.equal(hangman.status, "active");
   assert.equal(hangman.theme, "arquivo");

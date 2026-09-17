@@ -98,6 +98,8 @@ Instagram and arbitrary external pages can expose accounts, private content, and
 
 Autonomous Instagram navigation is disabled. `lib/externalNavigationGuard.js` blocks agent-originated external navigation; the existing Instagram controller runs only from explicit operator paths.
 
+The Principal's explicit `INICIAR REELS + COMENTÁRIOS` action is an operator-started performance exception: after manual authentication, it navigates Reels, generates continuing public chat lines, and posts separate GPT-written comments to distinct identifiable Reels at intervals of at least 20 seconds until the operator stops it. It never follows, likes, or sends direct messages as part of this action. The dedicated stop button and `STOP ALL` cancel it; an unconfirmed comment is never retried on the same Reel.
+
 ### Reason
 
 The operator must remain responsible for authentication, navigation, review, and sending.

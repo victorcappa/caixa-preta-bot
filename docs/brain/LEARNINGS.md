@@ -65,6 +65,13 @@ Each entry records a reproduced problem, its cause, the working response, and a 
 - Working response: unlock the public window with an interaction, grant microphone permission in the Scene Zero controller, and perform a physical sound check.
 - Prevent regression: report static/browser/physical-audio outcomes separately; do not make the public projection request microphone access.
 
+## Reels comments need a feed fallback and a usable publish control
+
+- Problem: the robot speaks in the chatbot but does not comment on Reels.
+- Cause: the Reels feed may omit a permalink or video source, so posting was skipped before opening comments; a global first `Post` selector can also point to a disabled button.
+- Working response: identify the visible Reel or comment control, use the feed position as a fallback key, open its comments, select a visible field and an enabled publish control near it, and expose the last send result in Instagram state.
+- Prevent regression: test a Reel without a permalink/source and a disabled first publish button; a local mock does not prove that a real Instagram comment was accepted.
+
 ## Baralho Morbido should not congest the global public stream
 
 - Problem: a high-frequency deck display path can interfere with the main Operator/Chat stream.

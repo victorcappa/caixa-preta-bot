@@ -15,6 +15,8 @@ async function main() {
   assert.equal(initial.microphoneSensitivity, 1);
   assert.equal(initial.typingFrequency, 0.35);
   assert.equal(initial.typingIntervalMs, 60);
+  assert.equal(initial.displayFont, "modern-dos-8x16");
+  assert.deepEqual(sound.ROBOT_DISPLAY_FONT_NAMES, ["modern-dos-8x16", "modern-dos-9x16", "vt323", "courier"]);
   assert.equal(initial.outputResetSequence, 0);
   assert(initial.masterVolume > 0 && initial.masterVolume < 0.5);
 
@@ -37,6 +39,9 @@ async function main() {
   assert.equal(normalized.typingFrequency, 1);
   assert.equal(normalized.preset, "normal");
   assert.equal(normalized.soundStyle, "system95");
+  assert.equal(sound.normalizeRobotSoundSettings({ displayFont: "modern-dos-9x16" }).displayFont, "modern-dos-9x16");
+  assert.equal(sound.normalizeRobotSoundSettings({ displayFont: "vt323" }).displayFont, "vt323");
+  assert.equal(sound.normalizeRobotSoundSettings({ displayFont: "unknown" }).displayFont, "modern-dos-8x16");
   assert.equal(normalized.outputResetSequence, 0);
 
   assert.equal(sound.normalizeRobotSoundSettings({ typingFrequency: -1 }).typingFrequency, 0);

@@ -91,8 +91,8 @@
 .suitcaseHangmanOverlay > *:not(.hangmanInterference) { position: relative; z-index: 1; }
 .suitcaseHangmanOverlay header { box-sizing: border-box; display: flex; justify-content: space-between; gap: 24px; align-items: baseline; padding-right: clamp(220px, 22vw, 330px); font-size: clamp(16px, 2vw, 30px); letter-spacing: .12em; }
 .suitcaseHangmanOverlay header strong { color: #fff; font-size: clamp(24px, 4vw, 62px); }
-.hangmanTheme { margin: 0; color: #70907b; font-size: clamp(15px, 1.8vw, 27px); font-weight: 700; letter-spacing: .16em; text-align: center; }
-.hangmanTheme strong { color: #d7ff41; }
+.hangmanTheme { width: fit-content; max-width: 100%; justify-self: center; margin: 0; padding: clamp(12px, 2vh, 22px) clamp(18px, 3vw, 42px); color: #001c0c; background: #d7ff41; border: 4px solid #fff; font-size: clamp(28px, 4vw, 64px); font-weight: 900; letter-spacing: .04em; line-height: 1.05; text-align: center; text-wrap: balance; }
+.hangmanTheme strong { color: #001c0c; }
 .hangmanWord { align-self: center; margin: 0; color: #fff; font-size: clamp(44px, 8vw, 128px); font-weight: 950; line-height: 1.05; text-align: center; text-wrap: balance; }
 .hangmanFlight { position: relative; height: clamp(80px, 14vh, 150px); border-bottom: 2px solid #395343; }
 .hangmanFlight span { position: absolute; left: var(--descent); top: var(--descent); color: #fff; font-size: clamp(42px, 7vw, 90px); transform: translate(-50%, -50%) rotate(var(--descent-angle)); transition: left 320ms steps(4), top 320ms steps(4), transform 320ms steps(4); }

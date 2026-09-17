@@ -1,3 +1,4 @@
+import "@fontsource/vt323/400.css";
 import "./globals.css";
 
 export const metadata = {

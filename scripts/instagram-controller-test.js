@@ -238,6 +238,117 @@ async function main() {
   assert.equal(embeddedPanelController.requestEmbeddedPanel(), 2);
   assert.equal(embeddedPanelController.getStatus().embeddedPanelSequence, 2);
 
+  const reelsController = new controllerModule.InstagramController({ config });
+  reelsController.page = { url: () => "https://www.instagram.com/reels/" };
+  reelsController.reelsAutoplayActive = true;
+  reelsController.reelsAutoplayGeneration = 1;
+  reelsController.scheduleNextReelAutoplayStep = () => {};
+  reelsController.performEmbeddedSwipe = async () => {};
+  reelsController.applyAudioMuted = async () => {};
+  reelsController.getCurrentReelWatchDelayMs = async () => 2000;
+  let currentReel = "https://www.instagram.com/reel/one/";
+  reelsController.getCurrentReelTarget = async () => currentReel
+    ? { url: currentReel, key: new URL(currentReel).pathname }
+    : null;
+  const postedReels = [];
+  const spokenReels = [];
+  assert.equal(reelsController.startReelsPerformance(async ({ reelUrl, canPost, isActive }) => {
+    assert.equal(isActive(), true);
+    spokenReels.push(reelUrl);
+    if (canPost) postedReels.push(reelUrl);
+    return { status: canPost ? "commented" : "chat_only" };
+  }), true);
+  await reelsController.advanceReelsAutoplay(1);
+  reelsController.reelsPerformance.lastChatAt = 0;
+  await reelsController.advanceReelsAutoplay(1);
+  assert.deepEqual(postedReels, ["https://www.instagram.com/reel/one/"]);
+  assert.equal(spokenReels.length, 2);
+  reelsController.reelsPerformance.lastChatAt = 0;
+  reelsController.reelsPerformance.lastPostAt = 0;
+  currentReel = "https://www.instagram.com/reel/two/";
+  await reelsController.advanceReelsAutoplay(1);
+  reelsController.reelsPerformance.lastChatAt = 0;
+  reelsController.reelsPerformance.lastPostAt = 0;
+  currentReel = "https://www.instagram.com/reel/three/";
+  await reelsController.advanceReelsAutoplay(1);
+  assert.equal(postedReels.length, 3);
+  assert.deepEqual(reelsController.getStatus().reelsPerformance, { posted: 3, spoken: 4 });
+  reelsController.reelsPerformance.lastChatAt = 0;
+  reelsController.reelsPerformance.lastPostAt = 0;
+  currentReel = "https://www.instagram.com/reel/four/";
+  await reelsController.advanceReelsAutoplay(1);
+  assert.equal(postedReels.length, 4, "a sessão continua após três comentários");
+  reelsController.reelsPerformance.lastChatAt = 0;
+  reelsController.reelsPerformance.lastPostAt = 0;
+  currentReel = null;
+  await reelsController.advanceReelsAutoplay(1);
+  assert.equal(reelsController.getStatus().reelsPerformance.spoken, 6, "o chat continua mesmo sem link de Reel identificado");
+  reelsController.reelsPerformance.lastChatAt = 0;
+  reelsController.reelsPerformance.lastPostAt = 0;
+  reelsController.getCurrentReelTarget = async () => ({ url: null, key: "video:visible-reel" });
+  await reelsController.advanceReelsAutoplay(1);
+  assert.equal(reelsController.getStatus().reelsPerformance.posted, 5, "Reel visível sem permalink também recebe comentário");
+  const fallbackTargetController = new controllerModule.InstagramController({ config });
+  fallbackTargetController.reelsAutoplayGeneration = 3;
+  fallbackTargetController.reelsFeedIndex = 2;
+  fallbackTargetController.page = { evaluate: async () => ({ url: null, key: null }) };
+  assert.deepEqual(await fallbackTargetController.getCurrentReelTarget(), { url: null, key: "feed:3:2" });
+  reelsController.stopReelsAutoplay();
+  assert.equal(reelsController.reelsAutoplayActive, false);
+
+  const feedCommentController = new controllerModule.InstagramController({ config });
+  feedCommentController.sessionAuthenticated = true;
+  const feedCommentSteps = [];
+  feedCommentController.page = {
+    url: () => "https://www.instagram.com/reels/",
+    keyboard: { press: async (key) => feedCommentSteps.push(key) },
+    getByText: () => ({ last: () => ({ waitFor: async () => {} }) })
+  };
+  feedCommentController.getCurrentReelTarget = async () => ({ url: null, key: "video:current" });
+  feedCommentController.getSessionState = async () => "authenticated";
+  feedCommentController.openCommentsSurface = async () => { feedCommentSteps.push("open comments"); return true; };
+  feedCommentController.findCommentInput = async () => ({ });
+  feedCommentController.typeCommentText = async (_, value) => { feedCommentSteps.push(value); };
+  feedCommentController.submitComment = async () => { feedCommentSteps.push("submit"); };
+  assert.deepEqual(await feedCommentController.commentCurrentReel(null, "Minha vida de robô", { reelKey: "video:current" }), { status: "commented" });
+  assert.deepEqual(feedCommentSteps, ["open comments", "Minha vida de robô", "submit", "Escape"]);
+
+  const submitController = new controllerModule.InstagramController({ config });
+  let submittedButton = "";
+  const disabledButton = { isVisible: async () => true, isEnabled: async () => false };
+  const enabledButton = {
+    isVisible: async () => true,
+    isEnabled: async () => true,
+    evaluate: async () => ({ x: 100, y: 100 }),
+    click: async () => { submittedButton = "enabled"; }
+  };
+  submitController.page = {
+    getByRole: () => ({ all: async () => [disabledButton, enabledButton] }),
+    getByText: () => ({ all: async () => [] }),
+    keyboard: { press: async () => { submittedButton = "keyboard"; } }
+  };
+  await submitController.submitComment({ evaluate: async () => ({ x: 100, y: 100 }) });
+  assert.equal(submittedButton, "enabled", "ignora Publicar desabilitado e usa o botão ativo");
+
+  const stoppedController = new controllerModule.InstagramController({ config });
+  stoppedController.page = { url: () => "https://www.instagram.com/reels/" };
+  stoppedController.reelsAutoplayActive = true;
+  stoppedController.reelsAutoplayGeneration = 1;
+  stoppedController.getCurrentReelTarget = async () => ({ url: "https://www.instagram.com/reel/pending/", key: "/reel/pending/" });
+  stoppedController.scheduleNextReelAutoplayStep = () => {};
+  let releaseComment;
+  let swipedAfterStop = false;
+  stoppedController.performEmbeddedSwipe = async () => { swipedAfterStop = true; };
+  stoppedController.startReelsPerformance(({ isActive }) => new Promise((resolve) => {
+    releaseComment = () => resolve({ status: isActive() ? "commented" : "stopped" });
+  }));
+  const pendingAdvance = stoppedController.advanceReelsAutoplay(1);
+  await new Promise((resolve) => setImmediate(resolve));
+  stoppedController.stopReelsAutoplay();
+  releaseComment();
+  await pendingAdvance;
+  assert.equal(swipedAfterStop, false);
+
   const authenticatedController = new controllerModule.InstagramController({ config });
   authenticatedController.dismissKnownModals = async () => {};
   authenticatedController.hasManualInterventionSignal = async () => false;

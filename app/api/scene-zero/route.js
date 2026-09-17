@@ -1,4 +1,5 @@
 import { getExistingInstagramController, getInstagramController, normalizeUsername, parseGoogleGuidance } from "@/lib/instagram/InstagramController";
+import { closeActiveReels } from "@/lib/instagram/reelsLifecycle";
 import { analyzeInstagramScreenshot, generateCaixaPretaTurn, generateGoogleResearchComment, interpretSceneZeroBrowserRequest, refreshSceneZeroLocalContext } from "@/lib/openai";
 import { fallbackSceneZeroBrowserPlan, preserveExplicitNewsIntent } from "@/lib/scene-zero/browserCommand";
 import { collectionRepertoireBlock, parseCollectionIntervention, shouldRejectRepeatedHandAction } from "@/lib/scene-zero/collection";
@@ -17,7 +18,7 @@ import {
 } from "@/lib/scene-zero/suitcaseGame";
 import { getSceneZeroPhysicalChallenge, SCENE_ZERO_PHYSICAL_CHALLENGES } from "@/data/scene-zero-physical-challenges";
 import { getSceneZeroHangmanWord, SCENE_ZERO_HANGMAN_INSTRUCTION } from "@/data/scene-zero-hangman-words";
-import { chooseSceneZeroHangmanWord } from "@/lib/scene-zero/suitcaseHangman";
+import { chooseSceneZeroHangmanTheme, chooseSceneZeroHangmanWord, SCENE_ZERO_HANGMAN_THEME_DRAW_DURATION_MS } from "@/lib/scene-zero/suitcaseHangman";
 import { buildDataCollectionSystemPrompt } from "@/prompts/dataCollection";
 import { SCENE_ZERO_MOREL_BIOS_DURATION_MS } from "@/data/scene-zero-morel";
 import { PLAY_UNLOCK_CONFIG } from "@/data/scene-zero-unlock";
@@ -402,18 +403,38 @@ function scheduleHangmanStart(selectionSequence, selectedAt, immediate = false) 
     if (
       current?.suitcaseSelectionSequence !== selectionSequence
       || current.currentSuitcase !== 3
-      || current.hangman?.status !== "ready"
     ) return;
-    showState.addMessage("assistant", SCENE_ZERO_HANGMAN_INSTRUCTION, "scene-zero-hangman-instruction");
+    const announceAndStart = () => {
+      const latest = showState.snapshot().sceneZero.suitcaseGame;
+      if (latest?.suitcaseSelectionSequence !== selectionSequence || latest.currentSuitcase !== 3 || latest.hangman?.status !== "ready") return;
+      showState.addMessage("assistant", SCENE_ZERO_HANGMAN_INSTRUCTION, "scene-zero-hangman-instruction");
+      setTimeout(() => {
+        const active = showState.snapshot().sceneZero.suitcaseGame;
+        if (active?.suitcaseSelectionSequence !== selectionSequence || active.currentSuitcase !== 3 || active.hangman?.status !== "ready") return;
+        showState.controlSceneZero("hangman-start", {}, { source: "system" });
+      }, suitcaseSpeechDelay(SCENE_ZERO_HANGMAN_INSTRUCTION));
+    };
+
+    if (current.hangman?.status === "ready") {
+      announceAndStart();
+      return;
+    }
+    if (current.hangman?.status !== "idle") return;
+    const theme = chooseSceneZeroHangmanTheme();
+    if (!theme) return;
+    const draw = showState.controlSceneZero("hangman-theme-draw", {}, { source: "system" });
+    if (!draw.applied) return;
+    const drawSequence = draw.state.suitcaseGame.hangman.themeDraw.sequence;
     setTimeout(() => {
       const latest = showState.snapshot().sceneZero.suitcaseGame;
-      if (
-        latest?.suitcaseSelectionSequence !== selectionSequence
-        || latest.currentSuitcase !== 3
-        || latest.hangman?.status !== "ready"
-      ) return;
-      showState.controlSceneZero("hangman-start", {}, { source: "system" });
-    }, suitcaseSpeechDelay(SCENE_ZERO_HANGMAN_INSTRUCTION));
+      if (latest?.suitcaseSelectionSequence !== selectionSequence || latest.currentSuitcase !== 3
+        || latest.hangman?.status !== "theme-drawing" || latest.hangman.themeDraw.sequence !== drawSequence) return;
+      const word = chooseSceneZeroHangmanWord({ theme });
+      if (!word) return;
+      const configured = showState.controlSceneZero("hangman-configure", { wordId: word.id }, { source: "system" });
+      if (!configured.applied) return;
+      setTimeout(announceAndStart, 1400);
+    }, SCENE_ZERO_HANGMAN_THEME_DRAW_DURATION_MS);
   }, immediate ? 0 : suitcaseCueDelay(selectedAt));
 }
 
@@ -517,7 +538,7 @@ async function interruptPreviousSuitcase(nextSuitcaseNumber) {
     showState.controlSceneZero("gincana-timer-cancel", {}, { source: "scene-zero-operator" });
   }
 
-  if (["ready", "active"].includes(snapshot.sceneZero.suitcaseGame?.hangman?.status)) {
+  if (["theme-drawing", "ready", "active"].includes(snapshot.sceneZero.suitcaseGame?.hangman?.status)) {
     showState.controlSceneZero("hangman-cancel", {}, { source: "scene-zero-operator" });
   }
 
@@ -572,11 +593,6 @@ async function activateSuitcase(suitcaseNumber, detail = "") {
       durationSeconds: challengeTask.duration
     }, { source: "system" });
     if (!challenge.applied) return challenge;
-  }
-
-  if (suitcaseNumber === 3) {
-    const configured = showState.controlSceneZero("hangman-configure", {}, { source: "system" });
-    if (!configured.applied) return configured;
   }
 
   if (suitcaseNumber === 1) {
@@ -1020,6 +1036,7 @@ export async function POST(request) {
     if (action === "return-to-warmup") {
       const result = await returnToAudienceWarmup(detail);
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
+      await closeActiveReels();
       return Response.json({
         message: "CENA 0 — AQUECIMENTO RETOMADO",
         sceneZero: result.state,
@@ -1030,6 +1047,7 @@ export async function POST(request) {
     if (action === "return-to-sound-check") {
       const result = await returnToSoundCheck(detail);
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
+      await closeActiveReels();
       return Response.json({
         message: "CENA 0 — ESCUTA DE DECIBÉIS RETOMADA",
         sceneZero: result.state,
@@ -1040,6 +1058,7 @@ export async function POST(request) {
     if (action === "return-to-boot") {
       const result = await returnToBoot(detail);
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
+      await closeActiveReels();
       return Response.json({
         message: "CENA 0 — BOOT EM STANDBY",
         sceneZero: result.state,
@@ -1088,6 +1107,7 @@ export async function POST(request) {
     if (action === "suitcase-finish") {
       const result = await finishSceneZeroSuitcaseGame();
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 409 });
+      await closeActiveReels();
       return Response.json({ message: "JOGO DAS MALAS FINALIZADO — BARRA EM CONCLUSÃO", sceneZero: result.state });
     }
 
@@ -1115,6 +1135,7 @@ export async function POST(request) {
       }
       const result = showState.controlSceneZero(action, body, { source: "operator" });
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
+      if (["gincana-timer-pause", "gincana-timer-cancel"].includes(action)) await closeActiveReels();
       return Response.json({ message: `DESAFIO — ${(result.state.suitcaseGame?.gincana?.timer?.status || "idle").toUpperCase()}`, sceneZero: result.state });
     }
 
@@ -1123,8 +1144,11 @@ export async function POST(request) {
       if (suitcaseGame?.currentSuitcase !== 3) {
         return Response.json({ error: "INICIE A MALA 3 ANTES DA FORCA", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
       }
+      if (suitcaseGame.hangman?.status === "theme-drawing") {
+        return Response.json({ error: "AGUARDE O SORTEIO DO TEMA", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
+      }
       const selectedWord = action === "hangman-new"
-        ? chooseSceneZeroHangmanWord({ excludeIds: [suitcaseGame.hangman?.wordId].filter(Boolean) })
+        ? chooseSceneZeroHangmanWord({ excludeIds: [suitcaseGame.hangman?.wordId].filter(Boolean), theme: suitcaseGame.hangman?.theme || null })
         : getSceneZeroHangmanWord(body.wordId);
       if (!selectedWord) {
         return Response.json({ error: "PALAVRA DA FORCA DESCONHECIDA", sceneZero: showState.snapshot().sceneZero }, { status: 400 });
@@ -1141,8 +1165,10 @@ export async function POST(request) {
       if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase !== 3) {
         return Response.json({ error: "INICIE A MALA 3 ANTES DA FORCA", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
       }
+      const wasRunning = showState.snapshot().sceneZero.suitcaseGame?.hangman?.timer?.status === "running";
       const result = showState.controlSceneZero(action, body, { source: "operator" });
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
+      if (wasRunning && result.state.suitcaseGame?.hangman?.timer?.status !== "running") await closeActiveReels();
       return Response.json({ message: `FORCA — ${(result.state.suitcaseGame?.hangman?.flightState || "ESTÁVEL").toUpperCase()}`, sceneZero: result.state });
     }
 
@@ -1171,6 +1197,7 @@ export async function POST(request) {
       }
       const result = await finishGincana(action === "gincana-complete" ? "completed" : "failed", detail);
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
+      await closeActiveReels();
       return Response.json({ message: action === "gincana-complete" ? "DESAFIO CONCLUÍDO" : "FALHA REGISTRADA", sceneZero: result.state, text: result.turn?.text });
     }
 
@@ -1245,6 +1272,7 @@ export async function POST(request) {
 
     if (["timer-start", "timer-pause", "timer-resume", "timer-restart", "timer-cancel"].includes(action)) {
       const result = showState.controlSceneZero(action, body, { source: "operator" });
+      if (["timer-pause", "timer-cancel"].includes(action)) await closeActiveReels();
       return Response.json({ message: `TIMER ${result.state.timer.status.toUpperCase()}`, sceneZero: result.state });
     }
 

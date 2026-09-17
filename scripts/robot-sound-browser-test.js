@@ -30,6 +30,16 @@ async function main() {
     await page.goto("http://localhost:3000", { waitUntil: "domcontentloaded" });
     await page.getByText("CONNECTED", { exact: true }).first().waitFor({ timeout: 10000 });
     await page.getByRole("button", { name: "Abrir terminal operador ao lado" }).click();
+    const typography = page.getByLabel("Tipografia e digitação do bot");
+    await typography.getByLabel("Fonte do texto projetado do bot").selectOption("modern-dos-9x16");
+    await typography.getByLabel("Velocidade da digitação do robô").fill("24");
+    await page.waitForFunction(async () => {
+      const response = await fetch("/api/robot-sound");
+      const settings = (await response.json()).robotSound;
+      return settings.displayFont === "modern-dos-9x16" && Math.round(1000 / settings.typingIntervalMs) === 24;
+    });
+    await page.locator('[aria-label="Fala atual da Caixa Preta"][data-bot-font="modern-dos-9x16"]').waitFor();
+    assert.equal(await typography.locator("[data-bot-font]").getAttribute("data-bot-font"), "modern-dos-9x16");
     const soundPanel = await openRobotSoundPanel(page);
     await soundPanel.getByRole("button", { name: "TEST DIGITAÇÃO" }).click();
     await page.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.context?.state === "running");

@@ -33,6 +33,11 @@
 .reactionControls button[data-kind="many"] { color: #00ff66; border-color: #237c45; }
 .reactionControls button.selectedReaction { color: #001c0c; background: #d7ff41; border-color: #fff; }
 .reactionControls button:disabled { opacity: .3; cursor: default; }
+.reelsControls { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid #2d513b; }
+.reelsControls button { min-height: 42px; padding: 7px; font: inherit; font-size: 10px; font-weight: 850; line-height: 1.25; letter-spacing: .04em; cursor: pointer; }
+.reelsStartButton { color: #001c0c; background: #00ff66; border: 1px solid #00ff66; }
+.reelsStopButton { color: #ff708b; background: #171014; border: 1px solid #8a3042; }
+.reelsControls button:disabled { opacity: .4; cursor: default; }
 .header { display: grid; grid-template-columns: minmax(220px, .65fr) 1.35fr; gap: 18px; align-items: end; padding-bottom: 14px; border-bottom: 1px solid #303030; }
 .header p, .header h1, .memoryPanel h2, .personalityPanel h2, .stagePanel h2, .block h2 { margin: 0; }
 .header p { color: #00ff66; letter-spacing: .18em; }

@@ -11,7 +11,7 @@ import SceneZeroProjectionLayer, { SceneZeroStatusProjection } from "./SceneZero
 import styles from "./Chat.module.css";
 import { PUBLIC_TYPE_INTERVAL_MS } from "@/lib/messageTiming";
 import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
-import { robotTypingIntervalMs } from "@/lib/robot-sound/state";
+import { ROBOT_DISPLAY_FONT_DEFAULT, robotTypingIntervalMs } from "@/lib/robot-sound/state";
 import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import { PUBLIC_LAYOUT_CHANGE_EVENT, PUBLIC_LAYOUTS } from "@/lib/projectionScreens";
 import {
@@ -871,7 +871,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
           </div>
         </section>
 
-        <main className={styles.publicStage} aria-label="Fala atual da Caixa Preta">
+        <main className={styles.publicStage} aria-label="Fala atual da Caixa Preta" data-bot-font={robotSound?.displayFont || ROBOT_DISPLAY_FONT_DEFAULT}>
           <div className={styles.currentMessage}>
             {!publicMessage && messages.length === 0 ? (
               <p className={styles.introCursor} aria-label="Cursor da Caixa Preta">&gt;</p>

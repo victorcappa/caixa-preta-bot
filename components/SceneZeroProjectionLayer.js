@@ -12,6 +12,7 @@ import {
 import { SCENE_ZERO_MOREL_BIOS_DURATION_MS, SCENE_ZERO_MOREL_BIOS_LINES, SCENE_ZERO_MOREL_BIOS_LINE_INTERVAL_MS } from "@/data/scene-zero-morel";
 import { SCENE_ZERO_SUITCASE_CUE_DURATION_MS, sceneZeroSuitcaseCueFrameAt } from "@/lib/scene-zero/suitcaseGame";
 import { AUDIENCE_WARMUP_MINIGAMES, getAudienceWarmupMinigame } from "@/data/audience-warmup-minigames";
+import { SCENE_ZERO_HANGMAN_THEMES } from "@/data/scene-zero-hangman-words";
 import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
 import useCountdownSound from "./useCountdownSound";
 import styles from "./SceneZeroProjectionLayer.module.css";
@@ -456,6 +457,11 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
     && hangman.status === "active"
     && (suitcaseCuePhase === "complete" || suitcaseSelectionAge >= SCENE_ZERO_SUITCASE_CUE_DURATION_MS)
   );
+  const themeDraw = hangman.themeDraw || {};
+  const showHangmanThemeDraw = sceneZero?.suitcaseGame?.currentSuitcase === 3
+    && (themeDraw.status === "drawing" || themeDraw.status === "selected" && hangman.status === "ready");
+  const themeDrawElapsed = Math.max(0, now - Date.parse(themeDraw.startedAt || now));
+  const themeDrawIndex = Math.floor(themeDrawElapsed / Math.max(70, 230 - Math.min(155, themeDrawElapsed / 25))) % SCENE_ZERO_HANGMAN_THEMES.length;
   const hangmanSeconds = timerSeconds(hangman?.timer, now);
   const morelBiosAge = now - Date.parse(morelBios?.startedAt || "");
   const showMorelBios = Boolean(
@@ -508,6 +514,7 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
     || showTimer
     || showSuitcaseSelection
     || showPhysicalChallenge
+    || showHangmanThemeDraw
     || showHangman
     || showMorelBios
     || showParticipantSelection
@@ -535,6 +542,14 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
   useEffect(() => {
     if (participantSelection.status === "roulette") robotSoundEngine.rouletteTick(rouletteIndex);
   }, [participantSelection.status, rouletteIndex]);
+
+  useEffect(() => {
+    if (themeDraw.status === "drawing") robotSoundEngine.rouletteTick(themeDrawIndex);
+  }, [themeDraw.status, themeDrawIndex]);
+
+  useEffect(() => {
+    if (themeDraw.status === "selected") robotSoundEngine.success();
+  }, [themeDraw.status, themeDraw.sequence]);
 
   useEffect(() => {
     if (participantSelection.status === "selected") robotSoundEngine.success();
@@ -639,6 +654,24 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
           ) : null}
         </section>
       ) : null}
+      {showHangmanThemeDraw ? (
+        <section className={styles.warmupMinigameOverlay} aria-label="Sorteio do tema da Forca" aria-live="assertive">
+          {themeDraw.status === "drawing" ? (
+            <div className={styles.warmupGameDraw}>
+              <span>SORTEANDO TEMA DA FORCA</span>
+              <div className={styles.rouletteWindow} key={`hangman-theme-${themeDrawIndex}`}>{SCENE_ZERO_HANGMAN_THEMES[themeDrawIndex]}</div>
+              <div className={styles.candidateTicker}>
+                {SCENE_ZERO_HANGMAN_THEMES.map((theme) => <span key={theme}>{theme}</span>)}
+              </div>
+            </div>
+          ) : (
+            <div className={styles.warmupGameSelected}>
+              <span>TEMA SORTEADO</span>
+              <strong>{hangman.theme?.toUpperCase() || "—"}</strong>
+            </div>
+          )}
+        </section>
+      ) : null}
       {showHangman ? (
         <section
           className={`${styles.suitcaseHangmanOverlay} ${styles[`hangmanErrors${Math.min(4, Number(hangman.errorCount) || 0)}`] || ""}`}
@@ -651,7 +684,7 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
         >
           <div className={styles.hangmanInterference} aria-hidden="true" />
           <header><span>MALA 3 / FORCA</span><strong>{hangman.flightState || "ESTÁVEL"}</strong></header>
-          <p className={styles.hangmanTheme}>TEMA <strong>{(hangman.theme || "NÃO INFORMADO").toUpperCase()}</strong></p>
+          <p className={styles.hangmanTheme}><span>TEMA:</span> <strong>{(hangman.theme || "NÃO INFORMADO").toUpperCase()}</strong></p>
           <p className={styles.hangmanWord}>{hangmanPublic.progress || "_ _ _"}</p>
           <div className={styles.hangmanFlight} aria-hidden="true">
             <span>✈</span><i />

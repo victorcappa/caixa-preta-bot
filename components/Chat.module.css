@@ -201,13 +201,20 @@
 
 .machine {
   color: var(--green);
+  font-family: var(--bot-font-family, "Modern DOS 8x16", "VT323", monospace);
   font-size: clamp(2rem, 5.4vw, 6.8rem);
-  font-weight: 700;
+  font-weight: 400;
+  font-kerning: none;
   line-height: 1.08;
-  letter-spacing: -0.035em;
+  letter-spacing: 0.005em;
   text-align: left;
   text-wrap: wrap;
   text-shadow: 0 0 28px rgba(0, 255, 102, 0.14);
+}
+
+.publicStage[data-bot-font="courier"] .machine {
+  font-weight: 700;
+  letter-spacing: -0.035em;
 }
 
 .machineMedium {
@@ -405,6 +412,7 @@
 }
 
 .introCursor {
+  font-family: var(--bot-font-family, "Modern DOS 8x16", "VT323", monospace);
   animation: introBlink 0.55s steps(2, start) infinite;
 }
 

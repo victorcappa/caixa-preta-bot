@@ -517,6 +517,8 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             </div>
           </div>
 
+          <RobotSoundControls settings={state.robotSound} onLog={addLog} typingOnly />
+
           <div className={styles.meta}>
             <span className={status === "CONNECTED" ? styles.connected : styles.disconnected}>
               {status}
