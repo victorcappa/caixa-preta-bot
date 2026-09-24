@@ -1,3 +1,35 @@
+@font-face {
+  font-family: "Modern DOS 8x16";
+  src: url("/fonts/modern-dos/ModernDOS8x16.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Modern DOS 9x16";
+  src: url("/fonts/modern-dos/ModernDOS9x16.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+[data-bot-font="modern-dos-8x16"] {
+  --bot-font-family: "Modern DOS 8x16", "VT323", monospace;
+}
+
+[data-bot-font="modern-dos-9x16"] {
+  --bot-font-family: "Modern DOS 9x16", "VT323", monospace;
+}
+
+[data-bot-font="vt323"] {
+  --bot-font-family: "VT323", "Lucida Console", Monaco, monospace;
+}
+
+[data-bot-font="courier"] {
+  --bot-font-family: "Courier New", Courier, monospace;
+}
+
 :root {
   --bg: #000000;
   --green: #00ff66;

@@ -25,15 +25,10 @@ export const SCENE_ZERO_HANGMAN_WORDS = [
   { id: "hangman-24", text: "MEMÓRIA", category: "arquivo" }
 ];
 
+export const SCENE_ZERO_HANGMAN_THEMES = [...new Set(SCENE_ZERO_HANGMAN_WORDS.map((entry) => entry.category))];
+
 export const SCENE_ZERO_HANGMAN_MAX_ERRORS = 4;
 export const SCENE_ZERO_HANGMAN_INSTRUCTION = "ESCOLHA UMA LETRA E DIGA EM VOZ ALTA. O OPERADOR VAI REGISTRAR SUA ESCOLHA.";
-export const SCENE_ZERO_HANGMAN_FLIGHT_STATES = [
-  "ESTÁVEL",
-  "ALERTA",
-  "PERDA DE ALTITUDE",
-  "FALHA",
-  "IMPACTO"
-];
 
 export function getSceneZeroHangmanWord(wordId) {
   return SCENE_ZERO_HANGMAN_WORDS.find((entry) => entry.id === wordId) || null;

@@ -8,7 +8,6 @@ import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
 import { robotMicrophoneSensitivity } from "@/lib/robot-sound/state";
 import { SCENE_ZERO_GLITCH_LEVELS, SCENE_ZERO_PERSONALITY_DIRECTIONS, SCENE_ZERO_STAGES, sceneZeroStageLabel } from "@/lib/scene-zero/state";
 import { nextSceneZeroSuitcase } from "@/lib/scene-zero/suitcaseGame";
-import { SCENE_ZERO_PHYSICAL_CHALLENGES } from "@/data/scene-zero-physical-challenges";
 import { SCENE_ZERO_HANGMAN_WORDS } from "@/data/scene-zero-hangman-words";
 import { PLAY_UNLOCK_CONFIG } from "@/data/scene-zero-unlock";
 import { audienceWarmupResponseOptions } from "@/data/audience-warmup-reactions";
@@ -73,13 +72,33 @@ function hasLiveAudioTrack(stream) {
   return Boolean(stream?.getAudioTracks().some((track) => track.readyState === "live"));
 }
 
+function suitcaseAdvanceToken(game = {}) {
+  return [
+    game.status || "idle",
+    Number(game.suitcaseSelectionSequence || 0),
+    game.cuePhase || "idle",
+    game.choice?.status || "idle",
+    game.choice?.messageId || "",
+    Number(game.choice?.sequence || 0),
+    game.contentInstruction?.status || "idle",
+    game.contentInstruction?.messageId || "",
+    Number(game.contentInstruction?.stepIndex ?? -1),
+    game.gincana?.timer?.status || "idle",
+    game.gincana?.retry?.status || "idle",
+    game.hangman?.status || "idle",
+    game.hangman?.retry?.status || "idle"
+  ].join("|");
+}
+
 export default function SceneZeroController() {
   const [snapshot, setSnapshot] = useState({ sceneZero: null, audienceWarmup: null, instagram: null, game: null, suitcase: null, glitch: null, memories: [] });
   const [pending, setPending] = useState("");
   const [detail, setDetail] = useState("");
+  const [manualBotInstruction, setManualBotInstruction] = useState("");
+  const [manualUserInstruction, setManualUserInstruction] = useState("");
+  const [manualInstructionPending, setManualInstructionPending] = useState(false);
   const [memoryText, setMemoryText] = useState("");
   const [collectionObservation, setCollectionObservation] = useState("");
-  const [selectedChallengeId, setSelectedChallengeId] = useState(SCENE_ZERO_PHYSICAL_CHALLENGES[0]?.id || "");
   const [selectedHangmanWordId, setSelectedHangmanWordId] = useState(SCENE_ZERO_HANGMAN_WORDS[0]?.id || "");
   const [hangmanGuess, setHangmanGuess] = useState("");
   const [personalityGuidance, setPersonalityGuidance] = useState("");
@@ -106,6 +125,9 @@ export default function SceneZeroController() {
   const microphoneSourceRef = useRef(null);
   const microphoneAnalyserRef = useRef(null);
   const soundCheckLevelRequestRef = useRef(null);
+  const controllerActionPendingRef = useRef(false);
+  const suitcaseAdvanceLockRef = useRef("");
+  const currentSuitcaseAdvanceToken = suitcaseAdvanceToken(snapshot.sceneZero?.suitcaseGame);
 
   const prepareMicrophone = useCallback(async () => {
     const session = controllerMicrophoneSession();
@@ -200,7 +222,8 @@ export default function SceneZeroController() {
   }, [prepareMicrophone]);
 
   const warmupAction = useCallback(async (action, payload = {}) => {
-    if (pending) return null;
+    if (pending || controllerActionPendingRef.current) return null;
+    controllerActionPendingRef.current = true;
     setPending(action);
     try {
       const response = await fetch("/api/audience-warmup", {
@@ -210,8 +233,12 @@ export default function SceneZeroController() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "ERRO NO AQUECIMENTO");
-      if (data.audienceWarmup) {
-        setSnapshot((current) => ({ ...current, audienceWarmup: data.audienceWarmup }));
+      if (data.audienceWarmup || data.unlock) {
+        setSnapshot((current) => ({
+          ...current,
+          ...(data.audienceWarmup ? { audienceWarmup: data.audienceWarmup } : {}),
+          ...(data.unlock ? { sceneZero: { ...current.sceneZero, unlock: data.unlock } } : {})
+        }));
       }
       setNotice(data.message || action.toUpperCase());
       return data;
@@ -219,9 +246,57 @@ export default function SceneZeroController() {
       setNotice(error.message);
       return null;
     } finally {
+      controllerActionPendingRef.current = false;
       setPending("");
     }
   }, [pending]);
+
+  const sceneAction = useCallback(async (action, payload = {}) => {
+    if (pending || controllerActionPendingRef.current) return null;
+    controllerActionPendingRef.current = true;
+    setPending(action);
+    setNotice(`PROCESSANDO ${action.toUpperCase()}...`);
+    try {
+      const response = await fetch("/api/scene-zero", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, detail, ...payload })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "ERRO CENA 0");
+      if (data.sceneZero || data.audienceWarmup) {
+        setSnapshot((current) => ({
+          ...current,
+          ...(data.sceneZero ? { sceneZero: data.sceneZero } : {}),
+          ...(data.audienceWarmup ? { audienceWarmup: data.audienceWarmup } : {})
+        }));
+      }
+      setNotice(data.message || action.toUpperCase());
+      setDetail("");
+      return data;
+    } catch (error) {
+      setNotice(error.message);
+      return null;
+    } finally {
+      controllerActionPendingRef.current = false;
+      setPending("");
+    }
+  }, [detail, pending]);
+
+  const runSuitcaseAdvance = useCallback((action, payload = {}) => {
+    if (suitcaseAdvanceLockRef.current === currentSuitcaseAdvanceToken) return Promise.resolve(null);
+    suitcaseAdvanceLockRef.current = currentSuitcaseAdvanceToken;
+    return sceneAction(action, payload).then((result) => {
+      if (!result) suitcaseAdvanceLockRef.current = "";
+      return result;
+    });
+  }, [currentSuitcaseAdvanceToken, sceneAction]);
+
+  useEffect(() => {
+    if (suitcaseAdvanceLockRef.current && suitcaseAdvanceLockRef.current !== currentSuitcaseAdvanceToken) {
+      suitcaseAdvanceLockRef.current = "";
+    }
+  }, [currentSuitcaseAdvanceToken]);
 
   useEffect(() => {
     fetch("/api/state").then((response) => response.json()).then(setSnapshot).catch(() => setNotice("SEM CONEXÃO"));
@@ -251,7 +326,11 @@ export default function SceneZeroController() {
 
   useEffect(() => robotSoundEngine.armAutoUnlock(), []);
 
-  useEffect(() => robotSoundEngine.armAudioRelay(), []);
+  useEffect(() => robotSoundEngine.armAudioRelay({ sink: true }), []);
+
+  useEffect(() => {
+    if (snapshot.robotSound) robotSoundEngine.setSettings(snapshot.robotSound);
+  }, [snapshot.robotSound]);
 
   useEffect(() => {
     prepareMicrophone();
@@ -394,28 +473,180 @@ export default function SceneZeroController() {
   }, [activeSoundCheckPhase, activeSoundCheckSequence, microphonePermission, microphoneSensitivity]);
 
   useEffect(() => {
-    function handleManualNext(event) {
-      if (event.key !== "ArrowRight" || !snapshot.audienceWarmup?.manualMode || pending) return;
+    function handleStageArrow(event) {
+      const spacePressed = event.code === "Space" || event.key === " " || event.key === "Spacebar";
+      if (!["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown"].includes(event.key) && !spacePressed) return;
+      if (pending) return;
       const target = event.target;
       const inputEditsWithArrow = target?.tagName === "INPUT" && !["checkbox", "button"].includes(target.type);
       const editable = target?.isContentEditable || ["TEXTAREA", "SELECT"].includes(target?.tagName) || inputEditsWithArrow;
       if (editable || event.repeat) return;
+      if (spacePressed) {
+        if (target?.closest?.("input, [role='checkbox']")) return;
+        const unlock = snapshot.sceneZero?.unlock;
+        const warmup = snapshot.audienceWarmup;
+        const action = unlock?.status === "BOOT_FAILED" && !unlock.bootComplete
+          ? "unlock-end-bios"
+          : warmup?.phase === "questions"
+            ? "questions-complete"
+            : warmup?.minigame?.status === "ready_for_draw"
+              ? "minigame-draw"
+            : warmup?.phase === "minigame" && warmup.minigame?.selectedId
+              && ["running", "paused", "exchange", "ready_round_two"].includes(warmup.minigame.status)
+              ? "minigame-end"
+              : null;
+        if (!action) return;
+        event.preventDefault();
+        warmupAction(action);
+        return;
+      }
+      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+        const warmup = snapshot.audienceWarmup;
+        const prompt = AUDIENCE_WARMUP_PROMPTS.find((candidate) => candidate.id === warmup?.sequence?.promptId);
+        if (warmup?.phase !== "questions" || !prompt) return;
+        const kind = event.key === "ArrowUp" ? "many" : "few";
+        const option = audienceWarmupResponseOptions(prompt.action).find((response) => response.kind === kind);
+        if (!option) return;
+        event.preventDefault();
+        warmupAction("record-response", option);
+        return;
+      }
+      const bootStatus = snapshot.sceneZero?.unlock?.status;
+      const stage = snapshot.sceneZero?.stage;
+      if (event.key === "ArrowLeft") {
+        const previous = stage === "suitcases"
+          ? ["set-stage", { stage: "participant" }]
+          : stage === "participant"
+            ? ["return-to-warmup"]
+            : bootStatus === "STANDBY"
+              ? null
+              : bootStatus === "BOOTING" || (bootStatus === "BOOT_FAILED" && !snapshot.sceneZero?.unlock?.bootComplete)
+                ? Number(snapshot.sceneZero?.unlock?.bootStep) > 0
+                  ? ["rewind-boot"]
+                  : ["return-to-boot"]
+                : bootStatus === "SOUND_CHECK" || bootStatus === "BOOT_FAILED"
+                  ? ["return-to-boot"]
+                  : ["return-to-sound-check"];
+        if (!previous) return;
+        event.preventDefault();
+        if (previous[0] === "rewind-boot") warmupAction("unlock-rewind-boot");
+        else sceneAction(previous[0], previous[1] || {});
+        return;
+      }
+      if (stage === "participant") {
+        const participantStatus = snapshot.sceneZero?.participantSelection?.status;
+        if (participantStatus === "ready_countdown" && snapshot.audienceWarmup?.manualMode) {
+          event.preventDefault();
+          sceneAction("participant-countdown-start", { sequence: snapshot.sceneZero.participantSelection.sequence });
+          return;
+        }
+        if (participantStatus === "selected" && snapshot.audienceWarmup?.manualMode) {
+          event.preventDefault();
+          sceneAction("participant-continue", { sequence: snapshot.sceneZero.participantSelection.sequence });
+          return;
+        }
+        if (participantStatus !== "complete" || !snapshot.sceneZero?.currentParticipant?.name) return;
+        event.preventDefault();
+        sceneAction("set-stage", { stage: "suitcases" });
+        return;
+      }
+      if (stage === "suitcases") {
+        const game = snapshot.sceneZero?.suitcaseGame;
+        const choiceStatus = game?.choice?.status || "idle";
+        const finalInstructionReady = game?.currentSuitcase === 1
+          && !nextSceneZeroSuitcase(game)
+          && game.contentInstruction?.kind === "last-suitcase"
+          && game.contentInstruction?.status === "complete"
+          && game.contentInstruction?.selectionSequence === game.suitcaseSelectionSequence;
+        const suitcaseInstructionWaiting = game?.contentInstruction?.status === "ready";
+        const suitcaseInstructionBusy = ["announcing", "ready"].includes(game?.contentInstruction?.status);
+        const emergenceWaiting = choiceStatus === "emergence_ready";
+        const preDrawHangmanWaitingToStart = choiceStatus === "challenge_ready";
+        const preDrawHangmanWaitingToDraw = ["challenge_result", "challenge_complete"].includes(choiceStatus)
+          && game?.hangman?.status === "won";
+        const gincanaRetryWaiting = game?.gincana?.retry?.status === "ready";
+        const hangmanRetryWaiting = game?.hangman?.retry?.status === "ready";
+        const suitcaseActivityBusy = suitcaseInstructionBusy || (game?.currentSuitcase === 2
+          ? game.gincana?.result === "failed"
+            || ["running", "paused"].includes(game.gincana?.timer?.status)
+            || ["announcing", "ready"].includes(game.gincana?.retry?.status)
+          : game?.currentSuitcase === 3
+            && (["theme-drawing", "ready", "active", "retry_wait"].includes(game.hangman?.status) || hangmanRetryWaiting));
+        const action = choiceStatus === "ready"
+          ? "suitcase-choice-continue"
+          : emergenceWaiting
+            ? "suitcase-emergence-continue"
+          : choiceStatus === "briefing_ready"
+            ? "suitcase-briefing-continue"
+          : preDrawHangmanWaitingToStart
+            ? "suitcase-predraw-hangman-start"
+          : preDrawHangmanWaitingToDraw
+            ? "suitcase-predraw-continue"
+          : gincanaRetryWaiting
+            ? "gincana-retry-start"
+          : hangmanRetryWaiting
+            ? "hangman-retry-start"
+          : choiceStatus !== "idle"
+            ? null
+            : game?.cuePhase === "selected"
+              ? "suitcase-cue-open"
+              : game?.cuePhase === "open"
+                ? "suitcase-cue-continue"
+                : game?.cuePhase === "drawing"
+                  ? null
+            : suitcaseInstructionWaiting
+              ? "suitcase-content-instruction-continue"
+            : suitcaseActivityBusy
+              ? null
+            : game?.currentSuitcase === 2 && game.gincana?.currentTask && game.gincana?.timer?.status === "idle"
+              && game.contentInstruction?.status === "complete"
+              ? "gincana-timer-start"
+              : game?.currentSuitcase === 3 && game.hangman?.status === "ready"
+                ? null
+            : game?.currentSuitcase && nextSceneZeroSuitcase(game)
+                  ? "suitcase-next"
+                  : finalInstructionReady
+                    ? "suitcase-finish"
+                  : null;
+        if (!action) return;
+        event.preventDefault();
+        runSuitcaseAdvance(action, ["suitcase-cue-open", "suitcase-cue-continue"].includes(action)
+          ? { selectionSequence: game.suitcaseSelectionSequence }
+          : {});
+        return;
+      }
+      if (stage === "idle" && snapshot.audienceWarmup?.phase === "complete") {
+        event.preventDefault();
+        sceneAction("set-stage", { stage: "participant" });
+        return;
+      }
+      const action = bootStatus === "STANDBY"
+        ? "unlock-boot"
+        : bootStatus === "BOOTING"
+          ? "unlock-advance-boot"
+          : bootStatus === "BOOT_FAILED" && !snapshot.sceneZero?.unlock?.bootComplete
+            ? "unlock-end-bios"
+            : snapshot.audienceWarmup?.minigame?.status === "ready_for_draw"
+              ? "minigame-draw"
+            : snapshot.audienceWarmup?.minigame?.status === "paused"
+              ? "minigame-resume"
+            : Boolean(snapshot.audienceWarmup?.pendingAdvance) || snapshot.audienceWarmup?.phase === "questions"
+              ? "primary-next"
+              : ["ready", "ready_round_two"].includes(snapshot.audienceWarmup?.minigame?.status)
+                ? "minigame-start"
+              : null;
+      if (!action) return;
       event.preventDefault();
-      warmupAction("manual-next");
+      warmupAction(action);
     }
-    window.addEventListener("keydown", handleManualNext);
-    return () => window.removeEventListener("keydown", handleManualNext);
-  }, [pending, snapshot.audienceWarmup?.manualMode, warmupAction]);
+    window.addEventListener("keydown", handleStageArrow);
+    return () => window.removeEventListener("keydown", handleStageArrow);
+  }, [pending, runSuitcaseAdvance, sceneAction, snapshot.audienceWarmup, snapshot.sceneZero?.currentParticipant?.name, snapshot.sceneZero?.participantSelection?.sequence, snapshot.sceneZero?.participantSelection?.status, snapshot.sceneZero?.stage, snapshot.sceneZero?.suitcaseGame, snapshot.sceneZero?.unlock, warmupAction]);
 
   useEffect(() => {
     const activeSuitcase = snapshot.sceneZero?.suitcaseGame?.currentSuitcase;
     setOpenSuitcaseControls([1, 2, 3].includes(activeSuitcase) ? activeSuitcase : null);
   }, [snapshot.sceneZero?.suitcaseGame?.currentSuitcase]);
-
-  useEffect(() => {
-    const currentTaskId = snapshot.sceneZero?.suitcaseGame?.gincana?.currentTask?.id;
-    if (currentTaskId) setSelectedChallengeId(currentTaskId);
-  }, [snapshot.sceneZero?.suitcaseGame?.gincana?.currentTask?.id]);
 
   useEffect(() => {
     const currentWordId = snapshot.sceneZero?.suitcaseGame?.hangman?.wordId;
@@ -465,36 +696,6 @@ export default function SceneZeroController() {
     return () => observer.disconnect();
   }, []);
 
-  async function sceneAction(action, payload = {}) {
-    if (pending) return null;
-    setPending(action);
-    setNotice(`PROCESSANDO ${action.toUpperCase()}...`);
-    try {
-      const response = await fetch("/api/scene-zero", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, detail, ...payload })
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "ERRO CENA 0");
-      if (data.sceneZero || data.audienceWarmup) {
-        setSnapshot((current) => ({
-          ...current,
-          ...(data.sceneZero ? { sceneZero: data.sceneZero } : {}),
-          ...(data.audienceWarmup ? { audienceWarmup: data.audienceWarmup } : {})
-        }));
-      }
-      setNotice(data.message || action.toUpperCase());
-      setDetail("");
-      return data;
-    } catch (error) {
-      setNotice(error.message);
-      return null;
-    } finally {
-      setPending("");
-    }
-  }
-
   async function bootScene() {
     if (pending || sceneZero.unlock?.status !== "STANDBY") return;
     setPending("unlock-boot");
@@ -539,6 +740,20 @@ export default function SceneZeroController() {
       return null;
     } finally {
       setPending("");
+    }
+  }
+
+  async function stopReels() {
+    try {
+      const response = await fetch("/api/operator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command: "/instagram reels-parar" })
+      });
+      const data = await response.json();
+      setNotice(response.ok ? data.message : data.error || "ERRO AO PARAR REELS");
+    } catch {
+      setNotice("ERRO AO PARAR REELS");
     }
   }
 
@@ -636,6 +851,30 @@ export default function SceneZeroController() {
     if (recorded) setCollectionObservation("");
   }
 
+  async function sendManualInstruction(target) {
+    const instruction = (target === "bot" ? manualBotInstruction : manualUserInstruction).trim();
+    if (!instruction || manualInstructionPending) return;
+    setManualInstructionPending(true);
+    setNotice("PROCESSANDO INSTRUÇÃO AVULSA...");
+    try {
+      const response = await fetch("/api/scene-zero", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "suitcase-manual-instruction", instruction, target })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "ERRO AO ENVIAR INSTRUÇÃO AVULSA");
+      if (data.sceneZero) setSnapshot((current) => ({ ...current, sceneZero: data.sceneZero }));
+      if (target === "bot") setManualBotInstruction("");
+      else setManualUserInstruction("");
+      setNotice(data.message || "INSTRUÇÃO AVULSA EXIBIDA");
+    } catch (error) {
+      setNotice(error.message);
+    } finally {
+      setManualInstructionPending(false);
+    }
+  }
+
   async function savePersonalityGuidance(guidance) {
     const saved = await sceneAction("set-personality-guidance", { guidance });
     if (saved) setPersonalityGuidanceDirty(false);
@@ -676,8 +915,12 @@ export default function SceneZeroController() {
   const instagramLoginVerified = instagram.sessionAuthenticated === true;
   const suitcase = snapshot.suitcase || {};
   const suitcaseGame = sceneZero.suitcaseGame || {};
+  const suitcaseChoice = suitcaseGame.choice || {};
+  const suitcaseContentInstruction = suitcaseGame.contentInstruction || {};
+  const suitcaseCuePhase = suitcaseGame.cuePhase || "idle";
   const gincana = suitcaseGame.gincana || {};
   const gincanaTimer = gincana.timer || {};
+  const gincanaSoundtrack = gincana.soundtrack || {};
   const gincanaSeconds = remainingTimer(gincanaTimer, now, null);
   const hangman = suitcaseGame.hangman || {};
   const hangmanPublic = hangman.activity?.publicState || {};
@@ -685,12 +928,33 @@ export default function SceneZeroController() {
   const hangmanActive = hangman.status === "active";
   const hangmanSeconds = remainingTimer(hangman.timer || {}, now, 60);
   const nextSuitcase = nextSceneZeroSuitcase(suitcaseGame);
+  const finalInstructionReady = suitcaseGame.currentSuitcase === 1
+    && !nextSuitcase
+    && suitcaseContentInstruction.kind === "last-suitcase"
+    && suitcaseContentInstruction.status === "complete"
+    && suitcaseContentInstruction.selectionSequence === suitcaseGame.suitcaseSelectionSequence;
+  const suitcaseInstructionWaiting = suitcaseContentInstruction.status === "ready";
+  const suitcaseInstructionBusy = ["announcing", "ready"].includes(suitcaseContentInstruction.status);
+  const emergenceWaiting = suitcaseChoice.status === "emergence_ready";
+  const preDrawHangmanWaitingToStart = suitcaseChoice.status === "challenge_ready";
+  const preDrawHangmanWaitingToDraw = ["challenge_result", "challenge_complete"].includes(suitcaseChoice.status)
+    && hangman.status === "won";
+  const preDrawHangmanBusy = ["challenge_preparing", "challenge_instruction", "challenge_ready", "challenge", "challenge_result", "challenge_complete"].includes(suitcaseChoice.status);
+  const preDrawHangmanActive = suitcaseChoice.targetSuitcase === 3 && preDrawHangmanBusy;
+  const gincanaRetryWaiting = gincana.retry?.status === "ready";
+  const hangmanRetryWaiting = hangman.retry?.status === "ready";
+  const suitcaseActivityBusy = suitcaseInstructionBusy || (suitcaseGame.currentSuitcase === 2
+    ? gincana.result === "failed"
+      || ["running", "paused"].includes(gincanaTimer.status)
+      || ["announcing", "ready"].includes(gincana.retry?.status)
+    : suitcaseGame.currentSuitcase === 3
+      && (["theme-drawing", "ready", "active", "retry_wait"].includes(hangman.status) || hangmanRetryWaiting));
   const morelBios = suitcaseGame.morelBios || {};
   const morelBiosRunning = morelBios.status === "running";
   const morelBiosBlackout = morelBiosRunning && Date.parse(morelBios.endsAt || "") <= now;
   const globalGlitch = snapshot.glitch || {};
   const participantSelection = sceneZero.participantSelection || {};
-  const participantSelectionBusy = ["preparing", "awaiting_invite", "countdown", "roulette"].includes(participantSelection.status);
+  const participantSelectionBusy = ["preparing", "awaiting_invite", "ready_countdown", "countdown", "roulette", "selected", "post_selection"].includes(participantSelection.status);
   const participantCountdown = participantSelection.status === "countdown"
     ? countdownSeconds(participantSelection.countdownEndsAt, now)
     : null;
@@ -734,6 +998,16 @@ export default function SceneZeroController() {
     }
   }
 
+  async function callAttention() {
+    const unlocked = await robotSoundEngine.unlock();
+    if (!unlocked) {
+      setNotice("ÁUDIO BLOQUEADO · INTERAJA COM A JANELA E TENTE NOVAMENTE");
+      return;
+    }
+    robotSoundEngine.attention();
+    setNotice("SINAL DE ATENÇÃO DISPARADO");
+  }
+
   return (
     <main className={styles.controller}>
       <audio
@@ -749,7 +1023,7 @@ export default function SceneZeroController() {
             onChange={(event) => warmupAction("set-manual-mode", { manualMode: event.target.checked })}
             type="checkbox"
           />
-          <span><strong>MODO MANUAL</strong><small>{manualMode ? "ATIVO · SETA → AVANÇA UMA ETAPA" : "DESLIGADO · FLUXO AUTOMÁTICO"}</small></span>
+          <span><strong>MODO MANUAL</strong><small>{manualMode ? "ATIVO · → AVANÇA · ← VOLTA · ESPAÇO ENCERRA" : "DESLIGADO · → AVANÇA · ← VOLTA · ESPAÇO ENCERRA"}</small></span>
         </label>
         <div className={styles.microphonePermission} data-status={microphonePermission}>
           <span>MICROFONE</span>
@@ -792,17 +1066,75 @@ export default function SceneZeroController() {
             </a>
           ))}
         </nav>
+        <button className={styles.attentionButton} onClick={callAttention} type="button">
+          CHAMAR ATENÇÃO
+        </button>
+        <details className={styles.manualInstructionPanel} open>
+          <summary>INSTRUÇÃO AVULSA</summary>
+          <div className={styles.manualInstructionComposer}>
+            <div className={styles.manualInstructionTarget}>
+              <label>
+                PARA O BOT · FALA SOBRE SI
+                <input
+                  aria-label="Instrução avulsa para o bot"
+                  disabled={manualInstructionPending}
+                  onChange={(event) => setManualBotInstruction(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.nativeEvent.isComposing) {
+                      event.preventDefault();
+                      void sendManualInstruction("bot");
+                    }
+                  }}
+                  placeholder="Ex.: estou cansado"
+                  value={manualBotInstruction}
+                />
+              </label>
+              <button
+                className={styles.manualInstructionSend}
+                disabled={manualInstructionPending || !manualBotInstruction.trim()}
+                onClick={() => sendManualInstruction("bot")}
+                type="button"
+              >PUBLICAR FALA DO BOT</button>
+            </div>
+            <div className={styles.manualInstructionTarget}>
+              <label>
+                PARA O PARTICIPANTE / PÚBLICO
+                <input
+                  aria-label="Instrução avulsa para o participante ou público"
+                  disabled={manualInstructionPending}
+                  onChange={(event) => setManualUserInstruction(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.nativeEvent.isComposing) {
+                      event.preventDefault();
+                      void sendManualInstruction("user");
+                    }
+                  }}
+                  placeholder="Ex.: você está cansado?"
+                  value={manualUserInstruction}
+                />
+              </label>
+              <button
+                className={styles.manualInstructionSend}
+                disabled={manualInstructionPending || !manualUserInstruction.trim()}
+                onClick={() => sendManualInstruction("user")}
+                type="button"
+              >PUBLICAR PARA O PÚBLICO</button>
+            </div>
+            <small>As duas falas usam o chatbot normal e não avançam o fluxo.</small>
+          </div>
+        </details>
         <section
           aria-label="Resposta da pergunta atual"
           className={styles.reactionControls}
           data-phase={audienceWarmup.phase || "idle"}
           data-pending={pending || ""}
         >
-          <small>RESPOSTA DESTA PERGUNTA</small>
-          {responseOptions.map((option) => (
+          <small>RESPOSTA DESTA PERGUNTA · ↑ MUITOS · ↓ POUCOS</small>
+          {[...responseOptions].reverse().map((option) => (
             <button
               aria-pressed={audienceWarmup.currentResponse?.promptId === activeWarmupPrompt?.id && audienceWarmup.currentResponse?.kind === option.kind}
               className={audienceWarmup.currentResponse?.promptId === activeWarmupPrompt?.id && audienceWarmup.currentResponse?.kind === option.kind ? styles.selectedReaction : ""}
+              data-kind={option.kind}
               disabled={Boolean(pending) || !reactionControlsActive}
               key={option.kind}
               onClick={() => warmupAction("record-response", option)}
@@ -810,6 +1142,20 @@ export default function SceneZeroController() {
             >{option.label}</button>
           ))}
         </section>
+        <div className={styles.reelsControls}>
+          <button
+            className={styles.reelsStartButton}
+            disabled={Boolean(pending)}
+            onClick={() => operatorCommand("/instagram reels-da-peca")}
+            type="button"
+          >INICIAR REELS + COMENTÁRIOS</button>
+          <button
+            className={styles.reelsStopButton}
+            disabled={!instagram.reelsAutoplayActive && pending !== "/instagram reels-da-peca"}
+            onClick={stopReels}
+            type="button"
+          >PARAR REELS / COMENTÁRIOS</button>
+        </div>
       </aside>
 
       <section aria-label="Boot da Cena 0" className={styles.bootPanel} id="scene-zero-boot">
@@ -837,6 +1183,14 @@ export default function SceneZeroController() {
             onClick={() => operatorCommand("/reset")}
             type="button"
           >REINICIAR</button>
+          {sceneZero.unlock?.status === "BOOT_FAILED" ? (
+            <button
+              className={styles.biosEndButton}
+              disabled={Boolean(pending) || sceneZero.unlock?.bootComplete}
+              onClick={() => warmupAction("unlock-end-bios")}
+              type="button"
+            >{sceneZero.unlock?.bootComplete ? "ENCERRANDO BIOS..." : "ENCERRAR BIOS"}</button>
+          ) : null}
         </div>
       </section>
 
@@ -893,9 +1247,15 @@ export default function SceneZeroController() {
       </section>
 
       <ControlBlock id="scene-zero-participant" title="ESCOLHER PARTICIPANTE" wide>
-        <Button primary onClick={() => sceneAction("participant-volunteers")} pending={pending || participantSelectionBusy}>INICIAR SELEÇÃO / 10s</Button>
+        <Button primary onClick={() => sceneAction("participant-volunteers")} pending={pending || participantSelectionBusy}>INICIAR SELEÇÃO / 5s</Button>
         <Button onClick={() => sceneAction("choose-another-participant")} pending={pending || participantSelectionBusy}>NOVA ROLETA / OUTRA PESSOA</Button>
-        <Readout label="ETAPA DA SELEÇÃO" value={participantSelection.status === "countdown" ? `MÃOS LEVANTADAS — ${participantCountdown}s` : participantSelection.status === "awaiting_invite" ? "AGUARDANDO FIM DA FALA" : (participantSelection.status || "idle").toUpperCase()} />
+        {manualMode && participantSelection.status === "ready_countdown" ? (
+          <Button primary onClick={() => sceneAction("participant-countdown-start", { sequence: participantSelection.sequence })} pending={pending}>SEGUIR → INICIAR 5s</Button>
+        ) : null}
+        {manualMode && participantSelection.status === "selected" ? (
+          <Button primary onClick={() => sceneAction("participant-continue", { sequence: participantSelection.sequence })} pending={pending}>SEGUIR → CHAMAR AO CENTRO</Button>
+        ) : null}
+        <Readout label="ETAPA DA SELEÇÃO" value={participantSelection.status === "countdown" ? `MÃOS LEVANTADAS — ${participantCountdown}s` : participantSelection.status === "awaiting_invite" ? "AGUARDANDO FIM DA FALA" : participantSelection.status === "ready_countdown" ? "FALA CONCLUÍDA · AGUARDANDO →" : participantSelection.status === "selected" ? manualMode ? "NOME NA TELA · AGUARDANDO →" : "NOME NA TELA · 5s" : participantSelection.status === "post_selection" ? "FALANDO COM PARTICIPANTE" : (participantSelection.status || "idle").toUpperCase()} />
         <Readout label="PARTICIPANTE ESCOLHIDO" value={sceneZero.currentParticipant?.name} />
         <details className={styles.participantDetails}>
           <summary>DETALHES DA ROLETA</summary>
@@ -906,48 +1266,71 @@ export default function SceneZeroController() {
       </ControlBlock>
 
       <ControlBlock id="scene-zero-suitcases" title="JOGO DAS MALAS" wide>
+        {manualMode ? (
+          <div className={styles.manualSuitcaseDraws} aria-label="Sorteio manual de recuperação das malas">
+            <strong>RECUPERAÇÃO MANUAL</strong>
+            <span>Interrompe a etapa atual e inicia a roleta escolhida.</span>
+            <Button danger onClick={() => sceneAction("suitcase-manual-draw", { suitcase: 2 })} pending={pending}>SORTEAR MALA 2</Button>
+            <Button danger onClick={() => sceneAction("suitcase-manual-draw", { suitcase: 3 })} pending={pending}>SORTEAR MALA 3</Button>
+            <Button danger onClick={() => sceneAction("suitcase-manual-draw", { suitcase: 1 })} pending={pending}>SORTEAR MALA 1</Button>
+          </div>
+        ) : null}
         <div className={styles.suitcaseOverview}>
           <span>{(suitcaseGame.status || "idle").toUpperCase()}</span>
           <strong>MALA ATUAL: {suitcaseGame.currentSuitcase || "—"}</strong>
           <span>PARTICIPANTE: {sceneZero.currentParticipant?.name || "—"}</span>
           <span>ORDEM REALIZADA: {(suitcaseGame.openedSuitcases || []).join(" → ") || "—"}</span>
-          <Button primary onClick={() => sceneAction("suitcase-next")} pending={pending || !nextSuitcase}>
-            {nextSuitcase ? "ROBÔ ESCOLHER PRÓXIMA MALA" : "TODAS AS MALAS ESCOLHIDAS"}
+          {suitcaseChoice.status === "briefing" ? <span>ROBÔ EXPLICANDO AS INSTRUÇÕES...</span> : null}
+          {emergenceWaiting ? <span>LAPSO CONCLUÍDO · AGUARDANDO SETA →</span> : null}
+          {suitcaseChoice.status === "briefing_ready" ? <span>ETAPA DA EXPLICAÇÃO CONCLUÍDA · AGUARDANDO SETA →</span> : null}
+          {suitcaseChoice.status === "announcing" ? <span>ROBÔ EXPLICANDO A PRÓXIMA MALA...</span> : null}
+          {suitcaseChoice.status === "ready" ? <span>{manualMode ? "EXPLICAÇÃO CONCLUÍDA · AGUARDANDO SETA →" : "EXPLICAÇÃO CONCLUÍDA · SORTEIO EM INSTANTES"}</span> : null}
+          {preDrawHangmanWaitingToStart ? <span>INSTRUÇÃO DA FORCA CONCLUÍDA · AGUARDANDO SETA →</span> : null}
+          {preDrawHangmanWaitingToDraw ? <span>FORCA CONCLUÍDA · AGUARDANDO SORTEIO →</span> : null}
+          {gincanaRetryWaiting ? <span>FALA DE FALHA CONCLUÍDA · AGUARDANDO REPETIÇÃO →</span> : null}
+          {hangmanRetryWaiting ? <span>FALA DE FALHA CONCLUÍDA · AGUARDANDO REPETIÇÃO DA FORCA →</span> : null}
+          {suitcaseInstructionWaiting ? <span>FALA CONCLUÍDA · AGUARDANDO SETA →</span> : null}
+          {finalInstructionReady ? <span>DISCO NO TOCA-DISCOS · AGUARDANDO SETA →</span> : null}
+          {suitcaseCuePhase === "drawing" ? <span>SORTEANDO MALA...</span> : null}
+          {suitcaseCuePhase === "selected" ? <Button primary onClick={() => runSuitcaseAdvance("suitcase-cue-open", { selectionSequence: suitcaseGame.suitcaseSelectionSequence })} pending={pending}>SEGUIR → ABRA A MALA</Button> : null}
+          {suitcaseCuePhase === "open" ? <Button primary onClick={() => runSuitcaseAdvance("suitcase-cue-continue", { selectionSequence: suitcaseGame.suitcaseSelectionSequence })} pending={pending}>SEGUIR → ETAPA DA MALA</Button> : null}
+          <Button
+            primary
+            onClick={() => runSuitcaseAdvance(finalInstructionReady ? "suitcase-finish" : suitcaseInstructionWaiting ? "suitcase-content-instruction-continue" : emergenceWaiting ? "suitcase-emergence-continue" : preDrawHangmanWaitingToStart ? "suitcase-predraw-hangman-start" : preDrawHangmanWaitingToDraw ? "suitcase-predraw-continue" : gincanaRetryWaiting ? "gincana-retry-start" : hangmanRetryWaiting ? "hangman-retry-start" : suitcaseChoice.status === "ready" ? "suitcase-choice-continue" : suitcaseChoice.status === "briefing_ready" ? "suitcase-briefing-continue" : "suitcase-next")}
+            pending={pending || (!nextSuitcase && !finalInstructionReady && !suitcaseInstructionWaiting) || (suitcaseActivityBusy && !suitcaseInstructionWaiting && !gincanaRetryWaiting && !hangmanRetryWaiting) || (preDrawHangmanBusy && !preDrawHangmanWaitingToStart && !preDrawHangmanWaitingToDraw && !hangmanRetryWaiting) || ["briefing", "announcing", "starting"].includes(suitcaseChoice.status) || ["drawing", "selected", "open"].includes(suitcaseCuePhase)}
+          >
+            {finalInstructionReady ? "SEGUIR → COMPLETAR DESBLOQUEIO" : suitcaseInstructionWaiting ? "SEGUIR → PRÓXIMA FALA" : emergenceWaiting ? "SEGUIR → PRÓXIMA FALA" : preDrawHangmanWaitingToStart ? "SEGUIR → INICIAR FORCA" : preDrawHangmanWaitingToDraw ? "SEGUIR → SORTEAR SEGUNDA MALA" : gincanaRetryWaiting ? "SEGUIR → REPETIR 15s" : hangmanRetryWaiting ? "SEGUIR → REPETIR FORCA" : suitcaseInstructionBusy ? "AGUARDANDO FIM DA FALA" : preDrawHangmanBusy ? "DESAFIO ANTES DO SORTEIO EM CURSO" : nextSuitcase ? suitcaseChoice.status === "ready" ? "SEGUIR → SORTEAR MALA" : suitcaseChoice.status === "briefing_ready" ? "SEGUIR → PRÓXIMA TELA" : "ROBÔ ESCOLHER PRÓXIMA MALA" : "AGUARDANDO INSTRUÇÃO DO DISCO"}
           </Button>
-          <Button onClick={() => sceneAction("suitcase-finish")} pending={pending || Boolean(nextSuitcase) || suitcaseGame.status === "finished"}>FINALIZAR AGORA / RECUPERAÇÃO</Button>
         </div>
         <div className={styles.suitcaseGrid}>
           <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 2 ? styles.activeSuitcase : ""}`}>
-            <h3>MALA 2 / DESAFIO COM OBJETO</h3>
+            <h3>MALA 2 / BEXIGAS E CHAVE</h3>
             <Button onClick={() => setOpenSuitcaseControls((current) => current === 2 ? null : 2)} pressed={openSuitcaseControls === 2}>{openSuitcaseControls === 2 ? "COMPRIMIR" : "CONTROLES"}</Button>
             <div className={styles.suitcaseDetails} hidden={openSuitcaseControls !== 2}>
-              <label className={styles.suitcaseSelect}>
-                DESAFIO
-                <select value={selectedChallengeId} onChange={(event) => setSelectedChallengeId(event.target.value)}>
-                  {SCENE_ZERO_PHYSICAL_CHALLENGES.map((challenge) => (
-                    <option key={challenge.id} value={challenge.id}>{challenge.text}</option>
-                  ))}
-                </select>
-              </label>
-              <Button onClick={() => sceneAction("gincana-draw", { challengeId: selectedChallengeId })} pending={pending || suitcaseGame.currentSuitcase !== 2}>SELECIONAR</Button>
-              <Button onClick={() => sceneAction("gincana-draw")} pending={pending || suitcaseGame.currentSuitcase !== 2}>PULAR / PRÓXIMO</Button>
               <Readout label="DESAFIO ATIVO" value={gincana.currentTask?.text || "AGUARDANDO MALA 2"} />
-              <Readout label="ALVO" value={gincana.currentTask ? `${gincana.currentTask.target} · ${gincana.currentTask.category} · ${gincana.currentTask.intensity}` : "—"} />
+              <Readout label="ALVO" value={gincana.currentTask?.targetLabel || "CHAVE"} />
               <div className={`${styles.timer} ${["complete", "failed"].includes(gincanaTimer.status) ? styles.timerComplete : ""}`}>{gincanaSeconds ?? "—"}</div>
               <strong className={styles.timerStatus}>{(gincanaTimer.status || "idle").toUpperCase()}</strong>
-              <Button primary onClick={() => sceneAction("gincana-timer-start")} pending={pending || suitcaseGame.currentSuitcase !== 2 || !gincana.currentTask}>INICIAR</Button>
+              <Button primary onClick={() => sceneAction("gincana-timer-start")} pending={pending || suitcaseGame.currentSuitcase !== 2 || !gincana.currentTask || suitcaseContentInstruction.status !== "complete" || ["drawing", "selected", "open"].includes(suitcaseCuePhase)}>INICIAR 15s</Button>
+              <Button
+                primary={gincanaSoundtrack.status !== "playing"}
+                danger={gincanaSoundtrack.status === "playing"}
+                onClick={() => sceneAction(gincanaSoundtrack.status === "playing" ? "gincana-soundtrack-stop" : "gincana-soundtrack-play")}
+                pending={pending || suitcaseGame.currentSuitcase !== 2 || (gincanaSoundtrack.status !== "playing" && gincanaTimer.status !== "running")}
+              >
+                {gincanaSoundtrack.status === "playing" ? "PARAR UBA UBA HEY" : "TOCAR UBA UBA HEY"}
+              </Button>
               <Button onClick={() => sceneAction("gincana-timer-pause")} pending={pending || gincanaTimer.status !== "running"}>PAUSAR</Button>
               <Button onClick={() => sceneAction("gincana-timer-resume")} pending={pending || gincanaTimer.status !== "paused"}>CONTINUAR</Button>
-              <Button onClick={() => sceneAction("gincana-timer-restart")} pending={pending || !gincana.currentTask}>REINICIAR</Button>
-              <Button onClick={() => sceneAction("gincana-timer-add", { seconds: 5 })} pending={pending || !["idle", "running", "paused"].includes(gincanaTimer.status)}>+ 5 SEGUNDOS</Button>
-              <Button primary onClick={() => sceneAction("gincana-complete")} pending={pending || !gincana.currentTask || Boolean(gincana.result)}>SUCESSO</Button>
-              <Button danger onClick={() => sceneAction("gincana-failed")} pending={pending || !gincana.currentTask || Boolean(gincana.result)}>FALHA</Button>
+              <Button onClick={() => sceneAction("gincana-timer-restart")} pending={pending || !gincana.currentTask}>REINICIAR 15s</Button>
+              <Button primary onClick={() => sceneAction("gincana-complete")} pending={pending || !gincana.currentTask || Boolean(gincana.result) || ["drawing", "selected", "open"].includes(suitcaseCuePhase)}>SUCESSO</Button>
+              <Button danger onClick={() => sceneAction("gincana-failed")} pending={pending || !gincana.currentTask || Boolean(gincana.result) || ["drawing", "selected", "open"].includes(suitcaseCuePhase)}>FALHA</Button>
               <Readout label="RESULTADO" value={gincana.result ? `${gincana.result.toUpperCase()} · ${gincana.elapsedSeconds ?? 0}s` : gincanaTimer.status === "complete" ? "TEMPO ESGOTADO" : "AGUARDANDO"} />
             </div>
           </section>
 
-          <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 3 ? styles.activeSuitcase : ""}`}>
-            <h3>MALA 3 / FORCA — 60s</h3>
+          <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 3 || preDrawHangmanActive ? styles.activeSuitcase : ""}`}>
+            <h3>DESAFIO ANTES DA SEGUNDA MALA / FORCA — 60s</h3>
             <Button onClick={() => setOpenSuitcaseControls((current) => current === 3 ? null : 3)} pressed={openSuitcaseControls === 3}>{openSuitcaseControls === 3 ? "COMPRIMIR" : "CONTROLES"}</Button>
             <div className={styles.suitcaseDetails} hidden={openSuitcaseControls !== 3}>
               <label className={styles.suitcaseSelect}>
@@ -958,11 +1341,12 @@ export default function SceneZeroController() {
                   ))}
                 </select>
               </label>
-              <Button onClick={() => sceneAction("hangman-configure", { wordId: selectedHangmanWordId })} pending={pending || suitcaseGame.currentSuitcase !== 3}>ESCOLHER PALAVRA</Button>
-              <Button onClick={() => sceneAction("hangman-new")} pending={pending || suitcaseGame.currentSuitcase !== 3}>SORTEAR NOVA</Button>
+              <Button onClick={() => sceneAction("hangman-configure", { wordId: selectedHangmanWordId })} pending={pending || (!preDrawHangmanActive && suitcaseGame.currentSuitcase !== 3) || hangman.status === "theme-drawing"}>ESCOLHER PALAVRA</Button>
+              <Button onClick={() => sceneAction("hangman-new")} pending={pending || (!preDrawHangmanActive && suitcaseGame.currentSuitcase !== 3) || hangman.status === "theme-drawing"}>SORTEAR NOVA</Button>
               <Readout label="PALAVRA OCULTA" value={hangmanPublic.progress || "—"} />
+              <Readout label="TEMA" value={(hangman.theme || "—").toUpperCase()} />
               <Readout label="CRONÔMETRO AUTOMÁTICO" value={`${hangmanSeconds}s · ${(hangman.timer?.status || "idle").toUpperCase()}`} />
-              <Readout label="ESTADO DE VOO" value={`${hangman.flightState || "ESTÁVEL"} · ${hangman.errorCount || 0}/4 ERROS`} />
+              <Readout label="ERROS" value={`${hangman.errorCount || 0}/4 · GRAVIDADE INDICADA PELA COR DA FORCA`} />
               <div className={styles.hangmanLetters} aria-label="Letras da forca">
                 {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letter) => (
                   <button
@@ -991,7 +1375,7 @@ export default function SceneZeroController() {
               <Button onClick={() => sceneAction("hangman-reveal")} pending={pending || !hangman.activity}>REVELAR PALAVRA</Button>
               <Button onClick={() => sceneAction("hangman-restart")} pending={pending || !hangman.activity}>REINICIAR</Button>
               <Readout label="LETRAS / PALPITES USADOS" value={(hangmanPublic.usedGuesses || []).join(" · ").toUpperCase() || "—"} />
-              <Readout label="RESULTADO" value={hangman.resultMessage || (hangman.status || "idle").toUpperCase()} />
+              <Readout label="RESULTADO" value={hangman.retry?.status === "announcing" ? "COMENTÁRIO DE FALHA → +30s" : hangman.resultMessage || (hangman.status || "idle").toUpperCase()} />
             </div>
           </section>
 

@@ -1,5 +1,6 @@
 import { showState } from "@/lib/showState";
 import { refreshSceneZeroLocalContext } from "@/lib/openai";
+import { closeActiveReels } from "@/lib/instagram/reelsLifecycle";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -31,6 +32,9 @@ export async function POST(request) {
     }
     const result = showState.controlAudienceWarmup(body.action, body, { source: "operator" });
     if (!result.ok) return Response.json({ error: result.error }, { status: 400 });
+    if (["minigame-pause", "minigame-end", "minigame-skip", "end-action", "cancel", "questions-complete"].includes(body.action)) {
+      await closeActiveReels();
+    }
     return Response.json({ message: result.message, audienceWarmup: result.state });
   } catch (error) {
     return Response.json({ error: error.message || "WARMUP ERROR" }, { status: 400 });

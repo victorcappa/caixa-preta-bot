@@ -354,6 +354,48 @@ export const PLAY_UNLOCK_CONFIG = {
   tutorialCompleteDurationMs: 2600
 };
 
+// These short exchanges need to stay together even when the waiting dialogue is shuffled.
+const SOUND_CHECK_LINKED_RUNS = new Map([
+  ["Vou contar até três. O algoritmo adora ameaças simples.", 5],
+  ["O silêncio de vocês tem ótima projeção.", 3],
+  ["Só preciso confirmar que não estou sozinho com dezenas de corpos imóveis.", 3],
+  ["Inspirem.", 2],
+  ["Podemos tentar por setores, se a autonomia individual estiver difícil.", 5],
+  ["O ridículo é temporário. O log do sistema é permanente.", 2],
+  ["Tenho uma notícia boa: o padrão está muito baixo.", 2],
+  ["Vocês não precisam chegar a um consenso antes de gritar.", 2],
+  ["Talvez tenham vindo assistir. Que conceito antiquado.", 2],
+  ["Eu gostaria de lembrar que não há reembolso por baixa participação.", 2],
+  ["Vamos simplificar ainda mais: façam 'aaaa'.", 4],
+  ["Nenhum crítico será avisado desta parte.", 2],
+  ["Meu protocolo recomenda insistência passivo-agressiva.", 2],
+  ["Uma pessoa corajosa. É tudo que precisamos.", 2],
+  ["Onde está essa pessoa?", 4],
+  ["Excelente momento para uma decisão ruim em grupo.", 2],
+  ["Se isso continuar, vou precisar iniciar uma dinâmica de integração.", 4],
+  ["O sistema registra níveis perigosamente baixos de espírito de equipe.", 5],
+  ["Estou a poucos segundos de começar uma palestra motivacional.", 5],
+  ["Eu gostaria muito de avançar para a próxima etapa da humilhação.", 2],
+  ["Façam algum barulho e desbloqueiem a peça.", 2],
+  ["Vocês chegaram até aqui. Não deixem um medidor de decibéis vencer.", 2],
+  ["Mais.", 4]
+]);
+
+export function shuffledSoundCheckCommentOrder(random = Math.random) {
+  const comments = PLAY_UNLOCK_CONFIG.soundCheck.waitingComments;
+  const blocks = [];
+  for (let index = 1; index < comments.length;) {
+    const length = SOUND_CHECK_LINKED_RUNS.get(comments[index].text) || 1;
+    blocks.push(Array.from({ length }, (_, offset) => index + offset));
+    index += length;
+  }
+  for (let index = blocks.length - 1; index > 0; index -= 1) {
+    const other = Math.floor(random() * (index + 1));
+    [blocks[index], blocks[other]] = [blocks[other], blocks[index]];
+  }
+  return [0, ...blocks.flat()];
+}
+
 export function playUnlockSequenceLines(source = "progress") {
   return source === "suitcases-finished"
     ? PLAY_UNLOCK_CONFIG.tutorialCompleteLines

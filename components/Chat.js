@@ -11,7 +11,7 @@ import SceneZeroProjectionLayer, { SceneZeroStatusProjection } from "./SceneZero
 import styles from "./Chat.module.css";
 import { PUBLIC_TYPE_INTERVAL_MS } from "@/lib/messageTiming";
 import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
-import { robotTypingIntervalMs } from "@/lib/robot-sound/state";
+import { ROBOT_DISPLAY_FONT_DEFAULT, robotTypingIntervalMs } from "@/lib/robot-sound/state";
 import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import { PUBLIC_LAYOUT_CHANGE_EVENT, PUBLIC_LAYOUTS } from "@/lib/projectionScreens";
 import {
@@ -92,6 +92,8 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
   const completedTypingIdsRef = useRef(new Set());
   const notifiedTypedIdsRef = useRef(new Set());
   const soundOutputResetSequenceRef = useRef(null);
+  const warmupSoundCueIdRef = useRef(null);
+  const warmupStartChoiceSoundRef = useRef(null);
   const typingIntervalMsRef = useRef(PUBLIC_TYPE_INTERVAL_MS);
 
   const notifySceneZeroMessageTyped = useCallback((messageId) => {
@@ -220,6 +222,23 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
     robotSoundEngine.setGlitch(glitch || {});
   }, [glitch]);
 
+  useEffect(() => {
+    const display = audienceWarmup?.display;
+    if (display?.effect !== "notification-double" || !display.cueId || warmupSoundCueIdRef.current === display.cueId) return;
+    warmupSoundCueIdRef.current = display.cueId;
+    robotSoundEngine.attention();
+  }, [audienceWarmup?.display]);
+
+  useEffect(() => {
+    const choice = audienceWarmup?.startChoice;
+    if (choice?.status !== "selected" || !choice.selectedId || !choice.messageId) return;
+    const cueId = `${choice.messageId}:${choice.selectedId}`;
+    if (warmupStartChoiceSoundRef.current === cueId) return;
+    warmupStartChoiceSoundRef.current = cueId;
+    if (choice.selectedId === "start") robotSoundEngine.gameStart();
+    else if (choice.selectedId === "game-over") robotSoundEngine.gameOver();
+  }, [audienceWarmup?.startChoice]);
+
   const browserProcessing = ["STARTING", "NAVIGATING", "ACTING"].includes(instagram.status);
   const informationProcessing = pending || performancePending || browserProcessing;
 
@@ -333,6 +352,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
 
     setTypedReplies((current) => ({ ...current, [message.id]: "" }));
     robotSoundEngine.wake();
+    if (message.source?.startsWith("scene-zero-hangman-retry:")) robotSoundEngine.impact();
     let index = 0;
     const typeNextCharacter = () => {
       index += 1;
@@ -352,8 +372,26 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
           return;
         }
         typingTimersRef.current.delete(message.id);
-        robotSoundEngine.success();
-        if (["scene-zero-collection", "scene-zero-roulette", "scene-zero-cake-comment"].includes(message.source)) {
+        const suitcaseFlowMessage = message.source?.startsWith("scene-zero-suitcase-briefing:")
+          || message.source?.startsWith("scene-zero-suitcase-content:")
+          || message.source === "scene-zero-hangman-instruction"
+          || message.source === "scene-zero-hangman-result:success";
+        const suitcaseRetryMessage = message.source?.startsWith("scene-zero-gincana-retry:")
+          || message.source?.startsWith("scene-zero-hangman-retry:");
+        if (message.source === "audience-warmup-agreements:attention") robotSoundEngine.attention();
+        else if (message.source?.startsWith("scene-zero-hangman-retry:")) {
+          // O impacto desta falha toca assim que o quadro vermelho entra.
+        }
+        else if (message.source === "scene-zero-gincana-start") {
+          // O início já usa o efeito gameStart sincronizado ao cronômetro.
+        }
+        else if (message.source === "audience-warmup-agreements:failure" || message.source?.endsWith(":failure")) robotSoundEngine.error();
+        else if (!message.source?.startsWith("scene-zero-hangman-result:")) robotSoundEngine.success();
+        if (
+          suitcaseFlowMessage
+          || suitcaseRetryMessage
+          || ["scene-zero-collection", "scene-zero-roulette", "scene-zero-cake-comment", "scene-zero-suitcase-choice"].includes(message.source)
+        ) {
           notifySceneZeroMessageTyped(message.id);
         }
         drainTypingQueueRef.current?.();
@@ -438,11 +476,23 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
 
   useEffect(() => {
     const waitingMessageIds = [
+      audienceWarmup?.actionTimer?.status === "awaiting_message"
+        ? audienceWarmup.actionTimer.messageId
+        : null,
       sceneZero?.participantSelection?.status === "awaiting_invite"
         ? sceneZero.participantSelection.inviteMessageId
         : null,
       sceneZero?.collection?.activeCountdown?.status === "awaiting_message"
         ? sceneZero.collection.activeCountdown.messageId
+        : null,
+      ["briefing", "announcing", "challenge_instruction", "challenge_result"].includes(sceneZero?.suitcaseGame?.choice?.status)
+        ? sceneZero.suitcaseGame.choice.messageId
+        : null,
+      sceneZero?.suitcaseGame?.contentInstruction?.status === "announcing"
+        ? sceneZero.suitcaseGame.contentInstruction.messageId
+        : null,
+      sceneZero?.suitcaseGame?.hangman?.retry?.status === "announcing"
+        ? sceneZero.suitcaseGame.hangman.retry.messageId
         : null,
       game?.id === "verdade_ou_bolo" && ["REVEAL", "ROUND_RESULT"].includes(game?.data?.state)
         ? [...messages].reverse().find((message) => message.source === "scene-zero-cake-comment")?.id
@@ -455,7 +505,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
         notifySceneZeroMessageTyped(messageId);
       }
     }
-  }, [game?.data?.state, game?.id, messages, notifySceneZeroMessageTyped, sceneZero, typedReplies]);
+  }, [audienceWarmup, game?.data?.state, game?.id, messages, notifySceneZeroMessageTyped, sceneZero, typedReplies]);
 
   useEffect(() => {
     const typingTimers = typingTimersRef.current;
@@ -693,6 +743,17 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
   const machineBusy = pending || performancePending || Boolean(activeTypingAssistant) || Boolean(selfErasingMessageId);
   const bootStandby = !sceneZero || sceneZero.unlock?.status === "STANDBY";
   const quadrantLayout = publicLayout === PUBLIC_LAYOUTS.quadrants;
+  const gameOutcomeEffect = publicMessage?.source?.endsWith(":success")
+    ? "success"
+    : publicMessage?.source?.endsWith(":failure")
+      ? "failure"
+      : null;
+  const activeWarmupEffect = gameOutcomeEffect || (
+    audienceWarmup?.display?.messageId && audienceWarmup.display.messageId === publicMessage?.id
+      ? audienceWarmup.display.effect
+      : null
+  );
+  const warmupSilentCursor = !publicMessage && audienceWarmup?.display?.kind === "silent";
   const publicInput = (
     <form className={styles.form} onSubmit={submitMessage}>
       <span aria-hidden="true">&gt;</span>
@@ -852,7 +913,11 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
         </section>
         <section className={`${styles.layoutRegion} ${styles.sceneZeroAuxRegion}`} aria-label="Quadrante de contagens e conteúdos da Cena 0">
           <div className={styles.quadrantCanvas}>
-            <SceneZeroProjectionLayer audienceWarmup={audienceWarmup} sceneZero={sceneZero} />
+            <SceneZeroProjectionLayer
+              audienceWarmup={audienceWarmup}
+              botFont={robotSound?.displayFont || ROBOT_DISPLAY_FONT_DEFAULT}
+              sceneZero={sceneZero}
+            />
           </div>
         </section>
         <section className={`${styles.layoutRegion} ${styles.performanceRegion}`} aria-label="Quadrante de elementos visuais e conteúdos auxiliares">
@@ -868,9 +933,13 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
           </div>
         </section>
 
-        <main className={styles.publicStage} aria-label="Fala atual da Caixa Preta">
+        <main className={styles.publicStage} aria-label="Fala atual da Caixa Preta" data-bot-font={robotSound?.displayFont || ROBOT_DISPLAY_FONT_DEFAULT}>
           <div className={styles.currentMessage}>
-            {!publicMessage && messages.length === 0 ? (
+            {warmupSilentCursor ? (
+              <p className={styles.machine} aria-label="Cursor de espera da Caixa Preta">
+                <span className={styles.replyCursor} aria-hidden="true">_</span>
+              </p>
+            ) : !publicMessage && messages.length === 0 ? (
               <p className={styles.introCursor} aria-label="Cursor da Caixa Preta">&gt;</p>
             ) : null}
 
@@ -879,6 +948,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
                 className={styles.messageFrame}
                 data-emergence-cue={sceneZeroEmergenceCueForMessage(publicMessage)?.id || undefined}
                 data-emergence-phase={selfErasingMessageId === publicMessage.id ? "erasing" : undefined}
+                data-warmup-effect={activeWarmupEffect || undefined}
                 key={publicMessage.id}
               >
                 {audienceWarmup?.display?.messageId === publicMessage.id ? (
@@ -893,6 +963,18 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
                     <span className={`${styles.replyCursor} ${selfErasingMessageId === publicMessage.id ? styles.eraseCursor : ""}`} aria-hidden="true">_</span>
                   ) : null}
                 </p>
+                {activeWarmupEffect === "failure" || activeWarmupEffect === "success" ? (
+                  <div className={styles.warmupOutcome} data-result={activeWarmupEffect} aria-live="assertive">
+                    <strong>{activeWarmupEffect === "success" ? "ACERTO" : "ERRO"}</strong>
+                    <span>{activeWarmupEffect === "success" ? "DESBLOQUEIO +" : "PONTOS − · PEÇA BLOQUEADA"}</span>
+                  </div>
+                ) : null}
+                {activeWarmupEffect === "start-choice" && ["awaiting", "selected"].includes(audienceWarmup.startChoice?.status) ? (
+                  <div className={styles.warmupStartChoices} data-selection-state={audienceWarmup.startChoice.status} aria-label="Escolhas para começar">
+                    <button data-selected={audienceWarmup.startChoice.selectedId === "start" ? "true" : "false"} disabled type="button">START</button>
+                    <button data-selected={audienceWarmup.startChoice.selectedId === "game-over" ? "true" : "false"} disabled type="button">GAME OVER</button>
+                  </div>
+                ) : null}
               </div>
             ) : null}
 

@@ -15,6 +15,8 @@ async function main() {
   assert.equal(initial.microphoneSensitivity, 1);
   assert.equal(initial.typingFrequency, 0.35);
   assert.equal(initial.typingIntervalMs, 60);
+  assert.equal(initial.displayFont, "modern-dos-8x16");
+  assert.deepEqual(sound.ROBOT_DISPLAY_FONT_NAMES, ["modern-dos-8x16", "modern-dos-9x16", "vt323", "courier"]);
   assert.equal(initial.outputResetSequence, 0);
   assert(initial.masterVolume > 0 && initial.masterVolume < 0.5);
 
@@ -37,6 +39,9 @@ async function main() {
   assert.equal(normalized.typingFrequency, 1);
   assert.equal(normalized.preset, "normal");
   assert.equal(normalized.soundStyle, "system95");
+  assert.equal(sound.normalizeRobotSoundSettings({ displayFont: "modern-dos-9x16" }).displayFont, "modern-dos-9x16");
+  assert.equal(sound.normalizeRobotSoundSettings({ displayFont: "vt323" }).displayFont, "vt323");
+  assert.equal(sound.normalizeRobotSoundSettings({ displayFont: "unknown" }).displayFont, "modern-dos-8x16");
   assert.equal(normalized.outputResetSequence, 0);
 
   assert.equal(sound.normalizeRobotSoundSettings({ typingFrequency: -1 }).typingFrequency, 0);
@@ -111,13 +116,22 @@ async function main() {
   engine.error({ localOnly: true });
   engine.impact({ localOnly: true });
   engine.wake({ localOnly: true });
+  engine.attention({ localOnly: true });
   engine.setSettings({ ...engine.settings, completeEnabled: true });
   engine.complete({ localOnly: true });
   engine.countdown(0, { localOnly: true });
   engine.gameStart({ localOnly: true });
+  engine.gameOver({ localOnly: true });
+  engine.whistle({ localOnly: true });
   assert.deepEqual(system95Effects.map((entry) => entry.options.kind), [
-    "success", "error", "impact", "wake", "complete", "countdown", "game-start"
+    "success", "error", "impact", "wake", "attention", "complete", "countdown", "game-start", "game-over", "whistle"
   ]);
+  await new Promise((resolve) => setTimeout(resolve, 550));
+  assert.equal(
+    system95Effects.filter((entry) => entry.options.kind === "attention").length,
+    2,
+    "cada chamada de atenção deve tocar a frase sonora duas vezes"
+  );
 
   engine.rouletteTick(2, { localOnly: true });
   assert.equal(system95Blips.at(-1).destination, engine.effectsGain);
@@ -155,6 +169,33 @@ async function main() {
     relaySink.handleRelayMessage(relayedMessages[0]);
   }
   assert.equal(sinkPlayCount, 1);
+
+  let relayedAttentionCount = 0;
+  const attentionSink = new engineModule.RobotSoundEngine();
+  attentionSink.relaySinkId = "sink-a";
+  attentionSink.relaySinkUsers = 1;
+  attentionSink.context = { state: "running" };
+  attentionSink.attention = () => { relayedAttentionCount += 1; };
+  attentionSink.handleRelayMessage({ type: "play", targetSinkId: "sink-a", effect: "attention" });
+  assert.equal(relayedAttentionCount, 1);
+
+  let relayedWhistleCount = 0;
+  const whistleSink = new engineModule.RobotSoundEngine();
+  whistleSink.relaySinkId = "sink-a";
+  whistleSink.relaySinkUsers = 1;
+  whistleSink.context = { state: "running" };
+  whistleSink.whistle = () => { relayedWhistleCount += 1; };
+  whistleSink.handleRelayMessage({ type: "play", targetSinkId: "sink-a", effect: "whistle" });
+  assert.equal(relayedWhistleCount, 1);
+
+  let relayedGameOverCount = 0;
+  const gameOverSink = new engineModule.RobotSoundEngine();
+  gameOverSink.relaySinkId = "sink-a";
+  gameOverSink.relaySinkUsers = 1;
+  gameOverSink.context = { state: "running" };
+  gameOverSink.gameOver = () => { relayedGameOverCount += 1; };
+  gameOverSink.handleRelayMessage({ type: "play", targetSinkId: "sink-a", effect: "game-over" });
+  assert.equal(relayedGameOverCount, 1);
 
   let ghostClicks = 0;
   engine.typing = () => { ghostClicks += 1; };

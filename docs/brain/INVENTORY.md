@@ -33,6 +33,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:sound-control:browser` -> `node --no-warnings scripts/sound-control-browser-test.js`
 - `npm run test:audience-warmup` -> `node --no-warnings scripts/audience-warmup-test.js`
 - `npm run test:audience-sound-check:browser` -> `node --no-warnings scripts/audience-sound-check-browser-test.js`
+- `npm run test:audience-warmup:agreements:browser` -> `node --no-warnings scripts/audience-warmup-agreements-browser-test.js`
 - `npm run test:audience-warmup:browser` -> `node --no-warnings scripts/audience-warmup-browser-test.js`
 - `npm run test:play-unlock:browser` -> `node --no-warnings scripts/play-unlock-browser-test.js`
 - `npm run test:videomapping:browser` -> `node --no-warnings scripts/videomapping-browser-test.js`
@@ -203,6 +204,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 ## Test and browser-check scripts
 
 - `scripts/audience-sound-check-browser-test.js`
+- `scripts/audience-warmup-agreements-browser-test.js`
 - `scripts/audience-warmup-browser-test.js`
 - `scripts/audience-warmup-test.js`
 - `scripts/baralho-morbido-test.js`

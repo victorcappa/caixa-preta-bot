@@ -18,30 +18,32 @@ export const AUDIENCE_WARMUP_MINIGAMES = [
       "A OUTRA: MÃOS POR CIMA.",
       "QUEM ESTÁ EMBAIXO TENTA ACERTAR.",
       "QUEM ESTÁ EM CIMA TENTA ESCAPAR.",
-      "PRIMEIRO TURNO: 10 SEGUNDOS."
+      "DOIS TURNOS DE 10 SEGUNDOS."
     ]
   },
   {
     id: "piscada",
     name: "PISCADA",
-    defaultDurationSeconds: 60,
+    defaultDurationSeconds: 20,
     rules: [
       "PISCADA.",
       "OLHE NOS OLHOS DA SUA DUPLA.",
       "NÃO DESVIE.",
       "NÃO PISQUE.",
-      "QUEM PISCAR PRIMEIRO PERDE."
+      "QUEM PISCAR PRIMEIRO PERDE.",
+      "UM TURNO: 20 SEGUNDOS."
     ]
   },
   {
     id: "serinho",
     name: "SERINHO",
-    defaultDurationSeconds: 60,
+    defaultDurationSeconds: 20,
     rules: [
       "SERINHO.",
       "OLHE PARA SUA DUPLA.",
       "NÃO RIA.",
-      "QUEM RIR PRIMEIRO PERDE."
+      "QUEM RIR PRIMEIRO PERDE.",
+      "UM TURNO: 20 SEGUNDOS."
     ]
   }
 ];

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AUDIENCE_WARMUP_ACTIONS, AUDIENCE_WARMUP_INTENSITIES, AUDIENCE_WARMUP_PROMPTS } from "@/data/audience-warmup-prompts";
+import { AUDIENCE_WARMUP_ACTIONS, AUDIENCE_WARMUP_INTENSITIES, AUDIENCE_WARMUP_PROMPTS, AUDIENCE_WARMUP_START_CHOICES } from "@/data/audience-warmup-prompts";
 import { PLAY_UNLOCK_CONFIG } from "@/data/scene-zero-unlock";
 import { AUDIENCE_WARMUP_MINIGAMES } from "@/data/audience-warmup-minigames";
 import styles from "./AudienceWarmupController.module.css";
@@ -58,11 +58,17 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
   const remaining = Math.max(0, 100 - progress);
   const standby = playUnlock.status === "STANDBY";
   const booting = playUnlock.status === "BOOTING";
-  const bootFailed = playUnlock.status === "BOOT_FAILED";
   const soundChecking = playUnlock.status === "SOUND_CHECK";
   const warming = ["WAITING_FOR_AUDIENCE", "WARMING_AUDIENCE"].includes(playUnlock.status);
   const questionsReady = warmup.phase === "questions";
   const warmupDisabled = busy || !warming || !questionsReady || Boolean(playUnlock.pendingProgress);
+  const hasCurrentResponse = Boolean(warmup.sequence?.promptId)
+    && warmup.currentResponse?.promptId === warmup.sequence.promptId;
+  const drawStatus = warmup.pendingAdvance
+    ? "AGUARDE A REAÇÃO / AVANÇO ATUAL."
+    : hasCurrentResponse
+      ? "PRONTO PARA SORTEAR A PRÓXIMA PERGUNTA."
+      : "REGISTRE POUCOS OU MUITOS PARA ESTA PERGUNTA. O BOTÃO CONTINUA ATIVO E MOSTRA O AVISO SE TENTAR ANTES.";
   const minigame = warmup.minigame || {};
   const minigameReady = ["briefing", "minigame"].includes(warmup.phase);
   const minigameStarted = ["running", "paused", "exchange", "ready_round_two"].includes(minigame.status);
@@ -84,10 +90,30 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
           <h2 id="audience-warmup-title">ESQUENTAR PÚBLICO</h2>
         </div>
         <div className={styles.headerStatus}>
-          {warmup.manualMode ? <strong>MODO MANUAL · → NEXT</strong> : null}
+          <strong>SETA → AVANÇA · PERGUNTAS: INTENSIDADE 4</strong>
           <span className={warmup.active ? styles.live : styles.ready}>{(warmup.phase || "idle").replaceAll("_", " ").toUpperCase()}</span>
         </div>
       </header>
+
+      {["awaiting", "selected"].includes(warmup.startChoice?.status) ? (
+        <section className={styles.startChoicePanel} data-selection-state={warmup.startChoice.status} aria-label="Escolha para começar" aria-live="assertive">
+          <div>
+            <small>RESPOSTA À TELA PÚBLICA</small>
+            <strong>PODEMOS COMEÇAR?</strong>
+          </div>
+          {AUDIENCE_WARMUP_START_CHOICES.map((choice) => (
+            <button
+              aria-pressed={warmup.startChoice.selectedId === choice.id}
+              className={choice.id === "start" ? styles.startChoiceButton : styles.gameOverChoiceButton}
+              data-selected={warmup.startChoice.selectedId === choice.id ? "true" : "false"}
+              disabled={busy || warmup.startChoice.status === "selected"}
+              key={choice.id}
+              onClick={() => act("agreements-start-choice", { choiceId: choice.id })}
+              type="button"
+            >{choice.label}</button>
+          ))}
+        </section>
+      ) : null}
 
       <section className={styles.unlockPanel} aria-label="Desbloqueio da peça">
         <div className={styles.unlockHeading}>
@@ -142,11 +168,6 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
             </button>
             <button disabled={busy} onClick={() => act("unlock-advance-boot")} type="button">AVANÇAR BIOS</button>
           </div>
-        ) : null}
-        {bootFailed ? (
-          <button className={styles.startWarmup} disabled={busy || playUnlock.bootComplete} onClick={() => act("unlock-end-bios")} type="button">
-            {playUnlock.bootComplete ? "ENCERRANDO BIOS..." : "ENCERRAR BIOS"}
-          </button>
         ) : null}
         {soundChecking ? (
           <div className={styles.soundCheckControls}>
@@ -308,7 +329,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
       </div>
 
       <div className={styles.cueControls}>
-        <button className={styles.surprise} disabled={warmupDisabled || Boolean(warmup.pendingAdvance) || warmup.currentResponse?.promptId !== warmup.sequence?.promptId} onClick={() => act("surprise")} type="button">SORTEAR</button>
+        <button aria-describedby="audience-warmup-draw-status" className={styles.surprise} disabled={warmupDisabled || Boolean(warmup.pendingAdvance)} onClick={() => act("surprise")} type="button">SORTEAR</button>
         <button disabled={warmupDisabled || !previewPrompt} onClick={() => act("skip")} type="button">PULAR</button>
         <button disabled={warmupDisabled || !current} onClick={() => act("repeat")} type="button">REPETIR</button>
         <button disabled={warmupDisabled || !sequence || !next} onClick={() => act("next")} type="button">PRÓXIMO</button>
@@ -316,6 +337,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
         <button className={styles.cancel} disabled={busy || !warmup.active} onClick={() => act("end-action")} type="button">ENCERRAR AÇÃO</button>
         <button className={styles.finishQuestions} disabled={busy || !questionsReady} onClick={() => act("questions-complete")} type="button">ENCERRAR PERGUNTAS → MINI GAME</button>
       </div>
+      {questionsReady ? <p className={styles.drawStatus} data-ready={hasCurrentResponse ? "true" : "false"} id="audience-warmup-draw-status">{drawStatus}</p> : null}
 
       <div className={styles.timing}>
         <label>

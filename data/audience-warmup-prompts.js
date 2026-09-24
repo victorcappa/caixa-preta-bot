@@ -60,7 +60,33 @@ function step(text, action, options = {}) {
 
 export const AUDIENCE_WARMUP_REQUIRED_PROMPT_ID = "play-dead-30";
 export const AUDIENCE_WARMUP_REQUIRED_ACKNOWLEDGEMENT = "OBEDIENTES... ÓTIMO.";
+export const AUDIENCE_WARMUP_REQUIRED_TIMER_DELAY_MS = 2500;
 export const AUDIENCE_WARMUP_FIRST_QUESTION_INTENSITY = "provocative";
+export const AUDIENCE_WARMUP_START_CHOICE_CONFIRMATION_MS = 1400;
+export const AUDIENCE_WARMUP_AGREEMENTS = [
+  { id: "attention", text: "Quando eu fizer este som..." },
+  { id: "look-at-screen", text: "...você deve olhar para a tela." },
+  { id: "timer", text: "Em alguns momentos eu vou mostrar um timer na tela.", effect: "timer", durationSeconds: 5 },
+  { id: "failure", text: "Se você errar, perde pontos e não desbloqueia a peça.", effect: "failure" },
+  { id: "success", text: "Se acertar, avança no desbloqueio.", effect: "success" },
+  { id: "timer-idle-cursor", kind: "silent", effect: "idle-cursor" },
+  { id: "timer-notification-test", kind: "silent", effect: "notification-double", holdMs: 1300, lockUntilDue: true },
+  { id: "timer-ellipsis", text: "..." },
+  { id: "timer-attention-check", text: "Só pra ver se o público está esperto. Os resultados ainda são inconclusivos." },
+  { id: "start-choice", text: "Podemos começar?", effect: "start-choice", requiresOperatorChoice: true }
+];
+export const AUDIENCE_WARMUP_START_CHOICES = [
+  {
+    id: "start",
+    label: "START",
+    comment: "Ótimo. Apertaram START como se ainda tivessem alguma escolha."
+  },
+  {
+    id: "game-over",
+    label: "GAME OVER",
+    comment: "GAME OVER antes de começar. Adoro o otimismo. Infelizmente, isso também significa START."
+  }
+];
 
 // O texto abaixo é a fonte de verdade. Nenhuma camada de modelo pode reconstruí-lo.
 export const AUDIENCE_WARMUP_PROMPTS = [
@@ -71,7 +97,7 @@ export const AUDIENCE_WARMUP_PROMPTS = [
   prompt("play-04", "FAÇAM CARA DE FOTO 3X4.", "pose", "corpo / absurdo", "play", "collective", ["rosto", "pose"]),
   prompt("play-05", "TODO MUNDO DÁ UM GRITO EM 3, 2, 1.", "scream", "ritmo / som", "play", "chorus", ["grito", "coro"]),
   prompt("play-06", "FAÇAM O SOM DE UMA TURBINA.", "sound", "avião", "play", "chorus", ["avião", "som"]),
-  prompt(AUDIENCE_WARMUP_REQUIRED_PROMPT_ID, "TODOS FINJAM ESTAR MORTOS NAS CADEIRAS E NO CHÃO.", "sleep", "corpo / absurdo", "play", "collective", ["corpo", "imobilidade", "morte"], { durationSeconds: 30, requiredEverySession: true }),
+  prompt(AUDIENCE_WARMUP_REQUIRED_PROMPT_ID, "TODOS FINJAM ESTAR MORTOS NAS CADEIRAS E NO CHÃO.", "sleep", "corpo / absurdo", "play", "collective", ["corpo", "imobilidade", "morte"], { durationSeconds: 20, requiredEverySession: true }),
   prompt("play-08", "FAÇAM UMA POSE DE FISICULTURISTA.", "pose", "corpo / absurdo", "play", "mime", ["corpo", "pose"]),
   prompt("play-09", "FECHEM OS OLHOS POR 5 SEGUNDOS.", "eyes", "corpo / atenção", "play", "sequence", ["olhos", "atenção"], { steps: [step("FECHEM OS OLHOS POR 5 SEGUNDOS.", "eyes", { durationSeconds: 5 }), step("ABRAM.", "eyes")] }),
   prompt("play-10", "PISQUEM O MAIS RÁPIDO POSSÍVEL POR 5 SEGUNDOS.", "eyes", "corpo / absurdo", "play", "competition", ["olhos", "velocidade"], { durationSeconds: 5 }),
@@ -151,6 +177,46 @@ export const AUDIENCE_WARMUP_PROMPTS = [
   prompt("provocative-18", "QUEM VOTOU NO LULA E SE ARREPENDEU SENTA.", "sit", "política", "provocative", "division", ["política", "Lula", "arrependimento"]),
   prompt("provocative-19", "QUEM VOTOU NO BOLSONARO E SE ARREPENDEU LEVANTA.", "stand", "política", "provocative", "division", ["política", "Bolsonaro", "arrependimento"]),
   prompt("provocative-20", "QUEM MENTIU EM ALGUMA AÇÃO DESTE AQUECIMENTO PISCA TRÊS VEZES.", "eyes", "culpa", "provocative", "conditional", ["mentira", "aquecimento"]),
+  prompt("provocative-21", "QUEM JÁ MENTIU NO CURRÍCULO IMITA ALGUÉM DIGITANDO.", "imitate", "trabalho", "provocative", "confession", ["trabalho", "mentira"]),
+  prompt("provocative-22", "QUEM JÁ FINGIU ESTAR DOENTE PARA FALTAR AO TRABALHO TOSSE UMA VEZ.", "sound", "trabalho", "provocative", "confession", ["trabalho", "mentira"]),
+  prompt("provocative-23", "QUEM JÁ TOMOU O CRÉDITO PELO TRABALHO DE OUTRA PESSOA BATE UMA PALMA.", "clap", "trabalho", "provocative", "confession", ["trabalho", "culpa"]),
+  prompt("provocative-24", "QUEM QUER VER O PRÓPRIO CHEFE DEMITIDO LEVANTA UM DEDO.", "hand", "trabalho", "provocative", "confession", ["trabalho", "segredo"]),
+  prompt("provocative-25", "QUEM JÁ BEIJOU ALGUÉM DO TRABALHO OLHA PARA O CHÃO.", "look", "relações", "provocative", "confession", ["relacionamento", "trabalho"]),
+  prompt("provocative-26", "QUEM JÁ FINGIU ESTAR SOLTEIRO CRUZA OS BRAÇOS.", "pose", "relações", "provocative", "confession", ["relacionamento", "mentira"]),
+  prompt("provocative-27", "QUEM JÁ DEU EM CIMA DO PAR DE UM AMIGO TOCA NO PRÓPRIO OMBRO.", "touch_self", "relações", "provocative", "confession", ["relacionamento", "traição"]),
+  prompt("provocative-28", "QUEM JÁ SUMIU SEM RESPONDER NINGUÉM DESVIA O OLHAR.", "look", "relações", "provocative", "confession", ["relacionamento", "culpa"]),
+  prompt("provocative-29", "QUEM BLOQUEOU E DESBLOQUEOU O EX ESTE MÊS ABRE E FECHA AS MÃOS.", "hand", "relações", "provocative", "movement", ["relacionamento", "ex"]),
+  prompt("provocative-30", "QUEM OLHOU O PERFIL DO EX ESTA SEMANA FECHA OS OLHOS.", "eyes", "relações", "provocative", "confession", ["relacionamento", "ex"]),
+  prompt("provocative-31", "QUEM TEM APLICATIVO DE RELACIONAMENTO INSTALADO LEVANTA O CELULAR.", "raise_object", "relações", "provocative", "object", ["relacionamento", "celular"]),
+  prompt("provocative-32", "QUEM JÁ MENTIU A IDADE EM UM APLICATIVO LEVANTA DOIS DEDOS.", "count", "relações", "provocative", "confession", ["relacionamento", "mentira"]),
+  prompt("provocative-33", "QUEM JÁ MANDOU UMA MENSAGEM ÍNTIMA PARA A PESSOA ERRADA ESCONDE O ROSTO.", "hide", "sexo", "provocative", "confession", ["sexo", "celular"]),
+  prompt("provocative-34", "QUEM JÁ TRANSOU EM LUGAR PÚBLICO FICA COMPLETAMENTE IMÓVEL.", "freeze", "sexo", "provocative", "confession", ["sexo", "segredo"], { durationSeconds: 5 }),
+  prompt("provocative-35", "QUEM JÁ DISSE O NOME ERRADO DURANTE O SEXO BATE O PÉ UMA VEZ.", "stomp", "sexo", "provocative", "confession", ["sexo", "vergonha"]),
+  prompt("provocative-36", "QUEM JÁ APAGOU UMA CONVERSA PARA ESCONDER DE ALGUÉM FAZ O GESTO DE APAGAR.", "mime", "segredos", "provocative", "mime", ["segredo", "celular"]),
+  prompt("provocative-37", "QUEM JÁ LEU UMA CONVERSA ALHEIA ESCONDIDO OLHA PARA O LADO.", "look", "segredos", "provocative", "confession", ["segredo", "celular"]),
+  prompt("provocative-38", "QUEM SABE A SENHA DO CELULAR DO PAR LEVANTA A MÃO.", "hand", "relações", "provocative", "confession", ["relacionamento", "celular"]),
+  prompt("provocative-39", "QUEM JÁ INVENTOU UMA DESCULPA PARA NÃO ENCONTRAR ALGUÉM BALANÇA A CABEÇA.", "shake", "relações", "provocative", "confession", ["relacionamento", "mentira"]),
+  prompt("provocative-40", "QUEM JÁ MANTEVE UMA RELAÇÃO POR INTERESSE FAZ CARA DE INOCENTE.", "pose", "relações", "provocative", "confession", ["relacionamento", "dinheiro"]),
+  prompt("provocative-41", "QUEM JÁ USOU DROGA SOZINHO LEVANTA UM DEDO.", "hand", "drogas", "provocative", "confession", ["droga", "segredo"]),
+  prompt("provocative-42", "QUEM JÁ ESCONDEU O USO DE DROGA DE QUEM MORA JUNTO FECHA OS OLHOS.", "eyes", "drogas", "provocative", "confession", ["droga", "mentira"]),
+  prompt("provocative-43", "QUEM JÁ APAGOU COMPLETAMENTE DEPOIS DE BEBER NÃO SE MEXE.", "freeze", "drogas", "provocative", "conditional", ["álcool", "risco"], { durationSeconds: 5 }),
+  prompt("provocative-44", "QUEM JÁ BEBEU ESCONDIDO FAZ O SOM DE UMA GARRAFA ABRINDO.", "sound", "drogas", "provocative", "mime", ["álcool", "segredo"]),
+  prompt("provocative-45", "QUEM JÁ DISSE QUE IA PARAR E NÃO PAROU LEVANTA E SENTA.", "move", "drogas", "provocative", "confession", ["droga", "mentira"]),
+  prompt("provocative-46", "QUEM JÁ PEGOU DINHEIRO QUE NÃO ERA SEU TOCA NO PRÓPRIO BOLSO.", "touch_self", "culpa", "provocative", "confession", ["dinheiro", "culpa"]),
+  prompt("provocative-47", "QUEM JÁ FICOU COM UM TROCO DADO A MAIS LEVANTA UMA MÃO.", "hand", "culpa", "provocative", "confession", ["dinheiro", "culpa"]),
+  prompt("provocative-48", "QUEM DEVE DINHEIRO PARA ALGUÉM DESTA SALA OLHA PARA A SAÍDA.", "look", "dinheiro", "provocative", "confession", ["dinheiro", "dívida"]),
+  prompt("provocative-49", "QUEM JÁ ROUBOU ALGUMA COISA DO TRABALHO ESCONDE AS MÃOS.", "hide", "culpa", "provocative", "confession", ["trabalho", "roubo"]),
+  prompt("provocative-50", "QUEM JÁ COLOU EM UMA PROVA FAZ O GESTO DE COPIAR.", "mime", "culpa", "provocative", "confession", ["culpa", "mentira"]),
+  prompt("provocative-51", "QUEM JÁ DEU UM ELOGIO FALSO SORRI POR 3 SEGUNDOS.", "pose", "culpa", "provocative", "confession", ["mentira", "culpa"], { durationSeconds: 3 }),
+  prompt("provocative-52", "QUEM JÁ FINGIU NÃO VER UMA MENSAGEM PISCA DUAS VEZES.", "eyes", "culpa", "provocative", "confession", ["mentira", "celular"]),
+  prompt("provocative-53", "QUEM JÁ TORCEU PARA UM EVENTO SER CANCELADO BATE DUAS PALMAS.", "clap", "culpa", "provocative", "rhythm", ["culpa", "segredo"]),
+  prompt("provocative-54", "QUEM JÁ PESQUISOU O PRÓPRIO NOME NA INTERNET ACENA.", "wave", "vaidade", "provocative", "confession", ["vaidade", "internet"]),
+  prompt("provocative-55", "QUEM USA A SENHA DE STREAMING DE OUTRA PESSOA LEVANTA A MÃO.", "hand", "culpa", "provocative", "confession", ["culpa", "senha"]),
+  prompt("provocative-56", "QUEM JÁ JULGOU O CORPO DE ALGUÉM OLHA PARA O TETO.", "look", "julgamento", "provocative", "confession", ["corpo", "culpa"]),
+  prompt("provocative-57", "QUEM JÁ FALOU MAL DE ALGUÉM DESTA SALA COLOCA AS MÃOS PARA TRÁS.", "pose", "julgamento", "provocative", "confession", ["culpa", "segredo"]),
+  prompt("provocative-58", "QUEM JÁ NEGOU EM QUEM VOTOU FICA DE PÉ.", "stand", "política", "provocative", "confession", ["política", "mentira"]),
+  prompt("provocative-59", "QUEM JÁ MUDOU DE OPINIÃO POLÍTICA PARA EVITAR UMA BRIGA SENTA.", "sit", "política", "provocative", "confession", ["política", "medo"]),
+  prompt("provocative-60", "QUEM MENTIU EM ALGUMA RESPOSTA DESTA RODADA SUSSURRA \"EU\".", "chorus", "culpa", "provocative", "chorus", ["mentira", "aquecimento"]),
 
   // 5 · SOCIAL PRESSURE — divisão da sala, escolha e microcompetição.
   prompt("social-01", "ESQUERDA CONTRA DIREITA. QUEM GRITA MAIS ALTO?", "competition", "programa de auditório", "social_pressure", "competition", ["lado", "grito"], { durationSeconds: 8 }),
@@ -172,5 +238,45 @@ export const AUDIENCE_WARMUP_PROMPTS = [
   prompt("social-17", "APONTE PARA QUEM VOCÊ ACHA MAIS BONITO.", "point", "relações", "social_pressure", "sequence", ["atração", "julgamento"], { steps: [step("APONTE PARA QUEM VOCÊ ACHA MAIS BONITO.", "point"), step("AGORA APONTE PARA QUEM VOCÊ ACHA QUE SABE DISSO.", "point")] }),
   prompt("social-18", "QUEM JÁ TRAIU FICA DE PÉ.", "choice", "relações", "social_pressure", "sequence", ["relacionamento", "traição"], { steps: [step("QUEM JÁ TRAIU FICA DE PÉ.", "stand"), step("QUEM JÁ FOI TRAÍDO LEVANTA A MÃO.", "hand"), step("QUEM ESTÁ NOS DOIS GRUPOS LEVANTA AS DUAS.", "hand")] }),
   prompt("social-19", "QUEM CHEGOU ATRASADO FICA DE PÉ.", "choice", "programa de auditório", "social_pressure", "sequence", ["atraso", "julgamento"], { steps: [step("QUEM CHEGOU ATRASADO FICA DE PÉ.", "stand"), step("QUEM ACHA QUE ALGUÉM MENTIU, APONTA.", "point")] }),
-  prompt("social-20", "OLHEM PARA A PESSOA AO LADO.", "look", "corpo / atenção", "social_pressure", "sequence", ["olhar", "confronto"], { steps: [step("OLHEM PARA A PESSOA AO LADO.", "look"), step("NÃO DESVIEM.", "freeze", { durationSeconds: 10 })] })
+  prompt("social-20", "OLHEM PARA A PESSOA AO LADO.", "look", "corpo / atenção", "social_pressure", "sequence", ["olhar", "confronto"], { steps: [step("OLHEM PARA A PESSOA AO LADO.", "look"), step("NÃO DESVIEM.", "freeze", { durationSeconds: 10 })] }),
+  prompt("social-21", "QUEM CHOROU ESTA SEMANA FICA DE PÉ.", "choice", "emoções", "social_pressure", "sequence", ["emoção", "exposição"], { steps: [step("QUEM CHOROU ESTA SEMANA FICA DE PÉ.", "stand"), step("QUEM QUASE CHOROU LEVANTA A MÃO.", "hand"), step("OS OUTROS OLHAM PARA OS DOIS GRUPOS.", "look")] }),
+  prompt("social-22", "QUEM TEM DÍVIDA FICA DE PÉ.", "choice", "dinheiro", "social_pressure", "sequence", ["dinheiro", "dívida"], { steps: [step("QUEM TEM DÍVIDA FICA DE PÉ.", "stand"), step("QUEM NÃO SABE QUANTO DEVE LEVANTA AS DUAS MÃOS.", "hand"), step("CONTEM QUANTAS PESSOAS CONTINUAM SENTADAS.", "count")] }),
+  prompt("social-23", "QUEM PAGOU INGRESSO FICA DE PÉ.", "choice", "programa de auditório", "social_pressure", "sequence", ["dinheiro", "plateia"], { steps: [step("QUEM PAGOU INGRESSO FICA DE PÉ.", "stand"), step("QUEM ENTROU DE GRAÇA ACENA.", "wave"), step("AGORA OLHEM UNS PARA OS OUTROS.", "look")] }),
+  prompt("social-24", "QUEM VEIO SOZINHO LEVANTA A MÃO.", "choice", "relações", "social_pressure", "sequence", ["sozinho", "grupo"], { steps: [step("QUEM VEIO SOZINHO LEVANTA A MÃO.", "hand"), step("QUEM VEIO ACOMPANHADO SEGURA A MÃO DE QUEM VEIO JUNTO.", "hand"), step("QUEM NÃO SABE EM QUAL GRUPO ESTÁ FICA IMÓVEL.", "freeze")] }),
+  prompt("social-25", "QUEM CONHECE ALGUÉM DA EQUIPE FICA DE PÉ.", "choice", "programa de auditório", "social_pressure", "division", ["equipe", "plateia"]),
+  prompt("social-26", "QUEM JÁ PENSOU EM IR EMBORA LEVANTA UM DEDO.", "hand", "julgamento", "social_pressure", "confession", ["plateia", "segredo"]),
+  prompt("social-27", "ESCOLHAM EM SILÊNCIO QUEM PARECE MAIS CONFIÁVEL.", "point", "julgamento", "social_pressure", "sequence", ["confiança", "julgamento"], { steps: [step("ESCOLHAM EM SILÊNCIO QUEM PARECE MAIS CONFIÁVEL.", "look"), step("AGORA APONTEM AO MESMO TEMPO.", "point")] }),
+  prompt("social-28", "APONTE PARA QUEM VOCÊ CONFIARIA UM SEGREDO.", "point", "julgamento", "social_pressure", "sequence", ["segredo", "confiança"], { steps: [step("APONTE PARA QUEM VOCÊ CONFIARIA UM SEGREDO.", "point"), step("QUEM NÃO FOI APONTADO LEVANTA A MÃO.", "hand")] }),
+  prompt("social-29", "APONTE PARA QUEM VOCÊ CONFIARIA DINHEIRO.", "point", "dinheiro", "social_pressure", "sequence", ["dinheiro", "confiança"], { steps: [step("APONTE PARA QUEM VOCÊ CONFIARIA DINHEIRO.", "point"), step("MANTENHAM O DEDO APONTADO POR 5 SEGUNDOS.", "freeze", { durationSeconds: 5 })] }),
+  prompt("social-30", "ESCOLHAM QUEM SERIA O LÍDER DESTA SALA.", "point", "julgamento", "social_pressure", "sequence", ["liderança", "julgamento"], { steps: [step("ESCOLHAM QUEM SERIA O LÍDER DESTA SALA.", "look"), step("APONTEM PARA ESSA PESSOA.", "point"), step("OS MAIS APONTADOS FICAM DE PÉ.", "stand")] }),
+  prompt("social-31", "APONTE PARA QUEM PARECE MAIS COMPETITIVO.", "point", "julgamento", "social_pressure", "division", ["competição", "julgamento"]),
+  prompt("social-32", "APONTE PARA QUEM PROVAVELMENTE VAI EMBORA PRIMEIRO.", "point", "julgamento", "social_pressure", "division", ["plateia", "julgamento"]),
+  prompt("social-33", "APONTE PARA QUEM PROVAVELMENTE CHEGA ATRASADO EM TODO LUGAR.", "point", "julgamento", "social_pressure", "division", ["atraso", "julgamento"]),
+  prompt("social-34", "QUEM ACHA QUE JÁ FOI JULGADO NESTA RODADA FICA DE PÉ.", "stand", "julgamento", "social_pressure", "sequence", ["julgamento", "exposição"], { steps: [step("QUEM ACHA QUE JÁ FOI JULGADO NESTA RODADA FICA DE PÉ.", "stand"), step("QUEM JULGOU ALGUÉM LEVANTA A MÃO.", "hand"), step("OBSERVEM QUEM ESTÁ NOS DOIS GRUPOS.", "look")] }),
+  prompt("social-35", "QUEM MENTIU NESTA RODADA FICA IMÓVEL.", "freeze", "culpa", "social_pressure", "sequence", ["mentira", "grupo"], { steps: [step("QUEM MENTIU NESTA RODADA FICA IMÓVEL.", "freeze", { durationSeconds: 5 }), step("QUEM ACREDITA QUE NINGUÉM MENTIU BATE UMA PALMA.", "clap")] }),
+  prompt("social-36", "LADO ESQUERDO FAZ UMA RISADA FALSA.", "competition", "ritmo / som", "social_pressure", "sequence", ["lado", "riso"], { steps: [step("LADO ESQUERDO FAZ UMA RISADA FALSA.", "sound"), step("LADO DIREITO RESPONDE COM UMA RISADA PIOR.", "sound"), step("AS DUAS RISADAS JUNTAS.", "chorus")] }),
+  prompt("social-37", "LADO DIREITO BATE PALMAS O MAIS ALTO POSSÍVEL.", "competition", "ritmo / som", "social_pressure", "sequence", ["lado", "palmas"], { steps: [step("LADO DIREITO BATE PALMAS O MAIS ALTO POSSÍVEL.", "clap"), step("LADO ESQUERDO TENTA SUPERAR.", "clap"), step("DECIDAM QUEM GANHOU.", "chorus")] }),
+  prompt("social-38", "FILEIRA DA FRENTE CONTRA FILEIRA DE TRÁS. QUEM BATE OS PÉS MAIS FORTE?", "competition", "ritmo / som", "social_pressure", "competition", ["fileira", "pés"], { durationSeconds: 8 }),
+  prompt("social-39", "METADE DA SALA FAZ SOM DE CHUVA. A OUTRA METADE FAZ SOM DE TROVÃO.", "sound", "ritmo / som", "social_pressure", "sequence", ["lado", "som"], { steps: [step("METADE DA SALA FAZ SOM DE CHUVA.", "sound"), step("A OUTRA METADE FAZ SOM DE TROVÃO.", "sound"), step("TEMPESTADE COMPLETA.", "chorus", { durationSeconds: 7 })] }),
+  prompt("social-40", "PRIMEIRO LADO A FICAR TOTALMENTE EM SILÊNCIO GANHA.", "competition", "corpo / atenção", "social_pressure", "competition", ["lado", "silêncio"], { durationSeconds: 8 }),
+  prompt("social-41", "JANEIRO A JUNHO BATEM PALMAS. JULHO A DEZEMBRO BATEM OS PÉS.", "rhythm", "ritmo / som", "social_pressure", "sequence", ["aniversário", "ritmo"], { steps: [step("JANEIRO A JUNHO BATEM PALMAS.", "clap"), step("JULHO A DEZEMBRO BATEM OS PÉS.", "stomp"), step("QUEM FAZ ANIVERSÁRIO ESTE MÊS GRITA.", "scream")] }),
+  prompt("social-42", "QUEM DEMORAR MAIS PARA LEVANTAR AS DUAS MÃOS PERDE.", "competition", "programa de auditório", "social_pressure", "competition", ["velocidade", "mãos"]),
+  prompt("social-43", "A ÚLTIMA PESSOA A CRUZAR OS BRAÇOS FICA DE PÉ.", "competition", "programa de auditório", "social_pressure", "competition", ["velocidade", "corpo"]),
+  prompt("social-44", "FORMEM DUPLAS COM ALGUÉM QUE VOCÊS NÃO CONHECEM.", "swap", "relações", "social_pressure", "movement", ["dupla", "desconhecido"], { durationSeconds: 15 }),
+  prompt("social-45", "TROQUEM DE LUGAR COM ALGUÉM QUE CHEGOU ANTES DE VOCÊ.", "swap", "programa de auditório", "social_pressure", "movement", ["troca", "atraso"], { durationSeconds: 15 }),
+  prompt("social-46", "FIQUEM DE PÉ SE VOCÊS VIERAM DE TRANSPORTE PÚBLICO.", "choice", "cidade", "social_pressure", "sequence", ["transporte", "classe"], { steps: [step("FIQUEM DE PÉ SE VOCÊS VIERAM DE TRANSPORTE PÚBLICO.", "stand"), step("QUEM VEIO DE CARRO LEVANTA UMA MÃO.", "hand"), step("QUEM VEIO A PÉ OU DE BICICLETA ACENA.", "wave")] }),
+  prompt("social-47", "QUEM MORA SOZINHO FICA DE PÉ.", "choice", "moradia", "social_pressure", "sequence", ["moradia", "grupo"], { steps: [step("QUEM MORA SOZINHO FICA DE PÉ.", "stand"), step("QUEM MORA COM OS PAIS LEVANTA A MÃO.", "hand"), step("QUEM DIVIDE CASA COM OUTRAS PESSOAS BATE DUAS PALMAS.", "clap")] }),
+  prompt("social-48", "QUEM ESTÁ SOLTEIRO FICA DE PÉ.", "choice", "relações", "social_pressure", "sequence", ["relacionamento", "solteiro"], { steps: [step("QUEM ESTÁ SOLTEIRO FICA DE PÉ.", "stand"), step("QUEM ESTÁ EM UMA RELAÇÃO LEVANTA A MÃO.", "hand"), step("QUEM PREFERE NÃO RESPONDER FECHA OS OLHOS.", "eyes")] }),
+  prompt("social-49", "QUEM USA APLICATIVO DE RELACIONAMENTO LEVANTA O CELULAR.", "raise_object", "relações", "social_pressure", "sequence", ["relacionamento", "celular"], { steps: [step("QUEM USA APLICATIVO DE RELACIONAMENTO LEVANTA O CELULAR.", "raise_object"), step("QUEM RECONHECEU ALGUÉM DAQUI EM UM APLICATIVO NÃO SE MEXE.", "freeze")] }),
+  prompt("social-50", "QUEM DISCUTIU POLÍTICA ESTA SEMANA FICA DE PÉ.", "choice", "política", "social_pressure", "sequence", ["política", "conflito"], { steps: [step("QUEM DISCUTIU POLÍTICA ESTA SEMANA FICA DE PÉ.", "stand"), step("QUEM EVITOU A DISCUSSÃO CRUZA OS BRAÇOS.", "pose"), step("QUEM COMEÇOU A DISCUSSÃO LEVANTA AS DUAS MÃOS.", "hand")] }),
+  prompt("social-51", "QUEM JÁ MUDOU O VOTO FICA DE PÉ.", "choice", "política", "social_pressure", "sequence", ["política", "voto"], { steps: [step("QUEM JÁ MUDOU O VOTO FICA DE PÉ.", "stand"), step("QUEM NUNCA MUDOU CRUZA OS BRAÇOS.", "pose"), step("AGORA OBSERVEM O OUTRO GRUPO.", "look")] }),
+  prompt("social-52", "QUEM ACREDITA EM DEUS LEVANTA A MÃO.", "choice", "crença", "social_pressure", "sequence", ["religião", "crença"], { steps: [step("QUEM ACREDITA EM DEUS LEVANTA A MÃO.", "hand"), step("QUEM JÁ MUDOU DE CRENÇA FICA DE PÉ.", "stand"), step("QUEM NÃO QUER RESPONDER FECHA OS OLHOS.", "eyes")] }),
+  prompt("social-53", "ESCOLHAM UM LADO: DINHEIRO À ESQUERDA, AMOR À DIREITA.", "choice", "escolha", "social_pressure", "division", ["dinheiro", "relacionamento"], { steps: [step("ESCOLHAM UM LADO: DINHEIRO À ESQUERDA, AMOR À DIREITA.", "move"), step("QUEM RECUSA A ESCOLHA FICA NO MEIO.", "freeze"), step("OLHEM O TAMANHO DE CADA GRUPO.", "look")] }),
+  prompt("social-54", "ESCOLHAM UM LADO: CONTAR O SEGREDO À ESQUERDA, GUARDAR À DIREITA.", "choice", "segredos", "social_pressure", "division", ["segredo", "confiança"], { steps: [step("ESCOLHAM UM LADO: CONTAR O SEGREDO À ESQUERDA, GUARDAR À DIREITA.", "move"), step("ENCAREM O OUTRO LADO.", "look", { durationSeconds: 5 })] }),
+  prompt("social-55", "QUEM ACHA ESTA PLATEIA OBEDIENTE FICA DE PÉ.", "choice", "programa de auditório", "social_pressure", "sequence", ["obediência", "plateia"], { steps: [step("QUEM ACHA ESTA PLATEIA OBEDIENTE FICA DE PÉ.", "stand"), step("QUEM DISCORDA LEVANTA A MÃO.", "hand"), step("PROVEM QUEM TEM RAZÃO: TODOS IMÓVEIS.", "freeze", { durationSeconds: 5 })] }),
+  prompt("social-56", "UMA PESSOA COMEÇA UM RITMO. O RESTO COPIA.", "rhythm", "ritmo / som", "social_pressure", "sequence", ["ritmo", "liderança"], { steps: [step("UMA PESSOA COMEÇA UM RITMO.", "rhythm"), step("O RESTO COPIA.", "imitate", { durationSeconds: 8 }), step("TROQUEM DE LÍDER.", "point")] }),
+  prompt("social-57", "ESCOLHAM UMA PESSOA PARA DAR O PRIMEIRO GRITO.", "point", "programa de auditório", "social_pressure", "sequence", ["grito", "liderança"], { steps: [step("ESCOLHAM UMA PESSOA PARA DAR O PRIMEIRO GRITO.", "point"), step("A PESSOA ESCOLHIDA GRITA.", "scream"), step("A SALA INTEIRA RESPONDE.", "chorus")] }),
+  prompt("social-58", "QUEM RECEBER MAIS VOTOS FAZ UMA POSE NO CENTRO.", "competition", "julgamento", "social_pressure", "sequence", ["julgamento", "exposição"], { steps: [step("APONTEM PARA QUEM DEVERIA FAZER UMA POSE NO CENTRO.", "point"), step("QUEM RECEBER MAIS VOTOS FAZ A POSE.", "pose", { durationSeconds: 5 })] }),
+  prompt("social-59", "TODOS OLHAM PARA O CENTRO SEM OLHAR UNS PARA OS OUTROS.", "look", "corpo / atenção", "social_pressure", "sequence", ["olhar", "grupo"], { steps: [step("TODOS OLHAM PARA O CENTRO SEM OLHAR UNS PARA OS OUTROS.", "look"), step("AGORA PROCUREM QUEM QUEBROU A REGRA.", "point", { durationSeconds: 5 })] }),
+  prompt("social-60", "TODO MUNDO DE PÉ. SÓ SENTEM QUANDO MAIS ALGUÉM SENTAR JUNTO.", "competition", "programa de auditório", "social_pressure", "competition", ["grupo", "sincronia"], { durationSeconds: 12 })
 ];

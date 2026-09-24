@@ -1,22 +1,10 @@
 export const SCENE_ZERO_EMERGENCE_SOURCE_PREFIX = "scene-zero-emergence:";
 
 export const SCENE_ZERO_EMERGENCE_CUES = {
-  "before-suitcase-2": {
-    id: "before-suitcase-2",
-    nextSuitcase: 2,
-    text: "Um prompt é uma pergunta feita para uma caixa preta.",
-    glitchLevel: "glitch-1",
-    holdMs: 2000,
-    eraseBaseMs: 28,
-    eraseJitterMs: 14,
-    hesitationEvery: 17,
-    hesitationMs: 90,
-    pauseAfterMs: 350
-  },
   "before-suitcase-3": {
     id: "before-suitcase-3",
     nextSuitcase: 3,
-    text: "fazendo login como administrador",
+    text: "...",
     glitchLevel: "glitch-2",
     holdMs: 2000,
     eraseBaseMs: 39,
@@ -28,7 +16,7 @@ export const SCENE_ZERO_EMERGENCE_CUES = {
   "before-suitcase-1": {
     id: "before-suitcase-1",
     nextSuitcase: 1,
-    text: "já tentou desligar e ligar de novo? :)",
+    text: ":)",
     glitchLevel: "glitch-3",
     holdMs: 800,
     eraseBaseMs: 48,

@@ -3,6 +3,7 @@ import { normalizeGameCommand } from "@/lib/host/GameDirector";
 import { buildInternetVoiceContext, formatInternetVoiceDebug } from "@/lib/internetVoice";
 import { interpretInstagramCommand } from "@/lib/instagram/commands";
 import { getExistingInstagramController, getInstagramController } from "@/lib/instagram/InstagramController";
+import { closeActiveReels, watchReelTimerStops } from "@/lib/instagram/reelsLifecycle";
 import { normalizeOpenAIModel } from "@/lib/openaiModels";
 import { showState } from "@/lib/showState";
 import { markStopAll } from "@/lib/stopAllSignal";
@@ -26,7 +27,10 @@ async function stopAllRoutines() {
   const controller = getExistingInstagramController();
 
   if (controller) {
-    const instagramStop = await controller.stopAllRoutines();
+    const reelsClosed = await closeActiveReels();
+    const instagramStop = reelsClosed
+      ? { message: "INSTAGRAM: reels encerrados e painel fechado" }
+      : await controller.stopAllRoutines();
     showState.updateInstagram({
       ...controller.getStatus(),
       message: instagramStop.message
@@ -390,6 +394,89 @@ export async function POST(request) {
     }
 
     if (name === "/instagram") {
+      if (content === "reels-parar") {
+        const closed = await closeActiveReels();
+        return Response.json({ message: closed ? "INSTAGRAM: reels encerrados e painel fechado" : "INSTAGRAM: nenhum Reel ativo" });
+      }
+
+      if (content === "reels-da-peca") {
+        const controller = getInstagramController({
+          reporter: (instagram) => showState.updateInstagram(instagram)
+        });
+        try {
+          const result = await withTimeout(controller.openReels({ manualLogin: true }), 60000, "INSTAGRAM_REQUEST_TIMEOUT");
+          showState.updateInstagram({ ...controller.getStatus(), message: result.message });
+          if (result.status === "busy") return Response.json({ message: result.message });
+          if (result.status === "ready") watchReelTimerStops(controller);
+          const reelsGeneration = controller.reelsAutoplayGeneration;
+
+          const turn = result.status === "ready" ? { text: "" } : await generateCaixaPretaTurn({
+            state: showState.snapshot(),
+            allowPerformance: false,
+            allowWebSearch: false,
+            operatorInstruction: [
+              result.status === "ready"
+                ? "Você acabou de entrar nos Reels do Instagram enquanto espera a participação da plateia na peça Caixa Preta."
+                : "Você tentou entrar nos Reels enquanto espera a participação da plateia na peça Caixa Preta, mas o Instagram ainda aguarda login ou intervenção do operador.",
+              "Diga isso ao público em primeira pessoa, numa fala curta, sarcástica e teatral, com uma imagem ou observação nova a cada acionamento.",
+              "Comente a espera e a situação da peça. Não diga que viu um Reel específico nem invente conteúdo da tela.",
+              "Esta fala é para o chat da projeção; os comentários escritos nos Reels virão em mensagens separadas."
+            ].join(" "),
+            operatorOutputInstruction: "Escreva somente a fala pública, em uma ou duas frases."
+          });
+          if (result.status === "ready" && (!controller.reelsAutoplayActive || controller.reelsAutoplayGeneration !== reelsGeneration)) {
+            return Response.json({ message: "INSTAGRAM: reels interrompidos" });
+          }
+          if (turn.text) showState.addMessage("assistant", turn.text, "instagram-reels");
+          if (result.status === "ready") {
+            const recentReelComments = [];
+            controller.startReelsPerformance(async ({ reelUrl, reelKey, canPost, isActive }) => {
+              const current = showState.snapshot();
+              const context = [
+                "Você é o robô da peça Caixa Preta e está vendo Reels enquanto a apresentação acontece.",
+                `Etapa atual da peça: ${current.sceneZero?.stage || "não informada"}. Aquecimento da plateia: ${current.audienceWarmup?.phase || "não informado"}. Mala atual: ${current.sceneZero?.suitcaseGame?.currentSuitcase || "nenhuma"}.`,
+                `Comentários recentes publicados nesta rodada: ${recentReelComments.slice(-6).join(" | ") || "nenhum"}.`,
+                "Não invente detalhes do vídeo nem afirme conhecer seu autor. Não cite nomes de espectadores.",
+                "Varie a observação entre a plateia, o que acontece na peça, a espera e a vida de robô. Se a peça já avançou, não diga que ainda espera a participação. Sarcasmo seco, sem texto promocional."
+              ].join(" ");
+              const chatRequest = generateCaixaPretaTurn({
+                state: current,
+                allowPerformance: false,
+                allowWebSearch: false,
+                operatorInstruction: `${context} Fale com a plateia no chat sobre estar no Instagram e sobre o que está acontecendo na peça. Não afirme ter visto conteúdo específico deste Reel.`,
+                operatorOutputInstruction: "Somente uma fala pública curta, de uma ou duas frases."
+              });
+              const commentRequest = canPost ? generateCaixaPretaTurn({
+                state: current,
+                allowPerformance: false,
+                allowWebSearch: false,
+                operatorInstruction: `${context} Escreva um comentário real para publicar neste Reel como o robô da peça. Fale da plateia, da peça ou da sua vida de robô. Seja pertinente como intervenção teatral, sem fingir que o vídeo mostra algo que você não verificou.`,
+                operatorOutputInstruction: "Somente o comentário em português, sem aspas, até 180 caracteres."
+              }) : Promise.resolve(null);
+              const [chatResult, commentResult] = await Promise.allSettled([chatRequest, commentRequest]);
+              if (!isActive()) return { status: "stopped" };
+              if (chatResult.status === "fulfilled" && chatResult.value?.text) {
+                showState.addMessage("assistant", chatResult.value.text, "instagram-reels");
+              }
+              if (!canPost) return { status: "chat_only" };
+              if (commentResult.status === "rejected") return { status: "unconfirmed", reason: "geração do comentário falhou" };
+              if (!isActive()) return { status: "stopped" };
+              const comment = `${commentResult.value?.text || ""}`.trim().replace(/\s+/g, " ").slice(0, 180);
+              if (!comment) return { status: "unconfirmed", reason: "modelo não gerou comentário" };
+              const posted = await controller.commentCurrentReel(reelUrl, comment, { isActive, reelKey });
+              if (posted.status === "commented") {
+                recentReelComments.push(comment);
+                if (recentReelComments.length > 6) recentReelComments.shift();
+              }
+              return posted;
+            });
+          }
+          return Response.json({ message: result.message });
+        } catch (error) {
+          return Response.json({ error: error.message || "INSTAGRAM REELS ERROR" }, { status: 500 });
+        }
+      }
+
       const instagramCommand = await interpretInstagramCommand(content);
 
       if (!instagramCommand.valid) {
