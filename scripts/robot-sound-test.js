@@ -121,9 +121,17 @@ async function main() {
   engine.complete({ localOnly: true });
   engine.countdown(0, { localOnly: true });
   engine.gameStart({ localOnly: true });
+  engine.gameOver({ localOnly: true });
+  engine.whistle({ localOnly: true });
   assert.deepEqual(system95Effects.map((entry) => entry.options.kind), [
-    "success", "error", "impact", "wake", "attention", "complete", "countdown", "game-start"
+    "success", "error", "impact", "wake", "attention", "complete", "countdown", "game-start", "game-over", "whistle"
   ]);
+  await new Promise((resolve) => setTimeout(resolve, 550));
+  assert.equal(
+    system95Effects.filter((entry) => entry.options.kind === "attention").length,
+    2,
+    "cada chamada de atenção deve tocar a frase sonora duas vezes"
+  );
 
   engine.rouletteTick(2, { localOnly: true });
   assert.equal(system95Blips.at(-1).destination, engine.effectsGain);
@@ -170,6 +178,24 @@ async function main() {
   attentionSink.attention = () => { relayedAttentionCount += 1; };
   attentionSink.handleRelayMessage({ type: "play", targetSinkId: "sink-a", effect: "attention" });
   assert.equal(relayedAttentionCount, 1);
+
+  let relayedWhistleCount = 0;
+  const whistleSink = new engineModule.RobotSoundEngine();
+  whistleSink.relaySinkId = "sink-a";
+  whistleSink.relaySinkUsers = 1;
+  whistleSink.context = { state: "running" };
+  whistleSink.whistle = () => { relayedWhistleCount += 1; };
+  whistleSink.handleRelayMessage({ type: "play", targetSinkId: "sink-a", effect: "whistle" });
+  assert.equal(relayedWhistleCount, 1);
+
+  let relayedGameOverCount = 0;
+  const gameOverSink = new engineModule.RobotSoundEngine();
+  gameOverSink.relaySinkId = "sink-a";
+  gameOverSink.relaySinkUsers = 1;
+  gameOverSink.context = { state: "running" };
+  gameOverSink.gameOver = () => { relayedGameOverCount += 1; };
+  gameOverSink.handleRelayMessage({ type: "play", targetSinkId: "sink-a", effect: "game-over" });
+  assert.equal(relayedGameOverCount, 1);
 
   let ghostClicks = 0;
   engine.typing = () => { ghostClicks += 1; };

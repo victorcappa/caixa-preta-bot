@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AUDIENCE_WARMUP_ACTIONS, AUDIENCE_WARMUP_INTENSITIES, AUDIENCE_WARMUP_PROMPTS } from "@/data/audience-warmup-prompts";
+import { AUDIENCE_WARMUP_ACTIONS, AUDIENCE_WARMUP_INTENSITIES, AUDIENCE_WARMUP_PROMPTS, AUDIENCE_WARMUP_START_CHOICES } from "@/data/audience-warmup-prompts";
 import { PLAY_UNLOCK_CONFIG } from "@/data/scene-zero-unlock";
 import { AUDIENCE_WARMUP_MINIGAMES } from "@/data/audience-warmup-minigames";
 import styles from "./AudienceWarmupController.module.css";
@@ -94,6 +94,26 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
           <span className={warmup.active ? styles.live : styles.ready}>{(warmup.phase || "idle").replaceAll("_", " ").toUpperCase()}</span>
         </div>
       </header>
+
+      {["awaiting", "selected"].includes(warmup.startChoice?.status) ? (
+        <section className={styles.startChoicePanel} data-selection-state={warmup.startChoice.status} aria-label="Escolha para começar" aria-live="assertive">
+          <div>
+            <small>RESPOSTA À TELA PÚBLICA</small>
+            <strong>PODEMOS COMEÇAR?</strong>
+          </div>
+          {AUDIENCE_WARMUP_START_CHOICES.map((choice) => (
+            <button
+              aria-pressed={warmup.startChoice.selectedId === choice.id}
+              className={choice.id === "start" ? styles.startChoiceButton : styles.gameOverChoiceButton}
+              data-selected={warmup.startChoice.selectedId === choice.id ? "true" : "false"}
+              disabled={busy || warmup.startChoice.status === "selected"}
+              key={choice.id}
+              onClick={() => act("agreements-start-choice", { choiceId: choice.id })}
+              type="button"
+            >{choice.label}</button>
+          ))}
+        </section>
+      ) : null}
 
       <section className={styles.unlockPanel} aria-label="Desbloqueio da peça">
         <div className={styles.unlockHeading}>

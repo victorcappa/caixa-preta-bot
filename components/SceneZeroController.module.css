@@ -27,6 +27,15 @@
 .indexNav .activeIndexLink b { color: #13592e; }
 .attentionButton { min-height: 44px; padding: 8px; color: #050600; background: #d7ff41; border: 1px solid #fff; font: inherit; font-size: 11px; font-weight: 950; letter-spacing: .08em; cursor: pointer; }
 .attentionButton:hover, .attentionButton:focus-visible { color: #000; background: #fff; outline: 2px solid #d7ff41; outline-offset: 1px; }
+.manualInstructionPanel { padding-top: 10px; border-top: 1px solid #2d513b; }
+.manualInstructionPanel summary { color: #00ff66; font-size: 10px; font-weight: 900; letter-spacing: .08em; cursor: pointer; }
+.manualInstructionComposer { display: grid; gap: 7px; margin-top: 8px; }
+.manualInstructionComposer label { display: grid; gap: 5px; color: #7c9a88; font-size: 9px; font-weight: 800; letter-spacing: .08em; }
+.manualInstructionComposer input { box-sizing: border-box; width: 100%; min-height: 38px; padding: 0 8px; color: #fff; background: #050805; border: 1px solid #39704e; font: inherit; font-size: 10px; }
+.manualInstructionComposer input:focus { border-color: #00ff66; outline: 1px solid #00ff66; outline-offset: 1px; }
+.manualInstructionComposer small { color: #779081; font-size: 8px; line-height: 1.35; }
+.manualInstructionSend { min-height: 38px; padding: 7px; color: #001c0c; background: #00ff66; border: 1px solid #00ff66; font: inherit; font-size: 9px; font-weight: 900; letter-spacing: .05em; cursor: pointer; }
+.manualInstructionSend:disabled { opacity: .4; cursor: default; }
 .reactionControls { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid #2d513b; }
 .reactionControls small { color: #7c9a88; font-size: 9px; letter-spacing: .1em; }
 .reactionControls button { min-height: 38px; padding: 7px; color: #d7ff41; background: #11150f; border: 1px solid #586827; font: inherit; font-size: 10px; font-weight: 850; letter-spacing: .04em; cursor: pointer; }

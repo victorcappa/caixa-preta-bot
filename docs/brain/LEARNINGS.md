@@ -2,12 +2,26 @@
 
 Each entry records a reproduced problem, its cause, the working response, and a regression guard.
 
+## Participant name screen must finish before the chatbot resumes
+
+- Problem: after the roulette selected a participant, the name overlay stayed up while the center-stage and suitcase instructions were already advancing inside it without the chatbot typewriter.
+- Cause: the `selected` state both owned the full overlay and scheduled every post-selection message by mutating the overlay's `lastComment`.
+- Working response: make `selected` a dedicated name hold, close it after five seconds in automatic mode or `→`/click in manual mode, then enter a separate `post_selection` state and publish the two instructions through the normal chatbot message path.
+- Prevent regression: the selected overlay renders only the participant name; do not publish post-selection messages until it has closed, and do not permit the next-stage shortcut until both typed lines finish.
+
+## Audience agreements belong before the first warmup challenge
+
+- Problem: the attention/timer/success/failure agreements appeared only when the suitcase game began, after the audience had already received the required play-dead challenge.
+- Cause: the agreements were attached to the first suitcase selection instead of the existing human-verification handoff.
+- Working response: publish them through the audience warmup system sequence after the questions introduction, use source/effect metadata to trigger the existing attention, countdown, error, and success presentation, then stop on an operator-only `START`/`GAME OVER` choice. The chosen authored sarcastic response uses the normal chatbot path and force-arms `questions-start` only after its reading delay, so manual mode cannot strand or skip it.
+- Prevent regression: verify the authored order in both automatic and manual modes, lock the real five-second timer demo until it finishes, expose the choice buttons only after `Podemos começar?` finishes typing, hold the selected choice long enough to animate on both public and operator screens, require the selected sarcastic comment before `play-dead-30`, and never generate the suitcase explanation during participant selection.
+
 ## Suitcase explanation must finish before its draw
 
 - Problem: the suitcase draw replaced the robot's green explanation before the audience could read it.
 - Cause: `scene-zero-suitcase-choice` lacked a typewriter-completion acknowledgement, and a server timeout estimated the speaking duration then immediately activated the suitcase.
-- Working response: have `Chat` acknowledge the exact message ID, mark the choice ready, require `→` in manual mode, and hold at least 2.5 seconds after acknowledgement in automatic mode. Keep a generous fallback only for missing acknowledgements.
-- Prevent regression: validate the `announcing → ready → starting` statuses, prevent duplicate activation, and preserve the main controller's manual continuation.
+- Working response: have `Chat` acknowledge exact message IDs. At the first suitcase, publish the authored rules and Ricardinho cue as separate green messages; manual mode uses `briefing → briefing_ready → briefing` before `ready`, while automatic mode applies reading holds. Keep the legacy director active without queuing its `ESCOLHA UMA MALA` overlay.
+- Prevent regression: ensure participant selection publishes only the center-stage call, test both briefing screens and their manual gate, then validate `ready → starting` without duplicate activation.
 
 ## Manual suitcase reveal needs two operator gates
 
@@ -15,6 +29,27 @@ Each entry records a reproduced problem, its cause, the working response, and a 
 - Cause: the projection and activity start were both derived from elapsed time after `suitcase-select`.
 - Working response: retain the automatic timed path, but in manual mode hold the selected number, require `→` for `ABRA A MALA`, and require another `→` before starting the suitcase content. Tie each action to the current selection sequence so a stale timer or click cannot advance a later suitcase.
 - Prevent regression: check the `drawing → selected → open → complete` cue phases and verify that the challenge, hangman, and tutorial wait until `complete`.
+
+## Suitcase instructions must finish before dependent mechanics
+
+- Problem: adding an authored line immediately before a timer or final sequence can let the next action replace the green typewriter before the participant reads it.
+- Cause: a newly published assistant message does not itself gate Scene Zero state, and another public message interrupts the active typewriter.
+- Working response: track the active suitcase briefing/content message ID in `showState`, acknowledge it from `Chat`, and only then prepare the draw, enable the first timer, or start the final tutorial-ending sequence. Keep a guarded fallback for a missing browser acknowledgement.
+- Prevent regression: manual operator instructions may publish a normal bot message but must not mutate game state; disable them while a critical automatic suitcase instruction is active so they cannot interrupt that gate.
+
+## Mala 2 is one fixed 15-second key challenge
+
+- Problem: selectable audience-object tasks contradicted the physical contents of Mala 2 and let the operator extend or automatically retry a challenge announced as only 15 seconds.
+- Cause: Mala 2 reused the generic gincana bank, object-target UI, `+ 5 SEGUNDOS`, and the same retry mechanism as the hangman.
+- Working response: keep the existing shared gincana timer/state but reduce its authored bank to balloons/key, gate it behind a wait-for-`VALENDO!` instruction, and publish `VALENDO!` plus the game-start sound on timer start. Keep `assets/audios/uba-hey.mp3` behind explicit controller play/stop actions in shared state; a timeout uses the stored `tempo esgotado` observation to fire a dedicated procedural whistle.
+- Prevent regression: assert there is no audience-object copy, selectable challenge, added-time control, automatic Mala 2 retry, or automatic music start. Its timer must start at 15 seconds; only `TOCAR UBA UBA HEY` starts the track, while manual stop, pause, terminal result, unmount, or departure stop and rewind it. Timer resume/restart must leave the music stopped, and only timeout whistles.
+
+## Hangman retries start after the failure line, not at timer expiry
+
+- Problem: immediately restarting a failed hangman timer makes the 10-second chance run underneath the red error message, and revealing the lost word makes the retry meaningless.
+- Cause: game completion, public result presentation, and the next timer were previously treated as one synchronous transition.
+- Working response: publish an authored sarcastic failure through the normal chatbot with the existing red visual/error sound, retain its message ID in shared `showState`, and start a fresh 10-second timer only after `Chat` acknowledges that typewriter. Preserve correct hangman progress while clearing its error count, and never expose the secret during a retry.
+- Prevent regression: browser-test hangman failure, including red presentation, hidden challenge panel while announcing, exact 10-second resumed timer, and a later green success. Guard the acknowledgement by retry status and message ID so stale callbacks cannot restart a completed or different game.
 
 ## Port 3000 must belong to the intended checkout
 

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
-import { AUDIENCE_WARMUP_PROMPTS } from "../data/audience-warmup-prompts.js";
+import { AUDIENCE_WARMUP_AGREEMENTS, AUDIENCE_WARMUP_PROMPTS, AUDIENCE_WARMUP_START_CHOICES } from "../data/audience-warmup-prompts.js";
 import { PLAY_UNLOCK_CONFIG } from "../data/scene-zero-unlock.js";
 
 const BASE_URL = process.env.CAIXA_PRETA_URL || "http://localhost:3000";
@@ -237,7 +237,15 @@ try {
   await display.getByText(PLAY_UNLOCK_CONFIG.questionsIntroduction, { exact: true }).waitFor();
   await display.screenshot({ path: "/private/tmp/caixa-preta-human-verification-title.png" });
 
-  snapshot = await waitForState(context.request, (value) => value.audienceWarmup.phase === "questions", 7000);
+  snapshot = await waitForState(context.request, (value) => value.audienceWarmup.startChoice?.status === "awaiting", 40000);
+  assert.equal(snapshot.publicMessage.content, "Podemos começar?");
+  await display.getByRole("button", { name: "START", exact: true }).waitFor();
+  await display.getByRole("button", { name: "GAME OVER", exact: true }).waitFor();
+  await operator.getByRole("button", { name: "START", exact: true }).click();
+  const startChoice = AUDIENCE_WARMUP_START_CHOICES.find((choice) => choice.id === "start");
+  snapshot = await waitForState(context.request, (value) => value.publicMessage?.content === startChoice.comment, 7000);
+  await display.getByText(startChoice.comment, { exact: true }).waitFor();
+  snapshot = await waitForState(context.request, (value) => value.audienceWarmup.phase === "questions", 15000);
   const initialWarmupProgress = PLAY_UNLOCK_CONFIG.soundCheck.progressValue + PLAY_UNLOCK_CONFIG.questionProgressValue;
   assert.equal(snapshot.sceneZero.unlock.progress, initialWarmupProgress);
   assert.equal(snapshot.sceneZero.unlock.verificationTitleSequence, 1);
@@ -333,12 +341,45 @@ try {
     value.sceneZero.unlock.status === "HUMAN_VERIFICATION"
     && value.publicMessage?.content === PLAY_UNLOCK_CONFIG.questionsIntroduction
   ), 7000);
-  assert.equal(snapshot.audienceWarmup.pendingAdvance.kind, "questions-start");
+  assert.equal(snapshot.audienceWarmup.pendingAdvance.kind, "system-sequence");
   await new Promise((resolve) => setTimeout(resolve, PLAY_UNLOCK_CONFIG.verificationTitleDurationMs + 400));
   snapshot = await state(context.request);
   assert.equal(snapshot.sceneZero.unlock.status, "HUMAN_VERIFICATION", "modo manual não pode iniciar perguntas sozinho");
-  await operator.keyboard.press("ArrowRight");
-  snapshot = await waitForState(context.request, (value) => value.audienceWarmup.phase === "questions", 7000);
+  for (const [index, agreement] of AUDIENCE_WARMUP_AGREEMENTS.entries()) {
+    await operator.keyboard.press("ArrowRight");
+    snapshot = await waitForState(context.request, (value) => agreement.kind === "silent"
+      ? value.audienceWarmup.display?.source === `audience-warmup-agreements:${agreement.id}`
+      : value.publicMessage?.content === agreement.text, 7000);
+    if (agreement.kind === "silent") {
+      assert.equal(snapshot.publicMessage, null);
+      await display.getByLabel("Cursor de espera da Caixa Preta").waitFor();
+    } else {
+      assert.equal(snapshot.publicMessage.source, `audience-warmup-agreements:${agreement.id}`);
+    }
+    if (agreement.effect === "timer") {
+      assert.equal(snapshot.audienceWarmup.actionTimer.durationSeconds, 5);
+      assert.equal(snapshot.audienceWarmup.display.effect, "timer");
+      await new Promise((resolve) => setTimeout(resolve, 5200));
+    }
+    if (agreement.effect === "failure" || agreement.effect === "success") {
+      await display.locator(`[data-warmup-effect="${agreement.effect}"]`).waitFor();
+    }
+    if (agreement.lockUntilDue) {
+      await new Promise((resolve) => setTimeout(
+        resolve,
+        Math.max(0, Date.parse(snapshot.audienceWarmup.pendingAdvance.dueAt) - Date.now()) + 100
+      ));
+    }
+    if (agreement.requiresOperatorChoice) {
+      assert.equal(snapshot.audienceWarmup.pendingAdvance, null);
+      assert.equal(snapshot.audienceWarmup.startChoice.status, "awaiting");
+    } else {
+      assert.equal(snapshot.audienceWarmup.pendingAdvance.kind, "system-sequence", `avanço ausente depois do combinado ${index + 1}`);
+    }
+  }
+  await operator.getByRole("button", { name: "START", exact: true }).click();
+  snapshot = await waitForState(context.request, (value) => value.publicMessage?.content === startChoice.comment, 7000);
+  snapshot = await waitForState(context.request, (value) => value.audienceWarmup.phase === "questions", 15000);
   assert.equal(snapshot.audienceWarmup.phase, "questions");
 
   const manualPromptId = snapshot.audienceWarmup.previewPromptId;

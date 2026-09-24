@@ -2,12 +2,15 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import {
   AUDIENCE_WARMUP_ACTIONS,
+  AUDIENCE_WARMUP_AGREEMENTS,
   AUDIENCE_WARMUP_FIRST_QUESTION_INTENSITY,
   AUDIENCE_WARMUP_INTENSITIES,
   AUDIENCE_WARMUP_INTERACTION_TYPES,
   AUDIENCE_WARMUP_PROMPTS,
   AUDIENCE_WARMUP_REQUIRED_ACKNOWLEDGEMENT,
-  AUDIENCE_WARMUP_REQUIRED_PROMPT_ID
+  AUDIENCE_WARMUP_REQUIRED_PROMPT_ID,
+  AUDIENCE_WARMUP_REQUIRED_TIMER_DELAY_MS,
+  AUDIENCE_WARMUP_START_CHOICES
 } from "../data/audience-warmup-prompts.js";
 import {
   adjustAudienceWarmupMinigameTime,
@@ -60,7 +63,7 @@ import {
   updatePlayUnlockSoundCheckLevel
 } from "../lib/scene-zero/unlock.js";
 
-assert.equal(AUDIENCE_WARMUP_PROMPTS.length, 100, "a biblioteca deve cobrir vinte ações em cada um dos cinco degraus");
+assert.equal(AUDIENCE_WARMUP_PROMPTS.length, 180, "a biblioteca deve manter vinte ações nos três primeiros degraus e sessenta nos dois mais intensos");
 assert.equal(new Set(AUDIENCE_WARMUP_PROMPTS.map((prompt) => prompt.id)).size, AUDIENCE_WARMUP_PROMPTS.length, "ids devem ser únicos");
 for (const prompt of AUDIENCE_WARMUP_PROMPTS) {
   assert(prompt.text && prompt.action && prompt.category && prompt.intensity && prompt.interactionType && prompt.tags.length, `metadados incompletos: ${prompt.id}`);
@@ -78,7 +81,38 @@ assert.equal(requiredEverySessionPrompts[0].id, AUDIENCE_WARMUP_REQUIRED_PROMPT_
 assert.equal(requiredEverySessionPrompts[0].text, "TODOS FINJAM ESTAR MORTOS NAS CADEIRAS E NO CHÃO.");
 assert.equal(requiredEverySessionPrompts[0].durationSeconds, 20);
 assert.equal(AUDIENCE_WARMUP_REQUIRED_ACKNOWLEDGEMENT, "OBEDIENTES... ÓTIMO.");
+assert.equal(AUDIENCE_WARMUP_REQUIRED_TIMER_DELAY_MS, 2500);
 assert.equal(AUDIENCE_WARMUP_FIRST_QUESTION_INTENSITY, "provocative");
+assert.deepEqual(AUDIENCE_WARMUP_AGREEMENTS.map((agreement) => agreement.id), [
+  "attention",
+  "look-at-screen",
+  "timer",
+  "failure",
+  "success",
+  "timer-idle-cursor",
+  "timer-notification-test",
+  "timer-ellipsis",
+  "timer-attention-check",
+  "start-choice"
+]);
+assert.deepEqual(AUDIENCE_WARMUP_AGREEMENTS.filter((agreement) => agreement.text).map((agreement) => agreement.text), [
+  "Quando eu fizer este som...",
+  "...você deve olhar para a tela.",
+  "Em alguns momentos eu vou mostrar um timer na tela.",
+  "Se você errar, perde pontos e não desbloqueia a peça.",
+  "Se acertar, avança no desbloqueio.",
+  "...",
+  "Só pra ver se o público está esperto. Os resultados ainda são inconclusivos.",
+  "Podemos começar?"
+]);
+assert.equal(AUDIENCE_WARMUP_AGREEMENTS.find((agreement) => agreement.id === "timer").durationSeconds, 5);
+assert.equal(AUDIENCE_WARMUP_AGREEMENTS.find((agreement) => agreement.id === "timer-idle-cursor").kind, "silent");
+assert.equal(AUDIENCE_WARMUP_AGREEMENTS.find((agreement) => agreement.id === "timer-notification-test").effect, "notification-double");
+assert.equal(AUDIENCE_WARMUP_AGREEMENTS.find((agreement) => agreement.id === "failure").effect, "failure");
+assert.equal(AUDIENCE_WARMUP_AGREEMENTS.find((agreement) => agreement.id === "success").effect, "success");
+assert.equal(AUDIENCE_WARMUP_AGREEMENTS.at(-1).requiresOperatorChoice, true);
+assert.deepEqual(AUDIENCE_WARMUP_START_CHOICES.map((choice) => choice.label), ["START", "GAME OVER"]);
+assert(AUDIENCE_WARMUP_START_CHOICES.every((choice) => choice.comment.length > 30));
 assert.equal(AUDIENCE_WARMUP_PROMPTS.some((prompt) => /mora em s[aã]o paulo fica de p[eé]/iu.test(prompt.text)), false);
 for (const action of AUDIENCE_WARMUP_ACTIONS) {
   assert(AUDIENCE_WARMUP_PROMPTS.some((prompt) => prompt.action === action.id), `ação sem prompt: ${action.id}`);
@@ -86,8 +120,9 @@ for (const action of AUDIENCE_WARMUP_ACTIONS) {
   assert.equal(generated.action, action.id, `geração incompatível: ${action.id}`);
 }
 assert.deepEqual(AUDIENCE_WARMUP_INTENSITIES.map((intensity) => intensity.id), ["play", "personal", "exposed", "provocative", "social_pressure"]);
+const expectedPromptCountByIntensity = { play: 20, personal: 20, exposed: 20, provocative: 60, social_pressure: 60 };
 for (const intensity of AUDIENCE_WARMUP_INTENSITIES) {
-  assert.equal(AUDIENCE_WARMUP_PROMPTS.filter((prompt) => prompt.intensity === intensity.id).length, 20, `degrau sem repertório suficiente: ${intensity.id}`);
+  assert.equal(AUDIENCE_WARMUP_PROMPTS.filter((prompt) => prompt.intensity === intensity.id).length, expectedPromptCountByIntensity[intensity.id], `tamanho inesperado do repertório: ${intensity.id}`);
   const generated = chooseAudienceWarmupPrompt({ intensity: intensity.id, random: () => 0 });
   assert.equal(generated.intensity, intensity.id, `sorteio deve respeitar a intensidade selecionada: ${intensity.id}`);
   assert.notEqual(generated.id, AUDIENCE_WARMUP_REQUIRED_PROMPT_ID, "a ação obrigatória não deve ser sorteada novamente");
@@ -124,13 +159,15 @@ for (let index = 1; index < thirtyPromptSequence.length; index += 1) {
   assert.notEqual(current.category, previous.category, `categoria repetida em ${index + 1}`);
 }
 
-const provocativeHistory = [];
-for (let index = 0; index < 20; index += 1) {
-  const selected = chooseAudienceWarmupPrompt({ intensity: "provocative", recentPromptIds: provocativeHistory, random: diversityRandom });
-  assert(!provocativeHistory.includes(selected.id), `pergunta provocativa repetida antes de esgotar o repertório: ${selected.id}`);
-  provocativeHistory.push(selected.id);
+for (const intensity of ["provocative", "social_pressure"]) {
+  const fullIntensityHistory = [];
+  for (let index = 0; index < expectedPromptCountByIntensity[intensity]; index += 1) {
+    const selected = chooseAudienceWarmupPrompt({ intensity, recentPromptIds: fullIntensityHistory, random: diversityRandom });
+    assert(!fullIntensityHistory.includes(selected.id), `pergunta de ${intensity} repetida antes de esgotar o repertório: ${selected.id}`);
+    fullIntensityHistory.push(selected.id);
+  }
+  assert.equal(new Set(fullIntensityHistory).size, expectedPromptCountByIntensity[intensity]);
 }
-assert.equal(new Set(provocativeHistory).size, 20);
 
 const exactLibraryCases = {
   "public-07": "QUEM VOTOU NO LULA FICA DE PÉ.",
@@ -183,7 +220,10 @@ assert.equal(clampAudienceWarmupInterval(10), 800);
 assert.equal(clampAudienceWarmupInterval(99999), 15000);
 
 assert.deepEqual(AUDIENCE_WARMUP_MINIGAMES.map((game) => game.name), ["TAPÃO", "PISCADA", "SERINHO"]);
-assert.deepEqual(AUDIENCE_WARMUP_MINIGAMES.map((game) => game.defaultDurationSeconds), [10, 25, 25]);
+assert.deepEqual(AUDIENCE_WARMUP_MINIGAMES.map((game) => game.defaultDurationSeconds), [10, 20, 20]);
+assert.equal(AUDIENCE_WARMUP_MINIGAMES.find((game) => game.id === "tapao").rules.at(-1), "DOIS TURNOS DE 10 SEGUNDOS.");
+assert.equal(AUDIENCE_WARMUP_MINIGAMES.find((game) => game.id === "piscada").rules.at(-1), "UM TURNO: 20 SEGUNDOS.");
+assert.equal(AUDIENCE_WARMUP_MINIGAMES.find((game) => game.id === "serinho").rules.at(-1), "UM TURNO: 20 SEGUNDOS.");
 assert.deepEqual(AUDIENCE_WARMUP_MINIGAME_INTRO, ["PERGUNTAS CONCLUÍDAS. AGORA, UM TESTE.", "ESCOLHA A PESSOA AO SEU LADO E FORME UMA DUPLA.", "UM JOGO SERÁ SORTEADO.", "SIGAM AS INSTRUÇÕES."]);
 assert.doesNotMatch(AUDIENCE_WARMUP_MINIGAME_INTRO.join(" "), /NÃO COMPLIQUEM/);
 assert(AUDIENCE_WARMUP_REACTIONS.few.length >= 20);
@@ -216,6 +256,25 @@ minigameResult = resumeAudienceWarmupMinigame(minigameResult.state, "2026-09-09T
 assert.equal(minigameResult.state.status, "running");
 assert.equal(selectAudienceWarmupMinigame(minigameResult.state, "serinho").reason, "MINIGAME_ALREADY_STARTED", "um jogo iniciado não pode ser substituído por outro");
 assert.equal(selectAudienceWarmupMinigame({ ...minigameResult.state, status: "completed" }, "serinho").reason, "MINIGAME_ALREADY_STARTED", "perguntas não podem voltar ao bloco de minigame");
+
+for (const gameId of ["piscada", "serinho"]) {
+  const selected = selectAudienceWarmupMinigame(createInitialAudienceWarmupMinigameState(), gameId);
+  const ready = { ...selected.state, status: "ready", round: 1 };
+  const started = beginAudienceWarmupMinigameRound(ready, "2026-09-09T00:00:02.000Z");
+  assert.equal(started.applied, true);
+  assert.equal(started.state.round, 1, `${gameId} deve ter somente o primeiro turno`);
+  assert.equal(started.state.timer.durationSeconds, 20, `${gameId} deve começar com vinte segundos`);
+  assert.equal(
+    beginAudienceWarmupMinigameRound({ ...ready, status: "ready_round_two" }).reason,
+    "MINIGAME_SECOND_ROUND_NOT_AVAILABLE",
+    `${gameId} não pode iniciar segundo turno`
+  );
+}
+
+const tapaoRoundTwo = beginAudienceWarmupMinigameRound({ ...minigameResult.state, status: "ready_round_two" }, "2026-09-09T00:00:08.000Z");
+assert.equal(tapaoRoundTwo.applied, true);
+assert.equal(tapaoRoundTwo.state.round, 2);
+assert.equal(tapaoRoundTwo.state.timer.durationSeconds, 10, "o segundo turno do TAPÃO também deve ter dez segundos");
 
 let unlock = createInitialPlayUnlockState("2026-09-09T00:00:00.000Z");
 assert.equal(unlock.status, PLAY_UNLOCK_STATES.STANDBY);
@@ -355,11 +414,14 @@ assert.equal(getResearchTools({ research }).some((tool) => tool.name.startsWith(
 const sceneZeroRoute = fs.readFileSync(new URL("../app/api/scene-zero/route.js", import.meta.url), "utf8");
 const audienceWarmupRoute = fs.readFileSync(new URL("../app/api/audience-warmup/route.js", import.meta.url), "utf8");
 const showStateSource = fs.readFileSync(new URL("../lib/showState.js", import.meta.url), "utf8");
+const robotSoundEngineSource = fs.readFileSync(new URL("../lib/robot-sound/RobotSoundEngine.js", import.meta.url), "utf8");
 const sceneZeroProjection = fs.readFileSync(new URL("../components/SceneZeroProjectionLayer.js", import.meta.url), "utf8");
 const chatStyles = fs.readFileSync(new URL("../components/Chat.module.css", import.meta.url), "utf8");
 const sceneZeroController = fs.readFileSync(new URL("../components/SceneZeroController.js", import.meta.url), "utf8");
+const audienceWarmupController = fs.readFileSync(new URL("../components/AudienceWarmupController.js", import.meta.url), "utf8");
 const chatProjection = fs.readFileSync(new URL("../components/Chat.js", import.meta.url), "utf8");
 const controllerSurface = fs.readFileSync(new URL("../components/ControllerSurface.js", import.meta.url), "utf8");
+const suitcaseGameSource = fs.readFileSync(new URL("../lib/scene-zero/suitcaseGame.js", import.meta.url), "utf8");
 const participantResearchCalls = sceneZeroRoute.match(/researchCurrentSceneZeroParticipant\(\)/g) || [];
 assert.equal(participantResearchCalls.length, 2, "pesquisa de participante deve existir apenas na declaração e no handler manual");
 assert.match(sceneZeroRoute, /action === "suitcase-research-person"/);
@@ -378,13 +440,36 @@ assert.match(
 assert.match(showStateSource, /pending\.kind === "draw-and-publish"[\s\S]*drawAudienceWarmupSelection[\s\S]*publishSelectedAudienceWarmupPrompt\(prompt\)/, "depois da reação, SORTEAR deve escolher e disparar a próxima pergunta");
 assert.match(showStateSource, /currentResponse[\s\S]*REGISTRE A RESPOSTA DESTA PERGUNTA ANTES DE SORTEAR/, "SORTEAR deve exigir o resultado contextual da pergunta atual");
 assert.doesNotMatch(
-  fs.readFileSync(new URL("../components/AudienceWarmupController.js", import.meta.url), "utf8"),
+  audienceWarmupController,
   /disabled=\{[^}]*currentResponse\?\.promptId/,
   "SORTEAR não deve parecer quebrado antes do registro; o backend deve explicar a resposta obrigatória"
 );
 assert.match(showStateSource, /responseHistory:[\s\S]*promptId !== promptId/, "a resposta observada deve ser salva por pergunta");
 assert.doesNotMatch(showStateSource, /startAudienceWarmupMinigameCountdown/, "minigame deve iniciar sem pré-contagem");
-assert.match(showStateSource, /armAudienceWarmupAdvance\(\s*"questions-start"/, "a confirmação sonora deve abrir a rodada de perguntas");
+assert.match(showStateSource, /pending\.kind === "questions-start"[\s\S]*launchRequiredAudienceWarmupQuestion\(\)/, "o fim dos combinados deve abrir a rodada de perguntas");
+assert.match(showStateSource, /lines: AUDIENCE_WARMUP_AGREEMENTS,[\s\S]*completionKind: "questions-start"[\s\S]*sourcePrefix: "audience-warmup-agreements"/, "os combinados devem terminar antes de liberar a ação obrigatória");
+assert.match(showStateSource, /status: waitForTypingBeforeTimer \? "awaiting_message" : "running"/, "ações configuradas para aguardar o typewriter não podem iniciar o timer ao publicar a frase");
+assert.match(showStateSource, /completionKind: "first-provocation",[\s\S]*waitForTypingBeforeTimer: true/, "a ação de mortos deve aguardar o fim do typewriter antes de armar o timer");
+assert.match(showStateSource, /prepareRequiredAudienceWarmupTimer[\s\S]*"required-action-start"[\s\S]*AUDIENCE_WARMUP_REQUIRED_TIMER_DELAY_MS/, "o fim da digitação deve preparar a pausa antes do timer");
+assert.match(showStateSource, /pending\.kind === "required-action-start"[\s\S]*status: "running"[\s\S]*completeAudienceWarmupTimedAction/, "o timer da ação obrigatória deve começar somente depois da pausa");
+assert.match(chatProjection, /audienceWarmup\?\.actionTimer\?\.status === "awaiting_message"[\s\S]*audienceWarmup\.actionTimer\.messageId[\s\S]*notifySceneZeroMessageTyped/, "o chatbot deve confirmar o fim da frase obrigatória pelo reconhecimento de typewriter existente");
+assert.match(chatProjection, /audience-warmup-agreements:attention[^]*robotSoundEngine\.attention\(\)/, "a primeira frase deve disparar o sinal duplo de atenção quando terminar de escrever");
+assert.doesNotMatch(chatProjection, /audience-warmup-agreements:look-at-screen[^]*robotSoundEngine\.attention\(\)/, "a segunda frase não deve repetir o sinal de atenção");
+assert.match(showStateSource, /function publishAudienceWarmupSilentStep[\s\S]*state\.publicMessage = null[\s\S]*kind: "silent"/, "as pausas silenciosas devem limpar a fala e manter somente o cursor");
+assert.match(chatProjection, /display\?\.effect !== "notification-double"[\s\S]*robotSoundEngine\.attention\(\)/, "o teste depois do timer deve disparar o sinal duplo de atenção");
+assert.match(robotSoundEngineSource, /attention\(\{ localOnly = false \} = \{\}\)[\s\S]*playAttentionPhrase\(\)[\s\S]*ATTENTION_REPEAT_DELAY_MS/, "todo sinal de atenção deve repetir sua frase sonora");
+assert.match(chatProjection, /warmupSilentCursor[\s\S]*Cursor de espera da Caixa Preta[\s\S]*replyCursor/, "as etapas silenciosas devem projetar o cursor piscando");
+assert.match(chatProjection, /audience-warmup-agreements:failure[\s\S]*robotSoundEngine\.error\(\)/, "a demonstração de erro deve usar o som de falha existente");
+assert.match(showStateSource, /durationSeconds \* 1000[\s\S]*lockUntilDue: durationSeconds > 0/, "a demonstração do timer deve durar os cinco segundos completos");
+assert.match(showStateSource, /action === "agreements-start-choice"[\s\S]*status: "selected"[\s\S]*scheduleAudienceWarmupStartChoiceComment\(\)/, "START e GAME OVER devem registrar a seleção antes do comentário");
+assert.match(showStateSource, /scheduleAudienceWarmupStartChoiceComment[\s\S]*AUDIENCE_WARMUP_START_CHOICE_CONFIRMATION_MS|AUDIENCE_WARMUP_START_CHOICE_CONFIRMATION_MS[\s\S]*scheduleAudienceWarmupStartChoiceComment/, "a escolha deve permanecer visível durante a animação de confirmação");
+assert.match(showStateSource, /scheduleAudienceWarmupStartChoiceComment[\s\S]*forceAutomatic: true, lockUntilDue: true/, "depois da confirmação, as escolhas devem comentar e seguir para a primeira ação");
+assert.match(chatProjection, /activeWarmupEffect === "start-choice"[\s\S]*START[\s\S]*GAME OVER/, "a tela pública deve mostrar as duas escolhas abaixo da fala");
+assert.match(chatProjection, /data-selection-state[\s\S]*data-selected/, "a tela pública deve marcar visualmente a escolha selecionada");
+assert.match(chatProjection, /choice\.selectedId === "start"[\s\S]*robotSoundEngine\.gameStart\(\)[\s\S]*choice\.selectedId === "game-over"[\s\S]*robotSoundEngine\.gameOver\(\)/, "START e GAME OVER devem disparar sons próprios ao serem selecionados");
+assert.match(robotSoundEngineSource, /gameOver\(\{ localOnly = false \} = \{\}\)[\s\S]*relayEffect\("game-over"\)[\s\S]*kind: "game-over"/, "GAME OVER deve ter efeito sonoro dedicado e transportável");
+assert.match(audienceWarmupController, /agreements-start-choice[\s\S]*choiceId/, "o operador deve escolher START ou GAME OVER pelo controle compartilhado do aquecimento");
+assert.match(audienceWarmupController, /data-selection-state[\s\S]*aria-pressed[\s\S]*data-selected/, "o operador deve mostrar qual escolha foi selecionada");
 assert.match(showStateSource, /completionKind: "first-provocation"/, "a ação de mortos deve preparar a primeira provocação");
 assert.match(showStateSource, /AUDIENCE_WARMUP_REQUIRED_ACKNOWLEDGEMENT[\s\S]*"first-provocation"/, "o fim da ação obrigatória deve reconhecer a obediência e continuar");
 assert.match(showStateSource, /launchFirstAudienceWarmupProvocation\(\)[\s\S]*AUDIENCE_WARMUP_FIRST_QUESTION_INTENSITY[\s\S]*publishSelectedAudienceWarmupPrompt\(prompt\)/, "a primeira pergunta deve ser sorteada e disparada na intensidade 4");
@@ -410,12 +495,18 @@ assert.match(showStateSource, /action === "rewind-boot"[\s\S]*bootPaused: true/,
 assert.match(showStateSource, /pending\.kind === "reaction-resume"[\s\S]*continuation\.dueAt/, "reação automática deve retomar a continuação no instante original");
 assert.match(sceneZeroController, /minigame\?\.status === "ready_for_draw"[\s\S]*"minigame-draw"/, "seta direita deve sortear o jogo depois do briefing");
 assert.match(sceneZeroProjection, /status === PLAY_UNLOCK_STATES\.HUMAN_VERIFICATION && PLAY_UNLOCK_CONFIG\.verificationTitle/, "verificação sem título deve deixar a fala visível sob o HUD");
+assert.match(sceneZeroProjection, /const minigameTurnLabel = game\?\.id === "tapao"[\s\S]*"TURNO 1"[\s\S]*: null/, "somente o Tapão deve projetar número de turno");
+assert.match(sceneZeroProjection, /minigameTurnLabel \? <b>\{minigameTurnLabel\}<\/b> : null/, "o rótulo de turno deve ser omitido nos jogos de turno único");
+assert.doesNotMatch(sceneZeroProjection, /TURNO ÚNICO/, "Piscada e Serinho não precisam de rótulo de turno");
 assert.match(chatStyles, /\.chatPane:not\(\.chatPaneQuadrants\):has\(\[data-unlock-hud\]\) \.publicStage\s*\{\s*padding-top:/, "projeção principal deve reservar espaço para a barra sem cobrir a fala");
 assert.match(sceneZeroController, /minigame\?\.status === "paused"[\s\S]*"minigame-resume"[\s\S]*\["ready", "ready_round_two"\][\s\S]*"minigame-start"/, "seta direita deve retomar o jogo pausado e iniciar o turno pronto");
 assert.match(sceneZeroController, /stage === "idle" && snapshot\.audienceWarmup\?\.phase === "complete"[\s\S]*sceneAction\("set-stage", \{ stage: "participant" \}\)/, "seta direita deve ir do aquecimento concluído à seleção de participante");
-assert.match(sceneZeroController, /stage === "participant"[\s\S]*participantSelection\?\.status !== "complete"[\s\S]*sceneAction\("set-stage", \{ stage: "suitcases" \}\)/, "seta direita deve esperar o fim da seleção para abrir o jogo das malas");
+assert.match(sceneZeroController, /stage === "participant"[\s\S]*participantStatus === "selected"[\s\S]*"participant-continue"[\s\S]*participantStatus !== "complete"[\s\S]*sceneAction\("set-stage", \{ stage: "suitcases" \}\)/, "seta direita deve fechar o nome no manual e esperar as falas antes de abrir o jogo das malas");
 assert.match(chatProjection, /"scene-zero-suitcase-choice"/, "a explicação da mala deve avisar quando terminar de digitar");
 assert.match(sceneZeroRoute, /message\?\.source === "scene-zero-suitcase-choice"[\s\S]*markSuitcaseChoiceReady\(message\.id\)/, "o sorteio não pode começar no mesmo instante do fim da fala");
+assert.match(sceneZeroRoute, /scene-zero-suitcase-briefing:[\s\S]*completeSuitcaseFlowMessage\(message\.id\)/, "cada tela da explicação inicial deve avisar quando terminar de digitar");
+assert.match(showStateSource, /action === "suitcase-choice-briefing-ready"[\s\S]*status: "briefing_ready"/, "o modo manual deve aguardar a seta entre as duas telas da explicação");
+assert.match(sceneZeroController, /choiceStatus === "briefing_ready"[\s\S]*"suitcase-briefing-continue"/, "a seta direita deve abrir a segunda tela da explicação");
 assert.match(sceneZeroRoute, /SUITCASE_CHOICE_READING_HOLD_MS = 2500[\s\S]*function queueAutomaticSuitcaseChoice/, "modo automático deve dar tempo de leitura após o texto");
 assert.match(sceneZeroRoute, /snapshot\.audienceWarmup\?\.manualMode[\s\S]*queueAutomaticSuitcaseChoice\(messageId, 1000\)/, "modo manual não pode sortear a mala sozinho");
 assert.match(sceneZeroController, /stage === "suitcases"[\s\S]*choiceStatus === "ready"[\s\S]*"suitcase-choice-continue"[\s\S]*sceneAction\(action\)/, "seta direita deve iniciar a escolha depois da explicação");
@@ -439,6 +530,7 @@ assert.match(sceneZeroProjection, /participantSelection\.status === "preparing"[
 assert.doesNotMatch(sceneZeroProjection, /<span>TEMPO<\/span>/, "o cronômetro fixo deve projetar somente o número");
 assert.doesNotMatch(sceneZeroProjection, /: "EM CURSO"/, "o cronômetro fixo não deve repetir EM CURSO");
 assert.doesNotMatch(sceneZeroProjection, />10 SEGUNDOS</, "contagem do participante não deve repetir a duração por escrito");
+assert.doesNotMatch(sceneZeroProjection, />5 SEGUNDOS</, "a nova contagem do participante deve continuar projetando somente o número");
 assert.match(sceneZeroProjection, /suitcaseCueFrame\.phase === "reveal" \? "ABRA A MALA"/, "revelação deve mandar abrir a mala indicada");
 assert.doesNotMatch(sceneZeroProjection, /warmupReactionOverlay/, "comentários do aquecimento devem usar a fala verde do chatbot");
 assert.match(sceneZeroProjection, /allVisibleMorelLines\.slice\(-10\)/, "BIOS final deve acompanhar as linhas mais recentes");
@@ -446,17 +538,32 @@ assert.match(sceneZeroProjection, /hangman\.status === "won"\) robotSoundEngine\
 assert.match(sceneZeroProjection, /else robotSoundEngine\.error\(\)/, "derrota da forca deve disparar som de erro");
 assert.match(sceneZeroProjection, /robotSoundEngine\.rouletteTick/, "sorteios devem disparar som sincronizado");
 assert.match(sceneZeroProjection, /robotSoundEngine\.hangmanPulse/, "a forca deve manter uma trilha procedural discreta");
+assert.match(sceneZeroProjection, /errorCount > previous\.errorCount[\s\S]*robotSoundEngine\.impact\(\)/, "cada erro da forca deve disparar o impacto sonoro existente");
+assert.match(chatProjection, /scene-zero-hangman-retry:[\s\S]*robotSoundEngine\.impact\(\)/, "a falha final da forca deve manter impacto ao trocar o jogo pelo comentário vermelho");
+assert.doesNotMatch(sceneZeroProjection, /hangman\.flightState|ESTÁVEL/, "a projeção da forca não deve exibir estados textuais");
+assert.match(sceneZeroProjection, /hangmanErrors\$\{Math\.min\(4, Number\(hangman\.errorCount\)/, "a gravidade da forca deve continuar vinculada ao número de erros");
 assert.equal((sceneZeroProjection.match(/data-scene-zero-timer/g) || []).length, 1, "todos os fluxos devem compartilhar um único temporizador projetado");
 assert.match(sceneZeroProjection, /fixedTimer \? <SceneZeroTimerReadout/, "o temporizador deve ser ancorado uma única vez no quadrante auxiliar");
 assert.match(chatProjection, /!quadrantLayout \? <AudienceWarmupTimer/, "o videomapping não deve repetir o temporizador junto à fala do chatbot");
-assert.match(sceneZeroRoute, /O jogo é simples:[\s\S]*abra a mala[\s\S]*Vou escolher uma mala agora\./, "primeira mala deve explicar como abrir e cumprir o desafio");
+assert.match(suitcaseGameSource, /SCENE_ZERO_SUITCASE_GAME_EXPLANATION = "O jogo é simples:[\s\S]*Vou escolher uma mala agora\."/, "a primeira tela deve conter somente a explicação geral das malas");
+assert.match(suitcaseGameSource, /SCENE_ZERO_SUITCASE_LIGHTING_CUE = ['`]Ricardinho,[\s\S]*luz aí[\s\S]*"claro"[\s\S]*trocadilho/, "a segunda tela deve conter a deixa sarcástica da luz");
+assert.match(suitcaseGameSource, /number === 2[\s\S]*game-explanation[\s\S]*lighting-cue/, "a explicação e a deixa da luz devem ser duas etapas ordenadas");
+assert.match(sceneZeroRoute, /Vou indicar outra mala[\s\S]*\$\{SCENE_ZERO_SUITCASE_LIGHTING_CUE\}/, "os sorteios seguintes também devem repetir a deixa da luz");
 assert.match(sceneZeroRoute, /SCENE_ZERO_HANGMAN_INSTRUCTION[\s\S]*scene-zero-hangman-instruction[\s\S]*hangman-start/, "a forca deve pedir a letra em voz alta antes de iniciar");
-assert.match(showStateSource, /SCENE_ZERO_KEEP_BORROWED_OBJECTS_INSTRUCTION[\s\S]*scene-zero-keep-objects/, "o fim do desafio deve mandar guardar os objetos na mala");
-assert.match(showStateSource, /publishSceneZeroHangmanResult\(timedOut\)/, "o fim automático da forca deve voltar como fala do bot");
+assert.match(showStateSource, /SCENE_ZERO_GINCANA_SUCCESS_INSTRUCTION[\s\S]*scene-zero-gincana-result:\$\{effect\}/, "o resultado da chave deve voltar ao chatbot sem instrução sobre objetos da plateia");
+assert.match(showStateSource, /scene-zero-gincana-result:\$\{effect\}[\s\S]*scene-zero-hangman-result:\$\{effect\}/, "os resultados das malas devem carregar o efeito visual de acerto ou erro");
+assert.doesNotMatch(showStateSource, /scene-zero-gincana-retry:failure/, "a Mala 2 deve terminar depois dos 15 segundos sem chance automática extra");
+assert.match(showStateSource, /scene-zero-hangman-retry:failure/, "a falha da forca deve usar o visual vermelho existente");
+assert.match(showStateSource, /completeSceneZeroMessageTyping[\s\S]*hangman-retry/, "a chance extra da forca deve começar somente após a fala sarcástica terminar");
+assert.match(showStateSource, /addMessage\("assistant", "VALENDO!", "scene-zero-gincana-start"\)/, "o início do cronômetro da Mala 2 deve publicar VALENDO");
+assert.match(sceneZeroProjection, /audios%2Fuba-hey\.mp3[\s\S]*robotSoundEngine\.gameStart\(\)/, "a Mala 2 deve tocar a música e o som de partida quando o cronômetro começar");
+assert.match(chatProjection, /gameOutcomeEffect[\s\S]*publicMessage\?\.source\?\.endsWith\(":success"\)[\s\S]*publicMessage\?\.source\?\.endsWith\(":failure"\)/, "o chatbot deve reutilizar o visual dos combinados nos resultados dos jogos");
+assert.match(showStateSource, /timeoutSceneZeroHangman\(currentHangman\)[\s\S]*announceSceneZeroHangmanRetry\(timedOut\)/, "o fim automático da forca deve voltar como sarcasmo antes dos 10 segundos extras");
 assert.match(sceneZeroRoute, /scheduleHangmanStart[\s\S]*controlSceneZero\("hangman-start"/, "a forca deve iniciar automaticamente");
 assert.match(sceneZeroRoute, /FIM DO TUTORIAL|tutorialCompleteDurationMs/, "a Mala 1 deve terminar o tutorial antes do glitch");
 assert.match(sceneZeroRoute, /parsed\.centro[\s\S]*centro da cena/, "o GPT deve criar um chamado nominal ao centro da cena");
-assert.match(sceneZeroRoute, /parsed\.malas[\s\S]*olhar para as três malas/, "o GPT deve explicar o jogo depois de mostrar as três malas");
+assert.doesNotMatch(sceneZeroRoute, /postSelection: \[sequence\.centerInvitation, sequence\.gameExplanation\]/, "a seleção do participante não deve duplicar a explicação das malas");
+assert.match(sceneZeroRoute, /startSuitcases\(\{ source: "scene-zero-operator", queueEvents: false \}\)/, "a Cena Zero não deve projetar o antigo ESCOLHA UMA MALA");
 assert.match(sceneZeroRoute, /scope: "full-frame"/, "o glitch final deve ocupar todos os quadrantes");
 assert.match(sceneZeroRoute, /controlDisplayBlackout\("all", true, \{ source: "scene-zero-final" \}\)/, "a BIOS final deve terminar em blackout global");
 assert.doesNotMatch(controllerSurface, /ControllerBlackoutBar/, "a barra de abas de blackout não deve aparecer nos controllers");

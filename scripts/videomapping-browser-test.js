@@ -114,11 +114,16 @@ try {
     return (await response.json()).sceneZero.unlock.status === "HUMAN_VERIFICATION";
   });
   const verificationBarCenterY = await progressBarCenterY();
-  await postWarmup("manual-next");
+  await postWarmup("set-manual-mode", { manualMode: false });
+  await page.waitForFunction(async () => {
+    const response = await fetch("/api/state");
+    return (await response.json()).audienceWarmup.startChoice?.status === "awaiting";
+  }, null, { timeout: 40000 });
+  await postWarmup("agreements-start-choice", { choiceId: "start" });
   await page.waitForFunction(async () => {
     const response = await fetch("/api/state");
     return (await response.json()).audienceWarmup.phase === "questions";
-  });
+  }, null, { timeout: 15000 });
   const questionBarCenterY = await progressBarCenterY();
   assert.ok(
     Math.abs(questionBarCenterY - verificationBarCenterY) <= 1,

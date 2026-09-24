@@ -570,10 +570,11 @@ o navegador não confirmar). A projeção mostra a contagem e `FIM`; trocar de
 etapa cancela a temporização. A progressão dramatúrgica continua inteiramente
 manual.
 
-Ao entrar em `ESCOLHER PARTICIPANTE`, o bot improvisa um convite mais
-sarcástico, informal e Gen Z para as pessoas levantarem a mão. A projeção abre
-uma janela real de 10 segundos e, ao chegar a zero, inicia automaticamente um
-mini game de roleta com os nomes do pool existente de equipe, público e
+Ao entrar em `ESCOLHER PARTICIPANTE`, o bot improvisa em verde um convite curto
+e ácido para levantarem a mão. No automático, o fim da digitação apaga a frase
+e inicia a contagem real de 5 segundos. No manual, a frase completa permanece
+visível até `→` ou `SEGUIR → INICIAR 5s`; só então ela some e o timer ocupa o
+centro da projeção grande. No zero começa a roleta com os nomes de equipe, público e
 participantes da sessão. Durante o giro — com mínimo de sete segundos e duração
 estendida quando necessário para terminar cada fala — três comentários curtos
 sobre odds e chances são gerados pelo modelo e publicados em momentos
@@ -582,14 +583,21 @@ sorteado e protegido no estado interno, só aparece ao fim da roleta e não pode
 ser alterado pelo modelo. A seleção favorece nomes menos usados, e Marcus
 Garcia e Victor Cappa são sempre removidos do pool. `NOVA ROLETA / OUTRA
 PESSOA` exclui o nome atual quando há alternativa. Mudar para outra etapa
-interrompe imediatamente countdown, roleta e comentários pendentes.
+interrompe imediatamente countdown, roleta e comentários pendentes. Quando o
+nome sorteado aparece, a tela permanece estática: nenhuma fala é projetada ou
+digitada até o nome desaparecer. Só então começa a chamada ao centro.
 
 O bloco `JOGO DAS MALAS` mantém o `SuitcaseDirector` existente para recuperação
 e compatibilidade, mas organiza a dramaturgia atual em três cartões. Ao entrar
-na etapa, o robô explica rapidamente o jogo, anuncia que escolherá uma mala
-aleatoriamente e só então inicia a roleta, enquanto o software protege a ordem
-fixa `MALA 2 → MALA 3 → MALA 1`. A passagem seguinte fica disponível no
-botão `ROBÔ ESCOLHER PRÓXIMA MALA`. A ordem completa nunca entra na fala pública.
+na etapa, o robô usa duas falas verdes fixas: primeiro explica o jogo e depois
+pede sarcasticamente que Ricardinho indique a mala com a luz. No modo manual,
+`→` separa as duas telas e só inicia a roleta depois da segunda; no automático,
+as pausas de leitura fazem essa progressão. A explicação não é antecipada na
+seleção do participante e o antigo texto central `ESCOLHA UMA MALA` não é
+projetado nesse fluxo; a vinheta inicial `prompt caicxa preta` e seu glitch
+também não competem com a explicação. O software protege a ordem fixa `MALA 2 → MALA 3 → MALA
+1`. A passagem seguinte fica disponível no botão `ROBÔ ESCOLHER PRÓXIMA MALA`.
+A ordem completa nunca entra na fala pública.
 Cada escolha gira os números como caça-níquel e depois mostra `MALA` acima do
 número sorteado. Enquanto esse aviso está na frente, nenhuma fala da escolha ou
 do desafio entra na fila pública;
@@ -606,12 +614,12 @@ adaptado a palavras e expressões do espetáculo. A biblioteca fica em
 `data/scene-zero-hangman-words.js`. A partida começa automaticamente após o aviso
 da mala e depois de o chatbot pedir que a pessoa escolha uma letra e diga em voz
 alta para o operador registrar. Então começam os 60 segundos. Acertar a palavra
-encerra em vitória; quatro erros ou o fim do tempo encerram em derrota, com
-efeito sonoro próprio para cada resultado.
-Os quatro erros percorrem `ESTÁVEL`, `ALERTA`,
-`PERDA DE ALTITUDE`, `FALHA` e `IMPACTO`; ruído, deslocamento e degradação visual
-aumentam a cada erro. Vitória mostra `REGISTRO RECUPERADO`; derrota revela a
-palavra e termina em `IMPACTO`.
+encerra em vitória. Cada erro dispara som de impacto e um shake curto na tela;
+a paleta, o brilho, a trajetória e a interferência da forca ficam progressivamente
+mais vermelhos ao longo dos quatro erros, sem rótulos textuais como `ESTÁVEL` ou
+`IMPACTO`. Ao atingir quatro erros ou acabar o tempo, o bot mostra o visual
+vermelho, faz um comentário sarcástico e só depois libera mais 10 segundos sem
+revelar a palavra. Vitória mostra `REGISTRO RECUPERADO` com o visual verde.
 
 `MALA 1 — FIM DO TUTORIAL` completa o jogo automaticamente depois dos dez
 segundos que mostram o número. A projeção exibe `FIM DO TUTORIAL` primeiro; só

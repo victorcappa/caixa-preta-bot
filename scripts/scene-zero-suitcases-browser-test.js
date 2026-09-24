@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
 import { SCENE_ZERO_HANGMAN_INSTRUCTION } from "../data/scene-zero-hangman-words.js";
+import {
+  SCENE_ZERO_HANGMAN_RETRY_COMMENTS,
+  SCENE_ZERO_RETRY_DURATION_SECONDS
+} from "../lib/scene-zero/suitcaseGame.js";
 
 const BASE_URL = process.env.CAIXA_PRETA_URL || "http://localhost:3000";
 const PROJECTION_WINDOW_ID = `scene-zero-suitcases-test-${Date.now()}`;
@@ -27,7 +31,7 @@ async function unlockAction(request, action, payload = {}) {
   return data.unlock;
 }
 
-async function waitForState(request, predicate, timeoutMs = 15000) {
+async function waitForState(request, predicate, timeoutMs = 30000) {
   const startedAt = Date.now();
   while (Date.now() - startedAt < timeoutMs) {
     const state = await snapshot(request);
@@ -48,10 +52,15 @@ async function unlockProjection(request) {
   assert.equal(ending.bootProgress, 100);
   await waitForState(request, (candidate) => candidate.sceneZero.unlock.status === "SOUND_CHECK");
   await unlockAction(request, "sound-check-skip");
+  await waitForState(request, (candidate) => candidate.audienceWarmup.startChoice?.status === "awaiting", 40000);
+  const choiceResponse = await request.post(`${BASE_URL}/api/audience-warmup`, {
+    data: { action: "agreements-start-choice", choiceId: "start" }
+  });
+  assert.equal(choiceResponse.ok(), true);
   const state = await waitForState(
     request,
     (candidate) => candidate.audienceWarmup.phase === "questions" && candidate.sceneZero.unlock.status === "WARMING_AUDIENCE",
-    15000
+    30000
   );
   assert.equal(state.sceneZero.unlock.bootProgress, 100);
   assert.equal(state.sceneZero.unlock.progress, 10, "prova sonora e primeira pergunta devem preparar 10% antes das malas");
@@ -76,6 +85,14 @@ try {
 
   const attentionButton = controller.getByRole("button", { name: "CHAMAR ATENÇÃO", exact: true });
   await attentionButton.waitFor();
+  const manualInstructionField = controller.getByRole("textbox", { name: "Instrução avulsa para o participante" });
+  await manualInstructionField.waitFor();
+  assert.equal(
+    await manualInstructionField.evaluate((element) => element.closest("aside")?.getAttribute("aria-label")),
+    "Índice da Cena 0",
+    "a instrução avulsa deve permanecer no painel fixo da direita"
+  );
+  assert.equal(await manualInstructionField.isEnabled(), true, "a instrução avulsa deve estar acessível antes do jogo das malas");
   await controller.evaluate(() => {
     window.__sceneZeroAttentionOscillators = 0;
     const originalCreateOscillator = window.AudioContext.prototype.createOscillator;
@@ -90,7 +107,7 @@ try {
   assert.equal(await attentionNotice.textContent(), "SINAL DE ATENÇÃO DISPARADO", `falha ao disparar atenção: ${controllerErrors.join(" | ")}`);
   await controller.waitForFunction(() => window.__sceneZeroAttentionOscillators >= 4);
 
-  await controller.getByRole("heading", { name: "MALA 2 / DESAFIO COM OBJETO" }).waitFor();
+  await controller.getByRole("heading", { name: "MALA 2 / BEXIGAS E CHAVE" }).waitFor();
   await controller.getByRole("heading", { name: "MALA 3 / FORCA — 60s" }).waitFor();
   await controller.getByRole("heading", { name: "MALA 1 / FIM DO TUTORIAL" }).waitFor();
 
@@ -98,35 +115,90 @@ try {
   assert.equal(manualResponse.ok(), true);
   let result = await sceneAction(context.request, "suitcase-two-start");
   assert.deepEqual(result.sceneZero.suitcaseGame.openedSuitcases, [2]);
-  assert.match(result.sceneZero.suitcaseGame.gincana.currentTask.text, /AJUDA DA PLATEIA/);
-  assert.equal(Boolean(result.sceneZero.suitcaseGame.gincana.currentTask.mandatoryAction), false);
+  assert.equal(result.sceneZero.suitcaseGame.gincana.currentTask.id, "bexigas-chave");
+  assert.doesNotMatch(result.sceneZero.suitcaseGame.gincana.currentTask.text, /PLATEIA/);
   await waitForState(context.request, (value) => value.sceneZero.suitcaseGame.cuePhase === "selected");
   const suitcaseCue = projection.getByLabel("Mala indicada: 2");
   await suitcaseCue.waitFor();
   assert.equal(await suitcaseCue.getByText("ABRA A MALA").count(), 0, "a mala escolhida deve aguardar a seta antes da ordem de abrir");
-  await controller.getByRole("button", { name: "SEGUIR → ABRA A MALA" }).waitFor();
+  const openSuitcaseButton = controller.getByRole("button", { name: "SEGUIR → ABRA A MALA" });
+  await openSuitcaseButton.waitFor();
+  await openSuitcaseButton.click({ trial: true });
   await controller.keyboard.press("ArrowRight");
   await waitForState(context.request, (value) => value.sceneZero.suitcaseGame.cuePhase === "open");
   await suitcaseCue.getByText("ABRA A MALA", { exact: true }).waitFor();
-  assert.equal(await projection.getByText("CONSIGA 4 ÓCULOS COM AJUDA DA PLATEIA.", { exact: true }).count(), 0, "o desafio deve aguardar a segunda seta");
-  await controller.getByRole("button", { name: "SEGUIR → ETAPA DA MALA" }).waitFor();
+  assert.equal(await projection.getByText("ESTOURE AS BEXIGAS ATÉ ENCONTRAR A CHAVE.", { exact: true }).count(), 0, "o desafio deve aguardar a segunda seta");
+  const continueSuitcaseButton = controller.getByRole("button", { name: "SEGUIR → ETAPA DA MALA" });
+  await continueSuitcaseButton.waitFor();
+  await continueSuitcaseButton.click({ trial: true });
   await controller.keyboard.press("ArrowRight");
   await waitForState(context.request, (value) => value.sceneZero.suitcaseGame.cuePhase === "complete");
-  await waitForState(context.request, (value) => value.publicMessage?.content === result.sceneZero.suitcaseGame.gincana.currentTask.text);
-  const automaticResponse = await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "set-manual-mode", manualMode: false } });
-  assert.equal(automaticResponse.ok(), true);
-  await sceneAction(context.request, "gincana-draw", { challengeId: "quatro-oculos" });
-  await controller.getByRole("button", { name: "+ 5 SEGUNDOS", exact: true }).waitFor();
-  await projection.getByText("CONSIGA 4 ÓCULOS COM AJUDA DA PLATEIA.", { exact: true }).waitFor();
-  assert.equal(await projection.getByLabel("Desafio com objeto da Mala 2").count(), 0, "a instrução verde deve aparecer antes do painel do desafio");
+  await projection.getByText("Quando eu autorizar, você vai estourar as bexigas até encontrar a chave. Espere eu dizer ‘VALENDO!’.", { exact: true }).waitFor();
+  let state = await waitForState(context.request, (value) => (
+    value.sceneZero.suitcaseGame.contentInstruction.status === "complete"
+    && value.publicMessage?.content === "Você terá apenas 15 segundos."
+  ));
+  assert.equal(await controller.getByRole("button", { name: "+ 5 SEGUNDOS", exact: true }).count(), 0, "o operador não deve ampliar os 15 segundos");
+  const addTimeResponse = await context.request.post(`${BASE_URL}/api/scene-zero`, { data: { action: "gincana-timer-add", seconds: 5 } });
+  assert.equal(addTimeResponse.ok(), false, "a API também deve recusar tempo extra");
+  assert.equal((await addTimeResponse.json()).error, "SCENE ZERO ACTION UNKNOWN");
+  assert.equal(await projection.getByLabel("Desafio das bexigas da Mala 2").count(), 0, "a instrução verde deve aparecer antes do painel do desafio");
   assert.equal(await projection.getByText("TODOS FINJAM ESTAR MORTOS NAS CADEIRAS E NO CHÃO.", { exact: true }).count(), 0);
-  await controller.keyboard.press("ArrowRight");
-  let state = await waitForState(context.request, (value) => value.sceneZero.suitcaseGame.gincana.timer.status === "running");
-  assert.equal(state.sceneZero.suitcaseGame.gincana.timer.durationSeconds, 12);
-  await projection.getByLabel("Desafio com objeto da Mala 2").waitFor();
+  await projection.evaluate(() => {
+    const sound = window.__caixaPretaRobotSoundEngine;
+    window.__gincanaGameStartCalls = 0;
+    const originalGameStart = sound.gameStart.bind(sound);
+    sound.gameStart = (...args) => {
+      window.__gincanaGameStartCalls += 1;
+      return originalGameStart(...args);
+    };
+    window.__gincanaWhistleCalls = 0;
+    const originalWhistle = sound.whistle.bind(sound);
+    sound.whistle = (...args) => {
+      window.__gincanaWhistleCalls += 1;
+      return originalWhistle(...args);
+    };
+    window.__ubaHeyPlayCalls = 0;
+    window.__ubaHeyPauseCalls = 0;
+    const originalPlay = window.HTMLMediaElement.prototype.play;
+    const originalPause = window.HTMLMediaElement.prototype.pause;
+    window.HTMLMediaElement.prototype.play = function playSceneZeroMedia(...args) {
+      if (this.src.includes("uba-hey.mp3")) {
+        window.__ubaHeyPlayCalls += 1;
+        return Promise.resolve();
+      }
+      return originalPlay.apply(this, args);
+    };
+    window.HTMLMediaElement.prototype.pause = function pauseSceneZeroMedia(...args) {
+      if (this.src.includes("uba-hey.mp3")) window.__ubaHeyPauseCalls += 1;
+      return originalPause.apply(this, args);
+    };
+  });
+  await controller.getByRole("button", { name: "INICIAR 15s", exact: true }).click();
+  state = await waitForState(context.request, (value) => value.sceneZero.suitcaseGame.gincana.timer.status === "running");
+  assert.equal(state.publicMessage?.content, "VALENDO!", `o início deve publicar VALENDO: ${JSON.stringify(state.publicMessage)}`);
+  assert.equal(state.sceneZero.suitcaseGame.gincana.timer.durationSeconds, 15);
+  assert.equal(state.sceneZero.suitcaseGame.gincana.soundtrack.status, "idle");
+  await projection.getByText("VALENDO!", { exact: true }).waitFor();
+  await projection.getByLabel("Desafio das bexigas da Mala 2").waitFor();
+  await projection.waitForFunction(() => window.__gincanaGameStartCalls >= 1);
+  assert.equal(await projection.evaluate(() => window.__ubaHeyPlayCalls), 0, "o cronômetro não deve iniciar Uba Uba Hey automaticamente");
+  assert.match(await projection.locator("audio[data-scene-zero-gincana-music]").getAttribute("src"), /audios%2Fuba-hey\.mp3/);
+  const playUbaHeyButton = controller.getByRole("button", { name: "TOCAR UBA UBA HEY", exact: true });
+  await playUbaHeyButton.waitFor();
+  await playUbaHeyButton.click();
+  state = await waitForState(context.request, (value) => value.sceneZero.suitcaseGame.gincana.soundtrack.status === "playing");
+  await projection.waitForFunction(() => window.__ubaHeyPlayCalls === 1);
+  const stopUbaHeyButton = controller.getByRole("button", { name: "PARAR UBA UBA HEY", exact: true });
+  await stopUbaHeyButton.click();
+  state = await waitForState(context.request, (value) => value.sceneZero.suitcaseGame.gincana.soundtrack.status === "stopped");
+  await projection.waitForFunction(() => window.__ubaHeyPauseCalls >= 1);
+  assert.equal(await projection.locator("audio[data-scene-zero-gincana-music]").evaluate((audio) => audio.currentTime), 0);
+  await controller.getByRole("button", { name: "TOCAR UBA UBA HEY", exact: true }).click();
+  await projection.waitForFunction(() => window.__ubaHeyPlayCalls === 2);
   const physicalTimer = projection.locator("[data-scene-zero-timer]");
   await physicalTimer.waitFor();
-  await projection.getByRole("complementary", { name: /Tempo: (?:1[0-2]) segundos/ }).waitFor();
+  await projection.getByRole("complementary", { name: /Tempo: 1[0-5] segundos/ }).waitFor();
   const physicalTimerGeometry = await physicalTimer.evaluate((element) => {
     const bounds = element.getBoundingClientRect();
     const auxiliary = document.querySelector('[aria-label="Quadrante de contagens e conteúdos da Cena 0"]').getBoundingClientRect();
@@ -150,14 +222,37 @@ try {
   );
   await projection.screenshot({ path: "/private/tmp/caixa-preta-mala-2-desafio.png" });
 
+  state = await waitForState(
+    context.request,
+    (value) => value.sceneZero.suitcaseGame.gincana.timer.status === "failed",
+    20000
+  );
+  assert.equal(state.sceneZero.suitcaseGame.gincana.observation, "tempo esgotado");
+  assert.equal(state.sceneZero.suitcaseGame.gincana.soundtrack.status, "stopped");
+  await projection.getByLabel("Desafio das bexigas da Mala 2").waitFor({ state: "detached" });
+  await projection.waitForFunction(() => window.__gincanaWhistleCalls === 1 && window.__ubaHeyPauseCalls >= 1);
+  assert.equal(await projection.locator("audio[data-scene-zero-gincana-music]").evaluate((audio) => audio.currentTime), 0);
+
+  result = await sceneAction(context.request, "gincana-timer-restart");
+  assert.equal(result.sceneZero.suitcaseGame.gincana.timer.status, "running");
+  assert.equal(result.sceneZero.suitcaseGame.gincana.soundtrack.status, "idle");
+  assert.equal(await projection.evaluate(() => window.__ubaHeyPlayCalls), 2, "reiniciar o cronômetro não deve reiniciar a música");
+  await controller.getByRole("button", { name: "TOCAR UBA UBA HEY", exact: true }).click();
+  await projection.waitForFunction(() => window.__ubaHeyPlayCalls === 3);
   result = await sceneAction(context.request, "gincana-complete");
   assert.equal(result.sceneZero.suitcaseGame.gincana.timer.status, "completed");
-  await projection.getByLabel("Desafio com objeto da Mala 2").waitFor({ state: "detached" });
-  await projection.getByText("DEIXE OS OBJETOS DENTRO DA MALA. VAI ROLAR BRECHÓ DO CHATBOT NO FINAL.", { exact: true }).waitFor();
+  assert.equal(result.sceneZero.suitcaseGame.gincana.soundtrack.status, "stopped");
+  await projection.getByLabel("Desafio das bexigas da Mala 2").waitFor({ state: "detached" });
+  await projection.getByText("CHAVE ENCONTRADA.", { exact: true }).waitFor();
+  await projection.locator('[data-warmup-effect="success"]').waitFor();
+  await projection.waitForFunction(() => window.__ubaHeyPauseCalls >= 3);
 
+  const automaticResponse = await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "set-manual-mode", manualMode: false } });
+  assert.equal(automaticResponse.ok(), true);
   result = await sceneAction(context.request, "suitcase-three-start");
   assert.deepEqual(result.sceneZero.suitcaseGame.openedSuitcases, [2, 3]);
   assert.equal(result.sceneZero.suitcaseGame.gincana.timer.status, "completed");
+  assert.equal(await projection.locator("audio[data-scene-zero-gincana-music]").evaluate((audio) => audio.paused && audio.currentTime === 0), true);
   await sceneAction(context.request, "hangman-configure", { wordId: "hangman-11" });
   state = await waitForState(context.request, (value) => value.publicMessage?.content === SCENE_ZERO_HANGMAN_INSTRUCTION, 12000);
   assert.equal(state.sceneZero.suitcaseGame.hangman.status, "ready", "a forca deve aguardar a instrução terminar");
@@ -169,8 +264,9 @@ try {
   assert(Date.parse(state.sceneZero.suitcaseGame.hangman.timer.endsAt) > Date.now());
   assert.equal(state.publicMessage.content, SCENE_ZERO_HANGMAN_INSTRUCTION);
   const hangmanCard = controller.getByRole("heading", { name: "MALA 3 / FORCA — 60s" }).locator("..");
-  await projection.getByLabel("Forca da Mala 3").waitFor();
-  await projection.getByText("TEMA ARQUIVO", { exact: true }).waitFor();
+  const hangmanProjection = projection.getByLabel("Forca da Mala 3");
+  await hangmanProjection.waitFor();
+  await hangmanProjection.getByText("ARQUIVO", { exact: true }).waitFor();
   await hangmanCard.getByText("ARQUIVO", { exact: true }).waitFor();
   const hangmanTimerCenter = await projection.locator("[data-scene-zero-timer]").evaluate((element) => {
     const bounds = element.getBoundingClientRect();
@@ -180,25 +276,70 @@ try {
   assert.ok(Math.abs(hangmanTimerCenter.y - physicalTimerCenter.y) <= 1, "a forca deve manter a mesma posição vertical do temporizador");
   await controller.getByRole("button", { name: "MARCAR ERRO", exact: true }).waitFor();
   assert.equal(await hangmanCard.getByRole("button", { name: "INICIAR", exact: true }).count(), 0, "a forca não deve depender de início manual");
+  assert.equal(await hangmanProjection.getByText("ESTÁVEL", { exact: true }).count(), 0, "a projeção não deve narrar o estado por texto");
+  assert.equal(await hangmanCard.getByText("ESTADO DE VOO", { exact: true }).count(), 0, "o operador não deve receber o estado textual antigo");
+  await projection.evaluate(() => {
+    const sound = window.__caixaPretaRobotSoundEngine;
+    window.__hangmanImpactCalls = 0;
+    const originalImpact = sound.impact.bind(sound);
+    sound.impact = (...args) => {
+      window.__hangmanImpactCalls += 1;
+      return originalImpact(...args);
+    };
+  });
+  const hangmanDangerColors = [];
+  for (let errorCount = 1; errorCount <= 2; errorCount += 1) {
+    result = await sceneAction(context.request, "hangman-error");
+    assert.equal(result.sceneZero.suitcaseGame.hangman.errorCount, errorCount);
+    await projection.waitForFunction((expectedCount) => {
+      const overlay = document.querySelector('[aria-label="Forca da Mala 3"]');
+      return overlay && getComputedStyle(overlay).animationName.includes("hangmanErrorHit")
+        && window.__hangmanImpactCalls >= expectedCount;
+    }, errorCount);
+    hangmanDangerColors.push(await hangmanProjection.evaluate((element) => (
+      getComputedStyle(element).getPropertyValue("--hangman-danger").trim()
+    )));
+  }
+  assert.notEqual(hangmanDangerColors[0], hangmanDangerColors[1], "cada erro deve deixar a forca mais vermelha");
+  assert.equal(await projection.evaluate(() => window.__hangmanImpactCalls), 2, "cada erro deve disparar um impacto sonoro");
   result = await sceneAction(context.request, "hangman-guess", { guess: "CAIXA PRETA" });
   assert.equal(result.sceneZero.suitcaseGame.hangman.status, "won");
   assert.equal(result.sceneZero.suitcaseGame.hangman.timer.status, "complete");
   await projection.getByLabel("Forca da Mala 3").waitFor({ state: "detached" });
   await projection.getByText("REGISTRO RECUPERADO. A PALAVRA ERA CAIXA PRETA.", { exact: true }).waitFor();
+  await projection.locator('[data-warmup-effect="success"]').waitFor();
 
   await sceneAction(context.request, "hangman-configure", { wordId: "hangman-03" });
   await sceneAction(context.request, "hangman-start");
-  state = await waitForState(context.request, (value) => value.sceneZero.suitcaseGame.hangman.lastResult === "timeout", 65000);
-  assert.equal(state.sceneZero.suitcaseGame.hangman.status, "lost");
-  assert.equal(state.sceneZero.suitcaseGame.hangman.timer.status, "complete");
-  assert.equal(state.sceneZero.suitcaseGame.hangman.timer.remainingSeconds, 0);
+  await sceneAction(context.request, "hangman-lose");
+  state = await waitForState(context.request, (value) => value.sceneZero.suitcaseGame.hangman.retry?.status === "announcing");
+  assert.equal(state.sceneZero.suitcaseGame.hangman.status, "retry_wait");
+  assert.equal(state.sceneZero.suitcaseGame.hangman.timer.status, "retry_wait");
+  assert.equal(state.sceneZero.suitcaseGame.hangman.revealedWord, null);
   await projection.getByLabel("Forca da Mala 3").waitFor({ state: "detached" });
-  await projection.getByText("TEMPO ESGOTADO. A PALAVRA ERA ALTITUDE.", { exact: true }).waitFor();
+  await projection.getByText(SCENE_ZERO_HANGMAN_RETRY_COMMENTS[0], { exact: true }).waitFor();
+  await projection.locator('[data-warmup-effect="failure"]').waitFor();
+  await projection.waitForFunction(() => window.__hangmanImpactCalls >= 3);
   await projection.screenshot({ path: "/private/tmp/caixa-preta-mala-3-tempo-esgotado.png" });
+  state = await waitForState(
+    context.request,
+    (value) => value.sceneZero.suitcaseGame.hangman.retry?.status === "running",
+    10000
+  );
+  assert.equal(state.sceneZero.suitcaseGame.hangman.status, "active");
+  assert.equal(state.sceneZero.suitcaseGame.hangman.timer.status, "running");
+  assert.equal(state.sceneZero.suitcaseGame.hangman.timer.durationSeconds, SCENE_ZERO_RETRY_DURATION_SECONDS);
+  assert(state.sceneZero.suitcaseGame.hangman.timer.remainingSeconds <= SCENE_ZERO_RETRY_DURATION_SECONDS);
+  await projection.getByLabel("Forca da Mala 3").waitFor();
+  result = await sceneAction(context.request, "hangman-guess", { guess: "ALTITUDE" });
+  assert.equal(result.sceneZero.suitcaseGame.hangman.status, "won");
+  await projection.getByText("REGISTRO RECUPERADO. A PALAVRA ERA ALTITUDE.", { exact: true }).waitFor();
+  await projection.locator('[data-warmup-effect="success"]').waitFor();
 
   result = await sceneAction(context.request, "suitcase-one-start");
   assert.deepEqual(result.sceneZero.suitcaseGame.openedSuitcases, [2, 3, 1]);
   await projection.getByLabel("Forca da Mala 3").waitFor({ state: "detached" });
+  await projection.getByText("Use o disco no toca-discos.", { exact: true }).waitFor({ timeout: 14000 });
   const tutorialEnd = projection.getByText("FIM DO TUTORIAL", { exact: true });
   await tutorialEnd.waitFor({ timeout: 14000 });
   state = await snapshot(context.request);

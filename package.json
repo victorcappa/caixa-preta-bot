@@ -28,6 +28,7 @@
     "test:sound-control:browser": "node --no-warnings scripts/sound-control-browser-test.js",
     "test:audience-warmup": "node --no-warnings scripts/audience-warmup-test.js",
     "test:audience-sound-check:browser": "node --no-warnings scripts/audience-sound-check-browser-test.js",
+    "test:audience-warmup:agreements:browser": "node --no-warnings scripts/audience-warmup-agreements-browser-test.js",
     "test:audience-warmup:browser": "node --no-warnings scripts/audience-warmup-browser-test.js",
     "test:play-unlock:browser": "node --no-warnings scripts/play-unlock-browser-test.js",
     "test:videomapping:browser": "node --no-warnings scripts/videomapping-browser-test.js",

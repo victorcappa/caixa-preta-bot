@@ -20,6 +20,7 @@ import styles from "./SceneZeroProjectionLayer.module.css";
 const AIRPORT_VIDEO = "/api/game-assets?file=videos%2Fglitch%2Fpainel-aeroporto.mp4";
 const TEA_FOR_TWO_AUDIO = "/api/game-assets?file=audios%2FDoris%20Day%20-%20Tea%20For%20Two%20(1950).mp3";
 const EVIDENCIAS_KARAOKE_AUDIO = `/api/game-assets?file=${encodeURIComponent(SCENE_ZERO_EVIDENCIAS_AUDIO_FILE)}`;
+const UBA_HEY_AUDIO = "/api/game-assets?file=audios%2Fuba-hey.mp3";
 
 function timerSeconds(timer, now) {
   if (timer?.status === "running" && timer.endsAt) {
@@ -47,9 +48,9 @@ function timerElapsedSeconds(timer, now) {
   return 0;
 }
 
-function SceneZeroTimerReadout({ seconds }) {
+function SceneZeroTimerReadout({ centered = false, seconds }) {
   return (
-    <aside className={styles.sceneZeroTimer} data-scene-zero-timer aria-label={`Tempo: ${seconds} segundos`}>
+    <aside className={`${styles.sceneZeroTimer} ${centered ? styles.sceneZeroTimerCentered : ""}`} data-scene-zero-timer aria-label={`Tempo: ${seconds} segundos`}>
       <strong>{seconds}</strong>
     </aside>
   );
@@ -299,6 +300,15 @@ function AudienceWarmupMinigameProjection({ warmup, now }) {
   const timerVisible = ["countdown", "running", "paused", "exchange"].includes(minigame.status);
   const selectedVisible = minigame.status === "selected";
   const secondRoundReady = minigame.status === "ready_round_two";
+  const minigameTurnLabel = game?.id === "tapao"
+    ? minigame.timer?.phase === "round_two"
+      ? "TURNO 2"
+      : minigame.timer?.phase === "exchange"
+        ? "TROQUEM"
+        : minigame.timer?.phase === "countdown"
+          ? "COMEÇANDO"
+          : "TURNO 1"
+    : null;
 
   useCountdownSound(seconds, {
     active: Boolean(timerVisible && minigame.timer?.status === "running"),
@@ -339,7 +349,7 @@ function AudienceWarmupMinigameProjection({ warmup, now }) {
         </div>
       ) : (
         <div className={styles.warmupGameTimer} data-paused={minigame.status === "paused"}>
-          <header><span>{game?.name || "TESTE"}</span><b>{minigame.timer?.phase === "round_two" ? "TURNO 2" : minigame.timer?.phase === "exchange" ? "TROQUEM" : minigame.timer?.phase === "countdown" ? "COMEÇANDO" : "TURNO 1"}</b></header>
+          <header><span>{game?.name || "TESTE"}</span>{minigameTurnLabel ? <b>{minigameTurnLabel}</b> : null}</header>
         </div>
       )}
     </section>
@@ -349,10 +359,13 @@ function AudienceWarmupMinigameProjection({ warmup, now }) {
 function AudienceWarmupActionCountdownSound({ warmup, now }) {
   const timer = warmup?.actionTimer;
   const seconds = timerSeconds(timer, now);
-  const visible = warmup?.phase === "questions" && timer?.status === "running";
+  const visible = timer?.status === "running" && (
+    warmup?.phase === "questions"
+    || warmup?.display?.effect === "timer"
+  );
   useCountdownSound(seconds, {
     active: visible,
-    countdownKey: `audience-warmup-action:${warmup?.sequence?.id || "none"}:${warmup?.currentStep ?? -1}`
+    countdownKey: `audience-warmup-action:${warmup?.sequence?.id || warmup?.display?.messageId || "none"}:${warmup?.currentStep ?? -1}`
   });
   return null;
 }
@@ -361,11 +374,17 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
   const [now, setNow] = useState(Date.now());
   const teaAudioRef = useRef(null);
   const evidenciasAudioRef = useRef(null);
+  const gincanaMusicRef = useRef(null);
+  const gincanaMusicAttemptRef = useRef(null);
+  const gincanaStartSoundRef = useRef(null);
+  const gincanaEndSoundRef = useRef(null);
   const tea = sceneZero?.teaForTwo;
   const timer = sceneZero?.timer;
   const collectionTimer = sceneZero?.collection?.activeCountdown;
   const gincana = sceneZero?.suitcaseGame?.gincana;
   const gincanaTimer = gincana?.timer;
+  const gincanaSoundtrack = gincana?.soundtrack;
+  const currentSuitcase = sceneZero?.suitcaseGame?.currentSuitcase;
   const hangman = sceneZero?.suitcaseGame?.hangman || {};
   const hangmanPublic = hangman.activity?.publicState || {};
   const morelBios = sceneZero?.suitcaseGame?.morelBios;
@@ -413,6 +432,36 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
     audio.play().catch(() => {});
   }, [gincana?.currentTask?.id, gincanaTimer]);
 
+  useEffect(() => {
+    const audio = gincanaMusicRef.current;
+    if (!audio) return;
+
+    if (
+      currentSuitcase === 2
+      && gincanaTimer?.status === "running"
+      && gincanaSoundtrack?.status === "playing"
+    ) {
+      const attemptKey = `${gincanaSoundtrack.sequence || 0}`;
+      if (gincanaMusicAttemptRef.current !== attemptKey) {
+        gincanaMusicAttemptRef.current = attemptKey;
+        audio.currentTime = 0;
+      }
+      audio.play().catch(() => {});
+      return;
+    }
+
+    audio.pause();
+    audio.currentTime = 0;
+    gincanaMusicAttemptRef.current = null;
+  }, [currentSuitcase, gincanaSoundtrack?.sequence, gincanaSoundtrack?.status, gincanaTimer?.status]);
+
+  useEffect(() => () => {
+    const audio = gincanaMusicRef.current;
+    if (!audio) return;
+    audio.pause();
+    audio.currentTime = 0;
+  }, []);
+
   const visibleTimer = sceneZero?.stage === "collection" && ["running", "complete"].includes(collectionTimer?.status)
       ? collectionTimer
       : sceneZero?.stage === "singing" ? timer : null;
@@ -429,7 +478,7 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
     ? Math.floor(rouletteElapsed / Math.max(70, 260 - Math.min(190, rouletteElapsed / 28))) % selectionCandidates.length
     : 0;
   const rouletteName = selectionCandidates[rouletteIndex]?.name || "—";
-  const showParticipantSelection = ["preparing", "countdown", "roulette", "selected"].includes(participantSelection.status);
+  const showParticipantSelection = ["preparing", "roulette", "selected"].includes(participantSelection.status);
   const participantSeconds = participantSelection.status === "countdown"
     ? countdownSeconds(participantSelection.countdownEndsAt, now)
     : null;
@@ -486,7 +535,10 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
   const warmupMinigameVisible = ["drawing", "selected", "countdown", "running", "paused", "exchange", "ready_round_two"].includes(audienceWarmup?.minigame?.status);
   const warmupMinigameTimerVisible = ["countdown", "running", "paused", "exchange"].includes(audienceWarmup?.minigame?.status);
   const warmupMinigameSeconds = timerSeconds(audienceWarmup?.minigame?.timer, now);
-  const warmupActionVisible = audienceWarmup?.phase === "questions" && audienceWarmup?.actionTimer?.status === "running";
+  const warmupActionVisible = audienceWarmup?.actionTimer?.status === "running" && (
+    audienceWarmup?.phase === "questions"
+    || audienceWarmup?.display?.effect === "timer"
+  );
   const warmupActionSeconds = timerSeconds(audienceWarmup?.actionTimer, now);
   const fixedTimer = showPhysicalChallenge
     ? { seconds: physicalSeconds, status: gincanaTimer?.status === "paused" ? "PAUSADO" : "" }
@@ -518,6 +570,7 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
     || showHangman
     || showMorelBios
     || showParticipantSelection
+    || Boolean(fixedTimer)
     || warmupMinigameVisible
     || warmupActionVisible
   );
@@ -556,6 +609,26 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
   }, [participantSelection.sequence, participantSelection.status]);
 
   useEffect(() => {
+    if (gincanaTimer?.status !== "running" || !gincanaTimer.startedAt) return;
+    if (gincanaStartSoundRef.current === gincanaTimer.startedAt) return;
+    gincanaStartSoundRef.current = gincanaTimer.startedAt;
+    robotSoundEngine.gameStart();
+  }, [gincanaTimer?.startedAt, gincanaTimer?.status]);
+
+  useEffect(() => {
+    if (
+      currentSuitcase !== 2
+      || gincanaTimer?.status !== "failed"
+      || gincana?.observation !== "tempo esgotado"
+      || !gincanaTimer.completedAt
+    ) return;
+    const endKey = `${gincanaTimer.sequence || 0}:${gincanaTimer.completedAt}`;
+    if (gincanaEndSoundRef.current === endKey) return;
+    gincanaEndSoundRef.current = endKey;
+    robotSoundEngine.whistle();
+  }, [currentSuitcase, gincana?.observation, gincanaTimer?.completedAt, gincanaTimer?.sequence, gincanaTimer?.status]);
+
+  useEffect(() => {
     if (!showSuitcaseSelection) return;
     if (suitcaseCueFrame.phase === "roulette") robotSoundEngine.rouletteTick(suitcaseCueFrame.number);
     else robotSoundEngine.gameStart();
@@ -586,11 +659,23 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
     else robotSoundEngine.error();
   }, [hangman?.sequence, hangman?.status]);
 
+  const hangmanErrorImpactRef = useRef({ attemptKey: null, errorCount: 0 });
+  useEffect(() => {
+    const attemptKey = `${hangman?.wordId || "none"}:${hangman?.timer?.startedAt || "idle"}:${hangman?.retry?.count || 0}`;
+    const errorCount = Math.max(0, Number(hangman?.errorCount) || 0);
+    const previous = hangmanErrorImpactRef.current;
+    if (previous.attemptKey === attemptKey && hangman?.status === "active" && errorCount > previous.errorCount) {
+      robotSoundEngine.impact();
+    }
+    hangmanErrorImpactRef.current = { attemptKey, errorCount };
+  }, [hangman?.errorCount, hangman?.retry?.count, hangman?.status, hangman?.timer?.startedAt, hangman?.wordId]);
+
   return (
     <>
       <span data-scene-zero-aux-active={auxiliaryActive ? "true" : "false"} hidden />
       <audio preload="auto" ref={teaAudioRef} src={TEA_FOR_TWO_AUDIO} />
       <audio preload="auto" ref={evidenciasAudioRef} src={EVIDENCIAS_KARAOKE_AUDIO} />
+      <audio data-scene-zero-gincana-music preload="auto" ref={gincanaMusicRef} src={UBA_HEY_AUDIO} />
       <AudienceWarmupMinigameProjection now={now} warmup={audienceWarmup} />
       <AudienceWarmupActionCountdownSound now={now} warmup={audienceWarmup} />
       {collapse ? (
@@ -619,22 +704,22 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
         </div>
       ) : null}
       {showPhysicalChallenge ? (
-        <section className={`${styles.physicalChallengeOverlay} ${physicalUrgent ? styles.physicalChallengeUrgent : ""}`} aria-label="Desafio com objeto da Mala 2" aria-live="assertive">
-          <header><span>MALA 2</span><b>DESAFIO COM OBJETO</b></header>
+        <section className={`${styles.physicalChallengeOverlay} ${physicalUrgent ? styles.physicalChallengeUrgent : ""}`} aria-label="Desafio das bexigas da Mala 2" aria-live="assertive">
+          <header><span>MALA 2</span><b>BEXIGAS E CHAVE</b></header>
           <div className={styles.physicalChallengeBody}>
             <div className={styles.physicalChallengeSteps}>
               <article data-active="true">
-                <small>OBJETOS · {gincana.currentTask.objectDuration || 15}s</small>
+                <small>BEXIGAS · {gincana.currentTask.objectDuration || 15}s</small>
                 <p>{gincana.currentTask.text || gincana.currentTask.instruction}</p>
               </article>
             </div>
             <div className={styles.physicalChallengeReadout}>
-              <span>ALVO<strong>{gincana.currentTask.target}</strong></span>
+              <span>ALVO<strong>{gincana.currentTask.targetLabel || "CHAVE"}</strong></span>
             </div>
           </div>
           {gincana.result === "completed" ? (
             <div className={styles.physicalChallengeResult} data-success="true">
-              <strong>{gincana.currentTask.target}/{gincana.currentTask.target}</strong>
+              <strong>{gincana.currentTask.targetLabel || "CHAVE"}</strong>
               <span>{gincana.currentTask.successMessage}</span>
               <small>PRÓXIMO TESTE.</small>
             </div>
@@ -683,7 +768,7 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
           }}
         >
           <div className={styles.hangmanInterference} aria-hidden="true" />
-          <header><span>MALA 3 / FORCA</span><strong>{hangman.flightState || "ESTÁVEL"}</strong></header>
+          <header><span>MALA 3 / FORCA</span></header>
           <p className={styles.hangmanTheme}><span>TEMA:</span> <strong>{(hangman.theme || "NÃO INFORMADO").toUpperCase()}</strong></p>
           <p className={styles.hangmanWord}>{hangmanPublic.progress || "_ _ _"}</p>
           <div className={styles.hangmanFlight} aria-hidden="true">
@@ -735,11 +820,6 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
               <span className={styles.thinkingDots} aria-hidden="true"><i>.</i><i>.</i><i>.</i></span>
             </div>
           ) : null}
-          {participantSelection.status === "countdown" ? (
-            <div className={styles.volunteerCountdown}>
-              <p>{participantSelection.invite}</p>
-            </div>
-          ) : null}
           {participantSelection.status === "roulette" ? (
             <div className={styles.roulette}>
               <span>ODDS EM TEMPO REAL*</span>
@@ -757,12 +837,11 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
             <div className={styles.selectedParticipant}>
               <span>PARTICIPANTE ESCOLHIDO</span>
               <strong>{sceneZero.currentParticipant?.name || "—"}</strong>
-              <p>{participantSelection.lastComment || participantSelection.announcement}</p>
             </div>
           ) : null}
         </div>
       ) : null}
-      {fixedTimer ? <SceneZeroTimerReadout seconds={fixedTimer.seconds} /> : null}
+      {fixedTimer ? <SceneZeroTimerReadout centered={participantSelection.status === "countdown"} seconds={fixedTimer.seconds} /> : null}
     </>
   );
 }
