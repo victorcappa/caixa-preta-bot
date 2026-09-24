@@ -205,7 +205,7 @@ regras em etapas. O operador também pode substituir o resultado antes do
 início.
 
 `TAPÃO` executa dois turnos de 10 segundos separados por `TROQUEM`; `PISCADA` e
-`SERINHO` usam 60 segundos por padrão e aceitam outra duração. O operator dispõe
+`SERINHO` executam um único turno de 20 segundos. O operator dispõe
 de iniciar, pausar, continuar, reiniciar, encerrar, ajustar cinco segundos,
 antecipar a troca do TAPÃO e pular o minigame. Não há câmera nem detecção
 automática de piscada, riso ou vencedor. Depois de `FIM.`, o aquecimento é
@@ -213,8 +213,10 @@ concluído e não admite novo sorteio. A conclusão do jogo
 soma pouco progresso, sem completar a barra.
 
 No topo do controller da Cena 0, `MODO MANUAL` interrompe todas as transições
-automáticas do aquecimento. Cada pressão da seta para a direita consome somente
-o próximo avanço pendente. Os atalhos laterais `NINGUÉM REAGIU` e
+automáticas do aquecimento. Terminar o typewriter somente libera o próximo
+avanço; cada pressão da seta para a direita consome uma única etapa. Isso também
+separa a escolha `START`/`GAME OVER`, seu comentário, o timer obrigatório e a
+fala seguinte. Os atalhos laterais `NINGUÉM REAGIU` e
 `MUITOS REAGIRAM` inserem uma resposta sarcástica curta sem trocar a pergunta,
 a instrução ou a etapa seguinte; no modo automático, a continuação é retomada
 após uma pausa breve e, no manual, permanece aguardando a seta.
@@ -248,7 +250,8 @@ estado antes da mudança de percentual, gira por uma sequência controlada e nã
 O controller também mantém `+ PARTICIPAÇÃO`, `− PARTICIPAÇÃO`, definição exata
 de progresso, preparação até `99%`, áudio, pausa/avanço da BIOS e reinício.
 Antes do encerramento das malas, qualquer ajuste fica limitado a `99%`. Somente
-a conclusão da última mala anima a barra até `100%` e inicia a sequência final;
+o avanço manual depois da instrução `Use o disco no toca-discos.` anima a barra
+até `100%` e inicia a sequência final;
 o botão de retomada serve apenas para recuperar essa conclusão depois de o jogo
 das malas já estar finalizado. A configuração de conteúdo, ritmo, feedback e conclusão fica em
 `data/scene-zero-unlock.js`; `onPlayUnlocked` fica registrado no estado e no
@@ -570,11 +573,11 @@ o navegador não confirmar). A projeção mostra a contagem e `FIM`; trocar de
 etapa cancela a temporização. A progressão dramatúrgica continua inteiramente
 manual.
 
-Ao entrar em `ESCOLHER PARTICIPANTE`, o bot improvisa em verde um convite curto
-e ácido para levantarem a mão. No automático, o fim da digitação apaga a frase
+Ao entrar em `ESCOLHER PARTICIPANTE`, o bot fala em verde: `Agora preciso de
+participantes. Levantem a mão. Vocês têm cinco segundos.` No automático, o fim da digitação apaga a frase
 e inicia a contagem real de 5 segundos. No manual, a frase completa permanece
 visível até `→` ou `SEGUIR → INICIAR 5s`; só então ela some e o timer ocupa o
-centro da projeção grande. No zero começa a roleta com os nomes de equipe, público e
+centro da projeção grande, com o número ampliado e sem moldura. No zero começa a roleta com os nomes de equipe, público e
 participantes da sessão. Durante o giro — com mínimo de sete segundos e duração
 estendida quando necessário para terminar cada fala — três comentários curtos
 sobre odds e chances são gerados pelo modelo e publicados em momentos
@@ -595,35 +598,57 @@ pede sarcasticamente que Ricardinho indique a mala com a luz. No modo manual,
 as pausas de leitura fazem essa progressão. A explicação não é antecipada na
 seleção do participante e o antigo texto central `ESCOLHA UMA MALA` não é
 projetado nesse fluxo; a vinheta inicial `prompt caicxa preta` e seu glitch
-também não competem com a explicação. O software protege a ordem fixa `MALA 2 → MALA 3 → MALA
-1`. A passagem seguinte fica disponível no botão `ROBÔ ESCOLHER PRÓXIMA MALA`.
-A ordem completa nunca entra na fala pública.
+também não competem com a explicação. O software protege a ordem fixa
+`MALA 2 → desafio de forca → MALA 3 → MALA 1`. A passagem seguinte fica
+disponível no botão `ROBÔ ESCOLHER PRÓXIMA MALA`.
+A recuperação manual oferece `SORTEAR MALA 1`, `SORTEAR MALA 2` e
+`SORTEAR MALA 3`. Esses botões aparecem somente no modo manual, interrompem a
+atividade, timers, áudio e apresentações ainda ativos e reiniciam a mala
+escolhida pela mesma roleta pública do fluxo normal, preservando o histórico de
+malas já abertas. O avanço por `→` fica travado até o controller receber o novo
+estado da etapa atual; dois toques rápidos não consomem a etapa seguinte.
+A ordem completa nunca entra na fala pública. Depois da primeira mala, a
+explicação longa não volta: cada avanço usa uma fala curta e sarcástica própria.
 Cada escolha gira os números como caça-níquel e depois mostra `MALA` acima do
 número sorteado. Enquanto esse aviso está na frente, nenhuma fala da escolha ou
 do desafio entra na fila pública;
 o chatbot só começa a escrever depois que os dez segundos terminam.
 
-`MALA 2 — DESAFIO COM OBJETO` usa a biblioteca declarativa de 12 pedidos em
-`data/scene-zero-physical-challenges.js`. O objeto ou conjunto de objetos varia e
-deve ser obtido com ajuda da plateia. Cada desafio contém somente a coleta
-sorteada e usa o tempo configurado para essa coleta; a ação dos mortos pertence
-exclusivamente ao aquecimento do público.
+`MALA 2 — BEXIGAS E CHAVE` usa uma única tarefa fixa de 15 segundos. Se falhar,
+o bot publica em vermelho uma nova provocação sobre toda a plateia precisar
+esperar e sobre alguma substância ou atenção ajudar a pessoa a ficar mais
+ligada. Só depois do fim do typewriter o mesmo desafio recomeça, sem sortear
+outra mala no automático; no manual, o fim da fala libera
+`SEGUIR → REPETIR 15s` e o timer permanece parado até esse avanço. As duas
+falas que apresentam a tarefa também são etapas separadas:
+no manual, cada uma aguarda `→`; no automático, a próxima começa somente depois
+do fim do typewriter mais dois segundos. A música continua dependendo do botão manual.
 
-`MALA 3 — FORCA / QUEDA` reutiliza o motor de forca de `lib/activities.js`, agora
-adaptado a palavras e expressões do espetáculo. A biblioteca fica em
-`data/scene-zero-hangman-words.js`. A partida começa automaticamente após o aviso
-da mala e depois de o chatbot pedir que a pessoa escolha uma letra e diga em voz
-alta para o operador registrar. Então começam os 60 segundos. Acertar a palavra
-encerra em vitória. Cada erro dispara som de impacto e um shake curto na tela;
+Antes de sortear a segunda mala, o desafio de forca reutiliza o motor de
+`lib/activities.js`, adaptado a palavras e expressões do espetáculo. A biblioteca
+fica em `data/scene-zero-hangman-words.js`. Enquanto o desafio acontece, a mala
+atual continua sendo a 2 e a mala 3 ainda não entra na lista de malas abertas.
+Depois de o chatbot pedir que a pessoa escolha uma letra e diga em voz alta para
+o operador registrar, começam os 60 segundos. Acertar a palavra libera a fala e
+o sorteio normal da segunda mala; no manual, cada passagem espera `→`, e no
+automático espera o typewriter terminar mais dois segundos. Cada erro dispara
+som de impacto e um shake curto na tela;
 a paleta, o brilho, a trajetória e a interferência da forca ficam progressivamente
 mais vermelhos ao longo dos quatro erros, sem rótulos textuais como `ESTÁVEL` ou
 `IMPACTO`. Ao atingir quatro erros ou acabar o tempo, o bot mostra o visual
-vermelho, faz um comentário sarcástico e só depois libera mais 10 segundos sem
-revelar a palavra. Vitória mostra `REGISTRO RECUPERADO` com o visual verde.
+vermelho, faz um comentário sarcástico e só depois libera mais 30 segundos sem
+revelar a palavra. No manual, a tentativa extra também espera
+`SEGUIR → REPETIR FORCA`. Vitória mostra `REGISTRO RECUPERADO` com o visual
+verde e sempre libera o avanço para o sorteio seguinte, mesmo que a confirmação
+do navegador chegue atrasada.
 
-`MALA 1 — FIM DO TUTORIAL` completa o jogo automaticamente depois dos dez
-segundos que mostram o número. A projeção exibe `FIM DO TUTORIAL` primeiro; só
-depois a sequência de glitch crescente, BIOS corrompida e blackout começa.
+Antes da última mala, o bot anuncia sarcasticamente que fará outro sorteio mesmo
+havendo apenas uma opção disponível; a roleta ainda acontece normalmente.
+`MALA 1 — FIM DO TUTORIAL` permanece na instrução `Use o disco no toca-discos.`
+depois que ela termina de ser digitada. Somente a próxima seta ou o botão
+`SEGUIR → COMPLETAR DESBLOQUEIO` conclui o jogo. A projeção exibe
+`FIM DO TUTORIAL` primeiro; só depois a sequência de glitch crescente, BIOS
+corrompida e blackout começa.
 
 A configuração anterior, com Evidências e objeto
 pelo cheiro, não foi apagada. Ela está documentada e exportada por
