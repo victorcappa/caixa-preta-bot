@@ -370,7 +370,7 @@ function AudienceWarmupActionCountdownSound({ warmup, now }) {
   return null;
 }
 
-export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) {
+export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup, botFont }) {
   const [now, setNow] = useState(Date.now());
   const teaAudioRef = useRef(null);
   const evidenciasAudioRef = useRef(null);
@@ -485,6 +485,9 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
   const suitcaseSelectionAge = now - Date.parse(sceneZero?.suitcaseGame?.suitcaseSelectedAt || "");
   const suitcaseCueFrame = sceneZeroSuitcaseCueFrameAt(suitcaseSelectionAge, sceneZero?.suitcaseGame?.currentSuitcase);
   const suitcaseCuePhase = sceneZero?.suitcaseGame?.cuePhase || "idle";
+  const suitcaseChoice = sceneZero?.suitcaseGame?.choice || {};
+  const preDrawHangman = suitcaseChoice.targetSuitcase === 3
+    && ["challenge_preparing", "challenge_instruction", "challenge_ready", "challenge", "challenge_result", "challenge_complete"].includes(suitcaseChoice.status);
   const manualSuitcaseCue = ["drawing", "selected", "open"].includes(suitcaseCuePhase);
   const showSuitcaseSelection = Boolean(
     sceneZero?.suitcaseGame?.currentSuitcase
@@ -501,13 +504,13 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
   const physicalSeconds = timerSeconds(gincanaTimer, now);
   const physicalUrgent = gincanaTimer?.status === "running" && physicalSeconds <= 3;
   const showHangman = Boolean(
-    sceneZero?.suitcaseGame?.currentSuitcase === 3
+    (sceneZero?.suitcaseGame?.currentSuitcase === 3 || preDrawHangman)
     && hangman?.activity
     && hangman.status === "active"
-    && (suitcaseCuePhase === "complete" || suitcaseSelectionAge >= SCENE_ZERO_SUITCASE_CUE_DURATION_MS)
+    && (preDrawHangman || suitcaseCuePhase === "complete" || suitcaseSelectionAge >= SCENE_ZERO_SUITCASE_CUE_DURATION_MS)
   );
   const themeDraw = hangman.themeDraw || {};
-  const showHangmanThemeDraw = sceneZero?.suitcaseGame?.currentSuitcase === 3
+  const showHangmanThemeDraw = (sceneZero?.suitcaseGame?.currentSuitcase === 3 || preDrawHangman)
     && (themeDraw.status === "drawing" || themeDraw.status === "selected" && hangman.status === "ready");
   const themeDrawElapsed = Math.max(0, now - Date.parse(themeDraw.startedAt || now));
   const themeDrawIndex = Math.floor(themeDrawElapsed / Math.max(70, 230 - Math.min(155, themeDrawElapsed / 25))) % SCENE_ZERO_HANGMAN_THEMES.length;
@@ -760,7 +763,7 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
       {showHangman ? (
         <section
           className={`${styles.suitcaseHangmanOverlay} ${styles[`hangmanErrors${Math.min(4, Number(hangman.errorCount) || 0)}`] || ""}`}
-          aria-label="Forca da Mala 3"
+          aria-label="Forca antes da segunda mala"
           aria-live="assertive"
           style={{
             "--descent": `${Math.min(100, (Number(hangman.errorCount) || 0) * 25)}%`,
@@ -768,7 +771,7 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
           }}
         >
           <div className={styles.hangmanInterference} aria-hidden="true" />
-          <header><span>MALA 3 / FORCA</span></header>
+          <header><span>DESAFIO ANTES DA SEGUNDA MALA / FORCA</span></header>
           <p className={styles.hangmanTheme}><span>TEMA:</span> <strong>{(hangman.theme || "NÃO INFORMADO").toUpperCase()}</strong></p>
           <p className={styles.hangmanWord}>{hangmanPublic.progress || "_ _ _"}</p>
           <div className={styles.hangmanFlight} aria-hidden="true">
@@ -813,11 +816,11 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup }) 
         </section>
       ) : null}
       {showParticipantSelection ? (
-        <div className={styles.selectionOverlay} aria-live="assertive">
+        <div className={styles.selectionOverlay} aria-live="assertive" data-bot-font={botFont}>
           {participantSelection.status === "preparing" ? (
             <div className={styles.participantThinking} aria-label="Pensando em qual participante escolher">
               <span aria-hidden="true">/pensando</span>
-              <span className={styles.thinkingDots} aria-hidden="true"><i>.</i><i>.</i><i>.</i></span>
+              <span className={styles.thinkingDots} aria-hidden="true" />
             </div>
           ) : null}
           {participantSelection.status === "roulette" ? (

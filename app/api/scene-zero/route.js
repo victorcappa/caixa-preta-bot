@@ -13,6 +13,7 @@ import {
   SCENE_ZERO_FIRST_CHALLENGE,
   SCENE_ZERO_FIRST_SUITCASE_INSTRUCTION,
   SCENE_ZERO_LAST_SUITCASE_INSTRUCTION,
+  SCENE_ZERO_NEXT_SUITCASE_COMMENTS,
   SCENE_ZERO_SUITCASE_GAME_EXPLANATION,
   SCENE_ZERO_SUITCASE_LIGHTING_CUE,
   SCENE_ZERO_INSTAGRAM_TARGETS,
@@ -64,12 +65,22 @@ const DIRECTION_ACTIONS = {
 
 const completedEmergenceMessages = new Set();
 const completedSuitcaseFlowMessages = new Set();
-const SUITCASE_CHOICE_READING_HOLD_MS = 2500;
+const completedPreDrawHangmanMessages = new Set();
+let manualSuitcaseDrawInFlight = false;
+const SUITCASE_CHOICE_READING_HOLD_MS = 2000;
 const SUITCASE_CHOICE_FALLBACK_EXTRA_MS = 8000;
-const SUITCASE_INSTRUCTION_READING_HOLD_MS = 650;
+const SUITCASE_INSTRUCTION_READING_HOLD_MS = 2000;
+const SCENE_ZERO_PARTICIPANT_INVITE = "Agora preciso de participantes. Levantem a mão. Vocês têm cinco segundos.";
 
 function sceneZeroGooglePlan(guidance, originalCommand) {
   return preserveExplicitNewsIntent(parseGoogleGuidance(guidance), originalCommand);
+}
+
+function sceneZeroHangmanAvailable(suitcaseGame) {
+  return suitcaseGame?.currentSuitcase === 3 || (
+    suitcaseGame?.choice?.targetSuitcase === 3
+    && ["challenge_preparing", "challenge_instruction", "challenge_ready", "challenge", "challenge_result", "challenge_complete"].includes(suitcaseGame.choice.status)
+  );
 }
 
 async function openSceneZeroInstagramTarget(controller, person = "") {
@@ -180,7 +191,7 @@ function applyGeneratedTurn(turn, { messageSource = "scene-zero-operator" } = {}
 function parseParticipantSequence(text = "") {
   try {
     const parsed = JSON.parse(text);
-    const invite = `${parsed.convite || ""}`.trim();
+    const invite = SCENE_ZERO_PARTICIPANT_INVITE;
     const inviteWordCount = invite.split(/\s+/u).filter(Boolean).length;
     const normalizedInvite = invite.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     const statesFiveSeconds = /\b(?:5|cinco)\s+segundos?\b/u.test(normalizedInvite);
@@ -216,7 +227,7 @@ async function generateParticipantSequence({ candidates, winner, detail = "" }) 
     operatorOutputInstruction: [
       "Responda somente JSON válido, sem Markdown.",
       "Formato exato: {\"convite\":\"...\",\"comentarios\":[\"...\",\"...\",\"...\"],\"anuncio\":\"...\",\"centro\":\"...\"}.",
-      "O convite abre os 5 segundos: escreva uma única frase curta, com no máximo 12 palavras, ácida e sem gentileza. Diga explicitamente que há 5 segundos para levantar a mão.",
+      `Use exatamente este convite: ${SCENE_ZERO_PARTICIPANT_INVITE}`,
       "Os três comentários acontecem durante a roleta e não podem revelar o vencedor.",
       `O anúncio revela exatamente ${winner.name}. Em centro, fale diretamente com ${winner.name} e mande a pessoa vir até o centro da cena.`
     ].join(" ")
@@ -266,9 +277,22 @@ async function speak(directionAction, detail = "", options = {}) {
   return { ...turn, messages };
 }
 
-async function publishManualSuitcaseInstruction(instruction = "") {
+async function publishManualSuitcaseInstruction(instruction = "", requestedTarget = "user") {
   const requestedInstruction = `${instruction || ""}`.trim().slice(0, 500);
-  if (!requestedInstruction) throw new Error("ESCREVA UMA INSTRUÇÃO PARA O PARTICIPANTE");
+  const target = requestedTarget === "bot" ? "bot" : "user";
+  if (!requestedInstruction) throw new Error("ESCREVA UMA FALA AVULSA");
+  const targetInstruction = target === "bot"
+    ? [
+        "DESTINO SEMÂNTICO: A PRÓPRIA CAIXA PRETA (campo PARA O BOT).",
+        `Estado, sensação ou ideia obrigatória sobre a Caixa Preta: ${requestedInstruction}`,
+        "Transforme esse conteúdo em uma única fala curta na primeira pessoa, como algo que a própria CAIXA PRETA sente, pensa, percebe ou afirma sobre si.",
+        "Não transforme o conteúdo em pergunta ou ordem ao participante."
+      ]
+    : [
+        "DESTINO SEMÂNTICO: O PARTICIPANTE OU O PÚBLICO (campo PARA O PÚBLICO).",
+        `Conteúdo obrigatório dirigido ao participante ou público: ${requestedInstruction}`,
+        "Transforme esse conteúdo em uma única fala curta, direta e inequívoca da CAIXA PRETA para a pessoa ou plateia, usando a segunda pessoa quando couber."
+      ];
   const state = showState.privateSnapshot();
   const turn = await generateCaixaPretaTurn({
     state,
@@ -276,17 +300,16 @@ async function publishManualSuitcaseInstruction(instruction = "") {
     allowWebSearch: false,
     operatorInstruction: [
       "INSTRUÇÃO AVULSA DO OPERADOR DURANTE A CENA ZERO.",
-      `Conteúdo obrigatório da instrução: ${requestedInstruction}`,
-      "Transforme esse conteúdo em uma única fala curta, direta e inequívoca da CAIXA PRETA para o participante.",
-      "Preserve ação, objeto, negação e ordem operacional. Pode adaptar ritmo e vocabulário à personalidade do bot, mas não invente outra tarefa.",
+      ...targetInstruction,
+      "Preserve a intenção da entrada: afirmação, pergunta, ação, objeto e negação. Pode adaptar ritmo e vocabulário à personalidade do bot, sem mudar o sentido.",
       "Não altere etapa, timer, pontuação, mala atual ou sequência. Não anuncie que o jogo avançou e não acrescente prazo se o operador não informou um."
     ].join("\n"),
     operatorOutputInstruction: "Responda apenas com a fala pública final, sem JSON, rótulo, aspas, comentário ou instrução interna."
   });
   const text = `${turn.text || ""}`.trim().slice(0, 1000);
-  if (!text) throw new Error("O BOT NÃO GEROU UMA INSTRUÇÃO PÚBLICA");
+  if (!text) throw new Error("O BOT NÃO GEROU UMA FALA PÚBLICA");
   const message = showState.addMessage("assistant", text, "scene-zero-suitcase-manual-instruction");
-  return { text, messageId: message.id };
+  return { text, messageId: message.id, target };
 }
 
 function suitcaseSpeechDelay(text = "") {
@@ -350,9 +373,28 @@ function completeEmergenceMessage(messageId) {
   }
 
   completedEmergenceMessages.add(messageId);
+  if (showState.snapshot().audienceWarmup?.manualMode) {
+    const waiting = showState.controlSceneZero("suitcase-choice-emergence-ready", {
+      targetSuitcase: cue.nextSuitcase,
+      messageId
+    }, { source: "system" });
+    return { ...waiting, waitingForOperator: waiting.applied };
+  }
   return announceNextSuitcase({
     bypassEmergence: true
   });
+}
+
+function continueAfterEmergence(messageId) {
+  const sceneZero = showState.snapshot().sceneZero;
+  const choice = sceneZero.suitcaseGame?.choice;
+  if (choice?.status !== "emergence_ready" || choice.messageId !== messageId) {
+    return { applied: false, error: "LAPSO AINDA NÃO LIBEROU A PRÓXIMA FALA", state: sceneZero };
+  }
+  const briefing = sceneZeroSuitcaseBriefingSteps(choice.targetSuitcase);
+  return briefing.length
+    ? publishSuitcaseBriefingStep(choice.targetSuitcase, 0)
+    : publishSuitcaseChoiceAnnouncement(choice.targetSuitcase);
 }
 
 function startEmergenceMessage(cue) {
@@ -380,7 +422,7 @@ function startEmergenceMessage(cue) {
 function suitcaseChoiceAnnouncementText(suitcaseNumber) {
   return Number(suitcaseNumber) === 2
     ? `${SCENE_ZERO_SUITCASE_GAME_EXPLANATION} ${SCENE_ZERO_SUITCASE_LIGHTING_CUE}`
-    : `Vou indicar outra mala. Quando o número aparecer, vá até ela e abra a mala. ${SCENE_ZERO_SUITCASE_LIGHTING_CUE}`;
+    : SCENE_ZERO_NEXT_SUITCASE_COMMENTS[Number(suitcaseNumber)] || "Próxima mala. Tentem acompanhar.";
 }
 
 function queueSuitcaseFlowFallback(messageId, text) {
@@ -440,6 +482,10 @@ function advanceSuitcaseBriefing(messageId) {
     return ready;
   }
 
+  if (Number(choice.targetSuitcase) === 3) {
+    return startPreDrawHangman(choice.messageId);
+  }
+
   return publishSuitcaseChoiceAnnouncement(choice.targetSuitcase);
 }
 
@@ -477,9 +523,20 @@ function completeSuitcaseBriefingMessage(messageId) {
 
 function announceNextSuitcase({ bypassEmergence = false } = {}) {
   const sceneZero = showState.snapshot().sceneZero;
+  const suitcaseGame = sceneZero.suitcaseGame || {};
+  const instructionStillActive = ["announcing", "ready"].includes(suitcaseGame.contentInstruction?.status);
+  const retryingCurrentSuitcase = instructionStillActive || (suitcaseGame.currentSuitcase === 2
+    ? suitcaseGame.gincana?.result === "failed"
+      || ["running", "paused"].includes(suitcaseGame.gincana?.timer?.status)
+      || suitcaseGame.gincana?.retry?.status === "announcing"
+    : suitcaseGame.currentSuitcase === 3
+      && ["active", "retry_wait"].includes(suitcaseGame.hangman?.status));
+  if (retryingCurrentSuitcase) {
+    return { applied: false, error: "A MALA ATUAL PRECISA SER CONCLUÍDA ANTES DO PRÓXIMO SORTEIO", state: sceneZero };
+  }
   const nextSuitcase = nextSceneZeroSuitcase(sceneZero.suitcaseGame);
   if (!nextSuitcase) return { applied: false, error: "TODAS AS MALAS JÁ FORAM ESCOLHIDAS", state: sceneZero };
-  if (["briefing", "briefing_ready", "announcing", "ready", "starting"].includes(sceneZero.suitcaseGame?.choice?.status)) {
+  if (["emergence_ready", "briefing", "briefing_ready", "announcing", "ready", "starting", "challenge_preparing", "challenge_instruction", "challenge_ready", "challenge", "challenge_result", "challenge_complete"].includes(sceneZero.suitcaseGame?.choice?.status)) {
     return { applied: false, error: "ESCOLHA DE MALA JÁ EM ANDAMENTO", state: sceneZero };
   }
   if (!bypassEmergence) {
@@ -559,6 +616,10 @@ function completeSuitcaseContentInstructionMessage(messageId) {
   const nextStepIndex = Number(instruction.stepIndex) + 1;
   const steps = suitcaseContentInstructionSteps(suitcaseGame, instruction.kind);
   if (nextStepIndex < steps.length) {
+    if (showState.snapshot().audienceWarmup?.manualMode) {
+      const waiting = showState.controlSceneZero("suitcase-content-instruction-ready", { messageId }, { source: "system" });
+      return { ...waiting, waitingForOperator: waiting.applied };
+    }
     setTimeout(() => {
       const current = showState.snapshot().sceneZero.suitcaseGame;
       if (current?.contentInstruction?.status !== "announcing" || current.contentInstruction.messageId !== messageId) return;
@@ -567,15 +628,31 @@ function completeSuitcaseContentInstructionMessage(messageId) {
     return { applied: true, state: sceneZero };
   }
 
+  if (showState.snapshot().audienceWarmup?.manualMode) {
+    const completed = showState.controlSceneZero("suitcase-content-instruction-complete", { messageId }, { source: "system" });
+    return { ...completed, waitingForOperator: completed.applied };
+  }
+
   setTimeout(() => {
     const current = showState.snapshot().sceneZero.suitcaseGame;
     if (current?.contentInstruction?.status !== "announcing" || current.contentInstruction.messageId !== messageId) return;
-    const completed = showState.controlSceneZero("suitcase-content-instruction-complete", { messageId }, { source: "system" });
-    if (completed.applied && instruction.kind === "last-suitcase") {
-      scheduleTutorialEnd(current.suitcaseSelectionSequence, current.suitcaseSelectedAt, true);
-    }
+    showState.controlSceneZero("suitcase-content-instruction-complete", { messageId }, { source: "system" });
   }, SUITCASE_INSTRUCTION_READING_HOLD_MS);
   return { applied: true, state: sceneZero };
+}
+
+function advanceSuitcaseContentInstruction(messageId) {
+  const sceneZero = showState.snapshot().sceneZero;
+  const suitcaseGame = sceneZero.suitcaseGame;
+  const instruction = suitcaseGame?.contentInstruction;
+  if (instruction?.status !== "ready" || instruction.messageId !== messageId) {
+    return { applied: false, error: "PRÓXIMA FALA DA MALA NÃO ESTÁ PRONTA", state: sceneZero };
+  }
+  const nextStepIndex = Number(instruction.stepIndex) + 1;
+  if (!suitcaseContentInstructionSteps(suitcaseGame, instruction.kind)[nextStepIndex]) {
+    return { applied: false, error: "INSTRUÇÃO DA MALA JÁ ESTÁ NA ÚLTIMA FALA", state: sceneZero };
+  }
+  return publishSuitcaseContentInstructionStep(suitcaseGame, instruction.kind, nextStepIndex);
 }
 
 function completeSuitcaseFlowMessage(messageId) {
@@ -587,6 +664,102 @@ function completeSuitcaseFlowMessage(messageId) {
     return completeSuitcaseContentInstructionMessage(messageId);
   }
   return { applied: false, error: "MENSAGEM NÃO PERTENCE AO FLUXO DAS MALAS", state: showState.snapshot().sceneZero };
+}
+
+function startPreDrawHangman(messageId) {
+  const prepared = showState.controlSceneZero("suitcase-choice-predraw-start", { messageId }, { source: "system" });
+  if (!prepared.applied) return prepared;
+  const choiceSequence = prepared.state.suitcaseGame.choice.sequence;
+  const draw = showState.controlSceneZero("hangman-theme-draw", {}, { source: "system" });
+  if (!draw.applied) return draw;
+  const drawSequence = draw.state.suitcaseGame.hangman.themeDraw.sequence;
+
+  setTimeout(() => {
+    const current = showState.snapshot().sceneZero.suitcaseGame;
+    if (
+      current?.choice?.status !== "challenge_preparing"
+      || current.choice.targetSuitcase !== 3
+      || current.choice.sequence !== choiceSequence
+      || current.hangman?.status !== "theme-drawing"
+      || current.hangman.themeDraw.sequence !== drawSequence
+    ) return;
+    const theme = chooseSceneZeroHangmanTheme();
+    const word = chooseSceneZeroHangmanWord({ theme });
+    if (!word) return;
+    const configured = showState.controlSceneZero("hangman-configure", { wordId: word.id }, { source: "system" });
+    if (!configured.applied) return;
+    setTimeout(() => {
+      const latest = showState.snapshot().sceneZero.suitcaseGame;
+      if (
+        latest?.choice?.status !== "challenge_preparing"
+        || latest.choice.sequence !== choiceSequence
+        || latest.hangman?.status !== "ready"
+      ) return;
+      const message = showState.addMessage("assistant", SCENE_ZERO_HANGMAN_INSTRUCTION, "scene-zero-hangman-instruction");
+      const announced = showState.controlSceneZero("suitcase-choice-predraw-instruction", {
+        choiceSequence,
+        messageId: message.id
+      }, { source: "system" });
+      if (!announced.applied) return;
+      setTimeout(() => completePreDrawHangmanInstruction(message.id), suitcaseSpeechDelay(SCENE_ZERO_HANGMAN_INSTRUCTION) + SUITCASE_CHOICE_FALLBACK_EXTRA_MS);
+    }, 1400);
+  }, SCENE_ZERO_HANGMAN_THEME_DRAW_DURATION_MS);
+  return prepared;
+}
+
+function startPreDrawHangmanGame(messageId) {
+  return showState.controlSceneZero("suitcase-choice-predraw-hangman-start", { messageId }, { source: "system" });
+}
+
+function completePreDrawHangmanInstruction(messageId) {
+  const choice = showState.snapshot().sceneZero.suitcaseGame?.choice;
+  if (
+    choice?.status !== "challenge_instruction"
+    || choice.messageId !== messageId
+    || completedPreDrawHangmanMessages.has(messageId)
+  ) {
+    return { applied: false, error: "INSTRUÇÃO DA FORCA JÁ CONCLUÍDA", state: showState.snapshot().sceneZero };
+  }
+  completedPreDrawHangmanMessages.add(messageId);
+  if (showState.snapshot().audienceWarmup?.manualMode) {
+    const waiting = showState.controlSceneZero("suitcase-choice-predraw-hangman-ready", { messageId }, { source: "system" });
+    return { ...waiting, waitingForOperator: waiting.applied };
+  }
+  setTimeout(() => startPreDrawHangmanGame(messageId), SUITCASE_INSTRUCTION_READING_HOLD_MS);
+  return { applied: true, state: showState.snapshot().sceneZero };
+}
+
+function continueAfterPreDrawHangman(messageId) {
+  const choice = showState.snapshot().sceneZero.suitcaseGame?.choice;
+  if (!["challenge_result", "challenge_complete"].includes(choice?.status) || choice.messageId !== messageId) {
+    return { applied: false, error: "FORCA AINDA NÃO LIBEROU O SORTEIO", state: showState.snapshot().sceneZero };
+  }
+  return publishSuitcaseChoiceAnnouncement(3);
+}
+
+function completePreDrawHangmanResult(messageId) {
+  const choice = showState.snapshot().sceneZero.suitcaseGame?.choice;
+  if (
+    choice?.status !== "challenge_result"
+    || choice.messageId !== messageId
+    || completedPreDrawHangmanMessages.has(messageId)
+  ) {
+    return { applied: false, error: "RESULTADO DA FORCA JÁ CONCLUÍDO", state: showState.snapshot().sceneZero };
+  }
+  completedPreDrawHangmanMessages.add(messageId);
+  if (showState.snapshot().audienceWarmup?.manualMode) {
+    const waiting = showState.controlSceneZero("suitcase-choice-predraw-complete", { messageId }, { source: "system" });
+    return { ...waiting, waitingForOperator: waiting.applied };
+  }
+  setTimeout(() => continueAfterPreDrawHangman(messageId), SUITCASE_INSTRUCTION_READING_HOLD_MS);
+  return { applied: true, state: showState.snapshot().sceneZero };
+}
+
+function queuePreDrawHangmanResultFallback(messageId, text = "") {
+  if (!messageId) return;
+  setTimeout(() => {
+    completePreDrawHangmanResult(messageId);
+  }, suitcaseSpeechDelay(text) + 2000);
 }
 
 function scheduleHangmanStart(selectionSequence, selectedAt, immediate = false) {
@@ -630,29 +803,37 @@ function scheduleHangmanStart(selectionSequence, selectedAt, immediate = false) 
   }, immediate ? 0 : suitcaseCueDelay(selectedAt));
 }
 
-function scheduleTutorialEnd(selectionSequence, selectedAt, immediate = false) {
-  setTimeout(async () => {
-    const before = showState.snapshot().sceneZero;
-    const current = before.suitcaseGame;
-    if (current?.suitcaseSelectionSequence !== selectionSequence || current.currentSuitcase !== 1) return;
+async function finishTutorialAfterTurntableInstruction() {
+  const before = showState.snapshot().sceneZero;
+  const current = before.suitcaseGame;
+  const instruction = current?.contentInstruction;
+  if (
+    current?.currentSuitcase !== 1
+    || instruction?.kind !== "last-suitcase"
+    || instruction.status !== "complete"
+    || instruction.selectionSequence !== current.suitcaseSelectionSequence
+  ) {
+    return { applied: false, error: "AGUARDE A INSTRUÇÃO DO TOCA-DISCOS E AVANCE", state: before };
+  }
 
-    const completesProgressBar = Number(before.unlock?.progress || 0) < 100;
-    const finished = await finishSceneZeroSuitcaseGame();
-    if (!finished.applied) return;
-    const tutorialDurationMs = (completesProgressBar ? PLAY_UNLOCK_CONFIG.completeAnimationMs : 0)
-      + PLAY_UNLOCK_CONFIG.tutorialCompleteLeadMs
-      + PLAY_UNLOCK_CONFIG.tutorialCompleteDurationMs;
+  const selectionSequence = current.suitcaseSelectionSequence;
+  const completesProgressBar = Number(before.unlock?.progress || 0) < 100;
+  const finished = await finishSceneZeroSuitcaseGame();
+  if (!finished.applied) return finished;
+  const tutorialDurationMs = (completesProgressBar ? PLAY_UNLOCK_CONFIG.completeAnimationMs : 0)
+    + PLAY_UNLOCK_CONFIG.tutorialCompleteLeadMs
+    + PLAY_UNLOCK_CONFIG.tutorialCompleteDurationMs;
 
-    setTimeout(() => {
-      const next = showState.snapshot().sceneZero.suitcaseGame;
-      if (
-        next?.suitcaseSelectionSequence !== selectionSequence
-        || next.currentSuitcase !== 1
-        || next.status !== "finished"
-      ) return;
-      beginMorelBiosSequence(selectionSequence, "system");
-    }, tutorialDurationMs + 100);
-  }, immediate ? 0 : suitcaseCueDelay(selectedAt));
+  setTimeout(() => {
+    const next = showState.snapshot().sceneZero.suitcaseGame;
+    if (
+      next?.suitcaseSelectionSequence !== selectionSequence
+      || next.currentSuitcase !== 1
+      || next.status !== "finished"
+    ) return;
+    beginMorelBiosSequence(selectionSequence, "system");
+  }, tutorialDurationMs + 100);
+  return finished;
 }
 
 function startSelectedSuitcaseContent(suitcaseGame, immediate = false) {
@@ -716,11 +897,11 @@ function beginMorelBiosSequence(selectionSequence, source = "operator") {
   return started;
 }
 
-async function interruptPreviousSuitcase(nextSuitcaseNumber) {
+async function interruptPreviousSuitcase(nextSuitcaseNumber, { force = false } = {}) {
   const snapshot = showState.snapshot();
   const previousSuitcase = snapshot.sceneZero.suitcaseGame?.currentSuitcase;
 
-  if (!previousSuitcase || previousSuitcase === nextSuitcaseNumber) return;
+  if (!force && (!previousSuitcase || previousSuitcase === nextSuitcaseNumber)) return;
 
   if (snapshot.game?.active) {
     showState.stopGame({ status: "suitcase_replaced", source: "scene-zero-operator" });
@@ -755,10 +936,10 @@ async function interruptPreviousSuitcase(nextSuitcaseNumber) {
   }
 }
 
-async function activateSuitcase(suitcaseNumber, detail = "") {
+async function activateSuitcase(suitcaseNumber, detail = "", { force = false } = {}) {
   const before = showState.snapshot().sceneZero.suitcaseGame;
   const expectedSuitcase = nextSceneZeroSuitcase(before);
-  if (before?.currentSuitcase !== suitcaseNumber && expectedSuitcase !== suitcaseNumber) {
+  if (!force && before?.currentSuitcase !== suitcaseNumber && expectedSuitcase !== suitcaseNumber) {
     return {
       applied: false,
       error: expectedSuitcase
@@ -767,7 +948,17 @@ async function activateSuitcase(suitcaseNumber, detail = "") {
       state: showState.snapshot().sceneZero
     };
   }
-  await interruptPreviousSuitcase(suitcaseNumber);
+  if (force && !showState.snapshot().audienceWarmup?.manualMode) {
+    return { applied: false, error: "SORTEIO DIRETO EXIGE MODO MANUAL", state: showState.snapshot().sceneZero };
+  }
+  await interruptPreviousSuitcase(suitcaseNumber, { force });
+  if (force) {
+    const recovered = showState.controlSceneZero("suitcase-manual-recover", { detail }, { source: "operator" });
+    if (!recovered.applied) return recovered;
+    showState.controlSceneZero("set-glitch", { level: "normal" }, { source: "operator" });
+    applyGlitchLevel("normal");
+    clearSceneZeroFinalBlackout();
+  }
   const current = showState.snapshot();
   if (current.sceneZero.stage !== "suitcases") {
     showState.controlSceneZero("set-stage", { stage: "suitcases", detail }, { source: "operator" });
@@ -775,7 +966,7 @@ async function activateSuitcase(suitcaseNumber, detail = "") {
   showState.setMode(SHOW_MODES.malas);
   if (!showState.snapshot().suitcase?.active) showState.startSuitcases({ source: "scene-zero-operator", queueEvents: false });
 
-  const selected = showState.controlSceneZero("suitcase-select", { suitcase: suitcaseNumber, detail }, { source: "operator" });
+  const selected = showState.controlSceneZero("suitcase-select", { suitcase: suitcaseNumber, detail, force }, { source: "operator" });
   if (!selected.applied) return selected;
 
   const challengeTask = sceneZeroSuitcaseChallenge(suitcaseNumber, before?.gincana?.usedTaskIds || []);
@@ -1165,7 +1356,9 @@ export async function POST(request) {
       if (sceneZeroEmergenceCueForMessage(message)) {
         const continued = completeEmergenceMessage(message.id);
         return Response.json({
-          message: continued.applied ? "LAPSO APAGADO · FLUXO RETOMADO" : continued.error,
+          message: continued.waitingForOperator
+            ? "LAPSO APAGADO · AGUARDANDO OPERADOR"
+            : continued.applied ? "LAPSO APAGADO · FLUXO RETOMADO" : continued.error,
           result: continued,
           sceneZero: showState.snapshot().sceneZero
         });
@@ -1180,6 +1373,28 @@ export async function POST(request) {
           message: continued.waitingForOperator
             ? "INSTRUÇÃO CONCLUÍDA · AGUARDANDO OPERADOR"
             : continued.applied ? "INSTRUÇÃO CONCLUÍDA · FLUXO RETOMADO" : continued.error,
+          result: continued,
+          sceneZero: showState.snapshot().sceneZero
+        });
+      }
+
+      if (message?.source === "scene-zero-hangman-instruction") {
+        const continued = completePreDrawHangmanInstruction(message.id);
+        return Response.json({
+          message: continued.waitingForOperator
+            ? "INSTRUÇÃO DA FORCA CONCLUÍDA · AGUARDANDO OPERADOR"
+            : continued.applied ? "INSTRUÇÃO DA FORCA CONCLUÍDA" : continued.error,
+          result: continued,
+          sceneZero: showState.snapshot().sceneZero
+        });
+      }
+
+      if (message?.source === "scene-zero-hangman-result:success") {
+        const continued = completePreDrawHangmanResult(message.id);
+        return Response.json({
+          message: continued.waitingForOperator
+            ? "FORCA CONCLUÍDA · AGUARDANDO SORTEIO"
+            : continued.applied ? "FORCA CONCLUÍDA · SORTEIO PREPARADO" : continued.error,
           result: continued,
           sceneZero: showState.snapshot().sceneZero
         });
@@ -1230,6 +1445,34 @@ export async function POST(request) {
       const result = advanceSuitcaseBriefing(choice?.messageId);
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 409 });
       return Response.json({ message: "PRÓXIMA ETAPA DA EXPLICAÇÃO", sceneZero: showState.snapshot().sceneZero, text: result.text });
+    }
+
+    if (action === "suitcase-emergence-continue") {
+      const choice = showState.snapshot().sceneZero.suitcaseGame?.choice;
+      const result = continueAfterEmergence(choice?.messageId);
+      if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 409 });
+      return Response.json({ message: "LAPSO CONCLUÍDO · PRÓXIMA FALA", sceneZero: showState.snapshot().sceneZero, text: result.text });
+    }
+
+    if (action === "suitcase-content-instruction-continue") {
+      const instruction = showState.snapshot().sceneZero.suitcaseGame?.contentInstruction;
+      const result = advanceSuitcaseContentInstruction(instruction?.messageId);
+      if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 409 });
+      return Response.json({ message: "PRÓXIMA FALA DA MALA", sceneZero: showState.snapshot().sceneZero, text: result.text });
+    }
+
+    if (action === "suitcase-predraw-hangman-start") {
+      const choice = showState.snapshot().sceneZero.suitcaseGame?.choice;
+      const result = startPreDrawHangmanGame(choice?.messageId);
+      if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 409 });
+      return Response.json({ message: "FORCA ANTES DA SEGUNDA MALA INICIADA", sceneZero: result.state });
+    }
+
+    if (action === "suitcase-predraw-continue") {
+      const choice = showState.snapshot().sceneZero.suitcaseGame?.choice;
+      const result = continueAfterPreDrawHangman(choice?.messageId);
+      if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 409 });
+      return Response.json({ message: "FORCA CONCLUÍDA · SORTEIO DA SEGUNDA MALA", sceneZero: result.state, text: result.text });
     }
 
     if (action === "suitcase-cue-open" || action === "suitcase-cue-continue") {
@@ -1287,12 +1530,15 @@ export async function POST(request) {
     }
 
     if (action === "suitcase-manual-instruction") {
-      const instruction = await publishManualSuitcaseInstruction(body.instruction);
+      const instruction = await publishManualSuitcaseInstruction(body.instruction, body.target);
       return Response.json({
-        message: "INSTRUÇÃO AVULSA EXIBIDA · ESTADO DO JOGO PRESERVADO",
+        message: instruction.target === "bot"
+          ? "FALA SOBRE O BOT EXIBIDA · ESTADO DO JOGO PRESERVADO"
+          : "FALA PARA O PÚBLICO EXIBIDA · ESTADO DO JOGO PRESERVADO",
         sceneZero: showState.snapshot().sceneZero,
         text: instruction.text,
-        messageId: instruction.messageId
+        messageId: instruction.messageId,
+        target: instruction.target
       });
     }
 
@@ -1315,6 +1561,31 @@ export async function POST(request) {
       return Response.json({ message: `MALA ${suitcaseNumber} ATIVA — PROGRESSÃO MANUAL`, sceneZero: result.state, text: result.turn?.text });
     }
 
+    if (action === "suitcase-manual-draw") {
+      const suitcaseNumber = Number(body.suitcase);
+      if (![1, 2, 3].includes(suitcaseNumber)) {
+        return Response.json({ error: "MALA MANUAL INVÁLIDA", sceneZero: showState.snapshot().sceneZero }, { status: 400 });
+      }
+      if (!showState.snapshot().audienceWarmup?.manualMode) {
+        return Response.json({ error: "ATIVE O MODO MANUAL PARA FORÇAR UM SORTEIO", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
+      }
+      if (manualSuitcaseDrawInFlight) {
+        return Response.json({ error: "OUTRO SORTEIO MANUAL AINDA ESTÁ CARREGANDO", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
+      }
+      manualSuitcaseDrawInFlight = true;
+      try {
+        const result = await activateSuitcase(suitcaseNumber, detail || `recuperação manual da mala ${suitcaseNumber}`, { force: true });
+        if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 409 });
+        return Response.json({
+          message: `RECUPERAÇÃO MANUAL · SORTEANDO MALA ${suitcaseNumber}`,
+          sceneZero: result.state,
+          text: result.turn?.text
+        });
+      } finally {
+        manualSuitcaseDrawInFlight = false;
+      }
+    }
+
     if (action === "suitcase-next") {
       if (["drawing", "selected", "open"].includes(showState.snapshot().sceneZero.suitcaseGame?.cuePhase)) {
         return Response.json({ error: "CONFIRME A INDICAÇÃO DA MALA ANTES DE SEGUIR", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
@@ -1325,7 +1596,7 @@ export async function POST(request) {
     }
 
     if (action === "suitcase-finish") {
-      const result = await finishSceneZeroSuitcaseGame();
+      const result = await finishTutorialAfterTurntableInstruction();
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 409 });
       await closeActiveReels();
       return Response.json({ message: "JOGO DAS MALAS FINALIZADO — BARRA EM CONCLUSÃO", sceneZero: result.state });
@@ -1362,7 +1633,7 @@ export async function POST(request) {
       });
     }
 
-    if (["gincana-timer-start", "gincana-timer-pause", "gincana-timer-resume", "gincana-timer-restart", "gincana-timer-cancel"].includes(action)) {
+    if (["gincana-timer-start", "gincana-timer-pause", "gincana-timer-resume", "gincana-timer-restart", "gincana-timer-cancel", "gincana-retry-start"].includes(action)) {
       if (action === "gincana-timer-start" && ["drawing", "selected", "open"].includes(showState.snapshot().sceneZero.suitcaseGame?.cuePhase)) {
         return Response.json({ error: "CONFIRME ABRA A MALA ANTES DO DESAFIO", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
       }
@@ -1385,8 +1656,8 @@ export async function POST(request) {
 
     if (action === "hangman-configure" || action === "hangman-new") {
       const suitcaseGame = showState.snapshot().sceneZero.suitcaseGame;
-      if (suitcaseGame?.currentSuitcase !== 3) {
-        return Response.json({ error: "INICIE A MALA 3 ANTES DA FORCA", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
+      if (!sceneZeroHangmanAvailable(suitcaseGame)) {
+        return Response.json({ error: "INICIE O DESAFIO ANTES DA SEGUNDA MALA", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
       }
       if (suitcaseGame.hangman?.status === "theme-drawing") {
         return Response.json({ error: "AGUARDE O SORTEIO DO TEMA", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
@@ -1402,16 +1673,21 @@ export async function POST(request) {
       return Response.json({ message: "PALAVRA DA FORCA PRONTA", sceneZero: result.state });
     }
 
-    if (["hangman-start", "hangman-guess", "hangman-error", "hangman-reveal", "hangman-win", "hangman-lose", "hangman-restart"].includes(action)) {
+    if (["hangman-start", "hangman-guess", "hangman-error", "hangman-reveal", "hangman-win", "hangman-lose", "hangman-restart", "hangman-retry-start"].includes(action)) {
       if (action === "hangman-start" && ["drawing", "selected", "open"].includes(showState.snapshot().sceneZero.suitcaseGame?.cuePhase)) {
         return Response.json({ error: "CONFIRME ABRA A MALA ANTES DA FORCA", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
       }
-      if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase !== 3) {
-        return Response.json({ error: "INICIE A MALA 3 ANTES DA FORCA", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
+      if (!sceneZeroHangmanAvailable(showState.snapshot().sceneZero.suitcaseGame)) {
+        return Response.json({ error: "INICIE O DESAFIO ANTES DA SEGUNDA MALA", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
       }
       const wasRunning = showState.snapshot().sceneZero.suitcaseGame?.hangman?.timer?.status === "running";
       const result = showState.controlSceneZero(action, body, { source: "operator" });
       if (!result.applied) return Response.json({ error: result.error, sceneZero: result.state }, { status: 400 });
+      const choice = result.state.suitcaseGame?.choice;
+      if (choice?.status === "challenge_result" && choice.messageId) {
+        const resultMessage = showState.privateSnapshot().conversation.find((message) => message.id === choice.messageId);
+        queuePreDrawHangmanResultFallback(choice.messageId, resultMessage?.content || "");
+      }
       if (wasRunning && result.state.suitcaseGame?.hangman?.timer?.status !== "running") await closeActiveReels();
       return Response.json({ message: `FORCA — ${result.state.suitcaseGame?.hangman?.errorCount || 0}/4 ERROS`, sceneZero: result.state });
     }

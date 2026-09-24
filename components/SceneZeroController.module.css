@@ -30,6 +30,7 @@
 .manualInstructionPanel { padding-top: 10px; border-top: 1px solid #2d513b; }
 .manualInstructionPanel summary { color: #00ff66; font-size: 10px; font-weight: 900; letter-spacing: .08em; cursor: pointer; }
 .manualInstructionComposer { display: grid; gap: 7px; margin-top: 8px; }
+.manualInstructionTarget { display: grid; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid #183522; }
 .manualInstructionComposer label { display: grid; gap: 5px; color: #7c9a88; font-size: 9px; font-weight: 800; letter-spacing: .08em; }
 .manualInstructionComposer input { box-sizing: border-box; width: 100%; min-height: 38px; padding: 0 8px; color: #fff; background: #050805; border: 1px solid #39704e; font: inherit; font-size: 10px; }
 .manualInstructionComposer input:focus { border-color: #00ff66; outline: 1px solid #00ff66; outline-offset: 1px; }
@@ -132,6 +133,9 @@
 .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
 .suitcaseOverview { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; min-height: 38px; padding: 7px 10px; color: #929292; background: #080808; border-left: 3px solid #00ff66; font-size: 10px; letter-spacing: .08em; }
 .suitcaseOverview strong { color: #00ff66; }
+.manualSuitcaseDraws { flex: 1 1 100%; display: grid; grid-template-columns: auto minmax(220px, 1fr) repeat(3, minmax(150px, auto)); gap: 8px; align-items: center; padding: 10px; color: #ff9aae; background: #16070b; border: 1px solid #8a3042; }
+.manualSuitcaseDraws strong { color: #ff708b; letter-spacing: .08em; }
+.manualSuitcaseDraws span { color: #b9959d; font-size: 10px; }
 .suitcaseGrid { flex: 1 1 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .suitcaseCard { min-width: 0; padding: 14px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 8px; border: 1px solid #303030; background: #090909; }
 .suitcaseCard h3 { flex: 1 1 100%; margin: 0 0 8px; color: #eee; font-size: 15px; letter-spacing: .07em; }
@@ -187,7 +191,7 @@
 .instagramPanel { flex: 1 1 100%; min-height: 850px; height: 850px; border: 1px solid #303030; overflow: hidden; }
 .notice { position: sticky; z-index: 2; bottom: 0; margin: 18px -24px calc(-24px - env(safe-area-inset-bottom)); padding: 12px 24px calc(12px + env(safe-area-inset-bottom)); color: #00ff66; background: rgba(0,0,0,.94); border-top: 1px solid #303030; }
 @keyframes pulse { 50% { opacity: .35; } }
-@media (max-width: 1280px) { .suitcaseGrid { grid-template-columns: 1fr; } }
+@media (max-width: 1280px) { .manualSuitcaseDraws, .suitcaseGrid { grid-template-columns: 1fr; } }
 @media (max-width: 1000px) { .controller { padding-right: 190px; } .indexNav { right: 8px; width: 154px; } .header, .personalityPanel { grid-template-columns: 1fr; } .personalityQuickGrid { grid-column: auto; grid-template-columns: repeat(2, minmax(0, 1fr)); } .personalityPanel .readout { grid-column: auto; } .stageGrid { grid-template-columns: repeat(2, 1fr); } .blocks { grid-template-columns: 1fr; } .wide { grid-column: auto; } .levels { grid-template-columns: repeat(2, 1fr); } .quickGrid { grid-template-columns: repeat(3, 1fr); } .glitchVideoConfig, .browserQuickCommands { grid-template-columns: 1fr; } .glitchDurationPresets { grid-column: auto; } }
 @media (max-width: 520px) { .memoryHeading { display: grid; } .memoryComposer, .browserQuickField { grid-template-columns: 1fr; } .browserQuickField input, .browserQuickField button { grid-column: 1; grid-row: auto; } }
 @media (max-width: 700px) { .controller { padding: 18px 18px 178px; } .operatorModeBar { grid-template-columns: 1fr; } .operatorModeBar > div { justify-items: start; text-align: left; } .bootPanel { grid-template-columns: 1fr auto; } .bootActions { grid-column: 1 / -1; } .warmupDisclosureToggle { grid-template-columns: 1fr auto; } .warmupDisclosureStatus { grid-column: 1 / -1; grid-row: 2; white-space: normal; } .warmupDisclosureAction { grid-column: 2; grid-row: 1; } .indexNav { top: auto; right: 10px; bottom: 10px; left: 10px; width: auto; max-height: 170px; } .indexNav > span { display: none; } .indexNav nav { grid-template-columns: repeat(3, minmax(0, 1fr)); } .indexNav a { grid-template-columns: 20px minmax(0, 1fr); min-height: 26px; font-size: 9px; } .reactionControls { grid-template-columns: 1fr; } .reactionControls small { grid-column: 1 / -1; } }

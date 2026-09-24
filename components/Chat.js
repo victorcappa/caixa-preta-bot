@@ -373,8 +373,11 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
         }
         typingTimersRef.current.delete(message.id);
         const suitcaseFlowMessage = message.source?.startsWith("scene-zero-suitcase-briefing:")
-          || message.source?.startsWith("scene-zero-suitcase-content:");
-        const suitcaseRetryMessage = message.source?.startsWith("scene-zero-hangman-retry:");
+          || message.source?.startsWith("scene-zero-suitcase-content:")
+          || message.source === "scene-zero-hangman-instruction"
+          || message.source === "scene-zero-hangman-result:success";
+        const suitcaseRetryMessage = message.source?.startsWith("scene-zero-gincana-retry:")
+          || message.source?.startsWith("scene-zero-hangman-retry:");
         if (message.source === "audience-warmup-agreements:attention") robotSoundEngine.attention();
         else if (message.source?.startsWith("scene-zero-hangman-retry:")) {
           // O impacto desta falha toca assim que o quadro vermelho entra.
@@ -482,7 +485,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
       sceneZero?.collection?.activeCountdown?.status === "awaiting_message"
         ? sceneZero.collection.activeCountdown.messageId
         : null,
-      ["briefing", "announcing"].includes(sceneZero?.suitcaseGame?.choice?.status)
+      ["briefing", "announcing", "challenge_instruction", "challenge_result"].includes(sceneZero?.suitcaseGame?.choice?.status)
         ? sceneZero.suitcaseGame.choice.messageId
         : null,
       sceneZero?.suitcaseGame?.contentInstruction?.status === "announcing"
@@ -910,7 +913,11 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
         </section>
         <section className={`${styles.layoutRegion} ${styles.sceneZeroAuxRegion}`} aria-label="Quadrante de contagens e conteúdos da Cena 0">
           <div className={styles.quadrantCanvas}>
-            <SceneZeroProjectionLayer audienceWarmup={audienceWarmup} sceneZero={sceneZero} />
+            <SceneZeroProjectionLayer
+              audienceWarmup={audienceWarmup}
+              botFont={robotSound?.displayFont || ROBOT_DISPLAY_FONT_DEFAULT}
+              sceneZero={sceneZero}
+            />
           </div>
         </section>
         <section className={`${styles.layoutRegion} ${styles.performanceRegion}`} aria-label="Quadrante de elementos visuais e conteúdos auxiliares">
