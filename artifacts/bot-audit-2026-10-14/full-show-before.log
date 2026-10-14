@@ -1,0 +1,30 @@
+CHECKPOINT sound listening
+CHECKPOINT synthetic microphone confirmed
+CHECKPOINT authored agreements and START choice
+CHECKPOINT required action and first question
+CHECKPOINT many reaction
+CHECKPOINT next question after reaction
+CHECKPOINT few reaction
+CHECKPOINT next question after reaction
+CHECKPOINT mini game briefing
+CHECKPOINT selected mini game rules
+CHECKPOINT warmup completed on real timer
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: /api/scene-zero set-stage: SCENE ZERO PARTICIPANT COPY INVALID
+
+false !== true
+
+    at post (file:///Users/VictorCappa/Dev/Caixa%20Preta/caixa-preta-bot/scripts/full-show-audit.js:29:10)
+    at async file:///Users/VictorCappa/Dev/Caixa%20Preta/caixa-preta-bot/scripts/full-show-audit.js:101:3 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.6.0

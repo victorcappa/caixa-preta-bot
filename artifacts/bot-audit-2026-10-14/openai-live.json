@@ -1,0 +1,19 @@
+{
+  "service": "openai",
+  "model": "gpt-5-mini",
+  "status": "completed",
+  "text": "OK",
+  "usage": {
+    "input_tokens": 12,
+    "input_tokens_details": {
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "output_tokens": 19,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "total_tokens": 31
+  },
+  "ms": 3512
+}

@@ -1,0 +1,738 @@
+{
+  "configuredAssets": [
+    {
+      "file": "audios/CENA 2 FIM/AUDIO-2026-08-19-19-12-17.m4a",
+      "exists": true,
+      "bytes": 3176864,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "aac",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "192.466333"
+        }
+      }
+    },
+    {
+      "file": "audios/CENA 2 FIM/AUDIO-2026-08-19-19-12-26.m4a",
+      "exists": true,
+      "bytes": 542132,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "aac",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "31.274188"
+        }
+      }
+    },
+    {
+      "file": "audios/Doris Day - Tea For Two (1950).mp3",
+      "exists": true,
+      "bytes": 1800012,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "188.360272"
+        }
+      }
+    },
+    {
+      "file": "audios/Evidências - Chitãozinho e Xororó - Karaokê - Karaokê Show Oficial (youtube).mp3",
+      "exists": true,
+      "bytes": 601803,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "25.514626"
+        }
+      }
+    },
+    {
+      "file": "audios/queda-aviao/bank-angle.mp3",
+      "exists": true,
+      "bytes": 22786,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "0.739728"
+        }
+      }
+    },
+    {
+      "file": "audios/queda-aviao/bell-continuo.mp3",
+      "exists": true,
+      "bytes": 19910,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "0.823107"
+        }
+      }
+    },
+    {
+      "file": "audios/queda-aviao/britadeira.mp3",
+      "exists": true,
+      "bytes": 24975,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "0.847415"
+        }
+      }
+    },
+    {
+      "file": "audios/queda-aviao/pull-up.mp3",
+      "exists": true,
+      "bytes": 13909,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "0.593878"
+        }
+      }
+    },
+    {
+      "file": "audios/queda-aviao/raiz/Alarms, T-CAS and GPWS of Boeing 737.mp3",
+      "exists": true,
+      "bytes": 2652715,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "110.457324"
+        }
+      }
+    },
+    {
+      "file": "audios/queda-aviao/sirene.mp3",
+      "exists": true,
+      "bytes": 21478,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "0.739751"
+        }
+      }
+    },
+    {
+      "file": "audios/queda-aviao/uaua.mp3",
+      "exists": true,
+      "bytes": 15893,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "0.694331"
+        }
+      }
+    },
+    {
+      "file": "audios/thomas-edson.mp3",
+      "exists": true,
+      "bytes": 2772623,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "126.746122"
+        }
+      }
+    },
+    {
+      "file": "audios/uba-hey.mp3",
+      "exists": true,
+      "bytes": 4401697,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "codec_type": "audio"
+          },
+          {
+            "codec_name": "png",
+            "codec_type": "video"
+          }
+        ],
+        "format": {
+          "duration": "264.946939"
+        }
+      }
+    },
+    {
+      "file": "videos/baralho-morbido/.DS_Store",
+      "exists": true,
+      "bytes": 6148
+    },
+    {
+      "file": "videos/baralho-morbido/911.mp4",
+      "exists": true,
+      "bytes": 2154835,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "35.038912"
+        }
+      }
+    },
+    {
+      "file": "videos/baralho-morbido/asian-airlines.mp4",
+      "exists": true,
+      "bytes": 607144,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "24.613152"
+        }
+      }
+    },
+    {
+      "file": "videos/baralho-morbido/brace.mp4",
+      "exists": true,
+      "bytes": 3476462,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "118.398549"
+        }
+      }
+    },
+    {
+      "file": "videos/baralho-morbido/brasil.mp4",
+      "exists": true,
+      "bytes": 429143,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "8.150204"
+        }
+      }
+    },
+    {
+      "file": "videos/baralho-morbido/calor.mp4",
+      "exists": true,
+      "bytes": 2535329,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "59.535964"
+        }
+      }
+    },
+    {
+      "file": "videos/baralho-morbido/imaginar.mp4",
+      "exists": true,
+      "bytes": 32576145,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "23.733333"
+        }
+      }
+    },
+    {
+      "file": "videos/baralho-morbido/indiano.mp4",
+      "exists": true,
+      "bytes": 1880687,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "25.280000"
+        }
+      }
+    },
+    {
+      "file": "videos/baralho-morbido/legacy.mp4",
+      "exists": true,
+      "bytes": 78092669,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "139.017868"
+        }
+      }
+    },
+    {
+      "file": "videos/baralho-morbido/mamonas.mp4",
+      "exists": true,
+      "bytes": 92531892,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "68.684626"
+        }
+      }
+    },
+    {
+      "file": "videos/baralho-morbido/marilia.mp4",
+      "exists": true,
+      "bytes": 72121966,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "49.866667"
+        }
+      }
+    },
+    {
+      "file": "videos/baralho-morbido/ubatuba.mp4",
+      "exists": true,
+      "bytes": 772397,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "18.065125"
+        }
+      }
+    },
+    {
+      "file": "videos/forca-g/forca-g-isabela.mp4",
+      "exists": true,
+      "bytes": 1894689,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "26.679002"
+        }
+      }
+    },
+    {
+      "file": "videos/forca-g/forca-g-ney.mp4",
+      "exists": true,
+      "bytes": 3867185,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "58.652993"
+        }
+      }
+    },
+    {
+      "file": "videos/forca-g/forca-g-robinson.mp4",
+      "exists": true,
+      "bytes": 2929873,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "35.131995"
+        }
+      }
+    },
+    {
+      "file": "videos/glitch/painel-aeroporto.mp4",
+      "exists": true,
+      "bytes": 810286,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "20.619320"
+        }
+      }
+    },
+    {
+      "file": "videos/verdade-ou-bolo/bolo-lanterna.mp4",
+      "exists": true,
+      "bytes": 7063983,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "12.300000"
+        }
+      }
+    },
+    {
+      "file": "videos/verdade-ou-bolo/bolo-papel-higienico.mp4",
+      "exists": true,
+      "bytes": 4131885,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "12.500000"
+        }
+      }
+    },
+    {
+      "file": "videos/verdade-ou-bolo/verdade-nutella.mp4",
+      "exists": true,
+      "bytes": 1310079,
+      "probeCode": 0,
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio"
+          }
+        ],
+        "format": {
+          "duration": "3.100000"
+        }
+      }
+    }
+  ],
+  "emptyCues": [
+    {
+      "controller": "forca-g-samples",
+      "label": "Impacto Curto"
+    },
+    {
+      "controller": "forca-g-shaders",
+      "label": "Vídeo Principal"
+    },
+    {
+      "controller": "forca-g-shaders",
+      "label": "Deepfake"
+    },
+    {
+      "controller": "forca-g-shaders",
+      "label": "Insert Visual"
+    },
+    {
+      "controller": "piloto-videogame",
+      "label": "Confirmar Comando"
+    },
+    {
+      "controller": "piloto-videogame",
+      "label": "Erro Arcade"
+    },
+    {
+      "controller": "piloto-videogame",
+      "label": "Power Up"
+    },
+    {
+      "controller": "piloto-videogame",
+      "label": "Game Over"
+    },
+    {
+      "controller": "tecnologia-floresta",
+      "label": "Máquina Baixa"
+    },
+    {
+      "controller": "tecnologia-floresta",
+      "label": "Folha / Ruído"
+    },
+    {
+      "controller": "tecnologia-floresta",
+      "label": "Pulso Digital"
+    },
+    {
+      "controller": "tecnologia-floresta",
+      "label": "Loop Híbrido"
+    }
+  ],
+  "fonts": [
+    {
+      "file": "public/fonts/modern-dos/ModernDOS8x16.ttf",
+      "bytes": 32156
+    },
+    {
+      "file": "public/fonts/modern-dos/ModernDOS9x16.ttf",
+      "bytes": 32156
+    },
+    {
+      "file": "public/fonts/modern-dos/LICENSE.txt",
+      "bytes": 7048
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "status": 200,
+  "ms": 3491,
+  "model": "gpt-5-mini",
+  "source": "openai",
+  "text": "azul-cobalto-731. ok, registrando: vocês já provaram obedecer a uma senha sem saber por quê. radical.",
+  "fallback": false,
+  "contextMarkerPresent": true,
+  "openAIHealth": "ok"
+}

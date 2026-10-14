@@ -1,0 +1,5 @@
+
+> caixa-preta-chat@0.1.0 brain:check
+> node scripts/brain-check.js
+
+BRAIN CHECK PASSED (12 required files, 8 size limits)

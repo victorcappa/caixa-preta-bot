@@ -1,0 +1,5 @@
+
+> caixa-preta-chat@0.1.0 test:scene-zero
+> node --no-warnings scripts/scene-zero-test.js
+
+scene-zero-test: ok

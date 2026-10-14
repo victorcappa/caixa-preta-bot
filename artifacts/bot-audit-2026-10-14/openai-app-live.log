@@ -1,0 +1,5 @@
+
+> caixa-preta-chat@0.1.0 test:openai:live
+> node --no-warnings scripts/openai-live-audit.js --live
+
+{"status":200,"ms":3491,"model":"gpt-5-mini","source":"openai","text":"azul-cobalto-731. ok, registrando: vocês já provaram obedecer a uma senha sem saber por quê. radical.","fallback":false,"contextMarkerPresent":true,"openAIHealth":"ok"}

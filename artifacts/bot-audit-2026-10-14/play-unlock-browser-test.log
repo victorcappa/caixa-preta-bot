@@ -1,0 +1,9 @@
+file:///Users/VictorCappa/Dev/Caixa%20Preta/caixa-preta-bot/scripts/play-unlock-browser-test.js:39
+  throw new Error("timeout waiting for application state");
+        ^
+
+Error: timeout waiting for application state
+    at waitForState (file:///Users/VictorCappa/Dev/Caixa%20Preta/caixa-preta-bot/scripts/play-unlock-browser-test.js:39:9)
+    at async file:///Users/VictorCappa/Dev/Caixa%20Preta/caixa-preta-bot/scripts/play-unlock-browser-test.js:348:14
+
+Node.js v24.6.0

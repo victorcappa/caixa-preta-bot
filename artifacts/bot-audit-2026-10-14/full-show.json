@@ -1,0 +1,388 @@
+{
+  "microphone": "synthetic Web Audio stream",
+  "steps": [
+    {
+      "route": "/api/operator",
+      "action": "/reset",
+      "status": 200,
+      "at": "2026-10-14T19:32:40.419Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-pause-boot",
+      "status": 200,
+      "at": "2026-10-14T19:32:40.698Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-advance-boot",
+      "status": 200,
+      "at": "2026-10-14T19:32:40.706Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-advance-boot",
+      "status": 200,
+      "at": "2026-10-14T19:32:40.711Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-advance-boot",
+      "status": 200,
+      "at": "2026-10-14T19:32:40.716Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-advance-boot",
+      "status": 200,
+      "at": "2026-10-14T19:32:40.721Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-advance-boot",
+      "status": 200,
+      "at": "2026-10-14T19:32:40.725Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-advance-boot",
+      "status": 200,
+      "at": "2026-10-14T19:32:40.731Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-advance-boot",
+      "status": 200,
+      "at": "2026-10-14T19:32:40.737Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-advance-boot",
+      "status": 200,
+      "at": "2026-10-14T19:32:40.742Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-advance-boot",
+      "status": 200,
+      "at": "2026-10-14T19:32:40.747Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-advance-boot",
+      "status": 200,
+      "at": "2026-10-14T19:32:40.752Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "agreements-start-choice",
+      "status": 200,
+      "at": "2026-10-14T19:33:16.415Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "record-response",
+      "status": 200,
+      "at": "2026-10-14T19:33:47.358Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "surprise",
+      "status": 200,
+      "at": "2026-10-14T19:33:47.366Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "record-response",
+      "status": 200,
+      "at": "2026-10-14T19:33:50.581Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "surprise",
+      "status": 200,
+      "at": "2026-10-14T19:33:50.587Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "questions-complete",
+      "status": 200,
+      "at": "2026-10-14T19:33:53.144Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "minigame-draw",
+      "status": 200,
+      "at": "2026-10-14T19:34:04.210Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "minigame-start",
+      "status": 200,
+      "at": "2026-10-14T19:34:17.877Z"
+    },
+    {
+      "route": "/api/scene-zero",
+      "action": "set-stage",
+      "status": 200,
+      "at": "2026-10-14T19:34:45.325Z"
+    },
+    {
+      "route": "/api/scene-zero",
+      "action": "set-stage",
+      "status": 200,
+      "at": "2026-10-14T19:35:09.894Z"
+    },
+    {
+      "route": "/api/scene-zero",
+      "action": "gincana-timer-start",
+      "status": 200,
+      "at": "2026-10-14T19:35:42.866Z"
+    },
+    {
+      "route": "/api/scene-zero",
+      "action": "gincana-complete",
+      "status": 200,
+      "at": "2026-10-14T19:35:42.881Z"
+    },
+    {
+      "route": "/api/scene-zero",
+      "action": "suitcase-next",
+      "status": 200,
+      "at": "2026-10-14T19:35:43.682Z"
+    },
+    {
+      "route": "/api/scene-zero",
+      "action": "hangman-error",
+      "status": 200,
+      "at": "2026-10-14T19:36:01.652Z"
+    },
+    {
+      "route": "/api/scene-zero",
+      "action": "hangman-guess",
+      "status": 200,
+      "at": "2026-10-14T19:36:01.658Z"
+    },
+    {
+      "route": "/api/scene-zero",
+      "action": "suitcase-next",
+      "status": 200,
+      "at": "2026-10-14T19:36:09.593Z"
+    },
+    {
+      "route": "/api/scene-zero",
+      "action": "suitcase-finish",
+      "status": 200,
+      "at": "2026-10-14T19:36:28.920Z"
+    },
+    {
+      "route": "/api/operator",
+      "action": "/stopall",
+      "status": 200,
+      "at": "2026-10-14T19:37:04.090Z"
+    },
+    {
+      "route": "/api/operator",
+      "action": "/blackout all off",
+      "status": 200,
+      "at": "2026-10-14T19:37:04.092Z"
+    },
+    {
+      "route": "/api/operator",
+      "action": "/stopall",
+      "status": 200,
+      "at": "2026-10-14T19:37:05.863Z"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/",
+      "httpStatus": 200,
+      "privateFields": 0
+    },
+    {
+      "path": "/videomapping",
+      "httpStatus": 200,
+      "privateFields": 0
+    },
+    {
+      "path": "/baralho-morbido",
+      "httpStatus": 200,
+      "privateFields": 0
+    },
+    {
+      "path": "/queda-aviao",
+      "httpStatus": 200,
+      "privateFields": 0
+    },
+    {
+      "path": "/forca-g-samples",
+      "httpStatus": 200,
+      "privateFields": 0
+    },
+    {
+      "path": "/transicao-psicodelica",
+      "httpStatus": 200,
+      "privateFields": 0
+    },
+    {
+      "path": "/tea-for-two",
+      "httpStatus": 200,
+      "privateFields": 0
+    },
+    {
+      "path": "/piloto-videogame",
+      "httpStatus": 200,
+      "privateFields": 0
+    },
+    {
+      "path": "/tecnologia-floresta",
+      "httpStatus": 200,
+      "privateFields": 0
+    },
+    {
+      "path": "/cena-0-controller",
+      "httpStatus": 200
+    },
+    {
+      "path": "/videomapping-controller",
+      "httpStatus": 200
+    },
+    {
+      "path": "/queda-aviao-controller",
+      "httpStatus": 200
+    },
+    {
+      "path": "/forca-g-samples-controller",
+      "httpStatus": 200
+    },
+    {
+      "path": "/baralho-morbido-controller",
+      "httpStatus": 200
+    },
+    {
+      "path": "/transicao-psicodelica-controller",
+      "httpStatus": 200
+    },
+    {
+      "path": "/tea-for-two-controller",
+      "httpStatus": 200
+    },
+    {
+      "path": "/piloto-videogame-controller",
+      "httpStatus": 200
+    },
+    {
+      "path": "/tecnologia-floresta-controller",
+      "httpStatus": 200
+    },
+    {
+      "path": "/sound-control",
+      "httpStatus": 200
+    },
+    {
+      "path": "/operator",
+      "httpStatus": 200
+    },
+    {
+      "path": "/glitch-controller",
+      "httpStatus": 200
+    },
+    {
+      "path": "/treino",
+      "httpStatus": 200
+    }
+  ],
+  "errors": [],
+  "networkErrors": [],
+  "assets": [
+    {
+      "file": "audios/queda-aviao/raiz/Alarms, T-CAS and GPWS of Boeing 737.mp3",
+      "status": 206,
+      "bytes": 1024
+    },
+    {
+      "file": "audios/queda-aviao/bell-continuo.mp3",
+      "status": 206,
+      "bytes": 1024
+    },
+    {
+      "file": "audios/queda-aviao/britadeira.mp3",
+      "status": 206,
+      "bytes": 1024
+    },
+    {
+      "file": "audios/queda-aviao/pull-up.mp3",
+      "status": 206,
+      "bytes": 1024
+    },
+    {
+      "file": "audios/queda-aviao/sirene.mp3",
+      "status": 206,
+      "bytes": 1024
+    },
+    {
+      "file": "audios/queda-aviao/uaua.mp3",
+      "status": 206,
+      "bytes": 1024
+    },
+    {
+      "file": "audios/queda-aviao/bank-angle.mp3",
+      "status": 206,
+      "bytes": 1024
+    },
+    {
+      "file": "videos/forca-g/forca-g-isabela.mp4",
+      "status": 206,
+      "bytes": 1024
+    },
+    {
+      "file": "videos/forca-g/forca-g-robinson.mp4",
+      "status": 206,
+      "bytes": 1024
+    },
+    {
+      "file": "videos/forca-g/forca-g-ney.mp4",
+      "status": 206,
+      "bytes": 1024
+    },
+    {
+      "file": "audios/CENA 2 FIM/AUDIO-2026-08-19-19-12-17.m4a",
+      "status": 206,
+      "bytes": 1024
+    },
+    {
+      "file": "audios/CENA 2 FIM/AUDIO-2026-08-19-19-12-26.m4a",
+      "status": 206,
+      "bytes": 1024
+    },
+    {
+      "file": "audios/Doris Day - Tea For Two (1950).mp3",
+      "status": 206,
+      "bytes": 1024
+    },
+    {
+      "file": "audios/thomas-edson.mp3",
+      "status": 206,
+      "bytes": 1024
+    },
+    {
+      "file": "videos/verdade-ou-bolo/bolo-lanterna.mp4",
+      "status": 206,
+      "bytes": 1024
+    },
+    {
+      "file": "videos/verdade-ou-bolo/bolo-papel-higienico.mp4",
+      "status": 206,
+      "bytes": 1024
+    },
+    {
+      "file": "videos/verdade-ou-bolo/verdade-nutella.mp4",
+      "status": 206,
+      "bytes": 1024
+    }
+  ],
+  "minigame": "serinho",
+  "sceneZeroComplete": true,
+  "status": "PASS"
+}

@@ -1,0 +1,334 @@
+{
+  "results": [
+    {
+      "route": "/",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "width": 1920,
+      "scrollWidth": 1920
+    },
+    {
+      "route": "/",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "width": 1280,
+      "scrollWidth": 1280
+    },
+    {
+      "route": "/",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "route": "/videomapping",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "width": 1920,
+      "scrollWidth": 1920
+    },
+    {
+      "route": "/videomapping",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "width": 1280,
+      "scrollWidth": 1280
+    },
+    {
+      "route": "/videomapping",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "route": "/baralho-morbido",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "width": 1920,
+      "scrollWidth": 1920
+    },
+    {
+      "route": "/baralho-morbido",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "width": 1280,
+      "scrollWidth": 1280
+    },
+    {
+      "route": "/baralho-morbido",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "route": "/queda-aviao",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "width": 1920,
+      "scrollWidth": 1920
+    },
+    {
+      "route": "/queda-aviao",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "width": 1280,
+      "scrollWidth": 1280
+    },
+    {
+      "route": "/queda-aviao",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "route": "/forca-g-samples",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "width": 1920,
+      "scrollWidth": 1920
+    },
+    {
+      "route": "/forca-g-samples",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "width": 1280,
+      "scrollWidth": 1280
+    },
+    {
+      "route": "/forca-g-samples",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "route": "/transicao-psicodelica",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "width": 1920,
+      "scrollWidth": 1920
+    },
+    {
+      "route": "/transicao-psicodelica",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "width": 1280,
+      "scrollWidth": 1280
+    },
+    {
+      "route": "/transicao-psicodelica",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "route": "/tea-for-two",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "width": 1920,
+      "scrollWidth": 1920
+    },
+    {
+      "route": "/tea-for-two",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "width": 1280,
+      "scrollWidth": 1280
+    },
+    {
+      "route": "/tea-for-two",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "route": "/piloto-videogame",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "width": 1920,
+      "scrollWidth": 1920
+    },
+    {
+      "route": "/piloto-videogame",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "width": 1280,
+      "scrollWidth": 1280
+    },
+    {
+      "route": "/piloto-videogame",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "route": "/tecnologia-floresta",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "width": 1920,
+      "scrollWidth": 1920
+    },
+    {
+      "route": "/tecnologia-floresta",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "width": 1280,
+      "scrollWidth": 1280
+    },
+    {
+      "route": "/tecnologia-floresta",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "scene": "queda-aviao",
+      "segmentsTraversed": 39
+    },
+    {
+      "scene": "baralho-morbido",
+      "card": "brasil",
+      "width": 360,
+      "height": 640,
+      "error": null
+    },
+    {
+      "scene": "baralho-morbido",
+      "card": "brace",
+      "width": 360,
+      "height": 640,
+      "error": null
+    },
+    {
+      "scene": "baralho-morbido",
+      "card": "mamonas",
+      "width": 1920,
+      "height": 1080,
+      "error": null
+    },
+    {
+      "scene": "baralho-morbido",
+      "card": "ubatuba",
+      "width": 1920,
+      "height": 1080,
+      "error": null
+    },
+    {
+      "scene": "baralho-morbido",
+      "card": "asian-airlines",
+      "width": 640,
+      "height": 358,
+      "error": null
+    },
+    {
+      "scene": "baralho-morbido",
+      "card": "imaginar",
+      "width": 640,
+      "height": 358,
+      "error": null
+    },
+    {
+      "scene": "baralho-morbido",
+      "card": "calor",
+      "width": 360,
+      "height": 450,
+      "error": null
+    },
+    {
+      "scene": "baralho-morbido",
+      "card": "911",
+      "width": 360,
+      "height": 450,
+      "error": null
+    },
+    {
+      "scene": "baralho-morbido",
+      "card": "legacy",
+      "width": 1440,
+      "height": 1080,
+      "error": null
+    },
+    {
+      "scene": "baralho-morbido",
+      "card": "marilia",
+      "width": 1440,
+      "height": 1080,
+      "error": null
+    },
+    {
+      "scene": "baralho-morbido",
+      "card": "indiano",
+      "width": 360,
+      "height": 640,
+      "error": null
+    },
+    {
+      "scene": "baralho-morbido",
+      "missingMediaContained": true,
+      "exposesAssetPath": true
+    }
+  ],
+  "errors": []
+}
