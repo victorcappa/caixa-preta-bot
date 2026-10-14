@@ -2,6 +2,13 @@
 
 Each entry records a reproduced problem, its cause, the working response, and a regression guard.
 
+## Await asynchronous browser test conditions explicitly
+
+- Problem: async `waitForFunction` predicates returned false yet released tests early, producing false persistence and synchronization results.
+- Cause: Playwright 1.62.1 treats the returned Promise as truthy before resolving its value.
+- Response: use `scripts/browser-test-utils.js` for async predicates; keep native polling for synchronous DOM checks. Count relayed sound at the elected controller sink.
+- Guard: reject an always-false async predicate and require repeated polls before success. Invalid OpenAI JSON must enter the existing fallback, never project its envelope; `test:openai:failures` covers HTTP, timeout, empty/invalid output and recovery.
+
 ## Participant name screen must finish before the chatbot resumes
 
 - Problem: after the roulette selected a participant, the name overlay stayed up while the center-stage and suitcase instructions were already advancing inside it without the chatbot typewriter.

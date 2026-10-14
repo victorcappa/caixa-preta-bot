@@ -21,6 +21,12 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:instagram` -> `node --no-warnings scripts/instagram-controller-test.js`
 - `npm run test:suitcases` -> `node --no-warnings scripts/suitcase-director-test.js`
 - `npm run test:performance` -> `node --no-warnings scripts/performance-system-test.js`
+- `npm run test:openai:failures` -> `node --no-warnings scripts/openai-failure-audit.js`
+- `npm run test:participant-fallback` -> `node --no-warnings scripts/participant-fallback-test.js`
+- `npm run test:openai:live` -> `node --no-warnings scripts/openai-live-audit.js --live`
+- `npm run test:instagram:readonly` -> `node --no-warnings --env-file-if-exists=.env.local scripts/instagram-readonly-audit.js --live`
+- `npm run test:scene-zero:e2e` -> `node --no-warnings scripts/full-show-audit.js`
+- `npm run test:public-realtime:browser` -> `node --no-warnings scripts/public-realtime-browser-test.js`
 - `npm run test:scene-zero` -> `node --no-warnings scripts/scene-zero-test.js`
 - `npm run test:scene-zero:suitcases:browser` -> `node --no-warnings scripts/scene-zero-suitcases-browser-test.js`
 - `npm run test:scene-one-sampler` -> `node --no-warnings scripts/scene-one-sampler-browser-test.js`
@@ -168,7 +174,9 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 > Names only. Values are intentionally never collected.
 
 - `BASE_URL`
+- `CAIXA_PRETA_AUDIT_OUTPUT`
 - `CAIXA_PRETA_INTERNET_VOICE`
+- `CAIXA_PRETA_OPENAI_AUDIT_MOCK`
 - `CAIXA_PRETA_PERFORMATIVE_RESEARCH`
 - `CAIXA_PRETA_RESEARCH_BUDGET`
 - `CAIXA_PRETA_RESEARCH_ENABLED`
@@ -213,6 +221,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/game-director-test.js`
 - `scripts/instagram-controller-test.js`
 - `scripts/internet-voice-test.js`
+- `scripts/manual-sound-check-browser-test.js`
+- `scripts/participant-fallback-test.js`
 - `scripts/performance-system-test.js`
 - `scripts/play-unlock-browser-test.js`
 - `scripts/public-realtime-browser-test.js`

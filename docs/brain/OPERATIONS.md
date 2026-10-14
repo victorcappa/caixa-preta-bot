@@ -89,6 +89,18 @@ If generated Next artifacts are demonstrably stale, stop the server first and th
 - Controller uploads create and write beneath assets/controller-cues/ on first use.
 - Instagram uses a local browser profile under `.runtime/`; never inspect or publish it casually.
 
+Audit checks (never run against a live show):
+
+- `npm run test:openai:failures` owns port 3000 and temporary snapshots; intercepts OpenAI in its child process using a fake key. Tests 401/429/500, connection loss, timeout, empty/invalid output and recovery without calling the real provider.
+- `npm run test:openai:live` makes one real generation on a dedicated server with the configured key; resets the temporary session and checks operator context. It has a real provider cost and must never target the active show.
+- `npm run test:instagram:readonly` uses a disposable copy of the local browser profile, permits GET/HEAD and named GraphQL Queries, blocks writes and login, and reports only status/counts. It requires network access and never validates posting.
+- `npm run test:scene-zero:e2e` requires a dedicated local server, resets its session and follows BOOT → synthetic sound check → agreements → questions → minigame → participant → malas → final blackout. It also checks scoped routes and audio asset ranges; Baralho/videos are excluded. It does not prove physical microphone/audio or the entire later dramaturgy.
+- `npm run test:public-realtime:browser` checks projection/controller convergence with normal SSE and with public SSE blocked.
+
+Audit artifacts default to `artifacts/bot-audit-2026-10-14`; reusable audit scripts accept `CAIXA_PRETA_AUDIT_OUTPUT`. Results and remaining acceptance limits are in `BOT_TEST_REPORT.md`. Asynchronous browser predicates must use `scripts/browser-test-utils.js`, not async `waitForFunction`.
+
+These checks were validated with the pre-existing reliability work in the audit checkout; its launcher, health and recovery files are not part of the audit commits. Evidence artifacts remain local and unversioned.
+
 ## Deployment
 
 No deployment script, CI workflow, hosting manifest, or confirmed production procedure is versioned in the current repository. `npm run build` validates a production build locally; it does not deploy. Any deployment would have external effects and requires an explicit target, credentials, authorization, and post-deploy verification.

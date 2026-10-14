@@ -9,7 +9,7 @@ Verified against the current worktree on 2026-09-14. Code wins if this snapshot 
 - `lib/showState.js` owns the in-process show state: conversation, public message, Scene Zero, games, suitcases, projection windows, cues, glitch, audio, research, Instagram status, and performance events.
 - Public screens receive state through `app/api/events/route.js`; `lib/publicRealtime.js` adds revision-based reconciliation through `app/api/state/route.js`.
 - Public projection windows register through `app/api/projection/route.js`. Public routes are declared in `lib/projectionScreens.js`; private controller routes are declared in `lib/controllerSurfaces.js`.
-- Prompt composition lives in `prompts/`; curated play knowledge lives in `knowledge/`; the OpenAI boundary is `lib/openai.js`.
+- Prompt composition lives in `prompts/`; curated play knowledge lives in `knowledge/`; the OpenAI boundary is `lib/openai.js`. Invalid envelopes are rejected; participant copy falls back to existing local lines and the already drawn winner.
 
 ## How to start
 
