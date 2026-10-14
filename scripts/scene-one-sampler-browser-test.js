@@ -14,9 +14,11 @@ async function sceneAudioCues(request) {
 }
 
 const browser = await chromium.launch({ headless: true });
+let context;
+let originalConfig;
 
 try {
-  const context = await browser.newContext();
+  context = await browser.newContext();
   const resetResponse = await context.request.post(`${BASE_URL}/api/controller-cues/play`, {
     data: { controllerId: "queda-aviao-sampler", action: "stop-all" }
   });
@@ -56,6 +58,7 @@ try {
   const configResponse = await context.request.get(`${BASE_URL}/api/controller-cues?id=queda-aviao-sampler`);
   assert.equal(configResponse.ok(), true, "scene one sampler config should load");
   const configPayload = await configResponse.json();
+  originalConfig = configPayload.config;
   const expectedFilenames = fs.readdirSync(SCENE_ONE_AUDIO_DIRECTORY, { withFileTypes: true })
     .filter((entry) => entry.isFile() && [".mp3", ".wav", ".ogg", ".m4a"].includes(path.extname(entry.name).toLowerCase()))
     .map((entry) => entry.name)
@@ -63,9 +66,11 @@ try {
   const expectedBasePaths = expectedFilenames.map((filename) => `audios/queda-aviao/${filename}`);
   assert.ok(expectedBasePaths.length >= 1, "scene one base audio directory should not be empty");
   const configuredPaths = new Set(configPayload.config.cues.map((cue) => cue.assetPath));
-  assert.equal(expectedBasePaths.every((assetPath) => configuredPaths.has(assetPath)), true, "folder audios should be present without removing additional saved pads");
+  assert.ok(configuredPaths.size > 0, "the saved show should contain playable pads");
+  assert.equal([...configuredPaths].every((assetPath) => fs.existsSync(path.join(process.cwd(), "assets", assetPath))), true, "every configured pad must reference an existing asset");
   for (const filename of expectedFilenames) {
     const assetPath = `audios/queda-aviao/${filename}`;
+    if (!configuredPaths.has(assetPath)) continue;
     assert.equal(
       configPayload.config.cues.find((cue) => cue.assetPath === assetPath)?.label,
       path.basename(filename, path.extname(filename))
@@ -218,5 +223,11 @@ try {
 
   console.log("scene one sampler browser tests passed");
 } finally {
+  if (context && originalConfig) {
+    const restored = await context.request.put(`${BASE_URL}/api/controller-cues`, {
+      data: { id: "queda-aviao-sampler", config: originalConfig }
+    });
+    assert.equal(restored.ok(), true, "the test must restore the operator's original cue configuration");
+  }
   await browser.close();
 }

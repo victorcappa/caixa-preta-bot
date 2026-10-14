@@ -1,0 +1,132 @@
+{
+  "microphone": "synthetic Web Audio stream",
+  "steps": [
+    {
+      "route": "/api/operator",
+      "action": "/reset",
+      "status": 200,
+      "at": "2026-10-14T19:02:59.663Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-pause-boot",
+      "status": 200,
+      "at": "2026-10-14T19:03:00.040Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-advance-boot",
+      "status": 200,
+      "at": "2026-10-14T19:03:00.046Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-advance-boot",
+      "status": 200,
+      "at": "2026-10-14T19:03:00.052Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-advance-boot",
+      "status": 200,
+      "at": "2026-10-14T19:03:00.057Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-advance-boot",
+      "status": 200,
+      "at": "2026-10-14T19:03:00.062Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-advance-boot",
+      "status": 200,
+      "at": "2026-10-14T19:03:00.066Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-advance-boot",
+      "status": 200,
+      "at": "2026-10-14T19:03:00.071Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-advance-boot",
+      "status": 200,
+      "at": "2026-10-14T19:03:00.075Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-advance-boot",
+      "status": 200,
+      "at": "2026-10-14T19:03:00.079Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-advance-boot",
+      "status": 200,
+      "at": "2026-10-14T19:03:00.084Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "unlock-advance-boot",
+      "status": 200,
+      "at": "2026-10-14T19:03:00.088Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "agreements-start-choice",
+      "status": 200,
+      "at": "2026-10-14T19:03:41.203Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "record-response",
+      "status": 200,
+      "at": "2026-10-14T19:04:14.369Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "surprise",
+      "status": 200,
+      "at": "2026-10-14T19:04:14.374Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "record-response",
+      "status": 200,
+      "at": "2026-10-14T19:04:17.161Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "surprise",
+      "status": 200,
+      "at": "2026-10-14T19:04:17.166Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "questions-complete",
+      "status": 200,
+      "at": "2026-10-14T19:04:21.519Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "minigame-draw",
+      "status": 200,
+      "at": "2026-10-14T19:04:35.528Z"
+    },
+    {
+      "route": "/api/audience-warmup",
+      "action": "minigame-start",
+      "status": 200,
+      "at": "2026-10-14T19:04:49.901Z"
+    }
+  ],
+  "routes": [],
+  "errors": [],
+  "networkErrors": [],
+  "assets": [],
+  "minigame": "serinho",
+  "status": "FAIL",
+  "failure": "/api/scene-zero set-stage: SCENE ZERO PARTICIPANT COPY INVALID\n\nfalse !== true\n"
+}

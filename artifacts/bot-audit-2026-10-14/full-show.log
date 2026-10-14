@@ -1,0 +1,36 @@
+
+> caixa-preta-chat@0.1.0 test:scene-zero:e2e
+> node --no-warnings scripts/full-show-audit.js
+
+CHECKPOINT sound listening
+CHECKPOINT synthetic microphone confirmed
+CHECKPOINT authored agreements and START choice
+CHECKPOINT required action and first question
+CHECKPOINT many reaction
+CHECKPOINT next question after reaction
+CHECKPOINT few reaction
+CHECKPOINT next question after reaction
+CHECKPOINT mini game briefing
+CHECKPOINT selected mini game rules
+CHECKPOINT warmup completed on real timer
+CHECKPOINT participant invitation, countdown, name and center call
+CHECKPOINT first draw, open and key instructions
+CHECKPOINT key timer running
+CHECKPOINT pre-draw hangman theme and instructions
+CHECKPOINT second suitcase released only after win
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByText('Abra a segunda mala e pegue o disco.', { exact: true }) to be visible[22m
+
+    at /Users/VictorCappa/Dev/Caixa Preta/caixa-preta-bot/scripts/full-show-audit.js:117:87 {
+  log: [
+    "  - waiting for getByText('Abra a segunda mala e pegue o disco.', { exact: true }) to be visible"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v24.6.0

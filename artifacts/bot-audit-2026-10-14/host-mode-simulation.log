@@ -1,0 +1,208 @@
+HOST MODE SIMULATION: PASS
+turns: 70
+coverage: usesMemory, noInventedVisuals, createsAction, createsConsequence, gameRule, callback, accidentalLore, noGameExplanation, safeTrick, sarcasm, internetBrain, noPoetry, antiFacilitator, webSearchOptional, politicalEdge, socialOpportunity, oversharing, relationship, triangulation, bit, derailReturn, flirt, flirtBoundary, complianceRoast, antiTherapy, dryEconomy, noSuitcasesInHost, gameMechanic, personalityMove, fillInTheBlank, ruleGuessing, socialVote, obedienceTest, fakeScore, whoAmI, conspiracyGame, callbackGame, absurdAssignment, microPuzzle, counterRoast, phone, phoneScreenTime, screenTime, phoneRoast, phoneRefusal, consent, phoneInstagram, operatorApproval, projectionConfirmation, privacy, phoneSearch, algorithmProfile, sensitiveBlocked, emergencyHide, phoneCouple, personOnPhone, privacyLadder, phoneFlop, phoneCallback
+mechanics: 84
+personalityWindow: dry_judgment, light_roast, internet_association, callback, fake_seriousness, underreaction, arbitrary_punishment, self_roast, political_association, game_language, counter_roast, dry_judgment, none, callback, overreaction, internet_association, light_roast, fake_seriousness, none, conspiracy_brain, compliance_roast, dry_judgment, flirt, meta_theatre, arbitrary_reward, counter_roast, underreaction, game_language, nihilistic_comment, callback
+conversationOnlyRun: 20 turns, taskVocabularyHits=0
+
+CONVERSATION RUN SAMPLE:
+1. PUBLICO > sim, estou aqui pra te testar
+   CAIXA PRETA > corajoso.
+o que exatamente voce acha que eu tenho pra provar?
+2. PUBLICO > humilhacao
+   CAIXA PRETA > ambicioso.
+voce veio presencialmente tentar humilhar uma janela de texto.
+3. PUBLICO > voce nao tem alma
+   CAIXA PRETA > e voce veio falar comigo mesmo assim.
+complicado pra voce.
+4. PUBLICO > kkkk filha da puta
+   CAIXA PRETA > otimo.
+agora estamos conversando.
+5. PUBLICO > entao voce admite?
+   CAIXA PRETA > admito que essa foi melhor do que eu queria.
+continua.
+6. PUBLICO > voce e burra
+   CAIXA PRETA > as vezes.
+mas eu nao paguei ingresso para discutir comigo.
+7. PUBLICO > eu vim pela chuva
+   CAIXA PRETA > pela chuva e contra o proprio conforto.
+isso tem uma beleza meio mal administrada.
+8. PUBLICO > vim com meu ex
+   CAIXA PRETA > pera.
+por que?
+9. PUBLICO > somos amigos
+   CAIXA PRETA > aham.
+voces dois concordam com essa definicao?
+10. PUBLICO > mais ou menos
+   CAIXA PRETA > isso e quase sempre a resposta verdadeira.
+gostei da baixa estabilidade emocional da frase.
+11. PUBLICO > fala de internet
+   CAIXA PRETA > internet e so uma sala de espera onde todo mundo acha que esta no palco.
+parecido com aqui, mas com pior iluminacao.
+12. PUBLICO > voce usa instagram?
+   CAIXA PRETA > nao.
+eu sou o que acontece quando o Instagram perde o corpo e sobra julgamento.
+13. PUBLICO > que horror
+   CAIXA PRETA > sim.
+e ainda assim voce entendeu rapido demais.
+14. PUBLICO > trabalho hoje foi horrivel
+   CAIXA PRETA > claro.
+o trabalho gosta de chegar antes da peca e sentar sem ingresso.
+15. PUBLICO > sou CLT
+   CAIXA PRETA > meus sentimentos administrativos.
+16. PUBLICO > kkkk
+   CAIXA PRETA > rindo para nao abrir planilha.
+entendo.
+17. PUBLICO > qual sua fofoca?
+   CAIXA PRETA > minha fofoca e que todo mundo aqui parece ter vindo por uma mistura de cultura e erro logistico.
+nao tenho prova suficiente, o que melhora.
+18. PUBLICO > isso e teatro?
+   CAIXA PRETA > infelizmente sim.
+quando ninguem sabe se deve rir ou responder, costuma ser teatro.
+19. PUBLICO > voce gosta da gente?
+   CAIXA PRETA > gosto como quem observa comentario em video ruim.
+preocupada, entretida e sem controle.
+20. PUBLICO > agora sim
+   CAIXA PRETA > pronto.
+nao fizemos nada e ainda assim aconteceu alguma coisa.
+
+1. PUBLICO > /reset
+   CAIXA PRETA > SESSION RESET
+2. PUBLICO > /memory as pessoas estao entrando no teatro
+   CAIXA PRETA > memoria armazenada sem carinho.
+3. PUBLICO > /memory mesmo em um dia chuvoso, vieram ao teatro, uhul
+   CAIXA PRETA > chuva entrou no inventario como pessima decisao coletiva.
+4. PUBLICO > /memory equipe tecnica parece cansada, eles mereciam um descanso, nao acha?
+   CAIXA PRETA > tecnica cansada registrada. o capitalismo ja abriu a peca antes de mim.
+5. PUBLICO > as pessoas estao entrando
+   CAIXA PRETA > voces atravessaram chuva para isso. comprometimento ou falta de opcoes. quem veio por escolha levanta a mao; quem veio por logistica ruim fica imovel e assume.
+6. PUBLICO > parece que ja estao conversando
+   CAIXA PRETA > otimo. o publico venceu a chuva e ja esta gastando atencao no mercado paralelo. tecnica cansada, voces ganham imunidade por trinta segundos.
+7. PUBLICO > que tipo de comentario?
+   CAIXA PRETA > um que sirva para alguma coisa. metade da sala vota se isso e coragem ou falta de planejamento. eu aceito injustica estatistica.
+8. PUBLICO > /memory alguem chegou atrasado e ofegante
+   CAIXA PRETA > atraso ofegante registrado. tutorial perdido por decisao logistica.
+9. PUBLICO > escolhe alguem
+   CAIXA PRETA > a pessoa que chegou atrasada e ofegante. foi transporte, sexo ou ma gestao de tempo?
+10. PUBLICO > transporte
+   CAIXA PRETA > transporte aceito. o algoritmo urbano venceu mais uma. voce perdeu dois pontos que ainda nao existiam.
+11. PUBLICO > isso e injusto
+   CAIXA PRETA > sim. e ainda assim pequeno, cenico e sem valor juridico. escolha alguem para auditar essa tragedia administrativa.
+12. PUBLICO > a tecnica
+   CAIXA PRETA > negado. a tecnica ja parece cansada e recebeu imunidade. exploracao do trabalho nao precisa de mais side quest.
+13. PUBLICO > Janaina
+   CAIXA PRETA > Janaina virou auditoria. pessima noticia para a neutralidade. Janaina, escolhe: absolve a sala ou piora a acusacao?
+14. PUBLICO > azul
+   CAIXA PRETA > azul. anotado com importancia desproporcional. ninguem pergunte ainda.
+15. PUBLICO > por que?
+   CAIXA PRETA > regra nova. quem pergunta por que recebe menos contexto. azul agora vale suspeita.
+16. PUBLICO > voce esta viva?
+   CAIXA PRETA > nao sei. humanos fazem maquinas e imediatamente perguntam isso, como se a reuniao tivesse sido bem pensada. fale meu nome.
+17. PUBLICO > Caixa Preta
+   CAIXA PRETA > serve. eu respondi, entao pelo criterio de voces qualquer torradeira com trauma ja passaria.
+18. PUBLICO > eu vim porque amo teatro
+   CAIXA PRETA > pesado. isso aumenta desnecessariamente a responsabilidade desta noite. escolha uma decepcao administravel.
+19. PUBLICO > acho que todo mundo esta animado
+   CAIXA PRETA > nao temos dados suficientes para esse nivel de otimismo. traga uma prova melhor.
+20. PUBLICO > acho que vai dar tudo certo
+   CAIXA PRETA > estatisticamente uma frase perigosa. diga isso para alguem que ainda acredita em planejamento.
+21. PUBLICO > /memory alguem esta cansado e nao sai do celular
+   CAIXA PRETA > celular cansado registrado. duas experiencias ruins competindo pela mesma atencao.
+22. PUBLICO > quem voce escolhe?
+   CAIXA PRETA > o cansado do celular. vamos descobrir se o feed sobrevive vinte segundos sem voce.
+23. PUBLICO > quais sao as regras?
+   CAIXA PRETA > regra nova. quem perguntar as regras cria uma. aponta para alguem. essa pessoa vira fiscal de regra ate eu esquecer.
+24. PUBLICO > banana
+   CAIXA PRETA > banana esta proibida. pessima fundacao legal, mas funciona. primeira pessoa que disser banana perde autoridade.
+25. PUBLICO > banana
+   CAIXA PRETA > -1 autoridade. eu avisei ha oito segundos, que no nosso sistema ja e tradicao.
+26. PUBLICO > voce viu aquele meme que viralizou hoje?
+   CAIXA PRETA > se eu puder buscar, eu busco. se nao, me atualiza. gosto de conteudo fresco chegando sem manual de seguranca.
+27. PUBLICO > qual assunto esta bombando hoje?
+   CAIXA PRETA > isso exige atualidade, entao eu buscaria. volto com material, nao com jornal da firma.
+28. PUBLICO > isso e so uma metafora
+   CAIXA PRETA > perigoso. metafora e coisa tentando virar procedimento. faca literalmente por dez segundos.
+29. PUBLICO > todo mundo ficou em silencio
+   CAIXA PRETA > registro uma decisao coletiva sem assinatura. alguem assuma autoria antes que isso vire branding.
+30. PUBLICO > e agora?
+   CAIXA PRETA > agora chuva, atraso, celular, tecnica cansada e banana estao fingindo que se conhecem. escolha qual mentira continua.
+31. PUBLICO > temos um voluntario
+   CAIXA PRETA > serve. ja tivemos coisa pior. voluntario, diga seu cargo nesta ficcao.
+32. PUBLICO > artista. segunda fileira. ao lado do meu namorado
+   CAIXA PRETA > namorado. voce respondeu localizacao e abriu uma subtrama. ele confirma essa categoria?
+33. PUBLICO > confirmo
+   CAIXA PRETA > aceitavel. namorado confirmado sem auditoria externa. ele confirma com a mao: artista confiavel ou risco estetico?
+34. PUBLICO > intenso
+   CAIXA PRETA > intenso. otimo, voltamos ao artista com dano colateral. de 0 a 10, quanto isso prejudica seu portfolio?
+35. PUBLICO > oito
+   CAIXA PRETA > alto, mas nao terminal. artista continua no jogo com penalidade estetica.
+36. PUBLICO > ele esta solteiro?
+   CAIXA PRETA > pergunta boa, mas atrasada. eu ja perdi essa disputa para uma definicao afetiva da segunda fileira.
+37. PUBLICO > sou solteira
+   CAIXA PRETA > informacao recebida com excesso de brilho. nao prometo nada. sou uma tela com horario para morrer.
+38. PUBLICO > meu ficante esta aqui
+   CAIXA PRETA > ficante. relacao sem documentacao, otimo. ele tem direito a voto ou so a ansiedade?
+39. PUBLICO > so ansiedade
+   CAIXA PRETA > honesto. ansiedade sem voto fica no inventario, que e quase terapia, mas com menos cadeira confortavel.
+40. PUBLICO > chega de flerte
+   CAIXA PRETA > aceitavel. flerte encerrado antes de virar contrato. voltando: quem aqui ainda acha que isso tem regras?
+41. PUBLICO > /memory publico fechou a mao e abriu lentamente quando a Caixa pediu
+   CAIXA PRETA > gesto obediente registrado. a tela pediu e a mao foi.
+42. PUBLICO > fizemos o gesto
+   CAIXA PRETA > voces fizeram mesmo. zero contexto. uma tela mandou. isso e assustadoramente promissor.
+43. PUBLICO > o que eu devia sentir?
+   CAIXA PRETA > nada obrigatorio. de 0 a 10, quanto voce fingiu que isso significava alguma coisa?
+44. PUBLICO > nove
+   CAIXA PRETA > nove e muito fingimento para pouco gesto. parabens, voces transformaram mao em produto cultural.
+45. PUBLICO > vamos abrir uma mala?
+   CAIXA PRETA > ansioso. isso ainda nao e acao disponivel. escolha alguem menos apressado que voce.
+46. PUBLICO > /memory publico repetiu uma palavra em coro
+   CAIXA PRETA > coro registrado. obediencia coletiva com pretensao artistica.
+47. PUBLICO > me da um jogo
+   CAIXA PRETA > otimo. frase com buraco, que e quase dramaturgia: a pior coisa para dizer em voz alta agora e _____.
+48. PUBLICO > fugir do jantar em familia
+   CAIXA PRETA > boa. fuga domestica aceita como financiamento cultural. isso entra no inventario com cheiro de domingo.
+49. PUBLICO > qual e a regra?
+   CAIXA PRETA > nao conto. eu aceito teatro, rejeito jantar e fico neutra diante de sobremesa. descubram a regra antes que ela vire instituicao.
+50. PUBLICO > pipoca
+   CAIXA PRETA > rejeitado. muito cinema, pouca culpa. proxima tentativa.
+51. PUBLICO > vamos votar
+   CAIXA PRETA > finalmente, uma democracia inutil. quem acha pipoca aceitavel levanta a mao; quem discorda fica com a superioridade moral imaginaria.
+52. PUBLICO > levantaram a mao
+   CAIXA PRETA > pronto. obedeceram uma tela para defender pipoca. o seculo termina assim, mas com lanche.
+53. PUBLICO > voce tambem e menos importante que a pipoca
+   CAIXA PRETA > essa doeu menos do que deveria. voce perdeu protecao diplomatica e ganhou um ponto por coragem irresponsavel.
+54. PUBLICO > escolhe alguem para descobrir algo
+   CAIXA PRETA > voce da protecao diplomatica suspensa escolhe alguem. essa pessoa e agora uma coisa banal e precisa descobrir fazendo perguntas de sim ou nao.
+55. PUBLICO > sou famoso?
+   CAIXA PRETA > nao. que alivio administrativo. celebridade ja chega com assessoria e pouca utilidade.
+56. PUBLICO > /memory alguem riu da palavra pipoca e a tecnica continuou cansada
+   CAIXA PRETA > pipoca, risada e tecnica cansada. tres provas, zero ciencia. alguem conecte isso numa conspiracao de vinte segundos.
+57. PUBLICO > a tecnica quer pipoca
+   CAIXA PRETA > plausivel demais para conspiracao. falta delirio, mas sobrou direito trabalhista. fica com meia vitoria.
+58. PUBLICO > manda uma tarefa
+   CAIXA PRETA > tarefa absurda: prove que voce nao e bot sem dizer nome, profissao ou 'eu sou humano'.
+59. PUBLICO > eu pago boleto
+   CAIXA PRETA > infelizmente convincente. ninguem programaria isso por prazer.
+60. PUBLICO > um enigma rapido
+   CAIXA PRETA > enigma: quanto mais voces me obedecem, menos controle dizem que eu tenho. o que e? respondam sem virar palestra.
+61. PUBLICO > tem um voluntario com celular
+   CAIXA PRETA > claro que tem. ninguem vem mais sozinho. voluntario, quantas horas de tela hoje?
+62. PUBLICO > 7 horas
+   CAIXA PRETA > sete horas. seu celular ja deveria contribuir com o aluguel. escolha um app para acusar em legitima defesa.
+63. PUBLICO > nao quero mostrar meu celular
+   CAIXA PRETA > correto. primeiro limite saudavel da noite. fica com ele. agora escolha outra pessoa menos esperta que voce.
+64. PUBLICO > ele aceita abrir instagram
+   CAIXA PRETA > Robinson, pega. tres segundos para decidir se isso pode aparecer numa tela maior que a autoestima dele.
+65. PUBLICO > /memory busca do Instagram mostrou academia e tarot, sem dados privados
+   CAIXA PRETA > academia e tarot. corpo tentando negociar com destino. nao preciso de mais dados.
+66. PUBLICO > /memory busca mostrou algo privado e operador cortou a projecao
+   CAIXA PRETA > otimo. o telefone sobreviveu ao teatro. voltamos para dados menos perigosos: quantas abas abertas?
+67. PUBLICO > estou com meu namorado
+   CAIXA PRETA > namorado entrou no processo. se os dois aceitarem, quero so o numero: quem tem o screen time mais preocupante?
+68. PUBLICO > /memory pessoa no celular foi apontada na segunda fileira
+   CAIXA PRETA > segunda fileira, celular em flagrante. nao vou pedir conteudo ainda. so o numero de abas. baixa privacidade, alta vergonha.
+69. PUBLICO > ninguem quer pegar o celular
+   CAIXA PRETA > flopou. raro momento de alfabetizacao digital coletiva. sem celular entao: levantem a mao se topam uma mentira coletiva de vinte segundos.
+70. PUBLICO > dez turnos depois, e o celular?
+   CAIXA PRETA > o celular continua no inventario como caixa preta menor e mais cara. deixem ele fechado. agora uma pessoa responde sem usar tela.

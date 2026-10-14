@@ -1,0 +1,13 @@
+
+> caixa-preta-chat@0.1.0 test:instagram:readonly
+> node --no-warnings --env-file-if-exists=.env.local scripts/instagram-readonly-audit.js --live
+
+INSTAGRAM > iniciando navegador...
+INSTAGRAM > perfil persistente: /var/folders/zh/ffx555rn6wb0374j4z23s3jr0000gn/T/caixa-instagram-readonly-DjEK2m
+INSTAGRAM > contexto existente reutilizado
+INSTAGRAM > abrindo instagram.com
+INSTAGRAM > sessao encontrada
+INSTAGRAM > abrindo @caixapretabot
+INSTAGRAM > perfil carregado
+INSTAGRAM > navegador fechado
+{"account":"caixapretabot","writesBlocked":true,"authenticated":true,"httpStatus":200,"session":"authenticated","loginFields":0,"visibleImages":9,"homeMediaLinks":2,"homeFrameBytes":177807,"ms":4766,"profileStatus":"ready","profileMediaLinks":0,"profileMainCount":1,"profileRouteMatches":true,"profileErrorPage":false,"profileBlank":false,"profileNetwork":[{"kind":"profile","status":200},{"kind":"query","status":200}],"blockedReadQueries":[],"frameBytes":46827}

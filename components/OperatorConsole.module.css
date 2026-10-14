@@ -19,6 +19,61 @@
   overflow-y: auto;
 }
 
+.recoveryCard,
+.emergencyBar {
+  flex: 0 0 auto;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid #d9b45d;
+  background: #120f05;
+  color: #ffe09a;
+}
+
+.recoveryCard p {
+  margin: 8px 0 12px;
+}
+
+.recoveryCard > div,
+.emergencyBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.recoveryCard button,
+.emergencyBar button {
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.emergencyBar {
+  border-color: #7d3131;
+  background: #100404;
+  color: #ff8c8c;
+}
+
+.emergencyBar > div {
+  display: grid;
+  gap: 3px;
+}
+
+.emergencyBar span {
+  font-size: .72rem;
+}
+
+.emergencyActive {
+  border-color: #ff4343;
+  background: #2a0000;
+  color: #fff;
+}
+
 .projectionBar {
   flex: 0 0 auto;
   display: grid;

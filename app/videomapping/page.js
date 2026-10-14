@@ -1,5 +1,6 @@
 import Chat from "@/components/Chat";
 import ProjectionWindowClient from "@/components/ProjectionWindowClient";
+import PublicErrorBoundary from "@/components/PublicErrorBoundary";
 
 export const metadata = {
   title: "Caixa Preta — Videomapping",
@@ -8,9 +9,9 @@ export const metadata = {
 
 export default function VideomappingPage() {
   return (
-    <>
+    <PublicErrorBoundary>
       <ProjectionWindowClient />
       <Chat initialPublicLayout="quadrants" />
-    </>
+    </PublicErrorBoundary>
   );
 }

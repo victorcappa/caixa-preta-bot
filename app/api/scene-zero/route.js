@@ -29,6 +29,7 @@ import { buildDataCollectionSystemPrompt } from "@/prompts/dataCollection";
 import { SCENE_ZERO_MOREL_BIOS_DURATION_MS } from "@/data/scene-zero-morel";
 import { PLAY_UNLOCK_CONFIG } from "@/data/scene-zero-unlock";
 import { robotTypingIntervalMs } from "@/lib/robot-sound/state";
+import { localParticipantSequence } from "@/lib/scene-zero/participantFallback";
 import {
   sceneZeroEmergenceCueForMessage,
   sceneZeroEmergenceCueForNextSuitcase,
@@ -233,10 +234,12 @@ async function generateParticipantSequence({ candidates, winner, detail = "" }) 
     ].join(" ")
   });
   const sequence = parseParticipantSequence(turn.text);
-  if (!sequence) return null;
+  if (!sequence) return localParticipantSequence(winner.name, SCENE_ZERO_PARTICIPANT_INVITE);
   const normalizeCopy = (value) => `${value || ""}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
   const centerCopy = normalizeCopy(sequence.centerInvitation);
-  if (!centerCopy.includes(normalizeCopy(winner.name)) || !centerCopy.includes("centro")) return null;
+  if (!centerCopy.includes(normalizeCopy(winner.name)) || !centerCopy.includes("centro")) {
+    return localParticipantSequence(winner.name, SCENE_ZERO_PARTICIPANT_INVITE);
+  }
   return sequence;
 }
 
@@ -1347,6 +1350,20 @@ export async function POST(request) {
     const body = await request.json().catch(() => ({}));
     const action = `${body.action || ""}`;
     const detail = `${body.detail || ""}`.trim();
+    const emergencyBlockedActions = new Set([
+      "browser-command-start",
+      "browser-instagram-start",
+      "instagram-manual-login",
+      "google-guidance-start",
+      "instagram-start",
+      "suitcase-instagram-start",
+      "suitcase-instagram-next",
+      "suitcase-instagram-send",
+      "suitcase-instagram-resume"
+    ]);
+    if (showState.snapshot().reliability?.emergencyMode?.active && emergencyBlockedActions.has(action)) {
+      return Response.json({ error: "MODO EMERGÊNCIA: SERVIÇO EXTERNO BLOQUEADO" }, { status: 409 });
+    }
 
     if (action === "message-typed") {
       const snapshot = showState.privateSnapshot();

@@ -19,8 +19,18 @@ async function revision(request) {
   return data.revision;
 }
 
-async function openPair(browser, { blockPublicSse = false } = {}) {
+async function openPair(browser, { blockPublicSse = false, trackSources = false } = {}) {
   const context = await browser.newContext();
+  if (trackSources) await context.addInitScript(() => {
+    const NativeEventSource = window.EventSource;
+    window.__auditEventSources = [];
+    window.EventSource = class extends NativeEventSource {
+      constructor(...args) {
+        super(...args);
+        window.__auditEventSources.push(this);
+      }
+    };
+  });
 
   if (blockPublicSse) {
     await context.route("**/api/events?client=public-display", (route) => route.abort());
@@ -85,7 +95,34 @@ try {
   await fallback.projection.locator("audio").waitFor({ state: "detached", timeout: 2000 });
   await fallback.context.close();
 
-  console.log("public realtime browser tests passed");
+  const offline = await openPair(browser, { trackSources: true });
+  await stopAll(offline.context.request);
+  await offline.projection.locator("audio").waitFor({ state: "detached" });
+  await offline.context.setOffline(true);
+  // Offline emulation does not reliably tear down already-open SSE sockets.
+  for (const page of [offline.projection, offline.controller]) await page.evaluate(() => {
+    for (const source of window.__auditEventSources) {
+      source.close();
+      source.dispatchEvent(new Event("error"));
+    }
+  });
+  const onlineContext = await browser.newContext();
+  const config = await onlineContext.request.get(`${BASE_URL}/api/controller-cues?id=${CONTROLLER_ID}`).then((response) => response.json());
+  const started = await onlineContext.request.post(`${BASE_URL}/api/controller-cues/play`, {
+    data: { controllerId: CONTROLLER_ID, action: "play", cue: config.config.cues[0] }
+  });
+  assert.equal(started.ok(), true);
+  await offline.projection.waitForTimeout(500);
+  assert.equal(await offline.projection.locator("audio").count(), 0, "offline projection must retain its last frame");
+  await offline.context.setOffline(false);
+  await offline.projection.locator("audio").waitFor({ state: "attached", timeout: 5000 });
+  await offline.projection.reload({ waitUntil: "domcontentloaded" });
+  await offline.projection.locator("audio").waitFor({ state: "attached", timeout: 5000 });
+  await stopAll(onlineContext.request);
+  await offline.projection.locator("audio").waitFor({ state: "detached", timeout: 5000 });
+  await onlineContext.close();
+  await offline.context.close();
+  console.log("public realtime browser tests passed: SSE, reconciliation, offline clients, reconnect and reload");
 } finally {
   const cleanupContext = await browser.newContext();
   await stopAll(cleanupContext.request);

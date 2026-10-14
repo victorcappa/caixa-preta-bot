@@ -1,3 +1,4 @@
+import { waitForAsyncCondition } from "./browser-test-utils.js";
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
 import { PLAY_UNLOCK_CONFIG } from "../data/scene-zero-unlock.js";
@@ -97,30 +98,30 @@ try {
 
   await postWarmup("set-manual-mode", { manualMode: true });
   await postWarmup("unlock-end-bios");
-  await page.waitForFunction(async () => {
+  await waitForAsyncCondition(page, async () => {
     const response = await fetch("/api/state");
     const state = await response.json();
     return state.sceneZero.unlock.status === "SOUND_CHECK";
   });
   await postWarmup("manual-next");
-  await page.waitForFunction(async () => {
+  await waitForAsyncCondition(page, async () => {
     const response = await fetch("/api/state");
     return (await response.json()).sceneZero.unlock.soundCheck?.phase === "listening";
   });
   await postWarmup("unlock-sound-check-skip");
   await postWarmup("manual-next");
-  await page.waitForFunction(async () => {
+  await waitForAsyncCondition(page, async () => {
     const response = await fetch("/api/state");
     return (await response.json()).sceneZero.unlock.status === "HUMAN_VERIFICATION";
   });
   const verificationBarCenterY = await progressBarCenterY();
   await postWarmup("set-manual-mode", { manualMode: false });
-  await page.waitForFunction(async () => {
+  await waitForAsyncCondition(page, async () => {
     const response = await fetch("/api/state");
     return (await response.json()).audienceWarmup.startChoice?.status === "awaiting";
   }, null, { timeout: 40000 });
   await postWarmup("agreements-start-choice", { choiceId: "start" });
-  await page.waitForFunction(async () => {
+  await waitForAsyncCondition(page, async () => {
     const response = await fetch("/api/state");
     return (await response.json()).audienceWarmup.phase === "questions";
   }, null, { timeout: 15000 });

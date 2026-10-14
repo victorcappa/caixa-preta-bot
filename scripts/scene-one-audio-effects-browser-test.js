@@ -1,3 +1,4 @@
+import { waitForAsyncCondition } from "./browser-test-utils.js";
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
 import { assignSceneOneSampleShortcuts } from "../lib/sceneOneSampleShortcuts.js";
@@ -61,7 +62,7 @@ try {
   await controller.keyboard.press(firstCue.shortcut);
   await effects.getByText(firstCue.label, { exact: true }).waitFor();
   await controller.keyboard.press("l");
-  await controller.waitForFunction(async ({ controllerId, cueId }) => {
+  await waitForAsyncCondition(controller, async ({ controllerId, cueId }) => {
     const response = await fetch("/api/state", { cache: "no-store" });
     const state = await response.json();
     return state.sceneCue?.audioCues?.some((cue) => (
@@ -69,7 +70,7 @@ try {
     ));
   }, { controllerId: CONTROLLER_ID, cueId: firstCue.id });
   await controller.keyboard.press("l");
-  await controller.waitForFunction(async ({ controllerId, cueId }) => {
+  await waitForAsyncCondition(controller, async ({ controllerId, cueId }) => {
     const response = await fetch("/api/state", { cache: "no-store" });
     const state = await response.json();
     return state.sceneCue?.audioCues?.some((cue) => (
@@ -77,7 +78,7 @@ try {
     ));
   }, { controllerId: CONTROLLER_ID, cueId: firstCue.id });
   await effects.getByRole("button", { name: "RÁDIO" }).click();
-  await controller.waitForFunction(async ({ controllerId, cueId }) => {
+  await waitForAsyncCondition(controller, async ({ controllerId, cueId }) => {
     const response = await fetch(`/api/controller-cues?id=${controllerId}`, { cache: "no-store" });
     const data = await response.json();
     return data.config?.cues?.find((cue) => cue.id === cueId)?.audioEffects?.preset === "radio";
@@ -86,7 +87,7 @@ try {
   await controller.getByRole("button", { name: `Tocar ${secondCue.label}` }).click();
   await effects.getByText(secondCue.label, { exact: true }).waitFor();
   await effects.getByRole("button", { name: "DESTRUÍDO" }).click();
-  await controller.waitForFunction(async ({ controllerId, cueId }) => {
+  await waitForAsyncCondition(controller, async ({ controllerId, cueId }) => {
     const response = await fetch(`/api/controller-cues?id=${controllerId}`, { cache: "no-store" });
     const data = await response.json();
     return data.config?.cues?.find((cue) => cue.id === cueId)?.audioEffects?.preset === "destruido";
@@ -95,7 +96,7 @@ try {
   await controller.getByRole("button", { name: `Tocar ${firstCue.label}` }).click();
   await effects.getByRole("button", { name: "RÁDIO", pressed: true }).waitFor();
   await effects.getByRole("slider", { name: "PHASER INTENSIDADE" }).fill("0.81");
-  await controller.waitForFunction(async ({ controllerId, cueId }) => {
+  await waitForAsyncCondition(controller, async ({ controllerId, cueId }) => {
     const response = await fetch(`/api/controller-cues?id=${controllerId}`, { cache: "no-store" });
     const data = await response.json();
     const settings = data.config?.cues?.find((cue) => cue.id === cueId)?.audioEffects;
@@ -111,7 +112,7 @@ try {
   assert.equal(saved.config.cues.find((cue) => cue.id === secondCue.id).audioEffects.preset, "destruido");
 
   await controller.getByRole("button", { name: `Fade out ${firstCue.label}` }).click();
-  await controller.waitForFunction(async ({ controllerId, firstCueId, secondCueId }) => {
+  await waitForAsyncCondition(controller, async ({ controllerId, firstCueId, secondCueId }) => {
     const response = await fetch("/api/state", { cache: "no-store" });
     const state = await response.json();
     const active = state.sceneCue?.audioCues || [];

@@ -1,0 +1,41 @@
+{
+  "ok": true,
+  "status": "ok",
+  "at": "2026-10-14T19:31:09.353Z",
+  "core": {
+    "app": {
+      "status": "ok"
+    },
+    "storage": {
+      "status": "ok",
+      "lastWrite": "2026-10-14T19:31:07.798Z",
+      "error": null
+    },
+    "emergencyMode": {
+      "status": "inactive",
+      "active": false
+    }
+  },
+  "optional": {
+    "internet": {
+      "status": "ok",
+      "error": null
+    },
+    "openAI": {
+      "status": "offline",
+      "configured": false,
+      "error": "OPENAI_API_KEY_MISSING"
+    },
+    "externalRequests": {
+      "status": "idle",
+      "active": 0,
+      "lastResult": {
+        "service": "openai",
+        "status": "error",
+        "at": "2026-10-14T19:30:21.640Z",
+        "durationMs": 0,
+        "error": "Error"
+      }
+    }
+  }
+}

@@ -1,23 +1,25 @@
 # Current state
 
-Verified against the current worktree on 2026-09-14. Code wins if this snapshot drifts.
+Verified against the current worktree on 2026-10-14. Code wins if this snapshot drifts.
 
 ## Runtime and architecture
 
 - Next.js App Router 15 with React 19 and server routes under `app/api/`.
 - Local runtime is fixed to `http://localhost:3000` by `scripts/require-port-3000.js`.
-- `lib/showState.js` owns the in-process show state: conversation, public message, Scene Zero, games, suitcases, projection windows, cues, glitch, audio, research, Instagram status, and performance events.
+- `lib/showState.js` owns live state and writes atomic, checksummed recovery snapshots to `.runtime/show/current.json`. Operator recovery pauses timers/media and never auto-resumes.
 - Public screens receive state through `app/api/events/route.js`; `lib/publicRealtime.js` adds revision-based reconciliation through `app/api/state/route.js`.
 - Public projection windows register through `app/api/projection/route.js`. Public routes are declared in `lib/projectionScreens.js`; private controller routes are declared in `lib/controllerSurfaces.js`.
-- Prompt composition lives in `prompts/`; curated play knowledge lives in `knowledge/`; the OpenAI boundary is `lib/openai.js`.
+- Prompts/knowledge live in `prompts/` and `knowledge/`. `lib/openai.js` bounds calls and sends unavailable/invalid replies through the existing local fallback. Participant selection also falls back to existing local lines and the already drawn winner.
 
 ## How to start
 
-Install with `npm install`, configure `OPENAI_API_KEY` in `.env.local` for live model calls, then run `npm run dev`. See `docs/brain/OPERATIONS.md` for show startup and validation boundaries.
+Install with `npm install` and configure `OPENAI_API_KEY` only for live model calls. Develop with `npm run dev`; prepare and run a presentation with `npm run show:prepare` followed by `npm run show`. See `docs/brain/OPERATIONS.md`.
 
 ## Implemented
 
 - Main public chatbot at `/` and private technical hub at `/operator`. The projected bot line and idle cursor use Modern DOS 8×16 by default; the Operator exposes a live font preview and selection between local Modern DOS 8×16/9×16, VT323, and the original Courier, alongside typing speed and click-frequency controls. The choice is shared through `showState.robotSound`/SSE by Principal and Videomapping; operator controls retain their existing typography. Modern DOS's CC0 license is bundled with its local font files.
+- Operator offers explicit resume/new choices after an interrupted snapshot. `MODO EMERGÊNCIA` persists, blocks external requests, pauses automation/media, and retains manual controls and `STOP ALL`. `/api/health` separates core from optional services.
+- Principal and Videomapping are wrapped by a public error boundary; render failures and internal 404s show only `SINAL INTERROMPIDO`, while the real error is retained in private reliability diagnostics.
 - Alternative `/videomapping` 2x2 presentation reuses the same `Chat`, `showState`, and realtime connection. Switching between `/` and `/videomapping` in a controlled projection window changes layout in place.
 - Scene Zero controller at `/cena-0-controller` and equivalent videomapping controller at `/videomapping-controller`. Its right-side index is operational: BOOT, ESCUTA DE DECIBÉIS, ESQUENTAR PÚBLICO, ESCOLHER PARTICIPANTE, and JOGO DAS MALAS can be re-entered from the menu. Returning to ESCUTA DE DECIBÉIS keeps the completed BIOS at 100%, resets later verification progress, and immediately reopens microphone listening. Returning from the suitcases interrupts their active game, timers, browser routine, glitch, and final blackout before restoring the selected earlier stage.
 - Before the required play-dead prompt, the human-verification introduction and ten authored agreement steps use the normal chatbot path. The attention signal always plays its phrase twice, including after `Quando eu fizer este som...` finishes typing and before `...você deve olhar para a tela.`. The sequence demonstrates the real five-second timer, then explains and demonstrates error and success. Only afterward the bot shows its blinking cursor, plays that same double notification, writes `...`, and comments sarcastically that the audience's alertness is inconclusive before `Podemos começar?`. Disabled `START` and `GAME OVER` choices appear publicly, while active versions remain in the operator panel; selecting them triggers distinct start and game-over sounds. Manual mode advances cursor, double notification, ellipsis, comment, and every other agreement as separate steps; automatic mode uses established delays. After the operator choice animates for 1.4 seconds, its authored comment replaces the question and releases play-dead. With no authored verification title, its progress bar stays a compact top HUD; videomapping retains its status quadrant.
@@ -58,12 +60,8 @@ Install with `npm install`, configure `OPENAI_API_KEY` in `.env.local` for live 
 
 ## Known operational constraints
 
-- State is process-local. Restarting Next creates a new show session; `/reset` clears the current show session.
+- Atomic recovery survives process restart, but requires explicit resume/new choice. `/reset` starts a new session and overwrites the prior recovery point.
 - The global singleton is version-gated by `STORE_VERSION` in `lib/showState.js`; stale dev processes can retain old state/code combinations.
 - Browser media and microphone paths require real browser interaction and permissions; physical output needs a separate sound check.
 - Browser checks require the expected local server and deliberate waits for SSE/timer convergence.
 - The repository contains archived `bot-old/`; it is not the current implementation.
-
-## Active worktree context
-
-The current branch is `feature-verificacao-humana-bios`. At this snapshot, Scene Zero unlock/BIOS, warmup, public projection, and videomapping files have uncommitted changes. Inspect `git status` and the relevant diff before editing those domains; do not overwrite unrelated work. Treat this paragraph as transient and replace it when that work lands or is abandoned.

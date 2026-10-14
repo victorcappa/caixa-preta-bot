@@ -56,7 +56,6 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
   const [typedReplies, setTypedReplies] = useState({});
   const [input, setInput] = useState("");
   const [status, setStatus] = useState("CONNECTING");
-  const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [performancePending, setPerformancePending] = useState(false);
   const [performanceEvents, setPerformanceEvents] = useState([]);
@@ -553,7 +552,6 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
     }
 
     setInput("");
-    setError("");
     setPending(true);
 
     const controller = new AbortController();
@@ -573,7 +571,15 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
       }
     } catch (requestError) {
       if (requestError.name !== "AbortError") {
-        setError(requestError.message);
+        fetch("/api/reliability", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "public-error",
+            message: requestError.message,
+            path: window.location.pathname
+          })
+        }).catch(() => {});
         robotSoundEngine.error();
       }
     } finally {
@@ -979,7 +985,6 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
             ) : null}
 
             {pending && !publicMessage ? <p className={styles.machine}>_</p> : null}
-            {error ? <p className={styles.error}>&gt; {error}</p> : null}
             <div ref={scrollRef} />
           </div>
           <footer className={styles.publicInput}>{publicInput}</footer>

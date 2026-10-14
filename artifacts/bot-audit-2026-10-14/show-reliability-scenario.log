@@ -1,0 +1,5 @@
+
+> caixa-preta-chat@0.1.0 test:show-reliability:scenario
+> node --no-warnings scripts/show-reliability-scenario.js
+
+SHOW RELIABILITY SCENARIOS A-D OK

@@ -1,0 +1,20 @@
+INTERNET VOICE TESTS PASSED
+STYLE
+guide: caixa_preta_internet_ptbr_voice@1.2.0
+registers: whatsapp, reddit
+humor: understatement
+contexts: none
+target architecture: correction_only
+slang cooldown: aura, jurou, skill issue, lore, mano
+recent patterns: micro_reply, fragment, dry_observation, fragment
+recent lengths: 1, 5, 4, 5
+recent humor: none
+recent kkk: 1
+recent profanity: 1
+recent questions: 0
+callbacks available: 0
+repertoire tokens: ninguém?, pior que foi, eu vi, calma
+repertoire markers: eu vi, pior que foi, calma, que isso, assim fica difícil
+repertoire terms: none
+repertoire examples: gente | eu vi isso | o problema é que todo mundo aceitou | infelizmente mandou bem
+SCENARIOS 13/13

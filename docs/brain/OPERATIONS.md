@@ -30,6 +30,15 @@ npm start
 
 `build` writes production artifacts to `.next/`; `start` serves them on port 3000. Stop `dev` before `build` or `start`.
 
+For the presentation, build before the room opens and use the production launcher:
+
+```bash
+npm run show:prepare
+npm run show
+```
+
+`show:prepare` creates the production build. `show` never builds or starts a development server: it requires an existing `.next/BUILD_ID`, verifies writable snapshot storage and a free port 3000, starts `next start`, and waits for the local core health check. It never kills a process occupying the port. Stop it with `Ctrl-C` or a targeted `SIGTERM`.
+
 ## Cheap checks
 
 ```bash
@@ -45,13 +54,17 @@ Targeted logical and browser commands are listed in the generated inventory. Run
 
 ## Start a local presentation
 
-1. Confirm port 3000 is free and run `npm run dev`.
+1. Before audience entry, run `npm run show:prepare`; then start the production runtime with `npm run show`.
 2. Open `http://localhost:3000/operator` as the private hub.
 3. In `ABRIR NOVA JANELA COM`, open the desired public route from the operator so the projection window receives an ID and registers.
 4. Move that public window to the extended display/projector and enter fullscreen manually.
 5. Use `MUDAR PARA TELA` or the scene-controller tabs only after the projection status reports a connected window.
 6. For Scene Zero, open `/cena-0-controller` (or `/videomapping-controller`), confirm microphone permission/status, then use `BOOT` and the visible operator sequence.
 7. Before audience entry, verify text, blackout/recovery, global volume, media playback, selected audio output, microphone level, and STOP ALL on the actual browser/hardware path.
+
+If Operator reports an interrupted session, inspect scene, step, and snapshot time. Choose `RETOMAR APRESENTAÇÃO` to restore it paused and with transient media/external browser state stopped, or `INICIAR NOVA APRESENTAÇÃO` to discard that recovery path deliberately. Nothing restores automatically.
+
+`MODO EMERGÊNCIA` is available at the top of Operator. Activating it cancels and blocks external requests, pauses automatic/timed activity, preserves snapshots, and keeps local/manual controls available. Deactivating it permits future external requests but deliberately leaves the show in manual control.
 
 Direct public routes and all controller routes are listed in `docs/brain/INVENTORY.md`. The canonical registries are `lib/projectionScreens.js` and `lib/controllerSurfaces.js`.
 
@@ -82,12 +95,34 @@ Effect: terminates a local process. Repeat the `lsof` command; no listener means
 
 If generated Next artifacts are demonstrably stale, stop the server first and then remove only `.next/`. This deletes rebuildable cache/output and should not be done merely because it is documented here.
 
-## Persistence and writes
+## Persistence, health, and writes
 
-- Show state and conversation are process-local and reset on server restart.
+- Recovery snapshots are written asynchronously and atomically to `.runtime/show/current.json`; checksum/schema/store-version failures are rejected. The live singleton remains authoritative.
+- `GET /api/health` reports `core` app/storage/emergency state separately from optional internet/OpenAI/request state. Optional failure does not make the core unhealthy.
 - `data/scene-notes.json`, `data/controller-cues.json`, and `data/forca-g-sampler-settings.json` are local persisted operator data and can be changed by their UIs.
 - Controller uploads create and write beneath assets/controller-cues/ on first use.
 - Instagram uses a local browser profile under `.runtime/`; never inspect or publish it casually.
+
+Targeted reliability checks:
+
+```bash
+npm run test:show-reliability
+npm run test:show-reliability:scenario
+```
+
+The scenario check owns port 3000 temporarily, refuses to run when it is occupied, uses isolated temporary snapshot storage, and exercises restart/resume, offline fallback, public error containment, new-session discard, and Emergency Mode. Do not run it during a live or rehearsing session.
+
+Audit checks (never run against a live show):
+
+- `npm run test:openai:failures` owns port 3000 and temporary snapshots; intercepts OpenAI in its child process using a fake key. Tests 401/429/500, connection loss, timeout, empty/invalid output and recovery without calling the real provider.
+- `npm run test:openai:live` makes one real generation on a dedicated server with the configured key; resets the temporary session and checks operator context. It has a real provider cost and must never target the active show.
+- `npm run test:instagram:readonly` uses a disposable copy of the local browser profile, permits GET/HEAD and named GraphQL Queries, blocks writes and login, and reports only status/counts. It requires network access and never validates posting.
+- `npm run test:scene-zero:e2e` requires a dedicated local server, resets its session and follows BOOT → synthetic sound check → agreements → questions → minigame → participant → malas → final blackout. It also checks scoped routes and audio asset ranges; Baralho/videos are excluded. It does not prove physical microphone/audio or the entire later dramaturgy.
+- `npm run test:public-realtime:browser` checks projection/controller convergence with normal SSE and with public SSE blocked.
+
+Audit artifacts default to `artifacts/bot-audit-2026-10-14`; reusable audit scripts accept `CAIXA_PRETA_AUDIT_OUTPUT`. Results and remaining acceptance limits are in `BOT_TEST_REPORT.md`. Asynchronous browser predicates must use `scripts/browser-test-utils.js`, not async `waitForFunction`.
+
+These checks were validated with the reliability layer now versioned in this checkout, including its launcher, health and recovery files. The dated audit evidence is versioned under `artifacts/`; runtime snapshots and browser profiles remain local.
 
 ## Deployment
 

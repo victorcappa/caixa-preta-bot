@@ -1,0 +1,13 @@
+   ▲ Next.js 15.5.23
+   - Local:        http://localhost:3000
+   - Network:      http://0.0.0.0:3000
+
+ ✓ Starting...
+ ✓ Ready in 131ms
+[Caixa Preta] espetáculo pronto em http://localhost:3000/operator
+OPENAI LOCAL FALLBACK { reason: 'Error', key: 'failure' }
+OPENAI LOCAL FALLBACK { reason: 'Error', key: 'failure' }
+OPENAI LOCAL FALLBACK { reason: 'Error', key: 'failure' }
+OPENAI LOCAL FALLBACK { reason: 'Error', key: 'transition' }
+OPENAI LOCAL FALLBACK { reason: 'Error', key: 'transition' }
+[Caixa Preta] servidor encerrado (0).

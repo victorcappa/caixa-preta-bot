@@ -1,0 +1,19 @@
+Manual arrow and denied-microphone fallback passed {
+  before: {
+    stage: 'idle',
+    unlock: 'SOUND_CHECK',
+    sound: 'greeting',
+    pending: 'sound-check-listen',
+    manual: true,
+    source: 'audience-sound-check'
+  },
+  after: {
+    stage: 'idle',
+    unlock: 'SOUND_CHECK',
+    sound: 'listening',
+    pending: 'sound-check-comment',
+    manual: true,
+    source: 'audience-sound-check'
+  },
+  actions: [ 'primary-next', 'unlock-sound-check-level' ]
+}

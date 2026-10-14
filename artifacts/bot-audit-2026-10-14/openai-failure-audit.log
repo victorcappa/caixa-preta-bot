@@ -1,0 +1,5 @@
+
+> caixa-preta-chat@0.1.0 test:openai:failures
+> node --no-warnings scripts/openai-failure-audit.js
+
+OpenAI failure audit: HTTP 401/429/500, timeout, connection, empty, malformed, invalid type and recovery passed

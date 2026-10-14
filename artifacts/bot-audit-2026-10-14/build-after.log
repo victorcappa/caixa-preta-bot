@@ -1,0 +1,122 @@
+
+> caixa-preta-chat@0.1.0 build
+> next build
+
+   ▲ Next.js 15.5.23
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+<w> [webpack.cache.PackFileCacheStrategy] Skipped not serializable cache item 'Compilation/modules|javascript/auto|/Users/VictorCappa/Dev/Caixa Preta/caixa-preta-bot/node_modules/next/dist/build/webpack/loaders/next-flight-css-loader.js??ruleSet[1].rules[14].oneOf[5].use[0]!/Users/VictorCappa/Dev/Caixa Preta/caixa-preta-bot/node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[1]!/Users/VictorCappa/Dev/Caixa Preta/caixa-preta-bot/node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[2]!/Users/VictorCappa/Dev/Caixa Preta/caixa-preta-bot/components/OperatorConsole.module.css|ssr': No serializer registered for Warning
+<w> while serializing webpack/lib/cache/PackFileCacheStrategy.PackContentItems -> webpack/lib/NormalModule -> Array { 1 items } -> webpack/lib/ModuleWarning -> Warning
+<w> [webpack.cache.PackFileCacheStrategy] Skipped not serializable cache item 'Compilation/modules|javascript/auto|/Users/VictorCappa/Dev/Caixa Preta/caixa-preta-bot/node_modules/next/dist/build/webpack/loaders/next-flight-css-loader.js??ruleSet[1].rules[14].oneOf[5].use[0]!/Users/VictorCappa/Dev/Caixa Preta/caixa-preta-bot/node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[1]!/Users/VictorCappa/Dev/Caixa Preta/caixa-preta-bot/node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[2]!/Users/VictorCappa/Dev/Caixa Preta/caixa-preta-bot/components/SceneZeroController.module.css|ssr': No serializer registered for Warning
+<w> while serializing webpack/lib/cache/PackFileCacheStrategy.PackContentItems -> webpack/lib/NormalModule -> Array { 1 items } -> webpack/lib/ModuleWarning -> Warning
+<w> [webpack.cache.PackFileCacheStrategy] Skipped not serializable cache item 'Compilation/modules|javascript/auto|/Users/VictorCappa/Dev/Caixa Preta/caixa-preta-bot/node_modules/next/dist/build/webpack/loaders/next-flight-css-loader.js??ruleSet[1].rules[14].oneOf[5].use[0]!/Users/VictorCappa/Dev/Caixa Preta/caixa-preta-bot/node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[1]!/Users/VictorCappa/Dev/Caixa Preta/caixa-preta-bot/node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[5].use[2]!/Users/VictorCappa/Dev/Caixa Preta/caixa-preta-bot/components/SoundControlPanel.module.css|ssr': No serializer registered for Warning
+<w> while serializing webpack/lib/cache/PackFileCacheStrategy.PackContentItems -> webpack/lib/NormalModule -> Array { 1 items } -> webpack/lib/ModuleWarning -> Warning
+ ⚠ Compiled with warnings in 2.4s
+
+./components/OperatorConsole.module.css
+Warning
+
+(254:3) autoprefixer: end value has mixed support, consider using flex-end instead
+
+Import trace for requested module:
+./components/OperatorConsole.module.css
+./components/OperatorConsole.js
+
+./components/SceneZeroController.module.css
+Warning
+
+(101:76) autoprefixer: start value has mixed support, consider using flex-start instead
+
+Import trace for requested module:
+./components/SceneZeroController.module.css
+./components/SceneZeroController.js
+
+./components/SoundControlPanel.module.css
+Warning
+
+(13:3) autoprefixer: end value has mixed support, consider using flex-end instead
+
+Import trace for requested module:
+./components/SoundControlPanel.module.css
+./components/SoundControlPanel.js
+
+ ✓ Compiled successfully in 2.8s
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/27) ...
+   Generating static pages (6/27)
+   Generating static pages (13/27)
+   Generating static pages (20/27)
+ ✓ Generating static pages (27/27)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ○ /                                      148 B         174 kB
+├ ○ /_not-found                            223 B         103 kB
+├ ƒ /api/audience-warmup                   223 B         103 kB
+├ ƒ /api/baralho-morbido                   223 B         103 kB
+├ ƒ /api/chat                              223 B         103 kB
+├ ƒ /api/controller-cues                   223 B         103 kB
+├ ƒ /api/controller-cues/play              223 B         103 kB
+├ ƒ /api/events                            223 B         103 kB
+├ ƒ /api/forca-g-sampler                   223 B         103 kB
+├ ƒ /api/game-assets                       223 B         103 kB
+├ ƒ /api/glitch                            223 B         103 kB
+├ ƒ /api/global-volume                     223 B         103 kB
+├ ƒ /api/health                            223 B         103 kB
+├ ƒ /api/instagram/audio                   223 B         103 kB
+├ ƒ /api/instagram/frame                   223 B         103 kB
+├ ƒ /api/instagram/input                   223 B         103 kB
+├ ƒ /api/instagram/panel                   223 B         103 kB
+├ ƒ /api/instagram/password                223 B         103 kB
+├ ƒ /api/instagram/stream                  223 B         103 kB
+├ ƒ /api/operator                          223 B         103 kB
+├ ƒ /api/performance/interaction           223 B         103 kB
+├ ƒ /api/projection                        223 B         103 kB
+├ ƒ /api/queda-aviao                       223 B         103 kB
+├ ƒ /api/reliability                       223 B         103 kB
+├ ƒ /api/robot-sound                       223 B         103 kB
+├ ƒ /api/scene-notes                       223 B         103 kB
+├ ƒ /api/scene-zero                        223 B         103 kB
+├ ƒ /api/show-session                      223 B         103 kB
+├ ƒ /api/state                             223 B         103 kB
+├ ƒ /api/training/chat                     223 B         103 kB
+├ ƒ /api/training/examples                 223 B         103 kB
+├ ƒ /api/training/improve                  223 B         103 kB
+├ ƒ /api/training/state                    223 B         103 kB
+├ ƒ /api/training/style-notes              223 B         103 kB
+├ ○ /baralho-morbido                     3.33 kB         110 kB
+├ ○ /baralho-morbido-controller          2.51 kB         112 kB
+├ ○ /cena-0-controller                     143 B         161 kB
+├ ○ /forca-g-samples                     5.14 kB         112 kB
+├ ○ /forca-g-samples-controller          4.65 kB         117 kB
+├ ○ /forca-g-shaders                       223 B         103 kB
+├ ○ /forca-g-shaders-controller            223 B         103 kB
+├ ○ /glitch-controller                   5.15 kB         115 kB
+├ ○ /operator                              729 B         154 kB
+├ ○ /piloto-videogame                      190 B         111 kB
+├ ○ /piloto-videogame-controller           190 B         121 kB
+├ ○ /queda-aviao                         2.83 kB         114 kB
+├ ○ /queda-aviao-controller                143 B         126 kB
+├ ○ /queda-aviao/debug                     143 B         126 kB
+├ ƒ /reliability-test/public-error         950 B         103 kB
+├ ○ /sound-control                         950 B         121 kB
+├ ○ /tea-for-two                           190 B         111 kB
+├ ○ /tea-for-two-controller                190 B         121 kB
+├ ○ /tecnologia-floresta                   305 B         111 kB
+├ ○ /tecnologia-floresta-controller        190 B         121 kB
+├ ○ /transicao-psicodelica                 190 B         111 kB
+├ ○ /transicao-psicodelica-controller      190 B         121 kB
+├ ƒ /treino                              3.79 kB         114 kB
+├ ○ /videomapping                          148 B         174 kB
+└ ○ /videomapping-controller               143 B         161 kB
++ First Load JS shared by all             102 kB
+  ├ chunks/1255-95a777d519d1f36f.js      46.2 kB
+  ├ chunks/4bd1b696-86afa8c4c12348b1.js  54.2 kB
+  └ other shared chunks (total)          1.93 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand

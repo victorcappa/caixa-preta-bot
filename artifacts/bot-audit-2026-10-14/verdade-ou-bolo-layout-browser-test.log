@@ -1,0 +1,4 @@
+verdade ou bolo layout browser test passed {
+  wide: { stageWidth: 806.390625, fontSize: 48.3234 },
+  compact: { stageHeight: 320, fontSize: 30.6 }
+}

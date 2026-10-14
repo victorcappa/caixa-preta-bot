@@ -35,6 +35,8 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   const [projectionMenu, setProjectionMenu] = useState(null);
   const [instagramPanelClosed, setInstagramPanelClosed] = useState(false);
   const [warmupOpen, setWarmupOpen] = useState(false);
+  const [recoveryStatus, setRecoveryStatus] = useState(null);
+  const [recoveryPending, setRecoveryPending] = useState(false);
   const scrollRef = useRef(null);
   const projectionWindowRefs = useRef(new Map());
 
@@ -53,6 +55,11 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
         }
       })
       .catch(() => {});
+
+    fetch("/api/show-session")
+      .then((response) => response.json())
+      .then((data) => setRecoveryStatus(data))
+      .catch(() => setRecoveryStatus({ status: "unavailable", recoverable: false }));
 
     const events = new EventSource("/api/events?client=operator");
     events.onopen = () => setStatus("CONNECTED");
@@ -486,10 +493,84 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     }
   }
 
+  async function chooseShowSession(action) {
+    setRecoveryPending(true);
+    try {
+      const response = await fetch("/api/show-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        addLog(data.error || "SHOW SESSION ERROR", "error");
+        return;
+      }
+      if (data.state) setState((current) => ({ ...data.state, context: current.context }));
+      setRecoveryStatus({ status: "current", recoverable: false });
+      addLog(action === "resume" ? "APRESENTAÇÃO RETOMADA EM MODO SEGURO" : "NOVA APRESENTAÇÃO INICIADA", "ok");
+    } catch {
+      addLog("SHOW SESSION CONNECTION FAILED", "error");
+    } finally {
+      setRecoveryPending(false);
+    }
+  }
+
+  async function toggleEmergencyMode() {
+    const active = Boolean(state.reliability?.emergencyMode?.active);
+    setPending(true);
+    try {
+      const response = await fetch("/api/reliability", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: active ? "emergency-off" : "emergency-on" })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        addLog(data.error || "EMERGENCY MODE ERROR", "error");
+        return;
+      }
+      addLog(active ? "MODO EMERGÊNCIA DESATIVADO; CONTROLES PERMANECEM MANUAIS" : "MODO EMERGÊNCIA ATIVO", "ok");
+    } catch {
+      addLog("EMERGENCY MODE CONNECTION FAILED", "error");
+    } finally {
+      setPending(false);
+    }
+  }
+
   return (
     <Terminal title="OPERATOR" footer={footer} className={terminalClassName}>
       <div className={`${styles.operator} ${embedded ? styles.embeddedOperator : ""}`}>
         <section className={styles.console}>
+          {recoveryStatus?.recoverable || recoveryStatus?.status === "corrupted" ? (
+            <section className={styles.recoveryCard} aria-live="polite">
+              <strong>{recoveryStatus.status === "corrupted" ? "SNAPSHOT CORROMPIDO" : "APRESENTAÇÃO INTERROMPIDA ENCONTRADA"}</strong>
+              {recoveryStatus.snapshot ? (
+                <p>
+                  SALVO: {new Date(recoveryStatus.snapshot.savedAt).toLocaleString("pt-BR")}
+                  {" · "}CENA: {recoveryStatus.snapshot.summary?.scene || "-"}
+                  {" · "}ETAPA: {recoveryStatus.snapshot.summary?.step || "-"}
+                </p>
+              ) : <p>O estado anterior não é seguro para retomada. Inicie uma nova apresentação.</p>}
+              <div>
+                {recoveryStatus.recoverable ? (
+                  <button disabled={recoveryPending} onClick={() => chooseShowSession("resume")} type="button">RETOMAR APRESENTAÇÃO</button>
+                ) : null}
+                <button disabled={recoveryPending} onClick={() => chooseShowSession("new")} type="button">INICIAR NOVA APRESENTAÇÃO</button>
+              </div>
+            </section>
+          ) : null}
+
+          <section className={`${styles.emergencyBar} ${state.reliability?.emergencyMode?.active ? styles.emergencyActive : ""}`}>
+            <div>
+              <strong>MODO EMERGÊNCIA</strong>
+              <span>{state.reliability?.emergencyMode?.active ? "EXTERNOS BLOQUEADOS · TIMERS PAUSADOS · CONTROLE MANUAL" : "Pronto para isolar serviços externos e pausar automações."}</span>
+            </div>
+            <button disabled={pending} onClick={toggleEmergencyMode} type="button">
+              {state.reliability?.emergencyMode?.active ? "SAIR DO MODO EMERGÊNCIA" : "ATIVAR MODO EMERGÊNCIA"}
+            </button>
+          </section>
+
           <div className={styles.projectionBar} aria-label="Controle das janelas de projecao">
             <ProjectionMenuButton
               disabled={false}
@@ -630,7 +711,16 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             <span>KNOWLEDGE: {state.context?.knowledge?.loaded ? "LOADED" : "NOT LOADED"}</span>
             <span>VARIABLES: {variableCount}</span>
             <span>PROMPT: V{state.context?.promptVersion || 1}</span>
+            <span>FALLBACK: {state.reliability?.lastFallback?.key?.toUpperCase() || "NÃO USADO"}</span>
           </div>
+          {state.reliability?.lastPublicError ? (
+            <article className={styles.memory}>
+              <strong>ÚLTIMO ERRO PÚBLICO</strong>
+              <p>{state.reliability.lastPublicError.message || "PUBLIC_RENDER_ERROR"}
+                {"\n"}{state.reliability.lastPublicError.path || "-"}
+              </p>
+            </article>
+          ) : null}
           <h2>MEMORY BUFFER</h2>
           {latestMemories.length === 0 ? <p>EMPTY</p> : null}
           {latestMemories.map((memory) => (

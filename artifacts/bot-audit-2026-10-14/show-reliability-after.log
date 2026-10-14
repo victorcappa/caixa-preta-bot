@@ -1,0 +1,5 @@
+
+> caixa-preta-chat@0.1.0 test:show-reliability
+> node --no-warnings scripts/show-reliability-test.js
+
+SHOW RELIABILITY UNIT OK

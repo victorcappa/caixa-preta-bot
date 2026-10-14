@@ -9,12 +9,16 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 - Projection window registration/navigation -> `components/ProjectionWindowClient.js` -> `app/api/projection/route.js` -> `lib/projectionScreens.js`.
 - Public/private screen registry -> `lib/projectionScreens.js` and `lib/controllerSurfaces.js`.
 - Global stop -> `app/api/operator/route.js` (`stopAllRoutines`) -> `lib/stopAllSignal.js` -> media consumers.
+- Snapshot/restart recovery -> `lib/showState.js` -> `lib/showSessionPersistence.js` -> `app/api/show-session/route.js` -> `components/OperatorConsole.js`.
+- Emergency Mode and health -> `app/api/reliability/route.js`, `lib/externalRequestControl.js`, and `app/api/health/route.js`.
 
 ## Public chatbot and model
 
 - Public text/layout/typing -> `components/Chat.js` and `components/Chat.module.css`.
 - Visual performance event -> `components/PerformanceLayer.js` -> `lib/performanceEvents.js`.
 - Chat request/model envelope -> `app/api/chat/route.js` -> `lib/openai.js`.
+- OpenAI timeout/local fallback -> `lib/externalRequestControl.js` -> `lib/showFallback.js` -> normal chat message/typewriter flow.
+- Public render containment -> `components/PublicErrorBoundary.js`, `app/global-error.js`, and `app/not-found.js`.
 - System prompt -> `prompts/buildSystemPrompt.js` -> `prompts/personality.js`, `prompts/rules.js`, `prompts/modes.js`.
 - Play knowledge -> `lib/knowledge.js` -> `knowledge/`.
 - Web research policy/state -> `lib/research/ResearchDirector.js` and `docs/autonomia-pesquisa.md`.
@@ -67,3 +71,4 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 - Available commands and discovered checks -> `docs/brain/INVENTORY.md` (read only the relevant section).
 - Cheap project checks -> `package.json` scripts.
 - Browser checks -> matching `scripts/*-browser-test.js`; these usually require `npm run dev` already running on port 3000.
+- Reliability unit/scenario checks -> `scripts/show-reliability-test.js` and `scripts/show-reliability-scenario.js`.

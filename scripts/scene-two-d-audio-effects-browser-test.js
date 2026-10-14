@@ -1,3 +1,4 @@
+import { waitForAsyncCondition } from "./browser-test-utils.js";
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
 
@@ -45,7 +46,7 @@ try {
   await controller.getByRole("button", { name: `Tocar ${audioCues[0].label}` }).click();
   await effects.getByText(audioCues[0].label, { exact: true }).waitFor();
   await effects.getByRole("button", { name: "RÁDIO" }).click();
-  await controller.waitForFunction(async ({ controllerId, cueId }) => {
+  await waitForAsyncCondition(controller, async ({ controllerId, cueId }) => {
     const response = await fetch(`/api/controller-cues?id=${controllerId}`, { cache: "no-store" });
     const data = await response.json();
     return data.config?.cues?.find((cue) => cue.id === cueId)?.audioEffects?.preset === "radio";
@@ -54,7 +55,7 @@ try {
   await controller.getByRole("button", { name: `Tocar ${audioCues[1].label}` }).click();
   await effects.getByText(audioCues[1].label, { exact: true }).waitFor();
   await effects.getByRole("button", { name: "DESTRUÍDO" }).click();
-  await controller.waitForFunction(async ({ controllerId, cueId }) => {
+  await waitForAsyncCondition(controller, async ({ controllerId, cueId }) => {
     const response = await fetch(`/api/controller-cues?id=${controllerId}`, { cache: "no-store" });
     const data = await response.json();
     return data.config?.cues?.find((cue) => cue.id === cueId)?.audioEffects?.preset === "destruido";

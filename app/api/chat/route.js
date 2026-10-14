@@ -99,7 +99,7 @@ export async function POST(request) {
     }
 
     const assistantMessage = turn.text
-      ? showState.addMessage("assistant", turn.text, "openai")
+      ? showState.addMessage("assistant", turn.text, turn.fallback ? "fallback-local" : "openai")
       : null;
 
     if (turn.events.length) {
@@ -108,7 +108,7 @@ export async function POST(request) {
 
     showState.completeTurnGameTick();
 
-    return Response.json({ message: assistantMessage, events: turn.events });
+    return Response.json({ message: assistantMessage, events: turn.events, fallback: turn.fallback || null });
   } catch (error) {
     console.error("CHAT ERROR", error);
     return Response.json(
