@@ -11,6 +11,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run dev` -> `node scripts/require-port-3000.js && next dev --port 3000`
 - `npm run build` -> `next build`
 - `npm run start` -> `node scripts/require-port-3000.js && next start --port 3000`
+- `npm run show:prepare` -> `npm run build`
+- `npm run show` -> `node scripts/show-launcher.js`
 - `npm run lint` -> `eslint .`
 - `npm run test:host-mode` -> `node scripts/host-mode-simulation.js`
 - `npm run test:internet-voice` -> `node --no-warnings scripts/internet-voice-test.js`
@@ -21,6 +23,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:instagram` -> `node --no-warnings scripts/instagram-controller-test.js`
 - `npm run test:suitcases` -> `node --no-warnings scripts/suitcase-director-test.js`
 - `npm run test:performance` -> `node --no-warnings scripts/performance-system-test.js`
+- `npm run test:show-reliability` -> `node --no-warnings scripts/show-reliability-test.js`
+- `npm run test:show-reliability:scenario` -> `node --no-warnings scripts/show-reliability-scenario.js`
 - `npm run test:openai:failures` -> `node --no-warnings scripts/openai-failure-audit.js`
 - `npm run test:participant-fallback` -> `node --no-warnings scripts/participant-fallback-test.js`
 - `npm run test:openai:live` -> `node --no-warnings scripts/openai-live-audit.js --live`
@@ -66,6 +70,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `/queda-aviao-controller` -> `app/queda-aviao-controller/page.js`
 - `/queda-aviao/debug` -> `app/queda-aviao/debug/page.js`
 - `/queda-aviao` -> `app/queda-aviao/page.js`
+- `/reliability-test/public-error` -> `app/reliability-test/public-error/page.js`
 - `/sound-control` -> `app/sound-control/page.js`
 - `/tea-for-two-controller` -> `app/tea-for-two-controller/page.js`
 - `/tea-for-two` -> `app/tea-for-two/page.js`
@@ -89,6 +94,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `GET /api/game-assets` -> `app/api/game-assets/route.js`
 - `GET, POST /api/glitch` -> `app/api/glitch/route.js`
 - `GET, POST /api/global-volume` -> `app/api/global-volume/route.js`
+- `GET /api/health` -> `app/api/health/route.js`
 - `POST /api/instagram/audio` -> `app/api/instagram/audio/route.js`
 - `GET /api/instagram/frame` -> `app/api/instagram/frame/route.js`
 - `POST /api/instagram/input` -> `app/api/instagram/input/route.js`
@@ -99,9 +105,11 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `POST /api/performance/interaction` -> `app/api/performance/interaction/route.js`
 - `GET, POST /api/projection` -> `app/api/projection/route.js`
 - `GET, POST /api/queda-aviao` -> `app/api/queda-aviao/route.js`
+- `GET, POST /api/reliability` -> `app/api/reliability/route.js`
 - `GET, POST /api/robot-sound` -> `app/api/robot-sound/route.js`
 - `GET, PUT /api/scene-notes` -> `app/api/scene-notes/route.js`
 - `GET, POST /api/scene-zero` -> `app/api/scene-zero/route.js`
+- `GET, POST /api/show-session` -> `app/api/show-session/route.js`
 - `GET /api/state` -> `app/api/state/route.js`
 - `POST /api/training/chat` -> `app/api/training/chat/route.js`
 - `GET, POST /api/training/examples` -> `app/api/training/examples/route.js`
@@ -129,6 +137,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/PerformanceLayer.js`
 - `components/PreparedSceneController.js`
 - `components/ProjectionWindowClient.js`
+- `components/PublicErrorBoundary.js`
+- `components/PublicErrorProbe.js`
 - `components/PublicGlitchLayer.js`
 - `components/PublicSceneStage.js`
 - `components/RobotSoundControls.js`
@@ -178,8 +188,10 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `CAIXA_PRETA_INTERNET_VOICE`
 - `CAIXA_PRETA_OPENAI_AUDIT_MOCK`
 - `CAIXA_PRETA_PERFORMATIVE_RESEARCH`
+- `CAIXA_PRETA_RELIABILITY_TESTS`
 - `CAIXA_PRETA_RESEARCH_BUDGET`
 - `CAIXA_PRETA_RESEARCH_ENABLED`
+- `CAIXA_PRETA_SHOW_RUNTIME_DIR`
 - `CAIXA_PRETA_URL`
 - `CAIXA_PRETA_VOICE_GUIDE_PATH`
 - `CAIXA_PRETA_WEB_SEARCH`
@@ -190,6 +202,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `NODE_ENV`
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL`
+- `OPENAI_SHOW_TIMEOUT_MS`
 - `OPENAI_WEB_SEARCH_TOOL_TYPE`
 - `TZ`
 
@@ -235,6 +248,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/scene-two-d-audio-effects-browser-test.js`
 - `scripts/scene-zero-suitcases-browser-test.js`
 - `scripts/scene-zero-test.js`
+- `scripts/show-reliability-test.js`
 - `scripts/sound-control-browser-test.js`
 - `scripts/suitcase-director-test.js`
 - `scripts/verdade-ou-bolo-layout-browser-test.js`

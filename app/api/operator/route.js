@@ -280,6 +280,10 @@ export async function POST(request) {
 
     const { name, content } = parseCommand(rawCommand);
 
+    if (showState.snapshot().reliability?.emergencyMode?.active && name === "/instagram") {
+      return Response.json({ error: "MODO EMERGÊNCIA: INSTAGRAM BLOQUEADO" }, { status: 409 });
+    }
+
     if (name === "/reset") {
       await stopAllRoutines();
       showState.reset();
