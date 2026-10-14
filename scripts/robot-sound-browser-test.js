@@ -12,6 +12,7 @@ async function openRobotSoundPanel(page) {
 }
 
 async function main() {
+  const { waitForAsyncCondition } = await import("./browser-test-utils.js");
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -27,18 +28,19 @@ async function main() {
   });
 
   try {
-    await page.goto("http://localhost:3000", { waitUntil: "domcontentloaded" });
-    await page.getByText("CONNECTED", { exact: true }).first().waitFor({ timeout: 10000 });
-    await page.getByRole("button", { name: "Abrir terminal operador ao lado" }).click();
+    await page.goto("http://localhost:3000/operator", { waitUntil: "domcontentloaded" });
+    const projection = await context.newPage();
+    await projection.goto("http://localhost:3000", { waitUntil: "domcontentloaded" });
+    await page.getByText("CONNECTED", { exact: true }).first().waitFor({ state: "attached", timeout: 10000 });
     const typography = page.getByLabel("Tipografia e digitação do bot");
     await typography.getByLabel("Fonte do texto projetado do bot").selectOption("modern-dos-9x16");
     await typography.getByLabel("Velocidade da digitação do robô").fill("24");
-    await page.waitForFunction(async () => {
+    await waitForAsyncCondition(page, async () => {
       const response = await fetch("/api/robot-sound");
       const settings = (await response.json()).robotSound;
       return settings.displayFont === "modern-dos-9x16" && Math.round(1000 / settings.typingIntervalMs) === 24;
     });
-    await page.locator('[aria-label="Fala atual da Caixa Preta"][data-bot-font="modern-dos-9x16"]').waitFor();
+    await projection.locator('[aria-label="Fala atual da Caixa Preta"][data-bot-font="modern-dos-9x16"]').waitFor();
     assert.equal(await typography.locator("[data-bot-font]").getAttribute("data-bot-font"), "modern-dos-9x16");
     const soundPanel = await openRobotSoundPanel(page);
     await soundPanel.getByRole("button", { name: "TEST DIGITAÇÃO" }).click();
@@ -53,7 +55,7 @@ async function main() {
       const sound = window.__caixaPretaRobotSoundEngine;
       return sound.context !== window.__previousRobotAudioContext && sound.context?.state === "running";
     });
-    await page.waitForFunction(async () => {
+    await waitForAsyncCondition(page, async () => {
       const response = await fetch("/api/robot-sound");
       return (await response.json()).robotSound.outputResetSequence > 0;
     });
@@ -87,7 +89,7 @@ async function main() {
     await soundPanel.getByLabel("Frequência do som de digitação do robô").fill("0.25");
     await soundPanel.getByLabel("Estilo geral dos efeitos do robô").selectOption("system95");
     await soundPanel.getByLabel("Preset da digitação do robô").selectOption("instavel");
-    await page.waitForFunction(async () => {
+    await waitForAsyncCondition(page, async () => {
       const response = await fetch("/api/robot-sound");
       const settings = (await response.json()).robotSound;
       return settings.soundStyle === "system95" && settings.preset === "instavel" && settings.masterVolume === 0.22 &&
@@ -107,7 +109,7 @@ async function main() {
     await page.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.settings?.enabled === false);
     assert.equal(await page.evaluate(() => window.__caixaPretaRobotSoundEngine.activeSources.size), 0);
     await soundPanel.getByRole("button", { name: "SOUND OFF" }).click();
-    await page.waitForFunction(async () => {
+    await waitForAsyncCondition(page, async () => {
       const response = await fetch("/api/robot-sound");
       return (await response.json()).robotSound.enabled === true;
     });
@@ -115,14 +117,14 @@ async function main() {
     const operatorInput = page.getByLabel("Comando do operator");
     await operatorInput.fill("/reset");
     await operatorInput.press("Enter");
-    await page.waitForFunction(async () => {
+    await waitForAsyncCondition(page, async () => {
       const response = await fetch("/api/state");
       return (await response.json()).sceneZero.unlock.status === "STANDBY";
     });
-    await page.getByText("> _", { exact: true }).waitFor({ timeout: 7000 });
-    assert.equal(await page.getByText("TEM ALGUEM AI?", { exact: false }).count(), 0);
+    await projection.getByLabel("Cursor da Caixa Preta", { exact: true }).waitFor({ timeout: 7000 });
+    assert.equal(await projection.getByText("TEM ALGUEM AI?", { exact: false }).count(), 0);
 
-    await page.evaluate(async () => {
+    await projection.evaluate(async () => {
       const sound = window.__caixaPretaRobotSoundEngine;
       window.__robotGhostCount = 0;
       const originalTyping = sound.typing.bind(sound);
@@ -136,11 +138,11 @@ async function main() {
         body: JSON.stringify({ action: "trigger", payload: { preset: "strong", durationMs: 3500 } })
       });
     });
-    await page.waitForFunction(() => {
+    await projection.waitForFunction(() => {
       const sound = window.__caixaPretaRobotSoundEngine;
       return sound?.glitch?.active && sound.glitch.ghostTyping;
     });
-    await page.waitForFunction(() => window.__robotGhostCount > 0, null, { timeout: 4200 });
+    await projection.waitForFunction(() => window.__robotGhostCount > 0, null, { timeout: 4200 });
 
     await page.evaluate(async () => {
       await fetch("/api/operator", {
@@ -153,10 +155,12 @@ async function main() {
 
     const relevantProblems = consoleProblems.filter((line) => (
       !line.includes("favicon") &&
+      !line.includes("The AudioContext was not allowed to start") &&
       !line.includes("Failed to load resource: the server responded with a status of 400")
     ));
     const relevantResponses = failedResponses.filter((line) => !line.includes("/api/projection"));
     assert.deepEqual(relevantProblems, []);
+    console.log("Expected autoplay policy warnings:", consoleProblems.filter((line) => line.includes("The AudioContext was not allowed to start")).length);
     assert.deepEqual(relevantResponses, []);
 
     await page.goto("http://localhost:3000/operator", { waitUntil: "domcontentloaded" });
@@ -167,7 +171,7 @@ async function main() {
 
     const projectionPage = await context.newPage();
     await projectionPage.goto("http://localhost:3000", { waitUntil: "domcontentloaded" });
-    await projectionPage.getByText("> _", { exact: true }).waitFor({ timeout: 10000 });
+    await projectionPage.getByLabel("Cursor da Caixa Preta", { exact: true }).waitFor({ timeout: 10000 });
     await projectionPage.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.lastRelaySinkAt > 0);
 
     const secondOperatorPage = await context.newPage();
@@ -176,7 +180,11 @@ async function main() {
     const secondOperatorSoundPanel = await openRobotSoundPanel(secondOperatorPage);
     await secondOperatorSoundPanel.getByRole("button", { name: "TEST DIGITAÇÃO" }).click();
     await secondOperatorPage.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.context?.state === "running");
-    await projectionPage.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.relaySinks?.size === 2);
+    await projectionPage.waitForFunction(() => {
+      const sound = window.__caixaPretaRobotSoundEngine;
+      sound?.relayEffect("typing", { character: " ", force: false });
+      return sound?.relaySinks?.size === 2;
+    });
     await secondOperatorPage.waitForTimeout(900);
     for (const operatorPage of [page, secondOperatorPage]) {
       await operatorPage.evaluate(() => {
@@ -197,7 +205,11 @@ async function main() {
     ]);
     assert.equal(relayedTypingCounts.reduce((total, count) => total + count, 0), 1);
     await secondOperatorPage.close();
-    await projectionPage.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.relaySinks?.size === 1);
+    await projectionPage.waitForFunction(() => {
+      const sound = window.__caixaPretaRobotSoundEngine;
+      sound?.relayEffect("typing", { character: " ", force: false });
+      return sound?.relaySinks?.size === 1;
+    });
 
     await page.evaluate(() => {
       const sound = window.__caixaPretaRobotSoundEngine;
@@ -246,6 +258,11 @@ async function main() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: "/reset" })
     }));
+    await projectionPage.evaluate(() => fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: "Teste de digitação após reset." })
+    }));
     await page.waitForFunction(() => window.__relayedBotTypingCount > 0, null, { timeout: 5000 });
     await projectionPage.close();
 
@@ -273,7 +290,7 @@ async function main() {
 
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto("http://localhost:3000/cena-0-controller", { waitUntil: "domcontentloaded" });
-    await page.getByRole("heading", { name: "BOT / MALAS" }).waitFor();
+    await page.getByRole("heading", { name: "BOOT", exact: true }).waitFor();
     const scrollResult = await page.evaluate(() => {
       const controller = document.querySelector("main");
       const scroller = controller?.parentElement;

@@ -156,7 +156,6 @@ try {
   assert.equal(state.audienceWarmup.actionTimer.status, "awaiting_message");
   assert.equal(state.audienceWarmup.actionTimer.endsAt, null, "o timer não pode correr enquanto a frase está sendo digitada");
   await display.getByText(state.publicMessage.content, { exact: true }).waitFor();
-  const requiredPromptTypedAt = Date.now();
   state = await waitFor(
     context.request,
     (candidate) => candidate.audienceWarmup.actionTimer?.status === "awaiting_start",
@@ -164,6 +163,8 @@ try {
     5000
   );
   assert.equal(state.audienceWarmup.actionTimer.endsAt, null, "a pausa de leitura ainda não pode exibir o timer");
+  const timerDueAt = Date.parse(state.audienceWarmup.pendingAdvance.dueAt);
+  assert(timerDueAt - Date.parse(state.audienceWarmup.updatedAt) >= AUDIENCE_WARMUP_REQUIRED_TIMER_DELAY_MS - 100);
   state = await waitFor(
     context.request,
     (candidate) => candidate.audienceWarmup.actionTimer?.status === "running",
@@ -171,7 +172,7 @@ try {
     5000
   );
   assert(
-    Date.now() - requiredPromptTypedAt >= AUDIENCE_WARMUP_REQUIRED_TIMER_DELAY_MS - 300,
+    Date.parse(state.audienceWarmup.actionTimer.startedAt) >= timerDueAt,
     "o timer deve respeitar a pausa depois do fim do typewriter"
   );
   assert(state.audienceWarmup.actionTimer.endsAt, "o timer deve ganhar endsAt somente quando começar");
@@ -291,7 +292,7 @@ try {
   await display.getByLabel("Minigame do aquecimento").waitFor();
   await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "running", "primeiro turno do TAPÃO");
   await post(context.request, "minigame-tapao-swap");
-  await display.getByText("INVERTAM OS PAPÉIS", { exact: true }).waitFor();
+  await display.getByText("TROQUEM.", { exact: true }).waitFor();
   await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "ready_round_two", "troca do TAPÃO");
   await sceneOperator.waitForFunction(() => document.querySelector('[aria-label="Minigame em dupla"] p')?.textContent?.startsWith("ESTADO: READY ROUND TWO ·"));
   await sceneOperator.keyboard.press("ArrowRight");
@@ -325,6 +326,7 @@ try {
   await post(context.request, "minigame-adjust-time", { deltaSeconds: 5 });
   state = await snapshot(context.request);
   assert.equal(state.audienceWarmup.minigame.timer.remainingSeconds, paused + 5);
+  if (await sceneWarmupToggle.getAttribute("aria-expanded") !== "true") await sceneWarmupToggle.click();
   await sceneOperator.waitForFunction(() => document.querySelector('[aria-label="Minigame em dupla"] p')?.textContent?.startsWith("ESTADO: PAUSED ·"));
   await sceneOperator.keyboard.press("ArrowRight");
   await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "running", "PISCADA retomada pela seta direita");

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
+import { AUDIENCE_WARMUP_QUESTIONS_RESULT_COMMENT } from "../data/audience-warmup-reactions.js";
 import { AUDIENCE_WARMUP_AGREEMENTS, AUDIENCE_WARMUP_PROMPTS, AUDIENCE_WARMUP_START_CHOICES } from "../data/audience-warmup-prompts.js";
 import { PLAY_UNLOCK_CONFIG } from "../data/scene-zero-unlock.js";
 
@@ -85,12 +86,27 @@ try {
   const bootPanel = operator.getByRole("region", { name: "Boot da Cena 0" });
   const bootButton = bootPanel.getByRole("button", { name: "BOOT", exact: true });
   const restartButton = bootPanel.getByRole("button", { name: "REINICIAR", exact: true });
+  async function pressStageArrow(key) {
+    const fullState = await state(context.request);
+    const current = fullState.sceneZero.unlock;
+    const pending = fullState.audienceWarmup.pendingAdvance;
+    if (fullState.audienceWarmup.manualMode && pending?.lockUntilDue) {
+      await new Promise((resolve) => setTimeout(resolve, Math.max(0, Date.parse(pending.dueAt) - Date.now()) + 100));
+    }
+    const progress = ["STANDBY", "BOOTING", "BOOT_FAILED"].includes(current.status)
+      ? current.bootProgress : current.progress;
+    await operator.waitForFunction((expected) => document.querySelector("#scene-zero-boot strong")?.textContent === `${expected}%`, progress);
+    await restartButton.click({ trial: true });
+    await operator.locator("#scene-zero-boot h2").click();
+    await operator.keyboard.press(key);
+  }
   await bootButton.waitFor();
   await restartButton.waitFor();
   const bootBox = await bootButton.boundingBox();
   const restartBox = await restartButton.boundingBox();
   assert(Math.abs(bootBox.y - restartBox.y) < 2, "BOOT e REINICIAR devem ficar lado a lado");
-  assert.equal(await bootPanel.evaluate((element) => element.nextElementSibling?.id), "scene-zero-unlock", "BOOT deve ser o primeiro bloco da Cena 0");
+  assert.equal(await bootPanel.evaluate((element) => element.nextElementSibling?.id), "scene-zero-sound-check", "a escuta deve vir depois do BOOT");
+  assert.equal(await operator.locator("#scene-zero-sound-check").evaluate((element) => element.nextElementSibling?.id), "scene-zero-unlock", "o aquecimento deve vir depois da escuta");
   const warmupDisclosure = operator.locator("#scene-zero-unlock");
   await operator.waitForFunction(() => document.querySelector("#scene-zero-unlock")?.dataset.ready === "true");
   const warmupToggle = warmupDisclosure.getByRole("button", { name: /ESQUENTAR PÚBLICO/ });
@@ -123,7 +139,7 @@ try {
   const unlockPanel = operator.getByLabel("Desbloqueio da peça");
   await unlockPanel.waitFor();
   assert.equal(await unlockPanel.getByRole("button", { name: "BOOT", exact: true }).count(), 0, "BOOT deve permanecer apenas no painel principal");
-  await operator.keyboard.press("ArrowRight");
+  await pressStageArrow("ArrowRight");
   snapshot = await waitForUnlock(context.request, (value) => value.status === "BOOTING");
   await restartButton.click();
   snapshot = await waitForUnlock(context.request, (value) => value.status === "STANDBY");
@@ -147,10 +163,12 @@ try {
   snapshot = await state(context.request);
   assert.equal(snapshot.sceneZero.unlock.bootProgress, pausedProgress, "BIOS pausada não deve avançar sozinha");
 
-  await operator.keyboard.press("ArrowLeft");
+  await pressStageArrow("ArrowLeft");
   snapshot = await waitForUnlock(context.request, (value) => value.status === "BOOTING" && value.bootProgress < pausedProgress);
   assert.equal(snapshot.sceneZero.unlock.bootPaused, true, "voltar uma etapa da BIOS deve impedir novo avanço automático");
-  await operator.keyboard.press("ArrowRight");
+  await operator.waitForFunction((progress) => document.querySelector("#scene-zero-boot strong")?.textContent === `${progress}%`, snapshot.sceneZero.unlock.bootProgress);
+  await restartButton.click({ trial: true });
+  await pressStageArrow("ArrowRight");
   snapshot = await waitForUnlock(context.request, (value) => value.bootProgress === pausedProgress);
 
   for (let index = 0; index < 12 && snapshot.sceneZero.unlock.status === "BOOTING"; index += 1) {
@@ -162,12 +180,12 @@ try {
   assert.equal(snapshot.sceneZero.unlock.bootComplete, false);
   assert.equal(snapshot.sceneZero.unlock.progress, 0);
   assert.equal(snapshot.publicMessage, null, "o erro da BIOS não deve criar fala do chatbot");
-  await operator.keyboard.press("ArrowLeft");
+  await pressStageArrow("ArrowLeft");
   snapshot = await waitForUnlock(context.request, (value) => value.status === "BOOTING" && value.bootProgress === 70);
   assert.equal(snapshot.sceneZero.unlock.bootPaused, true, "voltar de 78% deve parar em 70% sem reiniciar a BIOS");
-  await operator.keyboard.press("ArrowRight");
+  await pressStageArrow("ArrowRight");
   snapshot = await waitForUnlock(context.request, (value) => value.bootProgress === PLAY_UNLOCK_CONFIG.bootStallProgress);
-  await operator.keyboard.press("ArrowRight");
+  await pressStageArrow("ArrowRight");
   snapshot = await waitForUnlock(context.request, (value) => value.status === "BOOT_FAILED");
   await display.getByLabel("BIOS da Cena 0").waitFor();
   await display.getByText("AÇÃO COLETIVA", { exact: true }).waitFor();
@@ -183,7 +201,7 @@ try {
   assert.equal(await unlockPanel.getByRole("button", { name: "ENCERRAR BIOS", exact: true }).count(), 0, "ENCERRAR BIOS não deve ficar dentro do aquecimento");
   const endBiosButton = bootPanel.getByRole("button", { name: "ENCERRAR BIOS", exact: true });
   await endBiosButton.waitFor();
-  await operator.keyboard.press("ArrowRight");
+  await pressStageArrow("ArrowRight");
   snapshot = await waitForUnlock(context.request, (value) => value.status === "SOUND_CHECK" && value.bootComplete);
   assert.equal(snapshot.sceneZero.unlock.bootProgress, 100, "ENCERRAR BIOS deve completar a barra antes da próxima etapa");
   await display.getByRole("progressbar", { name: "CARREGAMENTO DA BIOS: 100%" }).waitFor();
@@ -303,6 +321,8 @@ try {
   await operator.getByRole("button", { name: "REINICIAR DESBLOQUEIO" }).click();
   snapshot = await waitForUnlock(context.request, (value) => value.status === "STANDBY");
   assert.equal(snapshot.sceneZero.unlock.progress, 0);
+  // Unlock reset is scoped; the next scenario needs a new whole-show session.
+  await context.request.post(`${BASE_URL}/api/operator`, { data: { command: "/reset" } });
   await bootButton.waitFor();
 
   await bootButton.click();
@@ -311,7 +331,11 @@ try {
     await unlock(context.request, "advance-boot");
     snapshot = await state(context.request);
   }
+  if (await warmupToggle.getAttribute("aria-expanded") !== "true") await warmupToggle.click();
   const manualMode = operator.getByRole("region", { name: "Controles iniciais do aquecimento" }).getByRole("checkbox");
+  await operator.evaluate(() => {
+    for (const microphone of window.__caixaPretaTestMicrophones || []) microphone.gain.gain.value = 0;
+  });
   await manualMode.click();
   snapshot = await waitForState(context.request, (value) => value.audienceWarmup.manualMode === true);
   await unlock(context.request, "end-bios");
@@ -320,7 +344,7 @@ try {
   snapshot = await state(context.request);
   assert.equal(snapshot.sceneZero.unlock.soundCheck.phase, "greeting", "modo manual não pode ativar o medidor sozinho");
   assert.equal(snapshot.audienceWarmup.pendingAdvance.kind, "sound-check-listen");
-  await operator.keyboard.press("ArrowRight");
+  await pressStageArrow("ArrowRight");
   snapshot = await waitForState(context.request, (value) => (
     value.sceneZero.unlock.status === "SOUND_CHECK"
     && value.sceneZero.unlock.soundCheck?.phase === "listening"
@@ -328,7 +352,7 @@ try {
   ), 7000);
   assert.equal(snapshot.audienceWarmup.pendingAdvance.kind, "sound-check-comment");
   await operator.waitForFunction(() => !document.querySelector('section[aria-label="Controles iniciais do aquecimento"] input')?.disabled);
-  await operator.keyboard.press("ArrowRight");
+  await pressStageArrow("ArrowRight");
   snapshot = await waitForState(context.request, (value) => value.publicMessage?.content === "Boa noite...", 7000);
   assert.equal(snapshot.sceneZero.unlock.soundCheck.phase, "listening", "uma seta deve publicar uma fala sem pular a prova sonora");
   assert.equal(snapshot.audienceWarmup.pendingAdvance.kind, "sound-check-comment");
@@ -336,7 +360,7 @@ try {
   await new Promise((resolve) => setTimeout(resolve, PLAY_UNLOCK_CONFIG.soundCheck.confirmationDurationMs + 400));
   snapshot = await state(context.request);
   assert.equal(snapshot.sceneZero.unlock.soundCheck.phase, "confirmed", "modo manual não pode sair da confirmação sozinho");
-  await operator.keyboard.press("ArrowRight");
+  await pressStageArrow("ArrowRight");
   snapshot = await waitForState(context.request, (value) => (
     value.sceneZero.unlock.status === "HUMAN_VERIFICATION"
     && value.publicMessage?.content === PLAY_UNLOCK_CONFIG.questionsIntroduction
@@ -346,7 +370,7 @@ try {
   snapshot = await state(context.request);
   assert.equal(snapshot.sceneZero.unlock.status, "HUMAN_VERIFICATION", "modo manual não pode iniciar perguntas sozinho");
   for (const [index, agreement] of AUDIENCE_WARMUP_AGREEMENTS.entries()) {
-    await operator.keyboard.press("ArrowRight");
+    await pressStageArrow("ArrowRight");
     snapshot = await waitForState(context.request, (value) => agreement.kind === "silent"
       ? value.audienceWarmup.display?.source === `audience-warmup-agreements:${agreement.id}`
       : value.publicMessage?.content === agreement.text, 7000);
@@ -378,19 +402,28 @@ try {
     }
   }
   await operator.getByRole("button", { name: "START", exact: true }).click();
+  await pressStageArrow("ArrowRight");
   snapshot = await waitForState(context.request, (value) => value.publicMessage?.content === startChoice.comment, 7000);
+  await pressStageArrow("ArrowRight");
   snapshot = await waitForState(context.request, (value) => value.audienceWarmup.phase === "questions", 15000);
   assert.equal(snapshot.audienceWarmup.phase, "questions");
+  await waitForState(context.request, (value) => value.audienceWarmup.actionTimer?.status === "awaiting_start", 7000);
+  await pressStageArrow("ArrowRight");
+  await waitForState(context.request, (value) => value.publicMessage?.content === "OBEDIENTES... ÓTIMO.", 26000);
+  await pressStageArrow("ArrowRight");
+  snapshot = await waitForState(context.request, (value) => value.audienceWarmup.previewPromptId?.startsWith("provocative-"), 7000);
 
   const manualPromptId = snapshot.audienceWarmup.previewPromptId;
-  const noReactionButton = operator.getByRole("button", { name: "NINGUÉM REAGIU", exact: true });
+  const noReactionButton = operator.getByRole("region", { name: "Resposta da pergunta atual" }).getByRole("button").last();
   await noReactionButton.click();
-  snapshot = await waitForState(context.request, (value) => value.audienceWarmup.reaction?.kind === "none", 7000);
+  snapshot = await waitForState(context.request, (value) => value.audienceWarmup.currentResponse?.kind === "few", 7000);
   assert.equal(snapshot.audienceWarmup.previewPromptId, manualPromptId, "reação manual não pode trocar a pergunta");
   await new Promise((resolve) => setTimeout(resolve, 2200));
   snapshot = await state(context.request);
-  assert.equal(snapshot.audienceWarmup.reaction?.kind, "none", "reação deve aguardar NEXT no modo manual");
-  await operator.keyboard.press("ArrowRight");
+  assert.equal(snapshot.audienceWarmup.currentResponse?.kind, "few", "resposta deve aguardar NEXT no modo manual");
+  await pressStageArrow("ArrowRight");
+  await waitForState(context.request, (value) => value.audienceWarmup.reaction?.kind === "few", 7000);
+  await pressStageArrow("ArrowRight");
   snapshot = await waitForState(context.request, (value) => !value.audienceWarmup.reaction, 7000);
 
   const historyBeforeBriefing = snapshot.audienceWarmup.history.length;
@@ -398,13 +431,15 @@ try {
   assert.equal(manualFinishQuestions.ok(), true);
   snapshot = await waitForState(context.request, (value) => value.audienceWarmup.phase === "briefing" && value.audienceWarmup.pendingAdvance?.kind === "system-sequence", 7000);
   assert.equal(snapshot.audienceWarmup.history.length, historyBeforeBriefing, "encerrar perguntas não deve publicar fala no modo manual");
-  let nextResponse = await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "manual-next" } });
+  const nextResponse = await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "manual-next" } });
   assert.equal(nextResponse.ok(), true);
   snapshot = await waitForState(context.request, (value) => value.audienceWarmup.history.length === historyBeforeBriefing + 1, 7000);
-  assert.equal(snapshot.audienceWarmup.history.at(-1).text, "PERGUNTAS CONCLUÍDAS. AGORA, UM TESTE.");
-  nextResponse = await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "manual-next" } });
-  assert.equal(nextResponse.ok(), true);
+  assert.equal(snapshot.audienceWarmup.history.at(-1).text, AUDIENCE_WARMUP_QUESTIONS_RESULT_COMMENT);
+  await pressStageArrow("ArrowRight");
   snapshot = await waitForState(context.request, (value) => value.audienceWarmup.history.length === historyBeforeBriefing + 2, 7000);
+  assert.equal(snapshot.audienceWarmup.history.at(-1).text, "PERGUNTAS CONCLUÍDAS. AGORA, UM TESTE.");
+  await pressStageArrow("ArrowRight");
+  snapshot = await waitForState(context.request, (value) => value.audienceWarmup.history.length === historyBeforeBriefing + 3, 7000);
   assert.equal(snapshot.audienceWarmup.history.at(-1).text, "ESCOLHA A PESSOA AO SEU LADO E FORME UMA DUPLA.");
 
   const earlyUnlock = await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "unlock-unlock-now" } });

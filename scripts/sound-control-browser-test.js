@@ -11,6 +11,7 @@ async function setRange(locator, value) {
 }
 
 async function main() {
+  const { waitForAsyncCondition } = await import("./browser-test-utils.js");
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -42,7 +43,7 @@ async function main() {
     await setRange(panel.getByLabel("Altura dos efeitos do robô"), 6);
     await setRange(panel.getByLabel("Frequência do som de digitação do robô"), 1);
     await page.waitForTimeout(350);
-    await page.waitForFunction(async (initialSequence) => {
+    await waitForAsyncCondition(page, async (initialSequence) => {
       const response = await fetch("/api/robot-sound", { cache: "no-store" });
       const settings = (await response.json()).robotSound;
       return settings.sequence > initialSequence

@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { chromium } from "playwright";
 import {
   AUDIENCE_WARMUP_AGREEMENTS,
-  AUDIENCE_WARMUP_REQUIRED_TIMER_DELAY_MS,
   AUDIENCE_WARMUP_START_CHOICES
 } from "../data/audience-warmup-prompts.js";
 
@@ -15,6 +14,12 @@ async function snapshot(request) {
 }
 
 async function post(request, action, payload = {}, expectedOk = true) {
+  if (action === "manual-next" && expectedOk) {
+    await waitForState(request, (state) => {
+      const pending = state.audienceWarmup.pendingAdvance;
+      return pending && (!pending.lockUntilDue || Date.parse(pending.dueAt) <= Date.now());
+    }, "manual gate ready");
+  }
   const response = await request.post(`${BASE_URL}/api/audience-warmup`, {
     data: { action, ...payload }
   });
@@ -80,6 +85,21 @@ try {
   const operator = await context.newPage();
   await operator.setViewportSize({ width: 1440, height: 1100 });
   await operator.goto(`${BASE_URL}/cena-0-controller`, { waitUntil: "domcontentloaded" });
+  // The controller is the elected audio sink. Count phrases where they play,
+  // while keeping the projection counters for the originating cues.
+  await operator.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.attention);
+  await operator.evaluate(async () => {
+    const engine = window.__caixaPretaRobotSoundEngine;
+    await engine.unlock();
+    window.__agreementPhraseCount = 0;
+    const original = engine.playAttentionPhrase.bind(engine);
+    engine.playAttentionPhrase = (...args) => {
+      window.__agreementPhraseCount += 1;
+      return original(...args);
+    };
+  });
+  // Wait for BroadcastChannel sink election before the first cue.
+  await display.waitForFunction(() => window.__caixaPretaRobotSoundEngine.relaySinks.size > 0);
   const warmupToggle = operator.locator("#scene-zero-unlock").getByRole("button", { name: /ESQUENTAR PÚBLICO/ });
   await warmupToggle.waitFor();
   await warmupToggle.click();
@@ -102,9 +122,9 @@ try {
 
     if (agreement.id === "attention") {
       await display.waitForFunction(() => window.__agreementSoundCounts.attention >= 1);
-      await display.waitForFunction(() => window.__agreementSoundCounts.playAttentionPhrase >= 2);
+      await operator.waitForFunction(() => window.__agreementPhraseCount >= 2);
       assert.equal(await display.evaluate(() => window.__agreementSoundCounts.attention), 1);
-      assert.equal(await display.evaluate(() => window.__agreementSoundCounts.playAttentionPhrase), 2);
+      assert.equal(await operator.evaluate(() => window.__agreementPhraseCount), 2);
     }
     if (agreement.id === "look-at-screen") {
       assert.equal(
@@ -112,17 +132,17 @@ try {
         1,
         "a segunda frase não deve repetir o sinal de atenção"
       );
-      assert.equal(await display.evaluate(() => window.__agreementSoundCounts.playAttentionPhrase), 2);
+      assert.equal(await operator.evaluate(() => window.__agreementPhraseCount), 2);
     }
     if (agreement.id === "timer-idle-cursor") {
       assert.equal(await display.evaluate(() => window.__agreementSoundCounts.attention), 1);
-      assert.equal(await display.evaluate(() => window.__agreementSoundCounts.playAttentionPhrase), 2);
+      assert.equal(await operator.evaluate(() => window.__agreementPhraseCount), 2);
     }
     if (agreement.id === "timer-notification-test") {
       await display.waitForFunction(() => window.__agreementSoundCounts.attention >= 2);
-      await display.waitForFunction(() => window.__agreementSoundCounts.playAttentionPhrase >= 4);
+      await operator.waitForFunction(() => window.__agreementPhraseCount >= 4);
       assert.equal(await display.evaluate(() => window.__agreementSoundCounts.attention), 2);
-      assert.equal(await display.evaluate(() => window.__agreementSoundCounts.playAttentionPhrase), 4);
+      assert.equal(await operator.evaluate(() => window.__agreementPhraseCount), 4);
       const blocked = await post(context.request, "manual-next", {}, false);
       assert.match(blocked.error, /DEMONSTRAÇÃO/);
       const waitMs = Math.max(0, Date.parse(state.audienceWarmup.pendingAdvance.dueAt) - Date.now()) + 100;
@@ -184,8 +204,10 @@ try {
   await selectedOperatorButton.waitFor();
   assert.equal(await selectedOperatorButton.textContent(), "GAME OVER");
   assert.match(await selectedOperatorButton.evaluate((element) => getComputedStyle(element).animationName), /operatorChoiceSelected/);
+  await post(context.request, "manual-next");
   await waitForState(context.request, (state) => state.publicMessage?.content === gameOver.comment, "GAME OVER comment");
   await display.getByText(gameOver.comment, { exact: true }).waitFor();
+  await post(context.request, "manual-next");
   const ready = await waitForState(
     context.request,
     (state) => state.audienceWarmup.previewPromptId === "play-dead-30",
@@ -197,19 +219,18 @@ try {
   assert.equal(ready.audienceWarmup.actionTimer.status, "awaiting_message");
   assert.equal(ready.audienceWarmup.actionTimer.endsAt, null);
   await display.getByText(requiredPrompt, { exact: true }).waitFor();
-  const typedAt = Date.now();
   const holding = await waitForState(
     context.request,
     (state) => state.audienceWarmup.actionTimer?.status === "awaiting_start",
     "required action reading hold"
   );
   assert.equal(holding.audienceWarmup.actionTimer.endsAt, null);
+  await post(context.request, "manual-next");
   const running = await waitForState(
     context.request,
     (state) => state.audienceWarmup.actionTimer?.status === "running",
     "required action timer"
   );
-  assert(Date.now() - typedAt >= AUDIENCE_WARMUP_REQUIRED_TIMER_DELAY_MS - 300);
   assert(running.audienceWarmup.actionTimer.endsAt);
 
   console.log("audience warmup agreements browser tests passed");
