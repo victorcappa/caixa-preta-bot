@@ -14,6 +14,8 @@ import { PLAY_UNLOCK_CONFIG } from "@/data/scene-zero-unlock";
 import { audienceWarmupResponseOptions } from "@/data/audience-warmup-reactions";
 import { AUDIENCE_WARMUP_PROMPTS } from "@/data/audience-warmup-prompts";
 import styles from "./SceneZeroController.module.css";
+import OperatorPublicLauncher from "./OperatorPublicLauncher";
+import { subscribePublicRealtime } from "@/lib/publicRealtime";
 
 const PRIMARY_STAGES = [
   ["collection", "COLETA DE DADOS"],
@@ -300,7 +302,6 @@ export default function SceneZeroController() {
   }, [currentSuitcaseAdvanceToken]);
 
   useEffect(() => {
-    fetch("/api/state").then((response) => response.json()).then(setSnapshot).catch(() => setNotice("SEM CONEXÃO"));
     fetch("/api/glitch")
       .then((response) => response.json())
       .then((data) => {
@@ -311,13 +312,10 @@ export default function SceneZeroController() {
         setGlitchVideoTransitionSeconds(Number(((data.glitch?.video?.transitionMs || 5200) / 1000).toFixed(1)));
       })
       .catch(() => setNotice("VÍDEOS DE GLITCH INDISPONÍVEIS"));
-    const events = new EventSource("/api/events?client=scene-zero-controller");
-    events.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
+    return subscribePublicRealtime((payload) => {
+      if (payload.event?.type === "operator-public") return;
       setSnapshot(payload.state || {});
-    };
-    events.onerror = () => setNotice("SSE DESCONECTADO");
-    return () => events.close();
+    }, (connection) => { if (connection === "disconnected") setNotice("SSE DESCONECTADO"); });
   }, []);
 
   useEffect(() => {
@@ -1050,6 +1048,7 @@ export default function SceneZeroController() {
         </div>
       </section>
       <aside className={styles.indexNav} aria-label="Índice da Cena 0">
+        <OperatorPublicLauncher />
         <strong>ÍNDICE / CENA 0</strong>
         <span>{sceneZeroStageLabel(sceneZero.stage)}</span>
         <nav>

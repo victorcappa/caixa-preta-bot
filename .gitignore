@@ -15,4 +15,8 @@ yarn-error.log*
 /bot-old/
 
 # Reproducible local Operator/audio audit output.
+/artifacts/operator-public-*/
+/artifacts/operator-settings-*/
+/artifacts/operator-typing-*/
+/artifacts/operator-handles-*/
 /artifacts/microphone-background-*/

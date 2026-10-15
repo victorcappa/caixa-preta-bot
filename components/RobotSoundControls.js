@@ -28,10 +28,16 @@ async function postSettings(settings) {
   const response = await fetch("/api/robot-sound", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ settings })
+    body: JSON.stringify({ settings }),
+    signal: AbortSignal.timeout(15000)
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "ROBOT SOUND ERROR");
+  const expected = normalizeRobotSoundSettings(settings, data.robotSound);
+  const metadata = new Set(["sequence", "updatedAt", "outputResetSequence"]);
+  const unconfirmed = Object.keys(settings).some((key) => Object.hasOwn(ROBOT_SOUND_DEFAULTS, key) && !metadata.has(key)
+    && (!Object.hasOwn(data.robotSound || {}, key) || data.robotSound[key] !== expected[key]));
+  if (unconfirmed) throw new Error("O servidor não confirmou os ajustes. Reinicie o servidor local para carregar os parâmetros novos e tente salvar novamente.");
   return data.robotSound;
 }
 
@@ -44,12 +50,15 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
   const pendingPatchRef = useRef({});
   const testTimersRef = useRef(new Set());
   const outputResetSequenceRef = useRef(null);
-  const localRevisionRef = useRef(0);
-  const settledRevisionRef = useRef(0);
+  const unsavedPatchRef = useRef({});
+  const savedSequenceRef = useRef(0);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
-    if (localRevisionRef.current !== settledRevisionRef.current) return;
-    const normalized = normalizeRobotSoundSettings(settings);
+    const remote = normalizeRobotSoundSettings(settings);
+    if (remote.sequence < savedSequenceRef.current) return;
+    savedSequenceRef.current = remote.sequence;
+    const normalized = normalizeRobotSoundSettings({ ...remote, ...unsavedPatchRef.current }, remote);
     draftRef.current = normalized;
     setDraft(normalized);
     robotSoundEngine.setSettings(normalized);
@@ -81,8 +90,7 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
   function commit(patch, delayMs = 0) {
     const current = draftRef.current;
     const next = normalizeRobotSoundSettings({ ...current, ...patch }, current);
-    const localRevision = localRevisionRef.current + 1;
-    localRevisionRef.current = localRevision;
+    unsavedPatchRef.current = { ...unsavedPatchRef.current, ...patch };
     draftRef.current = next;
     setDraft(next);
     robotSoundEngine.setSettings(next);
@@ -95,17 +103,20 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
         .catch(() => {})
         .then(() => postSettings(pendingPatch))
         .then((saved) => {
-          settledRevisionRef.current = Math.max(settledRevisionRef.current, localRevision);
-          if (localRevisionRef.current === localRevision) {
-            const normalized = normalizeRobotSoundSettings(saved);
-            draftRef.current = normalized;
-            setDraft(normalized);
-            robotSoundEngine.setSettings(normalized);
+          for (const [key, value] of Object.entries(pendingPatch)) {
+            if (unsavedPatchRef.current[key] === value) delete unsavedPatchRef.current[key];
           }
+          if (saved.sequence < savedSequenceRef.current) return saved;
+          savedSequenceRef.current = saved.sequence;
+          const normalized = normalizeRobotSoundSettings({ ...saved, ...unsavedPatchRef.current }, saved);
+          draftRef.current = normalized;
+          setDraft(normalized);
+          robotSoundEngine.setSettings(normalized);
+          if (!Object.keys(unsavedPatchRef.current).length) setSaveError("");
           return saved;
         })
         .catch((error) => {
-          settledRevisionRef.current = Math.max(settledRevisionRef.current, localRevision);
+          setSaveError(error.message);
           onLog(error.message, "error");
         });
     }, delayMs);
@@ -212,6 +223,21 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
       </label>
 
       <label className={styles.field}>
+        <span>PAUSA NA PONTUAÇÃO</span>
+        <output>{(draft.typingPauseMs / 1000).toLocaleString("pt-BR")} s</output>
+        <input aria-label="Pausa na pontuação do bot" type="range" min="0" max="2000" step="50"
+          value={draft.typingPauseMs} onChange={(event) => commit({ typingPauseMs: Number(event.target.value) }, 120)} />
+      </label>
+
+      <label className={styles.field}>
+        <span>INTERVALO ENTRE FALAS</span>
+        <output>{(draft.messageGapMs / 1000).toLocaleString("pt-BR")} s</output>
+        <input aria-label="Intervalo entre falas do bot" type="range" min="0" max="10000" step="100"
+          value={draft.messageGapMs} onChange={(event) => commit({ messageGapMs: Number(event.target.value) }, 120)} />
+        <small>Tempo mínimo entre o fim de uma fala e o início da próxima.</small>
+      </label>
+
+      <label className={styles.field}>
         <span>FREQUÊNCIA DOS CLIQUES</span>
         <output>{Math.round(draft.typingFrequency * 100)}%</output>
         <input
@@ -226,6 +252,12 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
       </label>
     </>
   );
+  const saveFeedback = saveError ? (
+    <div role="alert" className={styles.saveError}>
+      <p>{saveError} Os valores escolhidos continuam neste painel.</p>
+      <button type="button" onClick={() => commit({ ...unsavedPatchRef.current })}>TENTAR SALVAR NOVAMENTE</button>
+    </div>
+  ) : null;
 
   if (typingOnly) {
     return (
@@ -233,6 +265,7 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
         <header className={styles.header}><strong>TEXTO DO BOT</strong><span>PROJEÇÃO AO VIVO</span></header>
         <output className={styles.typingPreview} data-bot-font={draft.displayFont}>CAIXA PRETA_</output>
         {typingControls}
+        {saveFeedback}
         <small className={styles.note}>Fonte e ritmo compartilhados entre Principal e Videomapping.</small>
       </section>
     );
@@ -335,6 +368,7 @@ export default function RobotSoundControls({ settings = ROBOT_SOUND_DEFAULTS, on
       </label>
 
       {typingControls}
+      {saveFeedback}
 
       <label className={styles.selectField}>
         <span>PRESET DIGITAÇÃO</span>

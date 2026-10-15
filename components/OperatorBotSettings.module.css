@@ -1,0 +1,27 @@
+.settings {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  max-width: 900px;
+}
+
+.settings > section { margin: 0; }
+
+.model {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--green-soft);
+  color: var(--green-dim);
+  font-size: 0.82rem;
+}
+
+.model select {
+  width: 100%;
+  min-height: 36px;
+  padding: 6px;
+  border: 1px solid var(--green-soft);
+  background: #020402;
+  color: var(--green);
+  font: inherit;
+}

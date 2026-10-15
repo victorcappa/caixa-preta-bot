@@ -28,6 +28,9 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:openai:failures` -> `node --no-warnings scripts/openai-failure-audit.js`
 - `npm run test:participant-fallback` -> `node --no-warnings scripts/participant-fallback-test.js`
 - `npm run test:openai:live` -> `node --no-warnings scripts/openai-live-audit.js --live`
+- `npm run test:operator-public` -> `node --no-warnings scripts/operator-public-test.js`
+- `npm run test:operator-public:browser` -> `node --no-warnings scripts/operator-public-browser-test.js`
+- `npm run test:operator-public:live` -> `node --no-warnings scripts/operator-public-live-test.js --live`
 - `npm run test:instagram:readonly` -> `node --no-warnings --env-file-if-exists=.env.local scripts/instagram-readonly-audit.js --live`
 - `npm run test:scene-zero:e2e` -> `node --no-warnings scripts/full-show-audit.js`
 - `npm run test:public-realtime:browser` -> `node --no-warnings scripts/public-realtime-browser-test.js`
@@ -103,6 +106,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `POST /api/instagram/panel` -> `app/api/instagram/panel/route.js`
 - `POST /api/instagram/password` -> `app/api/instagram/password/route.js`
 - `GET /api/instagram/stream` -> `app/api/instagram/stream/route.js`
+- `POST /api/operator-public` -> `app/api/operator-public/route.js`
 - `POST /api/operator` -> `app/api/operator/route.js`
 - `POST /api/performance/interaction` -> `app/api/performance/interaction/route.js`
 - `GET, POST /api/projection` -> `app/api/projection/route.js`
@@ -135,13 +139,21 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/ForcaGShadersController.js`
 - `components/GlitchOverlay.js`
 - `components/InstagramBrowserPanel.js`
+- `components/OperatorBotSettings.js`
 - `components/OperatorConsole.js`
+- `components/OperatorLivePreview.js`
+- `components/OperatorPublicLauncher.js`
+- `components/OperatorTypedReply.js`
 - `components/PerformanceLayer.js`
 - `components/PreparedSceneController.js`
+- `components/ProjectionOperatorSurface.js`
 - `components/ProjectionWindowClient.js`
 - `components/PublicErrorBoundary.js`
 - `components/PublicErrorProbe.js`
 - `components/PublicGlitchLayer.js`
+- `components/PublicOperatorControls.js`
+- `components/PublicOperatorLayout.js`
+- `components/PublicOperatorPanel.js`
 - `components/PublicSceneStage.js`
 - `components/RobotSoundControls.js`
 - `components/SceneAudioEffectsControls.js`
@@ -191,6 +203,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `CAIXA_PRETA_INTERNET_VOICE`
 - `CAIXA_PRETA_OPENAI_AUDIT_MOCK`
 - `CAIXA_PRETA_OPERATOR_AUDIT_ROOT`
+- `CAIXA_PRETA_OPERATOR_MOCK`
 - `CAIXA_PRETA_PERFORMATIVE_RESEARCH`
 - `CAIXA_PRETA_RELIABILITY_TESTS`
 - `CAIXA_PRETA_RESEARCH_BUDGET`
@@ -241,12 +254,16 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/instagram-controller-test.js`
 - `scripts/internet-voice-test.js`
 - `scripts/manual-sound-check-browser-test.js`
+- `scripts/operator-public-browser-test.js`
+- `scripts/operator-public-live-test.js`
+- `scripts/operator-public-test.js`
 - `scripts/participant-fallback-test.js`
 - `scripts/performance-system-test.js`
 - `scripts/play-unlock-browser-test.js`
 - `scripts/public-realtime-browser-test.js`
 - `scripts/research-director-test.js`
 - `scripts/robot-sound-browser-test.js`
+- `scripts/robot-sound-hot-refresh-test.js`
 - `scripts/robot-sound-test.js`
 - `scripts/scene-notes-browser-test.js`
 - `scripts/scene-one-audio-effects-browser-test.js`

@@ -55,16 +55,16 @@ Targeted logical and browser commands are listed in the generated inventory. Run
 ## Start a local presentation
 
 1. Before audience entry, run `npm run show:prepare`; then start the production runtime with `npm run show`.
-2. Open `http://localhost:3000/operator` as the private hub.
+2. Use `/operator` only for bot parameters. For projection windows, emergency/recovery and technical commands, open Principal `/` and its **OP** drawer.
 3. In `ABRIR NOVA JANELA COM`, open the desired public route from the operator so the projection window receives an ID and registers.
 4. Move that public window to the extended display/projector and enter fullscreen manually.
 5. Use `MUDAR PARA TELA` or the scene-controller tabs only after the projection status reports a connected window.
 6. For Scene Zero, open `/cena-0-controller` (or `/videomapping-controller`), confirm microphone permission/status, then use `BOOT` and the visible operator sequence. Keep that tab open when switching to Bot: microphone detection uses the audio clock and continues while Operator is hidden; the public page never requests the microphone.
 7. Before audience entry, verify text, blackout/recovery, global volume, media playback, selected audio output, microphone level, and STOP ALL on the actual browser/hardware path.
 
-If Operator reports an interrupted session, inspect scene, step, and snapshot time. Choose `RETOMAR APRESENTAÇÃO` to restore it paused and with transient media/external browser state stopped, or `INICIAR NOVA APRESENTAÇÃO` to discard that recovery path deliberately. Nothing restores automatically.
+If the technical OP terminal reports an interrupted session, inspect scene, step, and snapshot time. Choose `RETOMAR APRESENTAÇÃO` to restore it paused and with transient media/external browser state stopped, or `INICIAR NOVA APRESENTAÇÃO` to discard that recovery path deliberately. Nothing restores automatically.
 
-`MODO EMERGÊNCIA` is available at the top of Operator. Activating it cancels and blocks external requests, pauses automatic/timed activity, preserves snapshots, and keeps local/manual controls available. Deactivating it permits future external requests but deliberately leaves the show in manual control.
+`MODO EMERGÊNCIA` is available at the top of the technical OP terminal in Principal. Activating it cancels and blocks external requests, pauses automatic/timed activity, preserves snapshots, and keeps local/manual controls available. Deactivating it permits future external requests but deliberately leaves the show in manual control.
 
 Direct public routes and all controller routes are listed in `docs/brain/INVENTORY.md`. The canonical registries are `lib/projectionScreens.js` and `lib/controllerSurfaces.js`.
 
@@ -139,6 +139,18 @@ After a material architecture, workflow, command, route, or current-state change
 
 Brain maintenance never authorizes commit, push, merge, deploy, data deletion, infrastructure changes, or external messages.
 
-## Background microphone
+## Operator Público
+
+Use REVELAR OPERATOR at the top of Scene Zero’s right menu; ABRIR CONVERSA reopens private controls. `/operator` contains bot parameters. Capture the public tab with CONECTAR PROJEÇÃO AO VIVO for a muted live monitor. Operation, recovery, streaming, personality and acceptance limits: `OPERATOR_PUBLICO.md`.
+
+`npm run test:operator-public` is local. `npm run test:operator-public:browser` builds an isolated temporary copy and uses port 3311 without resetting port 3000. `npm run test:operator-public:live` makes two real OpenAI calls on isolated port 3312 and sends character/context data; use only with explicit authorization.
 
 `npm run test:audience-microphone` checks meter RMS, silent output and timer cleanup. `npm run test:audience-microphone:background` builds an isolated copy on port 3313, runs the existing sound-check scenario, then tests a hidden Operator tab and an unfocused Operator window in native Chromium without focus emulation with synthetic audio and paint callbacks disabled. It does not use the physical mic or reset port 3000. Closing/discarding the capture tab, OS sleep or permission revocation still stops capture; physical-browser/hardware rehearsal remains required. See [MDN AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process) and [requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame).
+
+## Bot parameters
+
+`/operator` exposes only typing speed (5–60 characters/s), punctuation pause (0–2 s), minimum gap between lines (0–10 s), font, typing click frequency, the four personality sliders and model selection. Conversation, preview, games, projection controls and diagnostics stay out of this tab. The right-menu launcher still opens the public conversation.
+
+Punctuation pause and minimum gap default to zero, preserving the existing pacing until adjusted. `lib/robot-sound/state.js` defines the shared timing calculations; `components/Chat.js` applies them to the public line, and server reading estimates include the pauses before automatic continuation. Authored scene holds can be longer than the configured minimum gap. The simultaneous glitch/collapse composition retains its concurrent lines. The LIVE Operator receives genuine streaming deltas and reveals new replies at the configured typing speed/punctuation pause, including text buffered after the stream ends. Private speed changes apply while it types. Completed history is restored immediately on reload; cancelled replies stop typing.
+
+Parameter saves retain unsaved fields during SSE updates, reject missing/mismatched acknowledgements, and ignore older server sequences. A visible error offers retry without resetting the handle. Development hot reload refreshes sound normalization on the existing `showState` object, preserving listeners, scene and history. A process started before `_refreshRobotSoundSettings` existed needs one restart; preserve its recovery snapshot and explicitly resume the interrupted presentation. Verify with `node --no-warnings scripts/robot-sound-hot-refresh-test.js` (Node 22.15+/24) and the continuous-drag cases in `test:operator-public:browser`.

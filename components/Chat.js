@@ -11,7 +11,7 @@ import SceneZeroProjectionLayer, { SceneZeroStatusProjection } from "./SceneZero
 import styles from "./Chat.module.css";
 import { PUBLIC_TYPE_INTERVAL_MS } from "@/lib/messageTiming";
 import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
-import { ROBOT_DISPLAY_FONT_DEFAULT, robotTypingIntervalMs } from "@/lib/robot-sound/state";
+import { ROBOT_DISPLAY_FONT_DEFAULT, robotTypingIntervalMs, robotTypingDelayMs, robotMessageGapMs } from "@/lib/robot-sound/state";
 import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import { PUBLIC_LAYOUT_CHANGE_EVENT, PUBLIC_LAYOUTS } from "@/lib/projectionScreens";
 import {
@@ -94,6 +94,8 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
   const warmupSoundCueIdRef = useRef(null);
   const warmupStartChoiceSoundRef = useRef(null);
   const typingIntervalMsRef = useRef(PUBLIC_TYPE_INTERVAL_MS);
+  const typingSettingsRef = useRef({});
+  const lastTypingCompletedAtRef = useRef(null);
 
   const notifySceneZeroMessageTyped = useCallback((messageId) => {
     if (!messageId || notifiedTypedIdsRef.current.has(messageId)) return;
@@ -138,6 +140,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
     }
 
     return subscribePublicRealtime((payload) => {
+      if (payload.event?.type === "operator-public") return;
       if (payload.event?.type === "stop-all") {
         window.dispatchEvent(new CustomEvent("caixa-preta:stopall"));
         return;
@@ -210,6 +213,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
 
     robotSoundEngine.setSettings(robotSound);
     typingIntervalMsRef.current = robotTypingIntervalMs(robotSound);
+    typingSettingsRef.current = robotSound;
     const resetSequence = Number(robotSound.outputResetSequence || 0);
     if (soundOutputResetSequenceRef.current !== null && resetSequence !== soundOutputResetSequenceRef.current) {
       void robotSoundEngine.reconnectOutput();
@@ -364,6 +368,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
       if (index >= message.content.length) {
         clearInterval(timer);
         completedTypingIdsRef.current.add(message.id);
+        lastTypingCompletedAtRef.current = performance.now();
         robotSoundEngine.complete();
         const emergenceCue = sceneZeroEmergenceCueForMessage(message);
         if (emergenceCue) {
@@ -397,11 +402,13 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
         return;
       }
 
-      const nextTimer = window.setTimeout(typeNextCharacter, typingIntervalMsRef.current);
+      const nextTimer = window.setTimeout(typeNextCharacter, robotTypingDelayMs(typingSettingsRef.current, message.content[index - 1]));
       typingTimersRef.current.set(message.id, nextTimer);
     };
 
-    const timer = window.setTimeout(typeNextCharacter, typingIntervalMsRef.current);
+    const gapRemaining = concurrentTypingRef.current || lastTypingCompletedAtRef.current === null ? 0
+      : Math.max(0, lastTypingCompletedAtRef.current + robotMessageGapMs(typingSettingsRef.current) - performance.now());
+    const timer = window.setTimeout(typeNextCharacter, Math.max(typingIntervalMsRef.current, gapRemaining));
     typingTimersRef.current.set(message.id, timer);
   }, [notifySceneZeroMessageTyped, startSelfErasure]);
 
@@ -435,6 +442,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
       seenMessageIdsRef.current.clear();
       stoppedTypingIdsRef.current.clear();
       completedTypingIdsRef.current.clear();
+      lastTypingCompletedAtRef.current = null;
       notifiedTypedIdsRef.current.clear();
       setSelfErasingMessageId(null);
       setTypedReplies({});
@@ -859,7 +867,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
               </dl>
 
               <h3>OPERATOR</h3>
-              <p>Acesse <strong>/operator</strong> em outra aba ou use o botao <strong>OP</strong> ao lado deste guia.</p>
+              <p>Acesse <strong>/operator</strong> em outra aba para ajustar o bot. Use o botão <strong>OP</strong> ao lado deste guia para abrir o terminal técnico.</p>
               <dl>
                 <div>
                   <dt>/say texto</dt>
