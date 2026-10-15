@@ -10,7 +10,7 @@ import {
   sceneZeroEvidenciasFrameAt
 } from "@/data/scene-zero-gincanas";
 import { SCENE_ZERO_MOREL_BIOS_DURATION_MS, SCENE_ZERO_MOREL_BIOS_LINES, SCENE_ZERO_MOREL_BIOS_LINE_INTERVAL_MS } from "@/data/scene-zero-morel";
-import { SCENE_ZERO_SUITCASE_CUE_DURATION_MS, sceneZeroSuitcaseCueFrameAt } from "@/lib/scene-zero/suitcaseGame";
+import { SCENE_ZERO_SUITCASE_CUE_DURATION_MS, sceneZeroSuitcaseCueFrameAt, shouldShowSceneZeroSuitcaseCue } from "@/lib/scene-zero/suitcaseGame";
 import { AUDIENCE_WARMUP_MINIGAMES, getAudienceWarmupMinigame } from "@/data/audience-warmup-minigames";
 import { SCENE_ZERO_HANGMAN_THEMES } from "@/data/scene-zero-hangman-words";
 import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
@@ -370,7 +370,7 @@ function AudienceWarmupActionCountdownSound({ warmup, now }) {
   return null;
 }
 
-export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup, botFont }) {
+export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup, botFont, publicMessage }) {
   const [now, setNow] = useState(Date.now());
   const teaAudioRef = useRef(null);
   const evidenciasAudioRef = useRef(null);
@@ -489,12 +489,7 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup, bo
   const preDrawHangman = suitcaseChoice.targetSuitcase === 3
     && ["challenge_preparing", "challenge_instruction", "challenge_ready", "challenge", "challenge_result", "challenge_complete"].includes(suitcaseChoice.status);
   const manualSuitcaseCue = ["drawing", "selected", "open"].includes(suitcaseCuePhase);
-  const showSuitcaseSelection = Boolean(
-    sceneZero?.suitcaseGame?.currentSuitcase
-    && suitcaseSelectionAge >= 0
-    && (manualSuitcaseCue || suitcaseSelectionAge < SCENE_ZERO_SUITCASE_CUE_DURATION_MS && suitcaseCuePhase === "automatic")
-    && !showTimer
-  );
+  const showSuitcaseSelection = shouldShowSceneZeroSuitcaseCue(sceneZero?.suitcaseGame, now, publicMessage) && !showTimer;
   const showPhysicalChallenge = Boolean(
     sceneZero?.suitcaseGame?.currentSuitcase === 2
     && gincana?.currentTask
@@ -511,6 +506,7 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup, bo
   );
   const themeDraw = hangman.themeDraw || {};
   const showHangmanThemeDraw = (sceneZero?.suitcaseGame?.currentSuitcase === 3 || preDrawHangman)
+    && publicMessage?.source !== "scene-zero-hangman-instruction"
     && (themeDraw.status === "drawing" || themeDraw.status === "selected" && hangman.status === "ready");
   const themeDrawElapsed = Math.max(0, now - Date.parse(themeDraw.startedAt || now));
   const themeDrawIndex = Math.floor(themeDrawElapsed / Math.max(70, 230 - Math.min(155, themeDrawElapsed / 25))) % SCENE_ZERO_HANGMAN_THEMES.length;

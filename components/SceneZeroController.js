@@ -8,7 +8,7 @@ import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
 import { robotMicrophoneSensitivity } from "@/lib/robot-sound/state";
 import { startAudienceMicrophoneMeter } from "@/lib/audienceMicrophoneMeter";
 import { SCENE_ZERO_GLITCH_LEVELS, SCENE_ZERO_PERSONALITY_DIRECTIONS, SCENE_ZERO_STAGES, sceneZeroStageLabel } from "@/lib/scene-zero/state";
-import { nextSceneZeroSuitcase } from "@/lib/scene-zero/suitcaseGame";
+import { isSceneZeroFinalSuitcaseInstructionReady, nextSceneZeroSuitcase } from "@/lib/scene-zero/suitcaseGame";
 import { SCENE_ZERO_HANGMAN_WORDS } from "@/data/scene-zero-hangman-words";
 import { PLAY_UNLOCK_CONFIG } from "@/data/scene-zero-unlock";
 import { audienceWarmupResponseOptions } from "@/data/audience-warmup-reactions";
@@ -551,11 +551,7 @@ export default function SceneZeroController() {
       if (stage === "suitcases") {
         const game = snapshot.sceneZero?.suitcaseGame;
         const choiceStatus = game?.choice?.status || "idle";
-        const finalInstructionReady = game?.currentSuitcase === 1
-          && !nextSceneZeroSuitcase(game)
-          && game.contentInstruction?.kind === "last-suitcase"
-          && game.contentInstruction?.status === "complete"
-          && game.contentInstruction?.selectionSequence === game.suitcaseSelectionSequence;
+        const finalInstructionReady = isSceneZeroFinalSuitcaseInstructionReady(game);
         const suitcaseInstructionWaiting = game?.contentInstruction?.status === "ready";
         const suitcaseInstructionBusy = ["announcing", "ready"].includes(game?.contentInstruction?.status);
         const emergenceWaiting = choiceStatus === "emergence_ready";
@@ -570,7 +566,9 @@ export default function SceneZeroController() {
             || ["announcing", "ready"].includes(game.gincana?.retry?.status)
           : game?.currentSuitcase === 3
             && (["theme-drawing", "ready", "active", "retry_wait"].includes(game.hangman?.status) || hangmanRetryWaiting));
-        const action = choiceStatus === "ready"
+        const action = finalInstructionReady
+          ? "suitcase-finish"
+          : choiceStatus === "ready"
           ? "suitcase-choice-continue"
           : emergenceWaiting
             ? "suitcase-emergence-continue"
@@ -926,11 +924,7 @@ export default function SceneZeroController() {
   const hangmanActive = hangman.status === "active";
   const hangmanSeconds = remainingTimer(hangman.timer || {}, now, 60);
   const nextSuitcase = nextSceneZeroSuitcase(suitcaseGame);
-  const finalInstructionReady = suitcaseGame.currentSuitcase === 1
-    && !nextSuitcase
-    && suitcaseContentInstruction.kind === "last-suitcase"
-    && suitcaseContentInstruction.status === "complete"
-    && suitcaseContentInstruction.selectionSequence === suitcaseGame.suitcaseSelectionSequence;
+  const finalInstructionReady = isSceneZeroFinalSuitcaseInstructionReady(suitcaseGame);
   const suitcaseInstructionWaiting = suitcaseContentInstruction.status === "ready";
   const suitcaseInstructionBusy = ["announcing", "ready"].includes(suitcaseContentInstruction.status);
   const emergenceWaiting = suitcaseChoice.status === "emergence_ready";

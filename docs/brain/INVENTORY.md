@@ -269,6 +269,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/scene-one-audio-effects-browser-test.js`
 - `scripts/scene-one-sampler-browser-test.js`
 - `scripts/scene-two-d-audio-effects-browser-test.js`
+- `scripts/scene-zero-suitcase-regression-browser-test.js`
 - `scripts/scene-zero-suitcases-browser-test.js`
 - `scripts/scene-zero-test.js`
 - `scripts/show-reliability-test.js`

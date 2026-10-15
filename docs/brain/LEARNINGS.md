@@ -2,6 +2,10 @@
 
 Each entry records a reproduced problem, its cause, the working response, and a regression guard.
 
+## Sparse suitcase history
+
+Advance by position, not history length: `[2, 1]` ends at Mala 1. Final instruction outranks stale draws. Clear old speech on selection; new speech hides opening/theme overlays.
+
 ## Await asynchronous browser test conditions explicitly
 
 - Problem: async `waitForFunction` predicates returned false yet released tests early, producing false persistence and synchronization results.

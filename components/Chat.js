@@ -164,7 +164,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
         setDisplayBlackout(payload.state.displayBlackout || null);
         setSceneZero(payload.state.sceneZero || null);
         setAudienceWarmup(payload.state.audienceWarmup || null);
-        setPublicMessage(payload.state.publicMessage || [...(payload.state.conversation || [])].reverse().find((message) => message.role === "assistant") || null);
+        setPublicMessage(payload.state.publicMessage || null);
         hydrateInitialMessages(payload.state.conversation || [], payload.state.publicMessage);
         return;
       }
@@ -929,6 +929,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
           <div className={styles.quadrantCanvas}>
             <SceneZeroProjectionLayer
               audienceWarmup={audienceWarmup}
+              publicMessage={publicMessage}
               botFont={robotSound?.displayFont || ROBOT_DISPLAY_FONT_DEFAULT}
               sceneZero={sceneZero}
             />
