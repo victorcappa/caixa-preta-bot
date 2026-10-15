@@ -80,6 +80,7 @@ export default function TrainingConsole() {
   async function fetchTrainingState() {
     try {
       const response = await fetch("/api/training/state");
+      if (!response.ok) throw new Error("TRAINING STATE UNAVAILABLE");
       const data = await response.json();
       setSnapshot(data);
       setStatus("CONNECTED");
@@ -146,18 +147,23 @@ export default function TrainingConsole() {
           mode,
           memories,
           conversation: messages
-        })
+        }),
+        signal: AbortSignal.timeout(20000)
       });
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.error || "TRAINING CHAT FAILED");
       }
+      if (!data.message?.content?.trim()) throw new Error("O bot não retornou uma resposta. Tente novamente.");
 
       setMessages([...conversationBeforeReply, data.message]);
       updateDraft(data.message.id, {});
     } catch (requestError) {
-      setError(requestError.message);
+      setError(requestError.name === "TimeoutError"
+        ? "A resposta demorou demais. Sua mensagem foi mantida; tente enviar novamente."
+        : requestError.message);
+      setInput(content);
       setMessages(messages);
     } finally {
       setPending(false);
@@ -304,15 +310,29 @@ export default function TrainingConsole() {
 
   const footer = (
     <form className={styles.form} onSubmit={submitMessage}>
-      <span aria-hidden="true">&gt;</span>
-      <input
-        aria-label="Mensagem de treino"
-        autoComplete="off"
-        value={input}
-        onChange={(event) => setInput(event.target.value)}
-        disabled={pending}
-      />
-      <span className={styles.status}>{pending ? "PROCESSING" : status}</span>
+      <label className={styles.composer} htmlFor="training-message">
+        <span>MENSAGEM PARA O BOT</span>
+        <textarea
+          id="training-message"
+          aria-label="Mensagem de treino"
+          placeholder="Digite aqui para conversar e treinar o bot..."
+          autoComplete="off"
+          rows={2}
+          value={input}
+          onChange={(event) => setInput(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+              void submitMessage(event);
+            }
+          }}
+          disabled={pending}
+        />
+        <small>Enter envia · Shift+Enter quebra linha</small>
+      </label>
+      <div className={styles.composerActions}>
+        <button type="submit" disabled={pending || !input.trim()}>{pending ? "ENVIANDO..." : "ENVIAR"}</button>
+        <span className={styles.status} role="status">{pending ? "PROCESSING" : status}</span>
+      </div>
     </form>
   );
 

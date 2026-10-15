@@ -14,6 +14,7 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 
 ## Public chatbot and model
 
+- Training conversation/feedback -> `components/TrainingConsole.js`, `app/api/training/`, and `lib/training.js`; visible composer sends by Enter or button and preserves the draft after errors.
 - Public text/layout/typing -> `components/Chat.js` and `components/Chat.module.css`.
 - Visual performance event -> `components/PerformanceLayer.js` -> `lib/performanceEvents.js`.
 - Chat request/model envelope -> `app/api/chat/route.js` -> `lib/openai.js`.
