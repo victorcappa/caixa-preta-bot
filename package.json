@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:tarot": "node --no-warnings scripts/tarot-test.js",
+    "test:tarot:experience": "node --no-warnings scripts/tarot-experience-test.js",
+    "test:tarot:catalog": "node --no-warnings scripts/tarot-catalog-test.js",
+    "test:tarot:vision": "node --no-warnings scripts/tarot-vision-test.js",
+    "test:tarot:browser": "node --no-warnings scripts/tarot-browser-test.js",
     "dev": "node scripts/require-port-3000.js && next dev --port 3000",
     "build": "next build",
     "start": "node scripts/require-port-3000.js && next start --port 3000",

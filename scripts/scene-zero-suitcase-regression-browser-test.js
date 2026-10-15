@@ -14,6 +14,7 @@ sceneZero.suitcaseGame = {
   suitcaseSelectedAt: new Date().toISOString(), suitcaseSelectionSequence: 4
 };
 const previousMessage = { id: "previous", role: "assistant", source: "scene-zero-suitcase-choice", content: "Próxima mala." };
+const tarotMessage = { id: "tarot", role: "assistant", source: "tarot-response", content: "Um signo do tarô que pertence ao treinamento.", tarot: { cardId: 0 } };
 let state = {
   revision: 1, sceneZero, conversation: [previousMessage], publicMessage: null,
   audienceWarmup: { manualMode: true, phase: "complete" },
@@ -44,6 +45,15 @@ try {
   const projection = await context.newPage();
   const errors = [];
   projection.on("pageerror", (error) => errors.push(error.message));
+  const suitcaseState = state;
+  state = { ...state, sceneZero: createInitialSceneZeroState(), conversation: [tarotMessage], publicMessage: tarotMessage };
+  await projection.goto(baseUrl, { waitUntil: "domcontentloaded" });
+  await projection.getByLabel("Cursor da Caixa Preta", { exact: true }).waitFor();
+  assert.equal(await projection.getByText(tarotMessage.content, { exact: true }).count(), 0,
+    "um snapshot antigo não pode projetar falas do tarô antes do boot");
+  await projection.reload();
+  await projection.getByLabel("Cursor da Caixa Preta", { exact: true }).waitFor();
+  state = suitcaseState;
   await projection.goto(baseUrl, { waitUntil: "domcontentloaded" });
   const cue = projection.getByLabel("Mala indicada: 3", { exact: true });
   await cue.waitFor();
@@ -61,6 +71,15 @@ try {
   await projection.waitForFunction(() => document.querySelector('main[aria-label="Fala atual da Caixa Preta"]')?.textContent.includes("ESCOLHA UMA LETRA"));
   assert.equal(await speech.isVisible(), true);
   await projection.screenshot({ path: "/private/tmp/caixa-preta-forca-fala-visivel.png" });
+
+  state = { ...state, conversation: [...state.conversation, tarotMessage] };
+  await projection.evaluate((nextState) => {
+    for (const source of window.__suitcaseTestSources) source.onmessage?.({ data: JSON.stringify({ event: { type: "message" }, state: nextState }) });
+  }, state);
+  assert.equal(await projection.getByText(tarotMessage.content, { exact: true }).count(), 0);
+  assert((await speech.textContent()).includes("ESCOLHA UMA LETRA"), "o tarô não pode interromper a instrução da mala");
+  await projection.reload();
+  await projection.getByText(SCENE_ZERO_HANGMAN_INSTRUCTION, { exact: true }).waitFor();
 
   state = {
     ...state, revision: 3,

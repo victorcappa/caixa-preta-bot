@@ -404,7 +404,7 @@ assert.throws(
 );
 assert.doesNotThrow(() => assertBotCannotNavigateExternal({ source: "operator", target: "https://instagram.com/test" }));
 assert.equal(blockedAutonomousInstagramResult().code, "BOT_EXTERNAL_NAVIGATION_BLOCKED");
-assert.deepEqual(controllerNavigationSurfaces.map((surface) => surface.menuLabel), ["Principal", "Videomapping", "Sound Control", "Operator", "Glitch", "Treino"]);
+assert.deepEqual(controllerNavigationSurfaces.map((surface) => surface.menuLabel), ["Principal", "Videomapping", "Sound Control", "Operator", "TREINAMENTO", "Glitch", "Treino"]);
 assert.equal((await executeAutonomousInstagramTool({ name: "instagram_open_profile", args: { username: "test" } })).code, "BOT_EXTERNAL_NAVIGATION_BLOCKED");
 
 const research = updateResearchSettings(createInitialResearchState(), { autonomousInstagramEnabled: true });

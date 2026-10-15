@@ -7,6 +7,7 @@ import PublicErrorBoundary from "./PublicErrorBoundary";
 
 export default function ProjectionOperatorSurface({ children }) {
   const pathname = usePathname();
+  if (pathname === "/treinamento") return <PublicErrorBoundary>{children}</PublicErrorBoundary>;
   if (!isProjectionPath(pathname)) return children;
   return <PublicErrorBoundary><PublicOperatorLayout>{children}</PublicOperatorLayout></PublicErrorBoundary>;
 }

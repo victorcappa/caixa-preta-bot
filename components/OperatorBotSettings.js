@@ -5,6 +5,7 @@ import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import PublicOperatorControls from "./PublicOperatorControls";
 import RobotSoundControls from "./RobotSoundControls";
 import Terminal from "./Terminal";
+import Link from "next/link";
 import styles from "./OperatorBotSettings.module.css";
 
 export default function OperatorBotSettings() {
@@ -37,6 +38,7 @@ export default function OperatorBotSettings() {
       <div className={styles.settings} aria-label="Parâmetros ajustáveis do bot">
         <RobotSoundControls settings={state.robotSound} typingOnly />
         <PublicOperatorControls parametersOnly />
+        <section className={styles.model}><Link href="/treinamento/controle">TREINAMENTO · ABRIR CONTROLE DO TARÔ →</Link></section>
         <section className={styles.model} aria-label="Modelo do bot">
           <label htmlFor="bot-model">MODELO DO BOT</label>
           <select id="bot-model" aria-label="Modelo GPT" value={state.model || "gpt-5-mini"}

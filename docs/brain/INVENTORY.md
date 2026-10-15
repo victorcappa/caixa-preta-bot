@@ -8,6 +8,11 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 
 ## Package scripts
 
+- `npm run test:tarot` -> `node --no-warnings scripts/tarot-test.js`
+- `npm run test:tarot:experience` -> `node --no-warnings scripts/tarot-experience-test.js`
+- `npm run test:tarot:catalog` -> `node --no-warnings scripts/tarot-catalog-test.js`
+- `npm run test:tarot:vision` -> `node --no-warnings scripts/tarot-vision-test.js`
+- `npm run test:tarot:browser` -> `node --no-warnings scripts/tarot-browser-test.js`
 - `npm run dev` -> `node scripts/require-port-3000.js && next dev --port 3000`
 - `npm run build` -> `next build`
 - `npm run start` -> `node scripts/require-port-3000.js && next start --port 3000`
@@ -83,6 +88,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `/tecnologia-floresta` -> `app/tecnologia-floresta/page.js`
 - `/transicao-psicodelica-controller` -> `app/transicao-psicodelica-controller/page.js`
 - `/transicao-psicodelica` -> `app/transicao-psicodelica/page.js`
+- `/treinamento/controle` -> `app/treinamento/controle/page.js`
+- `/treinamento` -> `app/treinamento/page.js`
 - `/treino` -> `app/treino/page.js`
 - `/videomapping-controller` -> `app/videomapping-controller/page.js`
 - `/videomapping` -> `app/videomapping/page.js`
@@ -117,6 +124,10 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `GET, POST /api/scene-zero` -> `app/api/scene-zero/route.js`
 - `GET, POST /api/show-session` -> `app/api/show-session/route.js`
 - `GET /api/state` -> `app/api/state/route.js`
+- `GET /api/tarot/back` -> `app/api/tarot/back/route.js`
+- `GET, POST /api/tarot/catalog` -> `app/api/tarot/catalog/route.js`
+- `GET /api/tarot/reference/[id]` -> `app/api/tarot/reference/[id]/route.js`
+- `GET, POST /api/tarot` -> `app/api/tarot/route.js`
 - `POST /api/training/chat` -> `app/api/training/chat/route.js`
 - `GET, POST /api/training/examples` -> `app/api/training/examples/route.js`
 - `POST /api/training/improve` -> `app/api/training/improve/route.js`
@@ -162,6 +173,12 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/SceneZeroController.js`
 - `components/SceneZeroProjectionLayer.js`
 - `components/SoundControlPanel.js`
+- `components/tarot/TarotCameraFocus.js`
+- `components/tarot/TarotCatalogEditor.js`
+- `components/tarot/TarotControls.js`
+- `components/tarot/TarotMatrix.js`
+- `components/tarot/TarotTraining.js`
+- `components/tarot/useTarotCamera.js`
 - `components/Terminal.js`
 - `components/TrainingConsole.js`
 - `components/useCountdownSound.js`
@@ -209,6 +226,9 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `CAIXA_PRETA_RESEARCH_BUDGET`
 - `CAIXA_PRETA_RESEARCH_ENABLED`
 - `CAIXA_PRETA_SHOW_RUNTIME_DIR`
+- `CAIXA_PRETA_TAROT_AUDIT_ROOT`
+- `CAIXA_PRETA_TAROT_MOCK`
+- `CAIXA_PRETA_TAROT_OUTPUT`
 - `CAIXA_PRETA_URL`
 - `CAIXA_PRETA_VOICE_GUIDE_PATH`
 - `CAIXA_PRETA_WEB_SEARCH`
@@ -221,6 +241,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `OPENAI_MODEL`
 - `OPENAI_SHOW_TIMEOUT_MS`
 - `OPENAI_WEB_SEARCH_TOOL_TYPE`
+- `TAROT_CATALOG_REVIEW_OUTPUT`
+- `TAROT_VISION_ONLY_FLOOR`
 - `TZ`
 
 ## Workflows
@@ -275,6 +297,11 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/show-reliability-test.js`
 - `scripts/sound-control-browser-test.js`
 - `scripts/suitcase-director-test.js`
+- `scripts/tarot-browser-test.js`
+- `scripts/tarot-catalog-test.js`
+- `scripts/tarot-experience-test.js`
+- `scripts/tarot-test.js`
+- `scripts/tarot-vision-test.js`
 - `scripts/verdade-ou-bolo-layout-browser-test.js`
 - `scripts/videomapping-browser-test.js`
 

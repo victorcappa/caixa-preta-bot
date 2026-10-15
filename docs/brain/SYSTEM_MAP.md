@@ -74,6 +74,17 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 - Instagram -> `lib/instagram/InstagramController.js`; embedded UI -> `components/InstagramBrowserPanel.js`; server endpoints -> `app/api/instagram/`.
 - External-navigation safety -> `lib/externalNavigationGuard.js` and calls in `lib/showState.js`.
 
+## Tarô / Treinamento
+
+- Public camera/annotations/speech -> `app/treinamento/page.js` -> `components/tarot/TarotTraining.js` / `useTarotCamera.js`.
+- Private operation/catalogue/anchors -> `app/treinamento/controle/page.js` -> `components/tarot/TarotControls.js` / `TarotCatalogEditor.js` (TREINAMENTO navigation).
+- Session, cancellation and autonomy -> `lib/showState.js` -> `lib/tarot/controller.js`, `state.js`, `service.js`; existing SSE/conversation are reused.
+- Main speech isolation / pre-boot cursor -> `lib/publicText.js` (`isMainProjectionMessage`), `lib/showState.js` (`addMessage`), `components/Chat.js`; tarot stays in shared history, outside Principal typing/audio.
+- Cinematic focus/progressive reveal -> `components/tarot/TarotCameraFocus.js`, `TarotTraining.js`, `lib/tarot/geometry.js`; stable automatic analysis -> `recognition.js` / `useTarotCamera.js`; Matrix -> `TarotMatrix.js`.
+- Six readings / 22 backs / geometric choice / removal / reveal / closing -> `lib/tarot/floor.js`, `controller.js`, `app/api/tarot/back/`; real back reference -> `assets/tarot/carta-fundo.jpeg`.
+- Local image matching/flow -> `public/tarot-tracker.worker.js`, vendored OpenCV; catalogue -> `assets/tarot`, `lib/tarot/catalog.js`, `app/api/tarot/`.
+- Research, costs, preparation, physical-validation limits -> `docs/TAROT_TREINAMENTO.md`, per-card review -> `docs/TAROT_CATALOGO_VISUAL.md`; checks -> `scripts/tarot-*-test.js`.
+
 ## Validation
 
 - Available commands and discovered checks -> `docs/brain/INVENTORY.md` (read only the relevant section).

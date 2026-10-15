@@ -13,6 +13,7 @@ import { PUBLIC_TYPE_INTERVAL_MS } from "@/lib/messageTiming";
 import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
 import { ROBOT_DISPLAY_FONT_DEFAULT, robotTypingIntervalMs, robotTypingDelayMs, robotMessageGapMs } from "@/lib/robot-sound/state";
 import { subscribePublicRealtime } from "@/lib/publicRealtime";
+import { isMainProjectionMessage } from "@/lib/publicText";
 import { PUBLIC_LAYOUT_CHANGE_EVENT, PUBLIC_LAYOUTS } from "@/lib/projectionScreens";
 import {
   sceneZeroEmergenceCueForMessage,
@@ -152,6 +153,9 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
         return;
       }
 
+      const mainMessages = (payload.state.conversation || []).filter(isMainProjectionMessage);
+      const mainPublicMessage = isMainProjectionMessage(payload.state.publicMessage) ? payload.state.publicMessage : null;
+
       if (!initializedMessagesRef.current && payload.event?.type === "snapshot") {
         setPerformanceEvents(payload.state.performance?.events || []);
         setPerformanceActivities(payload.state.performance?.activities || []);
@@ -164,12 +168,12 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
         setDisplayBlackout(payload.state.displayBlackout || null);
         setSceneZero(payload.state.sceneZero || null);
         setAudienceWarmup(payload.state.audienceWarmup || null);
-        setPublicMessage(payload.state.publicMessage || null);
-        hydrateInitialMessages(payload.state.conversation || [], payload.state.publicMessage);
+        setPublicMessage(mainPublicMessage);
+        hydrateInitialMessages(mainMessages, mainPublicMessage);
         return;
       }
 
-      setMessages(payload.state.conversation || []);
+      setMessages(mainMessages);
       setPerformanceEvents(payload.state.performance?.events || []);
       setPerformanceActivities(payload.state.performance?.activities || []);
       setPhoneProjection(payload.state.performance?.phoneProjection || { status: "hidden" });
@@ -181,7 +185,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
       setDisplayBlackout(payload.state.displayBlackout || null);
       setSceneZero(payload.state.sceneZero || null);
       setAudienceWarmup(payload.state.audienceWarmup || null);
-      setPublicMessage(payload.state.publicMessage || null);
+      setPublicMessage(mainPublicMessage);
     }, (nextStatus) => setStatus(nextStatus === "connected" ? "CONNECTED" : "DISCONNECTED"));
   }, []);
 
