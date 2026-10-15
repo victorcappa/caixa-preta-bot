@@ -59,7 +59,7 @@ Targeted logical and browser commands are listed in the generated inventory. Run
 3. In `ABRIR NOVA JANELA COM`, open the desired public route from the operator so the projection window receives an ID and registers.
 4. Move that public window to the extended display/projector and enter fullscreen manually.
 5. Use `MUDAR PARA TELA` or the scene-controller tabs only after the projection status reports a connected window.
-6. For Scene Zero, open `/cena-0-controller` (or `/videomapping-controller`), confirm microphone permission/status, then use `BOOT` and the visible operator sequence.
+6. For Scene Zero, open `/cena-0-controller` (or `/videomapping-controller`), confirm microphone permission/status, then use `BOOT` and the visible operator sequence. Keep that tab open when switching to Bot: microphone detection uses the audio clock and continues while Operator is hidden; the public page never requests the microphone.
 7. Before audience entry, verify text, blackout/recovery, global volume, media playback, selected audio output, microphone level, and STOP ALL on the actual browser/hardware path.
 
 If Operator reports an interrupted session, inspect scene, step, and snapshot time. Choose `RETOMAR APRESENTAÇÃO` to restore it paused and with transient media/external browser state stopped, or `INICIAR NOVA APRESENTAÇÃO` to discard that recovery path deliberately. Nothing restores automatically.
@@ -138,3 +138,7 @@ After a material architecture, workflow, command, route, or current-state change
 4. Run `npm run brain:check`.
 
 Brain maintenance never authorizes commit, push, merge, deploy, data deletion, infrastructure changes, or external messages.
+
+## Background microphone
+
+`npm run test:audience-microphone` checks meter RMS, silent output and timer cleanup. `npm run test:audience-microphone:background` builds an isolated copy on port 3313, runs the existing sound-check scenario, then tests a hidden Operator tab and an unfocused Operator window in native Chromium without focus emulation with synthetic audio and paint callbacks disabled. It does not use the physical mic or reset port 3000. Closing/discarding the capture tab, OS sleep or permission revocation still stops capture; physical-browser/hardware rehearsal remains required. See [MDN AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process) and [requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame).

@@ -13,3 +13,6 @@ yarn-debug.log*
 yarn-error.log*
 .DS_Store
 /bot-old/
+
+# Reproducible local Operator/audio audit output.
+/artifacts/microphone-background-*/

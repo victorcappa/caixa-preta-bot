@@ -43,6 +43,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:sound-control:browser` -> `node --no-warnings scripts/sound-control-browser-test.js`
 - `npm run test:audience-warmup` -> `node --no-warnings scripts/audience-warmup-test.js`
 - `npm run test:audience-sound-check:browser` -> `node --no-warnings scripts/audience-sound-check-browser-test.js`
+- `npm run test:audience-microphone` -> `node --no-warnings scripts/audience-microphone-meter-test.js`
+- `npm run test:audience-microphone:background` -> `node --no-warnings scripts/audience-microphone-background-browser-test.js`
 - `npm run test:audience-warmup:agreements:browser` -> `node --no-warnings scripts/audience-warmup-agreements-browser-test.js`
 - `npm run test:audience-warmup:browser` -> `node --no-warnings scripts/audience-warmup-browser-test.js`
 - `npm run test:play-unlock:browser` -> `node --no-warnings scripts/play-unlock-browser-test.js`
@@ -185,8 +187,10 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 
 - `BASE_URL`
 - `CAIXA_PRETA_AUDIT_OUTPUT`
+- `CAIXA_PRETA_BACKGROUND_MIC`
 - `CAIXA_PRETA_INTERNET_VOICE`
 - `CAIXA_PRETA_OPENAI_AUDIT_MOCK`
+- `CAIXA_PRETA_OPERATOR_AUDIT_ROOT`
 - `CAIXA_PRETA_PERFORMATIVE_RESEARCH`
 - `CAIXA_PRETA_RELIABILITY_TESTS`
 - `CAIXA_PRETA_RESEARCH_BUDGET`
@@ -224,6 +228,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 
 ## Test and browser-check scripts
 
+- `scripts/audience-microphone-background-browser-test.js`
+- `scripts/audience-microphone-meter-test.js`
 - `scripts/audience-sound-check-browser-test.js`
 - `scripts/audience-warmup-agreements-browser-test.js`
 - `scripts/audience-warmup-browser-test.js`

@@ -6,6 +6,7 @@ import AudienceWarmupController from "./AudienceWarmupController";
 import { setSharedInstagramPanelVisible } from "@/lib/instagram/panelClient";
 import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
 import { robotMicrophoneSensitivity } from "@/lib/robot-sound/state";
+import { startAudienceMicrophoneMeter } from "@/lib/audienceMicrophoneMeter";
 import { SCENE_ZERO_GLITCH_LEVELS, SCENE_ZERO_PERSONALITY_DIRECTIONS, SCENE_ZERO_STAGES, sceneZeroStageLabel } from "@/lib/scene-zero/state";
 import { nextSceneZeroSuitcase } from "@/lib/scene-zero/suitcaseGame";
 import { SCENE_ZERO_HANGMAN_WORDS } from "@/data/scene-zero-hangman-words";
@@ -381,10 +382,9 @@ export default function SceneZeroController() {
     if (activeSoundCheckPhase !== "listening") return undefined;
 
     let cancelled = false;
-    let frame = 0;
+    let stopMeter = () => {};
     let smoothedLevel = 0;
     let heldMs = 0;
-    let lastFrameAt = performance.now();
     let lastPublishAt = 0;
     let completionSent = false;
 
@@ -432,24 +432,16 @@ export default function SceneZeroController() {
     microphoneContextRef.current?.resume()
       .then(() => setMicrophonePermission(microphoneContextRef.current?.state === "running" ? "ready" : "suspended"))
       .catch(() => setMicrophonePermission("unavailable"));
-    const analyser = microphoneAnalyserRef.current;
-    const samples = new Uint8Array(analyser.fftSize);
     const threshold = PLAY_UNLOCK_CONFIG.soundCheck.thresholdPercent / 100;
 
-    const readLevel = (frameAt) => {
+    const readLevel = ({ rms, elapsedMs }) => {
       if (cancelled) return;
-      analyser.getByteTimeDomainData(samples);
-      let energy = 0;
-      for (const sample of samples) {
-        const amplitude = (sample - 128) / 128;
-        energy += amplitude * amplitude;
-      }
-      const rms = Math.sqrt(energy / samples.length);
+      const frameAt = performance.now();
+      const elapsed = Math.max(0, Math.min(100, elapsedMs));
       // Medidor teatral sensível a voz/palmas; não pretende representar dB científicos.
       const normalized = Math.max(0, Math.min(1, ((rms - 0.006) / 0.055) * microphoneSensitivity));
-      smoothedLevel = (smoothedLevel * 0.82) + (normalized * 0.18);
-      const elapsed = Math.min(80, frameAt - lastFrameAt);
-      lastFrameAt = frameAt;
+      const smoothing = Math.pow(0.82, elapsed / (1000 / 60));
+      smoothedLevel = (smoothedLevel * smoothing) + (normalized * (1 - smoothing));
       heldMs = smoothedLevel >= threshold
         ? Math.min(PLAY_UNLOCK_CONFIG.soundCheck.sustainMs, heldMs + elapsed)
         : Math.max(0, heldMs - (elapsed * 1.5));
@@ -463,12 +455,20 @@ export default function SceneZeroController() {
         publishLevel(1, 1);
         completeFromMicrophone(smoothedLevel);
       }
-      frame = window.requestAnimationFrame(readLevel);
     };
-    frame = window.requestAnimationFrame(readLevel);
+    startAudienceMicrophoneMeter({
+      context: microphoneContextRef.current,
+      source: microphoneSourceRef.current,
+      analyser: microphoneAnalyserRef.current,
+      onSample: readLevel
+    }).then((meter) => {
+      if (cancelled) { meter.stop(); return; }
+      stopMeter = meter.stop;
+      controllerMicrophoneSession().meterMode = meter.mode;
+    }).catch(() => { if (!cancelled) publishLevel(0, 0, "unavailable"); });
     return () => {
       cancelled = true;
-      window.cancelAnimationFrame(frame);
+      stopMeter();
     };
   }, [activeSoundCheckPhase, activeSoundCheckSequence, microphonePermission, microphoneSensitivity]);
 

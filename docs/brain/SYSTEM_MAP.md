@@ -31,7 +31,7 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 - Scene Zero state shape -> `lib/scene-zero/state.js`; integration -> `lib/showState.js` (`controlSceneZero`).
 - Boot/BIOS/unlock copy and timings -> `data/scene-zero-unlock.js`; transitions -> `lib/scene-zero/unlock.js`.
 - Public BIOS/unlock/countdown rendering -> `components/SceneZeroProjectionLayer.js` and its CSS module.
-- Sound meter/microphone -> search `soundCheck` and `getUserMedia` in `components/SceneZeroController.js`; public receives numeric level only.
+- Sound meter/microphone -> `components/SceneZeroController.js` uses `lib/audienceMicrophoneMeter.js` and `public/audio-worklets/audience-meter.js`; audio-clock sampling continues in hidden tabs/windows, with a timer fallback. Public receives numeric level only.
 - Warmup prompt library -> `data/audience-warmup-prompts.js`; selection/timers -> `lib/audienceWarmup.js`; UI -> `components/AudienceWarmupController.js`.
 - Warmup mini games -> `data/audience-warmup-minigames.js` and `components/AudienceWarmupController.js`.
 - Participant selection -> `app/api/scene-zero/route.js` -> `lib/participants.js` -> `lib/showState.js`.
