@@ -10,6 +10,8 @@ import {DEFAULT_TAROT_VISUAL} from "@/lib/tarot/state";
 import ProjectionWindowClient from "@/components/ProjectionWindowClient";
 import useTarotCamera from "./useTarotCamera";
 import TarotCameraFocus from "./TarotCameraFocus";
+import TarotEffects,{TarotTextEffects,useHallucinationClock} from "./TarotEffects";
+import {evaluate} from "@/lib/tarot/hallucination";
 import styles from "./TarotTraining.module.css";
 
 function CardAnnotations({card,geometry,elements,visibleIds,activeIds,outline}){
@@ -31,9 +33,10 @@ function CardAnnotations({card,geometry,elements,visibleIds,activeIds,outline}){
 }
 export default function TarotTraining(){
   const [state,setState]=useState({}),[cursor,setCursor]=useState({id:null,chars:0}),[digitalSize,setDigitalSize]=useState([960,1280]);
-  const videoRef=useRef(null),textRef=useRef(null),stateRef=useRef(state),cursorRef=useRef(cursor);stateRef.current=state;cursorRef.current=cursor;
+  const videoRef=useRef(null),digitalImageRef=useRef(null),textRef=useRef(null),stateRef=useRef(state),cursorRef=useRef(cursor);stateRef.current=state;cursorRef.current=cursor;
   const tarot=state.tarot,response=tarot?.response,card=tarot?.currentCard,cards=tarot?readingCards(tarot):[],sessionId=state.reliability?.sessionId;
   const camera=useTarotCamera({sessionId,tarot,videoRef}),visual={...DEFAULT_TAROT_VISUAL,...tarot?.visual};
+  const hallTime=useHallucinationClock(tarot?.hallucination);
   const digital=card?.source==="bot",phase=tarot?.floor?.phase||"idle",floorStage=!["idle","interpreting"].includes(phase);
   const tracked=camera.tracking?.cards|| (camera.tracking?[camera.tracking]:[]);
   const geometries=digital?[{...card,matrix:[digitalSize[0],0,0,0,digitalSize[1],0,0,0,1],width:digitalSize[0],height:digitalSize[1]}]:floorStage?[]:cards.flatMap((c)=>{
@@ -84,6 +87,8 @@ export default function TarotTraining(){
   const selected=tarot?.floor?.selected,frame=camera.floorFrame;
   const localSelected=selected&&frame?.cards?.map((c)=>({...c,center:center(c.quad)})).find((c)=>nearby(c,selected));
   const selectedGeometry=selected&&localSelected&&!selected.removed&&["announcing","await-removal"].includes(phase)&&frame?{quad:localSelected.quad.map(([x,y])=>[x*frame.width,y*frame.height]),width:frame.width,height:frame.height}:null;
+  const hallPresent=Boolean(tarot?.active&&!tarot.suspended&&!floorStage&&geometries.length===cards.length&&cards.length&&tarot.camera.enabled);
+  const hallLevels=tarot?.hallucination?evaluate(tarot.hallucination,hallTime,hallPresent).levels:{};
   const focus=digital?[]:selectedGeometry?[selectedGeometry]:geometries;
   const view=selectedGeometry||geometries[0];
   return <main className={styles.screen} data-bot-font={state.robotSound?.displayFont||"modern-dos-8x16"} data-response-id={response?.id||""} style={{"--tarot-text-size":`${visual.textSize}px`}}>
@@ -95,9 +100,10 @@ export default function TarotTraining(){
         <div className={styles.imageStage}>
           <video ref={videoRef} autoPlay muted playsInline className={digital?styles.hiddenVideo:styles.video} aria-label="Imagem das cartas" style={{filter:focus.length?`blur(${visual.blur}px) brightness(${1-visual.dimming}) saturate(.82)`:"none",transition:visual.animations?"filter 260ms ease":"none"}}/>
           <TarotCameraFocus videoRef={videoRef} geometries={focus} visual={visual}/>
-          {digital&&card.imageUrl?<img className={styles.cardImage} src={card.imageUrl} alt={card.name} onLoad={(e)=>setDigitalSize([e.currentTarget.naturalWidth,e.currentTarget.naturalHeight])}/>:null}
+          {digital&&card.imageUrl?<img ref={digitalImageRef} className={styles.cardImage} src={card.imageUrl} alt={card.name} onLoad={(e)=>setDigitalSize([e.currentTarget.naturalWidth,e.currentTarget.naturalHeight])}/>:null}
           {camera.status!=="CÂMERA AO VIVO"&&!digital?<div className={styles.waiting}><div className={styles.reticle}>+</div><p>{camera.status}</p><small>APRESENTE AS CARTAS AO SISTEMA</small></div>:null}
-          {view?<svg className={styles.overlay} viewBox={`0 0 ${view.width} ${view.height}`} preserveAspectRatio="xMidYMid meet" aria-label="Anotações ancoradas nas cartas">
+          <TarotEffects h={tarot?.hallucination} time={hallTime} cards={cards} geometries={geometries} videoRef={digital?undefined:videoRef} image={digital?digitalImageRef.current:undefined} present={hallPresent} onError={error=>{if(camera.owner)void tarotCommand(sessionId,"camera-status",{owner:camera.ownerId,status:"live",error}).catch(()=>{});}}/>
+          {view?<svg style={{opacity:1-(hallLevels.symbols||0)*(.3+.3*Math.sin(hallTime*(.3+(tarot?.hallucination?.effects.symbols.speed||0)/15)))}} className={styles.overlay} viewBox={`0 0 ${view.width} ${view.height}`} preserveAspectRatio="xMidYMid meet" aria-label="Anotações ancoradas nas cartas">
             {!floorStage?cards.map((c)=><CardAnnotations key={c.id} card={c} geometry={geometries.find((g)=>g.id===c.id)} elements={elements} visibleIds={visibleIds} activeIds={activeIds} outline={visual.outline}/>):null}
             {selectedGeometry?<g data-floor-choice={selected.slot}><polygon className={styles.floorChoice} points={selectedGeometry.quad.map((p)=>p.join(",")).join(" ")}/><text className={styles.floorNumber} x={selectedGeometry.quad.reduce((n,p)=>n+p[0]/4,0)} y={selectedGeometry.quad.reduce((n,p)=>n+p[1]/4,0)} textAnchor="middle">{selected.column||selected.slot}</text></g>:null}
           </svg>:null}
@@ -115,8 +121,9 @@ export default function TarotTraining(){
         }):<div className={styles.empty}><p>{floorStage?phase==="scanning"?"Mantenha os 22 versos separados e visíveis.":selected&&!selected.removed?`A carta escolhida está destacada na imagem.`:phase==="await-reveal"?"Mostre a frente da carta retirada.":"":tarot?.generation==="pending"?"":"Os elementos surgem conforme a fala avança."}</p></div>}
       </div><footer>REFERÊNCIAS LOCAIS <span>●</span></footer></aside>
     </section>
-    <section className={styles.speech} aria-label="Fala do bot"><div className={styles.speechHeader}><h2>FALA DO BOT</h2><span>{response?.origin==="catalog"?"CONTEÚDO CADASTRADO":response?.interruptedBy==="tracking-lost"?"AGUARDANDO A CARTA":tarot?.generation==="pending"?"":""}</span></div>
+    <section className={styles.speech} style={{position:"relative"}} aria-label="Fala do bot"><div className={styles.speechHeader}><h2>FALA DO BOT</h2><span>{response?.origin==="catalog"?"CONTEÚDO CADASTRADO":response?.interruptedBy==="tracking-lost"?"AGUARDANDO A CARTA":tarot?.generation==="pending"?"":""}</span></div>
       <div className={styles.speechText} ref={textRef} aria-live="off">{response?.text?response.text.slice(0,response.status==="complete"?response.text.length:chars):<span className={styles.placeholder}>_</span>}{response?.status!=="complete"?<span className={styles.cursor}>▌</span>:null}</div>
+    <TarotTextEffects h={tarot?.hallucination} time={hallTime} text={response?.text?.slice(0,chars)||""} present={hallPresent}/>
     </section>
     {state.displayBlackout?.targets?.chatbot?<div className={styles.blackout}/>:null}
   </main>;

@@ -1,0 +1,46 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import {chromium} from 'playwright';
+const base=process.env.CAIXA_PRETA_TAROT_TEST_URL;
+assert(base&&new URL(base).port!=='3000','Provide an isolated CAIXA_PRETA_TAROT_TEST_URL, never the live show');
+async function poll(predicate,label,timeout=45000){const end=Date.now()+timeout;while(Date.now()<end){if(await predicate())return;await new Promise(r=>setTimeout(r,100));}throw new Error('Timeout: '+label);}
+const output='/private/tmp/tarot-hallucination-evidence';await fs.mkdir(output,{recursive:true});
+const browser=await chromium.launch({headless:true}),context=await browser.newContext({viewport:{width:1500,height:1000}}),page=await context.newPage(),errors=[],external=[];
+let restoreApproval=null;
+page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(!r.url().startsWith(base)&&!r.url().startsWith('blob:')&&!r.url().startsWith('data:'))external.push(r.url());});
+try{
+ await page.goto(base+'/treinamento/controle');await page.getByRole('link',{name:'TARÔ',exact:true}).waitFor();
+ const before=await(await fetch(base+'/api/tarot')).json();
+ await page.getByRole('button',{name:'05 — Memória',exact:true}).click();
+ await page.getByRole('button',{name:/PREPARAR ROSTOS DE assets/}).click();
+ await page.waitForFunction(()=>document.querySelector('[role="status"]')?.textContent.includes('Lote concluído'),{},{timeout:120000});
+ const logs=await page.locator('[role="status"]').allTextContents();console.log(JSON.stringify({preparation:logs}));
+ let library=await(await fetch(base+'/api/tarot/faces')).json();assert(library.faces.length>=8,`Faces detected: ${library.faces.length}`);assert.equal(library.sources.length,8);
+ await page.screenshot({path:output+'/01-faces.png'});
+ await page.getByRole('button',{name:'06 — Fusão facial',exact:true}).click();
+ const started=Date.now();await page.getByRole('button',{name:'PREPARAR FUSÕES AUTOMATICAMENTE',exact:true}).click();await page.getByRole('button',{name:'PREPARAR FUSÕES AUTOMATICAMENTE',exact:true}).waitFor({state:'visible'});
+ await page.waitForFunction(()=>!Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='PREPARAR FUSÕES AUTOMATICAMENTE')?.disabled,{},{timeout:120000});
+ library=await(await fetch(base+'/api/tarot/faces')).json();library.fusions=library.fusions.filter(f=>f.pipelineVersion===2);const fusionWallMs=Date.now()-started;assert(library.fusions.length>=8,`Fusions: ${library.fusions.length}`);
+ await page.getByRole('button',{name:'11 — Testes',exact:true}).click();await page.getByRole('button',{name:'VER FUSÃO AGORA',exact:true}).click();await page.waitForTimeout(300);const slider=page.getByRole('slider',{name:'Mistura foto e carta (%)'});await slider.focus();await slider.press('Home');await slider.press('Tab');await page.waitForTimeout(100);const alpha=()=>page.locator('[data-tarot-effects]:visible').evaluate(c=>{const a=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let n=0;for(let i=3;i<a.length;i+=4)n+=a[i];return n;});assert.equal(await alpha(),0);await slider.focus();await slider.press('End');await slider.press('Tab');await page.waitForTimeout(200);assert((await alpha())>0);await page.screenshot({path:output+'/02-preview.png'});
+ const after=await(await fetch(base+'/api/tarot')).json();assert.deepEqual(before.tarot.hallucination.seenCards,after.tarot.hallucination.seenCards);
+ assert.equal(before.history.length,after.history.length);assert.equal(after.tarot.currentCard,before.tarot.currentCard);
+ await page.getByRole('button',{name:'08 — Timeline',exact:true}).click();await page.screenshot({path:output+'/03-timeline.png'});
+ assert.equal(await page.getByRole('button',{name:'PLAY',exact:true}).count(),1);
+ const measurements={faces:library.faces.map(f=>({name:f.name,ms:f.elapsedMs})),fusions:library.fusions.map(f=>({cardId:f.cardId,ms:f.elapsedMs})),fusionWallMs,errors,external};await fs.writeFile(output+'/measurements.json',JSON.stringify(measurements,null,2));
+ const groupFaces=await page.evaluate(async()=>{const images=await Promise.all(['IMG_7529.jpg','IMG_7530.jpg'].map(async id=>{const img=new Image();img.src='/api/tarot/faces/source?id='+id;await img.decode();return img;}));const c=document.createElement('canvas');c.width=1200;c.height=800;const ctx=c.getContext('2d');images.forEach((img,i)=>ctx.drawImage(img,i*600,0,600,800));const blob=await new Promise(r=>c.toBlob(r,'image/png'));return new Promise((resolve,reject)=>{const worker=new Worker('/tarot-face.worker.js');worker.onmessage=({data})=>{worker.terminate();data.error?reject(new Error(data.error)):resolve(data.faces.length);};worker.postMessage({id:'group-test',action:'detect',blob});});});assert.equal(groupFaces,2,'Group photo yields two selectable faces');
+ const asset=library.fusions.find(f=>f.cardId===8),call=async body=>fetch(base+'/api/tarot/faces',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+ restoreApproval=()=>call({sessionId:before.sessionId,action:'approve',id:asset.id,approved:asset.approved});
+ assert.equal((await call({sessionId:'stale',action:'approve',id:asset.id,approved:true})).status,409);
+ const approved=await call({sessionId:before.sessionId,action:'approve',id:asset.id,approved:true});assert.equal(approved.status,200);assert((await(await fetch(base+'/api/tarot')).json()).tarot.hallucination.assets.some(f=>f.id===asset.id));const pub=await(await fetch(base+'/api/state')).json();assert(pub.tarot.hallucination.assets.some(f=>f.id===asset.id)||pub.tarot.hallucination.run.cardId!==asset.cardId);assert(!pub.tarot.hallucination.memories);assert(!JSON.stringify(pub.tarot.hallucination).includes('sourceHash'));
+ const command=async(action,data={})=>{const r=await fetch(base+'/api/tarot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:before.sessionId,action,...data})});if(!r.ok){const s=(await(await fetch(base+'/api/tarot')).json()).tarot;console.log({action,active:s.active,suspended:s.suspended,card:s.currentCard?.id,run:s.hallucination.run.status});}assert.equal(r.status,200,`${action}: ${await r.text()}`);};
+ await command('config',{config:{autoAnalyze:false,floorEnabled:false}});await command('hallucination',{patch:{afterCards:1,requireFusion:true,effects:Object.fromEntries(['breathing','wave','texture','chromatic','double','oscillation','morph','identity'].map(k=>[k,{enabled:false}]))}});
+ await context.addInitScript(()=>{window.__faceCardX=200;window.__faceBlank=false;navigator.mediaDevices.getUserMedia=async()=>{const img=new Image();img.src='/api/tarot/reference/8';await img.decode();const c=document.createElement('canvas');c.width=800;c.height=600;const ctx=c.getContext('2d'),draw=()=>{ctx.fillStyle='#45695a';ctx.fillRect(0,0,800,600);if(!window.__faceBlank)ctx.drawImage(img,window.__faceCardX,70,300,400);};draw();const timer=setInterval(draw,65),stream=c.captureStream(15);stream.getTracks().forEach(t=>{const stop=t.stop.bind(t);t.stop=()=>{clearInterval(timer);stop();};});return stream;};});
+ const projection=await context.newPage();projection.on('pageerror',e=>errors.push(e.message));await projection.goto(base+'/treinamento');await command('start');
+ await poll(async()=>{const s=(await(await fetch(base+'/api/tarot')).json()).tarot;return s.currentCard?.id===8&&s.active&&!s.suspended;},'tracked card 8');await command('hallucination-manual',{effect:'fusion',mode:'on'});
+ const center=()=>projection.locator('[data-tarot-effects]').evaluate(c=>{const pixels=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let x=0,y=0,n=0;for(let i=3;i<pixels.length;i+=4)if(pixels[i]>20){x+=((i-3)/4)%c.width;y+=Math.floor((i-3)/4/c.width);n++;}return n?{x:x/n,y:y/n}:null;});
+ await projection.waitForFunction(()=>{const c=document.querySelector('[data-tarot-effects]');return c&&c.width===800;},{},{timeout:20000});await projection.waitForTimeout(300);const initial=await center();assert(initial,'Approved fusion rendered on tracked card');assert(Math.abs(initial.x-337)<25&&Math.abs(initial.y-168)<25,JSON.stringify(initial));
+ await projection.evaluate(()=>{window.__faceCardX=280;});await projection.waitForTimeout(1200);const moved=await center();assert(moved&&moved.x-initial.x>45,'Fusion follows the physical homography');await projection.screenshot({path:output+'/04-tracked-fusion.png'});
+ await projection.evaluate(()=>{window.__faceBlank=true;});await poll(async()=>{const s=(await(await fetch(base+'/api/tarot')).json()).tarot;return s.hallucination.run.status==='stopped';},'removal stops the timeline',15000);assert.equal(await center(),null);assert.equal((await(await fetch(base+'/api/tarot')).json()).history.length,before.history.length,'Visual test makes no language calls');await command('end');await projection.close();
+ assert.equal((await call({sessionId:before.sessionId,action:'approve',id:asset.id,approved:asset.approved})).status,200);
+ assert.deepEqual(errors,[]);assert.deepEqual(external,[]);console.log(JSON.stringify({ok:true,faces:library.faces.length,fusions:library.fusions.length,output}));
+}finally{try{if(restoreApproval){const r=await restoreApproval();assert.equal(r.status,200,'Restore only the temporary test approval');}}finally{await browser.close();}}

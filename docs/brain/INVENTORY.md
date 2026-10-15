@@ -62,6 +62,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run brain:check` -> `node scripts/brain-check.js`
 - `npm run brain:summary` -> `node scripts/brain-summary.js`
 - `npm run generate:elderly-voice` -> `node scripts/generate-elderly-voice.js`
+- `npm run test:tarot:hallucination` -> `node --no-warnings scripts/tarot-hallucination-test.js`
+- `npm run test:tarot:hallucination:browser` -> `node --no-warnings scripts/tarot-hallucination-browser-test.js`
 
 ## App pages
 
@@ -126,6 +128,9 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `GET /api/state` -> `app/api/state/route.js`
 - `GET /api/tarot/back` -> `app/api/tarot/back/route.js`
 - `GET, POST /api/tarot/catalog` -> `app/api/tarot/catalog/route.js`
+- `GET /api/tarot/faces/[id]` -> `app/api/tarot/faces/[id]/route.js`
+- `GET, POST /api/tarot/faces` -> `app/api/tarot/faces/route.js`
+- `GET /api/tarot/faces/source` -> `app/api/tarot/faces/source/route.js`
 - `GET /api/tarot/reference/[id]` -> `app/api/tarot/reference/[id]/route.js`
 - `GET, POST /api/tarot` -> `app/api/tarot/route.js`
 - `POST /api/training/chat` -> `app/api/training/chat/route.js`
@@ -176,6 +181,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/tarot/TarotCameraFocus.js`
 - `components/tarot/TarotCatalogEditor.js`
 - `components/tarot/TarotControls.js`
+- `components/tarot/TarotEffects.js`
+- `components/tarot/TarotHallucinationControls.js`
 - `components/tarot/TarotMatrix.js`
 - `components/tarot/TarotTraining.js`
 - `components/tarot/useTarotCamera.js`
@@ -227,8 +234,10 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `CAIXA_PRETA_RESEARCH_ENABLED`
 - `CAIXA_PRETA_SHOW_RUNTIME_DIR`
 - `CAIXA_PRETA_TAROT_AUDIT_ROOT`
+- `CAIXA_PRETA_TAROT_FACE_DIR`
 - `CAIXA_PRETA_TAROT_MOCK`
 - `CAIXA_PRETA_TAROT_OUTPUT`
+- `CAIXA_PRETA_TAROT_TEST_URL`
 - `CAIXA_PRETA_URL`
 - `CAIXA_PRETA_VOICE_GUIDE_PATH`
 - `CAIXA_PRETA_WEB_SEARCH`
@@ -300,6 +309,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/tarot-browser-test.js`
 - `scripts/tarot-catalog-test.js`
 - `scripts/tarot-experience-test.js`
+- `scripts/tarot-hallucination-browser-test.js`
+- `scripts/tarot-hallucination-test.js`
 - `scripts/tarot-test.js`
 - `scripts/tarot-vision-test.js`
 - `scripts/verdade-ou-bolo-layout-browser-test.js`

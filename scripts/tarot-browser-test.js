@@ -81,7 +81,7 @@ try{
   await operator.goto(base+"/operator");assert.equal(await operator.getByRole("button",{name:"PREPARAR BARALHO",exact:true}).count(),0);
   await operator.getByRole("link",{name:/TREINAMENTO · ABRIR/}).click();
   await operator.waitForURL(base+"/treinamento/controle");await operator.getByRole("heading",{name:"TARÔ / TREINAMENTO",exact:true}).waitFor();
-  await operator.getByRole("link",{name:"TREINAMENTO",exact:true}).waitFor();
+  await operator.getByRole("link",{name:"TARÔ",exact:true}).waitFor();
   assert.equal(new URL(projection.url()).pathname,"/treinamento","opening controls must not navigate the projection");
   await post("/api/robot-sound",{settings:{typingIntervalMs:20,typingPauseMs:0,messageGapMs:0}});
   await operator.getByRole("button",{name:"INICIAR PRÓLOGO",exact:true}).click();
@@ -130,7 +130,7 @@ try{
   const firstReveal=await projection.evaluate((id)=>window.__revealSamples.find((s)=>s.response===id),response18);assert(firstReveal&&firstReveal.ids.length<=1,"new response cannot flash every sidebar element before typing");
   assert(!/CÂMERA AO VIVO|VISÃO COMPUTACIONAL|INTERPRETAÇÃO.*DIÁLOGO.*AUTONOMIA/.test(await projection.locator("body").innerText()));
   assert(await projection.locator('[class*="speechText"]').evaluate((e)=>parseFloat(getComputedStyle(e).fontSize)>=38));
-  await operator.getByRole("button",{name:"Câmera e carta",exact:true}).click();
+  await operator.getByRole("button",{name:"02 — Câmera e reconhecimento",exact:true}).click();
   await operator.getByLabel("Análise automática",{exact:true}).uncheck();
   await poll(async()=>(await privateState()).tarot.config.autoAnalyze===false,"automatic off");
   await projection.evaluate(()=>window.__tarotUseCard(0));await poll(async()=>(await state()).tarot.currentCard?.id===0,"recognition remains on");
@@ -167,7 +167,7 @@ try{
   await operator.getByLabel("Alfabeto de símbolos",{exact:true}).fill("☉ ☽ ∞ ◇");await operator.getByLabel("Alfabeto de símbolos",{exact:true}).press("Tab");
   await poll(async()=>(await state()).tarot.visual.matrixSymbols==="☉ ☽ ∞ ◇","custom glyph alphabet public");
   await operator.getByRole("button",{name:"RESTAURAR VISUAL",exact:true}).click();
-  await operator.getByRole("button",{name:"Baralho",exact:true}).click();
+  await operator.getByRole("button",{name:"04 — Baralho",exact:true}).click();
   await operator.getByRole("button",{name:"PREPARAR BARALHO",exact:true}).click();
   await operator.getByText("22 referências preparadas. Descritores salvos neste navegador.",{exact:true}).waitFor();assert.equal(await calls(),5,"preprocessing never invokes the model");
   await operator.getByRole("button",{name:"EDITAR CARTA 0",exact:true}).click();
@@ -179,7 +179,7 @@ try{
   assert((await catalog())[0].elements.every((e)=>e.validated));
   await post("/api/tarot/catalog",{sessionId,id:0,patch:{contingency:"Uma fala cadastrada, sem geração nova."}});
   checks.push("independent sectioned controls; live visual settings; free descriptor preparation; manual anchor editor preserved");
-  await operator.getByRole("button",{name:"Conversa",exact:true}).click();
+  await operator.getByRole("button",{name:"03 — Conversa",exact:true}).click();
   await operator.getByLabel("Pergunta ao bot",{exact:true}).fill("O que esta imagem sugere?");await operator.getByRole("button",{name:"ENVIAR PERGUNTA",exact:true}).click();
   await poll(async()=>(await privateState()).tarot.answeredQuestions===1,"count only answered question");await complete();
   await command("instruction",{text:"PRIVATE-TEST-SECRET"});assert(!JSON.stringify((await state()).tarot).includes("PRIVATE-TEST-SECRET"));
@@ -234,7 +234,7 @@ try{
   checks.push("main projection stays on its blinking cursor before boot, including reload with tarot history; tarot readings, questions, floor stages, closing and return to Principal never publish main speech");
   await projection.goto(base+"/treinamento?projectionWindow=tarot-reconnect");await projection.getByRole("heading",{name:"TARÔ / TREINAMENTO",exact:true}).waitFor();assert.equal((await state()).tarot.active,false);
   await projection.setViewportSize({width:390,height:844});await projection.screenshot({path:path.join(output,"treinamento-390x844.png")});assert(await projection.evaluate(()=>document.documentElement.scrollHeight<=innerHeight));
-  await operator.setViewportSize({width:1440,height:900});await operator.getByRole("button",{name:"Apresentação",exact:true}).click();await operator.screenshot({path:path.join(output,"controle-1440x900.png")});
+  await operator.setViewportSize({width:1440,height:900});await operator.getByRole("button",{name:"01 — Apresentação",exact:true}).click();await operator.screenshot({path:path.join(output,"controle-1440x900.png")});
   checks.push("shared conversation/personality/session; counted questions; presentation gate; autonomy; contingency; late replies; failure; end to Principal and reconnect");
   assert.deepEqual(errors,[]);
   await fs.writeFile(path.join(output,"result.json"),JSON.stringify({ok:true,syntheticCamera:true,liveModel:false,checks,auditRoot},null,2));

@@ -5,13 +5,13 @@ import { currentSession, sameOrigin } from "@/lib/tarot/http";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export async function GET() {
-  if (showState.tarotController?.version !== 4) return Response.json({ error: "Reinicie o servidor local para carregar esta versão do treinamento; a sessão atual foi preservada." }, { status: 503 });
+  if (showState.tarotController?.version !== 5) return Response.json({ error: "Reinicie o servidor local para carregar esta versão do treinamento; a sessão atual foi preservada." }, { status: 503 });
   const state = showState.privateSnapshot();
   return Response.json({ tarot: state.tarot, sessionId: state.reliability.sessionId,
     history: state.conversation.filter((m) => m.source?.startsWith("tarot-")).slice(-50) }, { headers: { "Cache-Control": "no-store" } });
 }
 export async function POST(request) {
-  if (showState.tarotController?.version !== 4) return Response.json({ error: "TAROT_RUNTIME_RESTART_REQUIRED" }, { status: 503 });
+  if (showState.tarotController?.version !== 5) return Response.json({ error: "TAROT_RUNTIME_RESTART_REQUIRED" }, { status: 503 });
   if (!sameOrigin(request)) return Response.json({ error: "ORIGIN_NOT_ALLOWED" }, { status: 403 });
   const body = await request.json().catch(() => null);
   if (!currentSession(body)) return Response.json({ error: "TAROT_SESSION_CHANGED" }, { status: 409 });
@@ -48,7 +48,7 @@ export async function POST(request) {
       }
       return Response.json(result);
     }
-    if (["autonomy-card", "catalog-updated", "restore-presentation", "bot"].includes(action)) throw new Error("TAROT_ACTION_UNKNOWN");
+    if (["hallucination-assets", "autonomy-card", "catalog-updated", "restore-presentation", "bot"].includes(action)) throw new Error("TAROT_ACTION_UNKNOWN");
     return Response.json(showState.controlTarot(action, data));
   } catch (error) {
     return Response.json({ error: /^TAROT_[A-Z_]+$/.test(error.message || "") ? error.message : "TAROT_COMMAND_FAILED" }, { status: 409 });

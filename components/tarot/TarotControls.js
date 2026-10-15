@@ -2,6 +2,7 @@
 /* eslint-disable @next/next/no-img-element -- Raw reference pixels are used by the local vision pipeline. */
 import { useCallback, useEffect, useState, useRef } from "react";
 import { prepareDeck, tarotCommand } from "@/lib/tarot/client";
+import {TarotHallucinationControls,TarotFacePreparation,TarotPreview} from "./TarotHallucinationControls";
 import TarotCatalogEditor from "./TarotCatalogEditor";
 import PublicOperatorControls from "@/components/PublicOperatorControls";
 import { DEFAULT_TAROT_VISUAL } from "@/lib/tarot/state";
@@ -13,6 +14,7 @@ const profileFields = [["humor","Humor"],["provocation","Provocação"],["philos
 export default function TarotControls() {
   const [snapshot,setSnapshot]=useState(null),[cards,setCards]=useState([]),[back,setBack]=useState(null);
   const [section,setSection]=useState("apresentacao");
+  const [library,setLibrary]=useState({faces:[],fusions:[],templates:[],sources:[]}),[memoryTitle,setMemoryTitle]=useState(""),[memoryText,setMemoryText]=useState("");
   const [selected,setSelected]=useState(0),[editor,setEditor]=useState(false),[pending,setPending]=useState(false),[error,setError]=useState("");
   const [question,setQuestion]=useState(""),[instruction,setInstruction]=useState(""),[preparation,setPreparation]=useState("");
   const [context,setContext]=useState({text:"",date:"",url:""});
@@ -69,10 +71,16 @@ export default function TarotControls() {
       <div className={styles.actions}><button disabled={!tarot} onClick={()=>command("start")}>INICIAR PRÓLOGO</button><button disabled={!tarot} onClick={()=>command("interrupt")}>INTERROMPER FALA</button><button disabled={!tarot} onClick={()=>command("end")}>ENCERRAR PRÓLOGO</button><a href="/treinamento" target="_blank" rel="noreferrer">ABRIR PROJEÇÃO ↗</a></div>
     </header>
     <div className={styles.workspace}><nav className={styles.sectionNav} aria-label="Seções do treinamento">
-      {[["apresentacao","Apresentação"],["camera","Câmera e carta"],["chao","Cartas no chão"],["conversa","Conversa"],["autonomia","Autonomia"],["baralho","Baralho"],["visual","Visual"],["contexto","Personalidade e contexto"]].map(([id,label])=><button key={id} type="button" aria-current={section===id?"page":undefined} onClick={()=>setSection(id)}>{label}</button>)}
+      {[["apresentacao","01 — Apresentação"],["camera","02 — Câmera e reconhecimento"],["conversa","03 — Conversa"],["baralho","04 — Baralho"],["memoria","05 — Memória"],["fusao","06 — Fusão facial"],["alucinacao","07 — Alucinação"],["timeline","08 — Timeline"],["autonomia","09 — Autonomia"],["contexto","10 — Personalidade e contexto"],["testes","11 — Testes"],["chao","Cartas no chão"],["visual","Visual"]].map(([id,label])=><button key={id} type="button" aria-current={section===id?"page":undefined} onClick={()=>setSection(id)}>{label}</button>)}
     </nav><div className={styles.content}>
 
       {tarot ? <>
+        {tarot.hallucination?<>
+          <TarotHallucinationControls h={tarot.hallucination} section={section} command={command}/>
+          <TarotFacePreparation section={section} sessionId={sessionId} cards={cards} library={library} onLibrary={setLibrary}/>
+          <details open hidden={section!=="testes"}><summary>11 — TESTES / SEM WEBCAM</summary><TarotPreview library={library} cards={cards} h={tarot.hallucination} sessionId={sessionId} onLibrary={setLibrary}/></details>
+          <details hidden={section!=="memoria"}><summary>TEXTOS, DOCUMENTOS E ENTREVISTAS (OPCIONAIS)</summary><div className={styles.section}><label>Título<input value={memoryTitle} onChange={e=>setMemoryTitle(e.target.value)}/></label><label>Texto / entrevista<textarea value={memoryText} onChange={e=>setMemoryText(e.target.value)}/></label><label>Importar documento de texto UTF-8<input type="file" accept=".txt,.md,text/plain" onChange={async e=>{const file=e.target.files[0];if(file){setMemoryTitle(file.name);setMemoryText((await file.text()).slice(0,12000));}}}/></label><button disabled={!memoryText.trim()} onClick={async()=>{if(await command("hallucination-memory",{memories:[...tarot.hallucination.memories,{id:crypto.randomUUID(),title:memoryTitle,text:memoryText,enabled:true}]})){setMemoryText("");setMemoryTitle("");}}}>SALVAR NA MEMÓRIA TEXTUAL</button>{tarot.hallucination.memories.map(m=><div key={m.id}><label className={styles.check}><input type="checkbox" checked={m.enabled} onChange={e=>command("hallucination-memory",{memories:tarot.hallucination.memories.map(v=>v.id===m.id?{...v,enabled:e.target.checked}:v)})}/>{m.title}</label><button onClick={()=>command("hallucination-memory",{memories:tarot.hallucination.memories.filter(v=>v.id!==m.id)})}>REMOVER TEXTO</button></div>)}</div></details>
+        </>:null}
 
         <details open hidden={section!=="apresentacao"}><summary>APRESENTAÇÃO</summary><div className={styles.section}><p className={styles.hint}>Câmera e processamento pertencem à tela pública. A prévia usa a referência e o estado compartilhado, sem vídeo remoto.</p><div className={styles.actions}><button onClick={()=>command("start")}>INICIAR</button><button onClick={()=>command("end")}>ENCERRAR PRÓLOGO</button><button onClick={()=>command("reset")}>REINICIAR TREINAMENTO</button><button onClick={()=>command("interrupt")}>INTERROMPER FALA</button><button onClick={()=>command("resume-speech")}>RETOMAR FALA</button><a href="/" target="_blank" rel="noreferrer">PRINCIPAL ↗</a></div>{tarot.currentCard?<div className={styles.preview}><img src={tarot.currentCard.imageUrl} alt={tarot.currentCard.name}/><div><strong>{tarot.currentCard.name}</strong><p>{tarot.response?.text||"Aguardando interpretação automática."}</p></div></div>:<p>Inicie o prólogo e mostre uma carta. O inventário visual das 22 referências já está incluído.</p>}</div></details>
         <details open hidden={section!=="camera"}><summary>CÂMERA E CARTA</summary><div className={styles.section}>

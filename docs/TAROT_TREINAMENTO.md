@@ -1,8 +1,10 @@
 # Tarô / Treinamento
 
+Rostos, fusões, mistura FOTO ↔ CARTA, efeitos independentes, presets e timeline: [TAROT_ALUCINACAO.md](TAROT_ALUCINACAO.md).
+
 ## Uso atual
 
-O controle privado fica em `/treinamento/controle`, acessível por **TREINAMENTO** na navegação e pelo link em `/operator`. A projeção pública é `/treinamento`. As duas usam a mesma sessão, conversa, personalidade, áudio procedural e SSE do espetáculo. Abrir o controle não muda a projeção. O antigo `/treino` continua sendo a calibração de personalidade.
+O controle privado fica em `/treinamento/controle`, acessível por **TARÔ** na navegação e pelo link em `/operator`. A projeção pública é `/treinamento`. As duas usam a mesma sessão, conversa, personalidade, áudio procedural e SSE do espetáculo. Abrir o controle não muda a projeção. O antigo `/treino` continua sendo a calibração de personalidade.
 
 As falas, perguntas, contingências e instruções do tarô aparecem somente em `/treinamento`. Elas permanecem no histórico compartilhado para dar contexto ao bot, mas não substituem `publicMessage` da tela principal nem entram na sua fila de digitação/sons. Antes do boot, a principal mantém apenas o cursor piscando; boot, BIOS, jogo das malas e falas próprias continuam no fluxo existente. Reabrir a principal também filtra mensagens antigas do tarô, sem reapresentá-las.
 
@@ -16,7 +18,7 @@ As falas, perguntas, contingências e instruções do tarô aparecem somente em 
 
 Uma pausa manual permanece ativa mesmo se a carta continuar visível: o reconhecimento não reinicia sozinho a fala cancelada. Retome pelo controle ou inicie explicitamente outra análise.
 
-Se um processo anterior ainda estiver aberto, a API pode informar `TAROT_RUNTIME_RESTART_REQUIRED`: esta evolução exige controller **v4**, que preserva a fala da tela principal. O singleton ativo não é apagado pelo hot reload. Reinicie o servidor em um momento adequado e use a recuperação existente se necessário. Não se reiniciou a sessão real durante os testes.
+Se um processo anterior ainda estiver aberto, a API pode informar `TAROT_RUNTIME_RESTART_REQUIRED`: esta evolução exige controller **v5**, que preserva a fala da tela principal. O singleton ativo não é apagado pelo hot reload. Reinicie o servidor em um momento adequado e use a recuperação existente se necessário. Não se reiniciou a sessão real durante os testes.
 
 ## Seis leituras e os 22 versos no chão
 

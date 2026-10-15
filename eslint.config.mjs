@@ -10,7 +10,7 @@ const compat = new FlatCompat({
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals"),
   {
-    ignores: [".next/**", "node_modules/**", "public/vendor/opencv/opencv.js"]
+    ignores: [".next/**", "node_modules/**", "public/vendor/opencv/opencv.js", "public/vendor/mediapipe/**"]
   }
 ];
 
