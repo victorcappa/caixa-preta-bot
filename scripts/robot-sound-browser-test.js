@@ -3,6 +3,7 @@ const { chromium } = require("playwright");
 
 async function openRobotSoundPanel(page) {
   const panel = page.getByLabel("Robot Sound Engine");
+  if (await panel.count() === 0) await page.goto("http://localhost:3000/sound-control", { waitUntil: "domcontentloaded" });
   if (!(await panel.isVisible())) {
     const diagnostics = page.getByText("DIAGNÓSTICOS, MEMÓRIA E CONTROLES AVANÇADOS", { exact: true });
     if (await diagnostics.isVisible()) await diagnostics.click();
@@ -31,7 +32,7 @@ async function main() {
     await page.goto("http://localhost:3000/operator", { waitUntil: "domcontentloaded" });
     const projection = await context.newPage();
     await projection.goto("http://localhost:3000", { waitUntil: "domcontentloaded" });
-    await page.getByText("CONNECTED", { exact: true }).first().waitFor({ state: "attached", timeout: 10000 });
+    await page.waitForFunction(() => !document.querySelector('[aria-label="Modelo GPT"]')?.disabled);
     const typography = page.getByLabel("Tipografia e digitação do bot");
     await typography.getByLabel("Fonte do texto projetado do bot").selectOption("modern-dos-9x16");
     await typography.getByLabel("Velocidade da digitação do robô").fill("24");
@@ -114,9 +115,7 @@ async function main() {
       return (await response.json()).robotSound.enabled === true;
     });
 
-    const operatorInput = page.getByLabel("Comando do operator");
-    await operatorInput.fill("/reset");
-    await operatorInput.press("Enter");
+    await page.request.post("http://localhost:3000/api/operator", { data: { command: "/reset" } });
     await waitForAsyncCondition(page, async () => {
       const response = await fetch("/api/state");
       return (await response.json()).sceneZero.unlock.status === "STANDBY";
@@ -164,7 +163,6 @@ async function main() {
     assert.deepEqual(relevantResponses, []);
 
     await page.goto("http://localhost:3000/operator", { waitUntil: "domcontentloaded" });
-    await page.getByText("CONNECTED", { exact: true }).first().waitFor({ timeout: 10000 });
     const standaloneSoundPanel = await openRobotSoundPanel(page);
     await standaloneSoundPanel.getByRole("button", { name: "TEST DIGITAÇÃO" }).click();
     await page.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.context?.state === "running");
@@ -176,7 +174,6 @@ async function main() {
 
     const secondOperatorPage = await context.newPage();
     await secondOperatorPage.goto("http://localhost:3000/operator", { waitUntil: "domcontentloaded" });
-    await secondOperatorPage.getByText("CONNECTED", { exact: true }).first().waitFor({ timeout: 10000 });
     const secondOperatorSoundPanel = await openRobotSoundPanel(secondOperatorPage);
     await secondOperatorSoundPanel.getByRole("button", { name: "TEST DIGITAÇÃO" }).click();
     await secondOperatorPage.waitForFunction(() => window.__caixaPretaRobotSoundEngine?.context?.state === "running");

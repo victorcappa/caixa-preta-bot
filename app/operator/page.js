@@ -1,10 +1,10 @@
 import ControllerSurface from "@/components/ControllerSurface";
-import OperatorConsole from "@/components/OperatorConsole";
+import OperatorBotSettings from "@/components/OperatorBotSettings";
 
 export default function OperatorPage() {
   return (
     <ControllerSurface>
-      <OperatorConsole />
+      <OperatorBotSettings />
     </ControllerSurface>
   );
 }

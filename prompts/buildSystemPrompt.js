@@ -1,3 +1,4 @@
+import { personalityPrompt } from "../lib/operatorPublic";
 import { caixaPretaExamples } from "./examples";
 import { buildHostGameLibraryBlock } from "../lib/host/games";
 import { getModePrompt } from "./modes";
@@ -17,11 +18,12 @@ ${JSON.stringify(variables, null, 2)}
 `.trim();
 }
 
-export function buildSystemPrompt({ knowledge = "", variables = {}, styleContext = "" } = {}) {
+export function buildSystemPrompt({ knowledge = "", variables = {}, styleContext = "", personality } = {}) {
   return [
     `PROMPT VERSION: ${PROMPT_VERSION}`,
     "PERSONALIDADE:",
     caixaPretaPersonality,
+    personalityPrompt(personality),
     styleContext ? "INTERNET VOICE - FORMA LINGUISTICA:" : "",
     styleContext,
     "REGRAS:",

@@ -8,6 +8,7 @@ import {
   readStoredGlobalVolume
 } from "@/lib/globalVolume";
 import styles from "./ControllerGlobalVolume.module.css";
+import { subscribePublicRealtime } from "@/lib/publicRealtime";
 
 async function postGlobalVolume(volume) {
   const response = await fetch("/api/global-volume", {
@@ -47,15 +48,11 @@ export default function ControllerGlobalVolume() {
         setStatus("OFFLINE");
       });
 
-    const events = new EventSource("/api/events?client=controller-global-volume");
-    events.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
+    return subscribePublicRealtime((payload) => {
+      if (payload.event?.type === "operator-public") return;
       const next = payload.state?.globalVolume ?? payload.globalVolume;
       if (next !== undefined) apply(next);
-    };
-    events.onerror = () => setStatus("OFFLINE");
-    events.onopen = () => setStatus("READY");
-    return () => events.close();
+    }, (connection) => setStatus(connection === "connected" ? "READY" : "OFFLINE"));
   }, []);
 
   async function update(nextValue) {

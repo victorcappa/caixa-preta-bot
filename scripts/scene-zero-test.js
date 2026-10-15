@@ -290,6 +290,30 @@ async function main() {
   assert.equal(suitcaseGame.nextSceneZeroSuitcase({ currentSuitcase: 2 }), 3);
   assert.equal(suitcaseGame.nextSceneZeroSuitcase({ currentSuitcase: 3 }), 1);
   assert.equal(suitcaseGame.nextSceneZeroSuitcase({ openedSuitcases: [2, 3, 1] }), null);
+  assert.equal(suitcaseGame.nextSceneZeroSuitcase({ currentSuitcase: 1, openedSuitcases: [2, 1] }), null,
+    "a última mala deve encerrar a sequência mesmo após um salto manual");
+  assert.equal(suitcaseGame.nextSceneZeroSuitcase({ currentSuitcase: 3, openedSuitcases: [3] }), 1,
+    "a recuperação na segunda mala deve continuar para a última, sem repetir a atual");
+  assert.equal(suitcaseGame.nextSceneZeroSuitcase({ openedSuitcases: [1] }), 2,
+    "sem mala atual, procurar a primeira disponível na ordem autoral");
+  const recoveredFinalSuitcase = {
+    currentSuitcase: 1, openedSuitcases: [2, 1], status: "active", suitcaseSelectionSequence: 4,
+    choice: { status: "ready", targetSuitcase: 1 },
+    contentInstruction: { kind: "last-suitcase", status: "complete", selectionSequence: 4 }
+  };
+  assert.equal(suitcaseGame.isSceneZeroFinalSuitcaseInstructionReady(recoveredFinalSuitcase), true);
+  assert.equal(suitcaseGame.isSceneZeroFinalSuitcaseInstructionReady({ ...recoveredFinalSuitcase, status: "finished" }), false);
+  assert.equal(suitcaseGame.isSceneZeroFinalSuitcaseInstructionReady({ ...recoveredFinalSuitcase, suitcaseSelectionSequence: 5 }), false);
+  assert.equal(suitcaseGame.isSceneZeroFinalSuitcaseInstructionReady({ ...recoveredFinalSuitcase, contentInstruction: { kind: "last-suitcase", status: "announcing", selectionSequence: 4 } }), false);
+  const cueNow = Date.parse("2026-10-14T12:00:00Z");
+  const forcaCue = { currentSuitcase: 3, suitcaseSelectedAt: new Date(cueNow).toISOString(), cuePhase: "open" };
+  assert.equal(suitcaseGame.shouldShowSceneZeroSuitcaseCue(forcaCue, cueNow + 10000), true,
+    "ABRA A MALA deve aguardar a seta no modo manual");
+  assert.equal(suitcaseGame.shouldShowSceneZeroSuitcaseCue(forcaCue, cueNow + 10000, { source: "scene-zero-hangman-instruction" }), false,
+    "a abertura da mala não pode encobrir uma nova fala");
+  assert.equal(suitcaseGame.shouldShowSceneZeroSuitcaseCue({ ...forcaCue, cuePhase: "complete" }, cueNow + 10000), false);
+  assert.equal(suitcaseGame.shouldShowSceneZeroSuitcaseCue({ ...forcaCue, cuePhase: "automatic" }, cueNow + 4999), true);
+  assert.equal(suitcaseGame.shouldShowSceneZeroSuitcaseCue({ ...forcaCue, cuePhase: "automatic" }, cueNow + 5000), false);
   assert.equal(suitcaseGame.buildSuitcaseSelectionCue(2), "2");
   assert.equal(suitcaseGame.buildSuitcaseSelectionCue(4), "");
   assert.equal(suitcaseGame.SCENE_ZERO_SUITCASE_CUE_DURATION_MS, 5000);
@@ -311,7 +335,7 @@ async function main() {
   assert.match(sceneZeroControllerSource, /suitcaseInstructionWaiting[\s\S]*"suitcase-content-instruction-continue"/, "a seta direita deve liberar a próxima fala da mala");
   assert.equal(suitcaseGame.SCENE_ZERO_LAST_SUITCASE_INSTRUCTION, "Use o disco no toca-discos.");
   assert.doesNotMatch(sceneZeroRouteSource, /instruction\.kind === "last-suitcase"[\s\S]*scheduleTutorialEnd/, "o fim do typewriter não pode concluir o desbloqueio automaticamente");
-  assert.match(sceneZeroRouteSource, /finishTutorialAfterTurntableInstruction[\s\S]*instruction\.status !== "complete"/, "o desbloqueio final deve exigir o avanço depois da instrução do toca-discos");
+  assert.match(sceneZeroRouteSource, /finishTutorialAfterTurntableInstruction[\s\S]*isSceneZeroFinalSuitcaseInstructionReady\(current\)/, "o desbloqueio final deve exigir o avanço depois da instrução do toca-discos");
   assert.match(sceneZeroControllerSource, /finalInstructionReady[\s\S]*"suitcase-finish"/, "a seta direita deve concluir o desbloqueio somente quando a instrução final estiver pronta");
   assert.match(sceneZeroControllerSource, /SEGUIR → COMPLETAR DESBLOQUEIO/, "o controller deve expor o avanço manual da etapa do disco");
   assert.equal(suitcaseGame.sceneZeroSuitcaseCueFrameAt(0, 2).phase, "roulette");

@@ -8,6 +8,8 @@ import { setSharedInstagramPanelVisible } from "@/lib/instagram/panelClient";
 import RobotSoundControls from "./RobotSoundControls";
 import AudienceWarmupController from "./AudienceWarmupController";
 import Terminal from "./Terminal";
+import PublicOperatorControls from "./PublicOperatorControls";
+import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import styles from "./OperatorConsole.module.css";
 
 export default function OperatorConsole({ embedded = false, terminalClassName = "" } = {}) {
@@ -41,11 +43,6 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   const projectionWindowRefs = useRef(new Map());
 
   useEffect(() => {
-    fetch("/api/state")
-      .then((response) => response.json())
-      .then((data) => setState(data))
-      .catch(() => setStatus("DISCONNECTED"));
-
     fetch("/api/glitch")
       .then((response) => response.json())
       .then((data) => {
@@ -61,27 +58,22 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
       .then((data) => setRecoveryStatus(data))
       .catch(() => setRecoveryStatus({ status: "unavailable", recoverable: false }));
 
-    const events = new EventSource("/api/events?client=operator");
-    events.onopen = () => setStatus("CONNECTED");
-    events.onerror = () => setStatus("DISCONNECTED");
-    events.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
+    return subscribePublicRealtime((payload) => {
+      if (payload.event?.type === "operator-public") return;
       if (payload.event?.type === "baralho-morbido" || payload.event?.type === "baralho-morbido-display") {
         return;
       }
 
-      setState({
+      setState((current) => ({
         ...payload.state,
-        context: payload.context
-      });
-    };
-
-    return () => events.close();
+        context: payload.context || payload.state?.context || current.context
+      }));
+    }, (connection) => setStatus(connection === "connected" ? "CONNECTED" : "DISCONNECTED"));
   }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ block: "end" });
-  }, [logs, state]);
+  }, [logs]);
 
   useEffect(() => {
     if (pending) robotSoundEngine.startThinking();
@@ -597,6 +589,8 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
               <span>Status: {projection.activeProjectionWindowId ? activeProjectionStatus : "sem projecao"}</span>
             </div>
           </div>
+
+          <PublicOperatorControls />
 
           <RobotSoundControls settings={state.robotSound} onLog={addLog} typingOnly />
 

@@ -15,6 +15,16 @@ async function main() {
   assert.equal(initial.microphoneSensitivity, 1);
   assert.equal(initial.typingFrequency, 0.35);
   assert.equal(initial.typingIntervalMs, 60);
+  assert.equal(initial.typingPauseMs, 0);
+  assert.equal(initial.messageGapMs, 0);
+  assert.equal(sound.normalizeRobotSoundSettings({ typingPauseMs: 5000, messageGapMs: 20000 }).typingPauseMs, 2000);
+  assert.equal(sound.normalizeRobotSoundSettings({ typingPauseMs: 5000, messageGapMs: 20000 }).messageGapMs, 10000);
+  const timing = { typingIntervalMs: 50, typingPauseMs: 300, messageGapMs: 700 };
+  assert.equal(sound.robotTypingDelayMs(timing, "A"), 50);
+  assert.equal(sound.robotTypingDelayMs(timing, ","), 350);
+  assert.equal(sound.robotTypingDelayMs(timing, "\n"), 350);
+  assert.equal(sound.robotTypingDurationMs("A,B.", timing), 500, "pause after comma, without trailing punctuation pause");
+  assert.equal(sound.robotMessageReadingMs("A,B.", timing), 1200, "reading schedule includes configured gap");
   assert.equal(initial.displayFont, "modern-dos-8x16");
   assert.deepEqual(sound.ROBOT_DISPLAY_FONT_NAMES, ["modern-dos-8x16", "modern-dos-9x16", "vt323", "courier"]);
   assert.equal(initial.outputResetSequence, 0);

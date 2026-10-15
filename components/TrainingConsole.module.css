@@ -190,13 +190,35 @@
 
 .form {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 10px;
-  align-items: center;
-  min-height: 42px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
 }
 
-.form input,
+.composer {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.composer > span { font-size: 0.85rem; font-weight: 700; }
+.composer small { color: var(--green-dim); font-size: 0.75rem; }
+
+.composerActions { display: grid; gap: 10px; justify-items: center; padding-bottom: 2px; }
+.composerActions button {
+  min-height: 44px;
+  padding: 8px 18px;
+  border: 1px solid var(--green);
+  background: #000;
+  color: var(--green);
+  font: inherit;
+  cursor: pointer;
+}
+.composerActions button:disabled { opacity: 0.5; cursor: default; }
+.composerActions button:focus-visible,
+.composer textarea:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+
+.composer textarea,
 .feedback input,
 .memoryBox textarea,
 .feedback textarea,
@@ -214,8 +236,11 @@
   font: inherit;
 }
 
-.form input {
-  border: 0;
+.composer textarea {
+  display: block;
+  min-height: 64px;
+  padding: 10px;
+  resize: vertical;
 }
 
 .meta select {
@@ -233,7 +258,7 @@
   resize: vertical;
 }
 
-.form input:disabled {
+.composer textarea:disabled {
   color: var(--green-dim);
 }
 
@@ -288,10 +313,8 @@
   }
 
   .form {
-    grid-template-columns: auto 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .status {
-    grid-column: 2;
-  }
+  .composerActions { display: flex; justify-content: space-between; align-items: center; }
 }

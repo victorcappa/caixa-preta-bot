@@ -2,6 +2,10 @@
 
 Each entry records a reproduced problem, its cause, the working response, and a regression guard.
 
+## Sparse suitcase history
+
+Advance by position, not history length: `[2, 1]` ends at Mala 1. Final instruction outranks stale draws. Clear old speech on selection; new speech hides opening/theme overlays.
+
 ## Await asynchronous browser test conditions explicitly
 
 - Problem: async `waitForFunction` predicates returned false yet released tests early, producing false persistence and synchronization results.
@@ -124,8 +128,8 @@ Each entry records a reproduced problem, its cause, the working response, and a 
 ## Browser audio and microphone are distinct from code correctness
 
 - Problem: media is logically active but silent, or the sound meter remains inactive.
-- Cause: autoplay policy, user-gesture requirements, permission state, selected output, or physical routing.
-- Working response: unlock the public window with an interaction, grant microphone permission in the Scene Zero controller, and perform a physical sound check.
+- Cause: hidden-tab rAF pauses; autoplay, permissions and physical routing also affect audio.
+- Working response: use the audio-clock meter in `lib/audienceMicrophoneMeter.js`, keep Operator open, unlock audio, grant its mic permission, then check hardware.
 - Prevent regression: report static/browser/physical-audio outcomes separately; do not make the public projection request microphone access.
 
 ## Reels comments need a feed fallback and a usable publish control

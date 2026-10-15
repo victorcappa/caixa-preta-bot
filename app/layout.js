@@ -1,5 +1,6 @@
 import "@fontsource/vt323/400.css";
 import "./globals.css";
+import ProjectionOperatorSurface from "@/components/ProjectionOperatorSurface";
 
 export const metadata = {
   title: "Caixa Preta Chat",
@@ -9,7 +10,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body><ProjectionOperatorSurface>{children}</ProjectionOperatorSurface></body>
     </html>
   );
 }

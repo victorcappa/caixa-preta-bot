@@ -1,6 +1,6 @@
 # Current state
 
-Verified against the current worktree on 2026-10-14. Code wins if this snapshot drifts.
+Verified 2026-10-15; current code is authoritative.
 
 ## Runtime and architecture
 
@@ -17,8 +17,8 @@ Install with `npm install` and configure `OPENAI_API_KEY` only for live model ca
 
 ## Implemented
 
-- Main public chatbot at `/` and private technical hub at `/operator`. The projected bot line and idle cursor use Modern DOS 8×16 by default; the Operator exposes a live font preview and selection between local Modern DOS 8×16/9×16, VT323, and the original Courier, alongside typing speed and click-frequency controls. The choice is shared through `showState.robotSound`/SSE by Principal and Videomapping; operator controls retain their existing typography. Modern DOS's CC0 license is bundled with its local font files.
-- Operator offers explicit resume/new choices after an interrupted snapshot. `MODO EMERGÊNCIA` persists, blocks external requests, pauses automation/media, and retains manual controls and `STOP ALL`. `/api/health` separates core from optional services.
+- Public chatbot `/`; `/operator` contains only bot parameters: typing speed, punctuation pause, minimum gap between lines, font preview/selection, click frequency, personality and model. Public conversation opens from the right-menu launcher; the technical terminal remains in Principal’s OP drawer. Timing/font settings share `showState.robotSound`/SSE across Principal and Videomapping. The default font is local Modern DOS 8×16 (CC0); Modern DOS 9×16, VT323 and Courier remain selectable. Live Operator: `OPERATOR_PUBLICO.md`.
+- Operator offers explicit resume/new choices after an interrupted snapshot. `MODO EMERGÊNCIA` in the technical terminal persists, blocks external requests, pauses automation/media, and retains manual controls and `STOP ALL`. `/api/health` separates core from optional services.
 - Principal and Videomapping are wrapped by a public error boundary; render failures and internal 404s show only `SINAL INTERROMPIDO`, while the real error is retained in private reliability diagnostics.
 - Alternative `/videomapping` 2x2 presentation reuses the same `Chat`, `showState`, and realtime connection. Switching between `/` and `/videomapping` in a controlled projection window changes layout in place.
 - Scene Zero controller at `/cena-0-controller` and equivalent videomapping controller at `/videomapping-controller`. Its right-side index is operational: BOOT, ESCUTA DE DECIBÉIS, ESQUENTAR PÚBLICO, ESCOLHER PARTICIPANTE, and JOGO DAS MALAS can be re-entered from the menu. Returning to ESCUTA DE DECIBÉIS keeps the completed BIOS at 100%, resets later verification progress, and immediately reopens microphone listening. Returning from the suitcases interrupts their active game, timers, browser routine, glitch, and final blackout before restoring the selected earlier stage.

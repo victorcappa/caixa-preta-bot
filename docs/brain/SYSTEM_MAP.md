@@ -14,6 +14,14 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 
 ## Public chatbot and model
 
+- Revealed Operator / private conversation / personality -> `OPERATOR_PUBLICO.md`, `app/api/operator-public/route.js`, `lib/operatorPublic.js`, and `lib/showState.js`.
+- Right-menu launcher -> `components/OperatorPublicLauncher.js` in `components/SceneZeroController.js`; private controls/monitor -> `components/PublicOperatorControls.js` and `components/OperatorLivePreview.js`.
+- LIVE reply pacing -> `components/OperatorTypedReply.js`, using private `robotSound` typing speed/punctuation pause; completed history is restored immediately.
+- Training conversation/feedback -> `components/TrainingConsole.js`, `app/api/training/`, and `lib/training.js`; visible composer sends by Enter or button and preserves the draft after errors.
+- Editable public conversation/sliders reuse `components/PublicOperatorControls.js` with `publicSurface`; private operational commands remain outside the projection.
+- Stable public 65/35 layout -> `app/layout.js` -> `components/ProjectionOperatorSurface.js` -> `components/PublicOperatorLayout.js`.
+
+- Bot parameters tab -> `app/operator/page.js`, `components/OperatorBotSettings.js`, `components/RobotSoundControls.js`, and `components/PublicOperatorControls.js` (`parametersOnly`); timing helpers in `lib/robot-sound/state.js`. Save acknowledgement/dirty-field merging lives in `RobotSoundControls`; `_refreshRobotSoundSettings` in `lib/showState.js` refreshes the live normalization after development reload. The technical console remains in the Principal OP drawer.
 - Public text/layout/typing -> `components/Chat.js` and `components/Chat.module.css`.
 - Visual performance event -> `components/PerformanceLayer.js` -> `lib/performanceEvents.js`.
 - Chat request/model envelope -> `app/api/chat/route.js` -> `lib/openai.js`.
@@ -30,7 +38,7 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 - Scene Zero state shape -> `lib/scene-zero/state.js`; integration -> `lib/showState.js` (`controlSceneZero`).
 - Boot/BIOS/unlock copy and timings -> `data/scene-zero-unlock.js`; transitions -> `lib/scene-zero/unlock.js`.
 - Public BIOS/unlock/countdown rendering -> `components/SceneZeroProjectionLayer.js` and its CSS module.
-- Sound meter/microphone -> search `soundCheck` and `getUserMedia` in `components/SceneZeroController.js`; public receives numeric level only.
+- Sound meter/microphone -> `components/SceneZeroController.js` uses `lib/audienceMicrophoneMeter.js` and `public/audio-worklets/audience-meter.js`; audio-clock sampling continues in hidden tabs/windows, with a timer fallback. Public receives numeric level only.
 - Warmup prompt library -> `data/audience-warmup-prompts.js`; selection/timers -> `lib/audienceWarmup.js`; UI -> `components/AudienceWarmupController.js`.
 - Warmup mini games -> `data/audience-warmup-minigames.js` and `components/AudienceWarmupController.js`.
 - Participant selection -> `app/api/scene-zero/route.js` -> `lib/participants.js` -> `lib/showState.js`.

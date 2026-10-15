@@ -10,6 +10,10 @@
   margin-bottom: 14px;
 }
 
+.saveError { display: grid; gap: 8px; color: var(--danger); }
+.saveError p { margin: 0; line-height: 1.4; }
+.saveError button { min-height: 36px; padding: 8px; background: #000; color: var(--green); border: 1px solid var(--green-soft); font: inherit; cursor: pointer; }
+
 .typingPreview {
   display: block;
   overflow: hidden;
@@ -72,6 +76,8 @@
   width: 100%;
   accent-color: var(--green);
 }
+
+.field small { grid-column: 1 / -1; line-height: 1.4; }
 
 .selectField {
   display: grid;

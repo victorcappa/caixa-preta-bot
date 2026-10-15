@@ -9,6 +9,7 @@ import { SHOW_MODES } from "@/prompts/modes";
 import { findInstagramParticipantByName } from "@/lib/suitcases/SuitcaseDirector";
 import {
   buildGincanaPresentation,
+  isSceneZeroFinalSuitcaseInstructionReady,
   nextSceneZeroSuitcase,
   SCENE_ZERO_FIRST_CHALLENGE,
   SCENE_ZERO_FIRST_SUITCASE_INSTRUCTION,
@@ -323,9 +324,13 @@ function suitcaseSpeechDelay(text = "") {
 }
 
 async function startAnnouncedSuitcase(messageId) {
-  const choice = showState.snapshot().sceneZero.suitcaseGame?.choice;
+  const suitcaseGame = showState.snapshot().sceneZero.suitcaseGame;
+  const choice = suitcaseGame?.choice;
   if (choice?.status !== "ready" || choice.messageId !== messageId) {
     return { applied: false, error: "ESCOLHA DE MALA NÃO ESTÁ MAIS PENDENTE", state: showState.snapshot().sceneZero };
+  }
+  if (choice.targetSuitcase !== nextSceneZeroSuitcase(suitcaseGame)) {
+    return { applied: false, error: "SORTEIO NÃO CORRESPONDE À PRÓXIMA MALA", state: showState.snapshot().sceneZero };
   }
   const claimed = showState.controlSceneZero("suitcase-choice-start", { messageId }, { source: "system" });
   if (!claimed.applied) return claimed;
@@ -809,13 +814,7 @@ function scheduleHangmanStart(selectionSequence, selectedAt, immediate = false) 
 async function finishTutorialAfterTurntableInstruction() {
   const before = showState.snapshot().sceneZero;
   const current = before.suitcaseGame;
-  const instruction = current?.contentInstruction;
-  if (
-    current?.currentSuitcase !== 1
-    || instruction?.kind !== "last-suitcase"
-    || instruction.status !== "complete"
-    || instruction.selectionSequence !== current.suitcaseSelectionSequence
-  ) {
+  if (!isSceneZeroFinalSuitcaseInstructionReady(current)) {
     return { applied: false, error: "AGUARDE A INSTRUÇÃO DO TOCA-DISCOS E AVANCE", state: before };
   }
 
