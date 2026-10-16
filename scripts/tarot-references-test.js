@@ -13,9 +13,9 @@ const original=await fs.readFile(MAIN_REFERENCE,'utf8'),hash=digest(original);
 const cards=await readCatalog(),library={faces:[]};
 const state=()=>({tarot:createTarotState(),conversation:[],memories:[]});
 const retrieve=(s,id=16,question='',mode='associative',people=library)=>retrieveTarotReferences({state:s,cards:[cards[id]],question,mode,library:people});
-await check('full source preserved, 25 thematic nuclei and bibliographic provenance indexed',async()=>{
+await check('full source preserved, 59 nuclei including all 22 arcana and bibliographic provenance indexed',async()=>{
  const index=await referenceIndex();assert(index.documents.find(d=>d.id===MAIN_REFERENCE).characters===original.trimEnd().length || index.documents.find(d=>d.id===MAIN_REFERENCE).characters===original.length);
- for(let n=1;n<=25;n++)assert(index.chunks.some(c=>c.sectionId===`CP-${String(n).padStart(2,'0')}`));
+ for(let n=1;n<=59;n++)assert(index.chunks.some(c=>c.sectionId===`CP-${String(n).padStart(2,'0')}`));
  assert(index.chunks.some(c=>c.sources.some(s=>s.includes('CENIPA'))));assert(index.chunks.every(c=>c.headings.length&&c.origin));
 });
 await check('paragraphs and headings are preserved without fixed character slicing',()=>{
@@ -59,9 +59,23 @@ await check('canonical play and external references share retrieval with explici
  const r=await retrieve(state(),16,'colisão CENIPA');for(const c of r.chunks)for(const source of c.sources)assert(original.includes(source));
 });
 await check('dated facts retain cutoff; contemporary context requires verification and consultation date',async()=>{
- const r=await retrieve(state(),4,'eleição Brasil Lula');assert(r.chunks.filter(c=>c.kind==='reference').every(c=>c.cutoff==='2026-10-15'));
+ const index=await referenceIndex();assert(index.chunks.filter(c=>c.sectionId==='CP-15').every(c=>c.cutoff==='2026-10-15'&&!c.checkedAt));
+ const r=await retrieve(state(),4,'eleição Brasil Lula');assert(r.chunks.filter(c=>c.kind==='reference').every(c=>c.cutoff===(Number(c.sectionId?.slice(3))>=48?'2026-10-16':'2026-10-15')));
  const contexts=normalizeContemporaryContext([{text:'Registro histórico',url:'https://example.org/fato',date:'2026-10-01',verification:'verified'}]);
  assert.equal(contexts[0].verification,'unverified');assert.equal(contexts[0].checkedAt,null);
+});
+await check('researched political sections carry their own consultation date, sources, themes and bounded retrieval',async()=>{
+ const index=await referenceIndex(),thematic={48:'politica',49:'politica',50:'politica',51:'politica',52:'politica',53:'politica',54:'bigtech',55:'bigtech',56:'politica',57:'bets',58:'bets',59:'politica'};
+ for(const [n,theme]of Object.entries(thematic)){
+  const chunks=index.chunks.filter(c=>c.sectionId===`CP-${n}`);assert(chunks.length);assert(chunks.every(c=>c.checkedAt==='2026-10-16'&&c.cutoff==='2026-10-16'&&c.theme===theme));
+  if(n!=='59')assert(chunks.every(c=>c.sources.length>0),`CP-${n} has bibliographic provenance`);
+ }
+ for(const [query,ids]of [['Banco Master Daniel Vorcaro BRB liquidação',['CP-50','CP-51']],['bolsonarismo Jair Bolsonaro golpe',['CP-48']],['Trump tarifa soberania pressão externa',['CP-52']],['tecnocracia Google publicidade infraestrutura',['CP-54']],['algoritmo feed X experimento conservador',['CP-55']],['Facebook comparecimento eleitoral mobilização',['CP-56']],['bets MP 1394 bloqueio',['CP-57']],['Penalidade Máxima cartões pênaltis manipulação',['CP-58']]]){
+  const r=await retrieve(state(),4,query);assert(r.chunks.some(c=>ids.includes(c.sectionId)),query);assert(r.characters<=r.limits.maxChars);
+  for(const block of JSON.parse(r.context).filter(c=>c.checkedAt))assert(block.temporalStatus.includes('2026-10-16'));
+ }
+ const s=state();s.tarot.references=referenceSettings({themes:{politica:false,bigtech:false,bets:false}});assert((await retrieve(s,4,'Master Vorcaro bolsonarismo algoritmos bets')).chunks.every(c=>Number(c.sectionId?.slice(3))<48||c.kind!=='reference'));
+ const bibliographicIds=[...original.matchAll(/^- \*\*\[(E\d+)\]\*\*/gm)].map(m=>m[1]);assert.equal(new Set(bibliographicIds).size,bibliographicIds.length);for(const [,id]of original.matchAll(/\[(E\d+)\]/g))assert(bibliographicIds.includes(id),id);
 });
 await check('recent references are penalized while deliberate hallucinatory repetition remains possible',async()=>{
  const s=state(),first=await retrieve(s);s.conversation=[{role:'assistant',content:'Uma fala sobre a queda.',tarot:{references:referenceTrace(first)}}];

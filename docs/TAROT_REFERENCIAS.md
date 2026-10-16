@@ -1,6 +1,6 @@
 # Referências e memória do Tarô
 
-O arquivo `assets/tarot/CAIXA_PRETA_REFERENCIAS_TARO.md` preserva o conteúdo de referência original e recebeu, na edição 2.1, interpretações editoriais individuais dos 22 Arcanos Maiores (CP-26 a CP-47). Ele amplia o repertório do Tarô; a dramaturgia canônica de `knowledge/` continua sendo a fonte principal sobre os acontecimentos do espetáculo. O sistema usa o mesmo modelo, personalidade, histórico, `showState`, recuperação da sessão e SSE existentes.
+O arquivo `assets/tarot/CAIXA_PRETA_REFERENCIAS_TARO.md` preserva o conteúdo de referência original e recebeu interpretações editoriais dos 22 Arcanos Maiores (CP-26 a CP-47). A edição 2.2 acrescenta 12 núcleos políticos, financeiros e algorítmicos (CP-48 a CP-59), pesquisados em 16/10/2026, e 15 entradas bibliográficas (E49 a E63). Ele amplia o repertório do Tarô; a dramaturgia canônica de `knowledge/` continua sendo a fonte principal sobre os acontecimentos do espetáculo. O sistema usa o mesmo modelo, personalidade, histórico, `showState`, recuperação da sessão e SSE existentes.
 
 ## Busca local
 
@@ -10,7 +10,7 @@ Os trechos preservam parágrafos completos, hierarquia de títulos, núcleo CP, 
 
 O índice dos arquivos é armazenado em `.runtime/tarot-reference-index.json`. Tamanho e data dos arquivos invalidam o cache; o texto não é relido nem reindexado em cada interpretação. Documentos dinâmicos usam um cache em memória por conteúdo. `REINDEXAR REFERÊNCIAS` força a reconstrução local. O índice não é uma segunda fonte editorial: é derivado dos arquivos existentes.
 
-As interpretações individuais da Parte IV usam o mesmo formato CP do índice, a numeração real (VIII Justiça / XI Força) e a seleção temática **Referências filosóficas**. Cada leitura traz potencial simbólico, tensão/contraponto e uma pergunta associativa, sem alterar o catálogo visual ou a interpretação nele cadastrada. A data de corte das notícias permanece 15/10/2026; a revisão editorial de 16/10/2026 não revalida os recortes políticos.
+As interpretações individuais da Parte IV usam o mesmo formato CP do índice, a numeração real (VIII Justiça / XI Força) e a seleção temática **Referências filosóficas**. Cada leitura traz potencial simbólico, tensão/contraponto e uma pergunta associativa, sem alterar o catálogo visual ou a interpretação nele cadastrada. Os recortes anteriores conservam a data de corte de 15/10/2026. Os novos núcleos CP-48 a CP-59 usam **Verificação: 2026-10-16**; essa data é herdada por todos os seus parágrafos e exibida na prévia e no contexto enviado ao modelo. Ela identifica a consulta editorial, sem declarar atualização automática posterior.
 
 A consulta combina inventário visual real, conceitos do catálogo, pergunta, seis mensagens recentes e pessoas selecionadas na biblioteca de rostos. Grupos de conceitos ampliam a busca; as conexões CP fornecem uma preferência adicional por relações editoriais. BM25 favorece também os conceitos principais e a pergunta. A seleção penaliza trechos e temas recentes e favorece diversidade de núcleos. Em alucinação, reduz a penalidade de repetição e amplia as pontes, sem modificar a memória. A recuperação é lexical e associativa por metadados; não é um modelo semântico de embeddings.
 
@@ -18,7 +18,7 @@ Entrevistas podem ser vinculadas aos IDs de pessoas cadastradas na seção de im
 
 ## Operação privada
 
-Se o servidor já estava aberto antes da integração, reinicie-o uma vez: o controlador compartilhado preservado pelo hot reload precisa carregar a versão 6. A API bloqueia uma versão antiga com pedido explícito de reinicialização, sem descartar a sessão. Os testes utilizaram um processo novo isolado.
+Se o servidor já estava aberto antes da integração, reinicie-o uma vez: o controlador compartilhado preservado pelo hot reload precisa carregar a versão 8. A API bloqueia uma versão antiga com pedido explícito de reinicialização, sem descartar a sessão. Os testes utilizaram um processo novo isolado.
 
 Em `/treinamento/controle`, abra **05 — Memória → REFERÊNCIAS E MEMÓRIA**.
 
@@ -42,7 +42,7 @@ O documento completo nunca é incluído no pedido. Também foi removido desse ca
 
 Na seção **10 — Personalidade e contexto → CONTEXTO CONTEMPORÂNEO**, cadastre resumo factual, URL, data de publicação, data de consulta/atualização e estado de verificação. Marcar como verificado exige data de consulta; registros antigos sem essa informação são tratados como não verificados. Cada entrada pode ser ativada ou desativada. Para corrigir uma entrada, desative a antiga e adicione a revisão com sua nova consulta e fonte.
 
-A busca funciona offline com os últimos dados locais. O arquivo principal recebe sua data de corte do próprio front matter. Seus recortes não são marcados como notícias atuais nem como revalidados pelo sistema. O prompt exige respeitar datas e não inferir resultados eleitorais, candidaturas ou situação jurídica atual. A verificação é editorial e manual, sem coleta automática de notícias: consulte fontes oficiais pertinentes antes da apresentação e registre o que foi conferido. O sistema não comprova automaticamente que a URL sustenta o resumo.
+A busca funciona offline com os últimos dados locais. O arquivo principal recebe a data de corte do front matter; uma data explícita de **Verificação** no núcleo prevalece somente naquele núcleo. A consulta documentada em 16/10/2026 não revalida os núcleos antigos nem transforma o arquivo em notícias ao vivo. O prompt exige respeitar datas e não inferir resultados eleitorais, candidaturas ou situação jurídica atual. A verificação é editorial e manual, sem coleta automática de notícias: consulte fontes oficiais pertinentes antes da apresentação e registre o que foi conferido. O sistema não comprova automaticamente que a URL sustenta o resumo.
 
 ## Validação
 
@@ -76,3 +76,12 @@ As respostas reais foram diferentes e mostram uso interpretativo do repertório,
 ### Atualização editorial — 16/10/2026
 
 A Parte IV recebeu 22 interpretações individuais (CP-26 a CP-47), preservando a tabela anterior, a bibliografia e o catálogo. A checagem local confirmou 22 seções únicas indexadas e a recuperação da leitura correspondente para cada carta, dentro do orçamento de contexto. Os 14 grupos de `test:tarot:references`, ESLint de `references.js` e `brain:sync` / `brain:check` passaram. Foi corrigida a regressão de prioridade das entrevistas vinculadas detectada com o corpus ampliado. Não foram feitas novas chamadas ao modelo ou validações físicas nesta revisão editorial.
+
+
+### Contexto político pesquisado — 16/10/2026
+
+CP-48 a CP-59 cobrem bolsonarismo e responsabilização institucional; extrema direita, fascismo e autocratização; Banco Master, Daniel Vorcaro e BRB; Compliance Zero e disputas de informação; pressão dos EUA em 2025 e o arquivo de 1964; tecnocracia e poder empresarial; experimentos com feeds e mobilização eleitoral; bets, proibição e manipulação esportiva; circuitos entre classificação, incentivos e ação real. Fatos, alegações, estudos e associações aparecem identificados, com datas e fontes. A revisão registra também limites: sanções de 2025 posteriormente retiradas, encaminhamentos de bloqueio que não comprovam execução integral, e pesquisas que não permitem atribuir o resultado de uma eleição inteira a um algoritmo.
+
+Os novos núcleos seguem os filtros existentes **Política e democracia**, **Big Techs e tecnocracia** e **Bets / fé e sorte**. O índice v4 incorpora a data por seção, preservando orçamento, memória e distinção entre interpretação editorial e prova. A comparação com o documento anterior confirmou que os 47 núcleos originais, incluindo as 22 interpretações, permaneceram idênticos. Os testes locais incluem recuperação dos novos temas, datas, fontes, filtros e limite de contexto; a revisão não requer gerações reais de IA nem reinício da sessão.
+
+Passaram os 15 grupos de `test:tarot:references`, lint focado, build isolado e `brain:sync/check`. O ensaio HTTP/Playwright com modelo interceptado confirmou a busca Master/Vorcaro e a data por seção na interface (`/private/tmp/tarot-reference-evidence-pUupgR/report.json`). A reindexação e a busca na porta 3000 confirmaram 345 trechos / 63 fontes, dentro do orçamento e sem modificar sessão, histórico ou parâmetros (`/private/tmp/tarot-political-references-live-index.json`). Esses testes validam recuperação e transporte do contexto; a conferência factual decorre da pesquisa editorial, não do teste automático. Não houve novas gerações reais de IA.

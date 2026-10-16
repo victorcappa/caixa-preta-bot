@@ -1,10 +1,12 @@
 ---
 titulo: "CAIXA PRETA — Arquivo de referências para o Tarô"
 subtitulo: "Memória, corpo, automação, queda, imagem, política, desigualdade, plataformas, repetição e alucinação"
-versao: "2.1 — 2026-10-16 (acréscimo de interpretações individuais dos 22 Arcanos Maiores)"
+versao: "2.2 — 2026-10-16 (contexto político, financeiro e algorítmico pesquisado)"
 idioma: "pt-BR"
 uso: "Base de conhecimento e recuperação contextual (RAG) do chatbot em /treinamento"
 data_de_corte_para_noticias: "2026-10-15"
+pesquisa_complementar_verificada_em: "2026-10-16"
+escopo_da_revisao: "CP-48 a CP-59 e fontes E49 a E63; os recortes anteriores conservam sua data original."
 atualizacao_obrigatoria: "Revalidar fatos eleitorais, legislação e notícias antes de cada apresentação; os acontecimentos de 2026 podem mudar rapidamente."
 fontes_internas:
   - "Texto caixa preta.pdf — 34 páginas; rascunho parcial visualizado em 10/08/2026"
@@ -853,7 +855,181 @@ categorias_de_status:
 
 ---
 
-# PARTE V — REGRAS PARA A INTERPRETAÇÃO DO BOT
+# PARTE V — POLÍTICA, FINANÇAS E ALGORITMOS: CONTEXTO PESQUISADO EM 16/10/2026
+
+Esta parte acrescenta repertório aos núcleos anteriores. Cada bloco distingue documento, alegação, resultado de pesquisa e associação editorial. **Verificação** indica quando a fonte foi consultada; as datas dos acontecimentos e dos dados aparecem no texto. As fontes não se atualizam sozinhas. As conexões com os arcanos são propostas de leitura, sem transformar a carta em prova, prognóstico eleitoral ou diagnóstico de alguém da plateia.
+
+## [CP-48] Bolsonarismo: o líder, a rede e a continuidade de um projeto de poder
+
+**Status:** PESQUISA DOCUMENTAL + ASSOCIAÇÃO CRÍTICA
+**Verificação:** 2026-10-16
+**Tags:** `bolsonarismo`, `Jair Bolsonaro`, `golpismo`, `autoridade`, `instituições`, `liderança`, `redes`, `Brasil`
+**Arcanos associados:** O Imperador, O Hierofante, O Julgamento, A Justiça.
+**Conexões:** CP-15, CP-16, CP-23, CP-30, CP-49, CP-52.
+
+**Fato documentado.** Em 11/09/2025, a Primeira Turma do STF fixou, na AP 2.668, pena de 27 anos e três meses para Jair Bolsonaro, condenado no processo da tentativa de golpe de Estado. A notícia do Tribunal registra sua caracterização como líder da organização criminosa [E52]. É uma decisão sobre réus e condutas determinados; não autoriza atribuir responsabilidade criminal coletiva a eleitores ou a toda pessoa conservadora.
+
+**Leitura crítica.** Usar “bolsonarismo” para investigar uma rede de identificação, circulação de imagens e disputa de autoridade que pode continuar além da presença física ou da candidatura de um líder. A hipótese editorial é que símbolos, porta-vozes e hábitos de mobilização preservam uma máquina política. Isso não demonstra que todas as pessoas dessa rede pensam igual nem que seu futuro eleitoral está decidido.
+
+**Associação.** O trono pode permanecer ocupado pela imagem de quem saiu dele. A Justiça e o Julgamento permitem confrontar provas, responsabilização e a tentativa de converter um processo em espetáculo de perseguição. **Quando o líder deixa a cena, quem continua falando em seu nome?**
+
+## [CP-49] Extrema direita e fascismo: mecanismos de erosão, sem destino inevitável
+
+**Status:** PESQUISA COMPARATIVA + INTERPRETAÇÃO CONCEITUAL
+**Verificação:** 2026-10-16
+**Tags:** `extrema direita`, `fascismo`, `autocratização`, `democracia`, `violência política`, `pluralismo`, `inimigo`, `censura`
+**Arcanos associados:** O Imperador, O Diabo, A Torre, A Justiça, A Força.
+**Conexões:** CP-16, CP-17, CP-18, CP-23, CP-48, CP-55.
+
+**Pesquisa e período.** O Democracy Report 2026 do V-Dem, baseado em dados até 2025, identifica 44 países em autocratização. Discute concentração de poder, ataques à expressão pública e repressão à sociedade civil. Também apresenta o Brasil como caso de reversão da autocratização a partir de 2022, ainda sob forte polarização [E28]. A data de publicação do relatório não transforma esses números em medição instantânea de outubro de 2026.
+
+**Leitura crítica.** A preocupação com crescimento de práticas fascistas pode orientar perguntas sobre fabricação de inimigos, desumanização, culto ao chefe, exclusão e legitimação da violência. A lente de Eco já descrita em CP-16 ajuda essa investigação [E27]. “Autocratização”, “extrema direita” e “fascismo” têm histórias e critérios distintos: um índice de democracia não converte automaticamente todos os seus casos em regimes fascistas. Nomear mecanismos concretos permite uma crítica mais incisiva que o uso indiferenciado do rótulo.
+
+**Associação.** A Torre pode ser desmontada por dentro antes de cair; a porta ainda existe, mas já não abre para todos. A reversão brasileira registrada pelo V-Dem também permite perguntar por resistência e organização. **Qual mudança passa a parecer normal antes que alguém perceba o que perdeu?**
+
+## [CP-50] Banco Master e Daniel Vorcaro: confiança financeira, fiscalização e prova
+
+**Status:** ATO ADMINISTRATIVO CONFIRMADO + NOTÍCIA DATADA + ASSOCIAÇÃO
+**Verificação:** 2026-10-16
+**Tags:** `Banco Master`, `Daniel Vorcaro`, `BRB`, `Banco Central`, `crédito`, `liquidez`, `confiança`, `fiscalização`
+**Arcanos associados:** A Torre, A Justiça, O Diabo, A Roda da Fortuna, O Imperador.
+**Conexões:** CP-19, CP-21, CP-22, CP-41, CP-42, CP-51.
+
+**Documentos e situação conhecida.** O Comunicado 44.234 do Banco Central registra a liquidação extrajudicial do Banco Master S.A. em 18/11/2025 e a indisponibilidade de bens de controladores e ex-administradores [E49]. Em reportagem publicada e atualizada em 15/10/2026, a CNN noticiou novo depoimento previsto de Daniel Vorcaro à PF sobre as tratativas de venda do antigo Master para o BRB [E51]. Essa notícia sobre uma oitiva não comprova seu conteúdo final nem permite anunciar encerramento do caso.
+
+**Distinção necessária.** Liquidação é um ato administrativo; investigação, denúncia e condenação são etapas diferentes. O nome Daniel Vorcaro aparece como personagem público do caso, sem que isso autorize completar lacunas com crimes imaginados ou declarar culpados seus interlocutores. Nem uma relação institucional nem uma fotografia demonstram, isoladamente, participação num ilícito.
+
+**Associação.** Um título de crédito é uma promessa sobre o futuro; uma crise pode obrigar a testar a distância entre promessa, patrimônio e confiança. A caixa-preta financeira pode tornar visível quem decide, quem fiscaliza e quem suporta a perda de acesso ao próprio dinheiro. **Quem garante a garantia quando a fachada da segurança começa a ceder?**
+
+## [CP-51] Compliance Zero: disputar o regulador e a circulação da informação
+
+**Status:** INVESTIGAÇÃO EM CURSO, SEGUNDO COMUNICADO DA PF + ASSOCIAÇÃO
+**Verificação:** 2026-10-16
+**Tags:** `Compliance Zero`, `Banco Master`, `redes sociais`, `intimidação`, `jornalismo`, `dados sigilosos`, `regulador`, `reputação`
+**Arcanos associados:** A Lua, O Mago, A Sacerdotisa, A Justiça, O Diabo.
+**Conexões:** CP-01, CP-18, CP-20, CP-24, CP-50, CP-55.
+
+**Fato documentado e atribuição.** Em 09/07/2026, a PF anunciou a décima fase da Operação Compliance Zero, destinada a apurar indícios de atuação coordenada nas redes para comprometer a credibilidade do Banco Central. O comunicado também descreve apurações sobre possível intimidação de jornalistas, monitoramento ilícito e acesso indevido a informação sigilosa [E50]. Esses enunciados expressam o objeto da investigação policial, não uma sentença final sobre todas as pessoas mencionadas no caso.
+
+**Leitura crítica.** A hipótese de associação é que uma disputa financeira também pode ocorrer no terreno da atenção: tornar o fiscal suspeito, pressionar quem publica ou selecionar quais documentos chegam ao público. Aqui o arquivo não serve apenas para recordar; o controle de sua circulação pode participar da própria disputa. Não afirmar que houve uso de um algoritmo específico, contratação por uma pessoa determinada ou coordenação com outros movimentos sem documento adicional.
+
+**Associação.** A Lua sugere o conflito entre visibilidade e prova; a Sacerdotisa, a diferença entre guardar um documento e impedir seu exame. **A informação está escondida porque é falsa, porque é sigilosa ou porque alguém tem poder para escolher quando ela aparece?**
+
+## [CP-52] Pressão dos EUA sobre a política brasileira: comércio, plataformas e jurisdição
+
+**Status:** ATOS OFICIAIS DATADOS + INTERPRETAÇÃO POLÍTICA
+**Verificação:** 2026-10-16
+**Tags:** `Estados Unidos`, `EUA`, `Trump`, `Bolsonaro`, `soberania`, `tarifas`, `Magnitsky`, `plataformas`, `pressão externa`
+**Arcanos associados:** O Imperador, A Justiça, O Mundo, O Carro, O Diabo.
+**Conexões:** CP-15, CP-17, CP-20, CP-24, CP-48, CP-53, CP-54.
+
+**Recorte documentado de 2025.** A ordem executiva norte-americana de 30/07/2025 estabeleceu tarifa adicional de 40% sobre determinados produtos brasileiros, com exceções, e incluiu o processo contra Bolsonaro e decisões brasileiras sobre empresas digitais nas justificativas [E53]. As acusações formuladas nesse ato são a posição da administração Trump, não um julgamento independente que o bot deva adotar como verdade.
+
+**Desdobramento que não pode ser omitido.** O relatório anual do governo dos EUA publicado em 25/03/2026 registra que Alexandre de Moraes entrou na lista de sanções em 30/07/2025 e foi retirado em 12/12/2025. A retirada também alcançou Viviane Barci de Moraes e o Lex Instituto [E54]. O episódio ilustra pressão diplomática e econômica; não sustenta dizer que aquelas sanções continuam vigentes. Esta seção não fornece uma tabela aduaneira atual nem afirma o efeito presente de cada medida comercial.
+
+**Associação crítica.** A conexão proposta é entre soberania e infraestrutura: a jurisdição nacional encontra empresas, moedas e mercados cuja operação atravessa fronteiras. Disputas sobre expressão podem carregar interesses de Estado e de negócios. **Quem pode fazer uma decisão local custar mais caro em outro país?**
+
+## [CP-53] 1964 e a Operação Brother Sam: distinguir arquivo histórico de analogia
+
+**Status:** DOCUMENTO HISTÓRICO OFICIAL + ASSOCIAÇÃO
+**Verificação:** 2026-10-16
+**Tags:** `1964`, `Brother Sam`, `Estados Unidos`, `intervenção`, `golpe`, `soberania`, `logística`, `arquivo`
+**Arcanos associados:** O Carro, O Imperador, A Torre, O Julgamento.
+**Conexões:** CP-01, CP-02, CP-16, CP-17, CP-52.
+
+**Evidência histórica.** O telegrama de 31/03/1964 do Departamento de Estado à embaixada no Brasil, publicado na coleção Foreign Relations of the United States, descreve preparativos de apoio logístico e naval no contexto da crise que levou ao golpe. A documentação identifica a operação como Brother Sam [E55]. O documento permite discutir apoio externo material; não exige inventar um desembarque ou uma batalha que ele não relata.
+
+**Leitura crítica.** Colocar esse arquivo ao lado das pressões comerciais de 2025 abre uma comparação entre mecanismos de intervenção, sem dizer que tarifa, plataforma, sanção e operação militar são acontecimentos idênticos. Reconstruir a história exige separar decisão, planejamento, execução e efeito. A repetição de um interesse não significa repetição literal da cena.
+
+**Associação.** Antes de um movimento aparecer na rua, pode haver decisões sobre combustível, rotas e abastecimento. O Carro interroga a infraestrutura de quem parece agir sozinho. **Que forças permanecem fora do enquadramento quando uma história apresenta apenas seus protagonistas nacionais?**
+
+## [CP-54] Tecnocracia mundial e poder das Big Techs: quem escolhe o objetivo da máquina
+
+**Status:** PESQUISA INSTITUCIONAL + DECISÃO ADMINISTRATIVA DATADA + ASSOCIAÇÃO
+**Verificação:** 2026-10-16
+**Tags:** `tecnocracia`, `Big Tech`, `inteligência artificial`, `concentração`, `publicidade`, `infraestrutura`, `governança`, `Google`, `métricas`
+**Arcanos associados:** O Mago, O Imperador, O Hierofante, A Justiça, O Mundo.
+**Conexões:** CP-07, CP-20, CP-21, CP-22, CP-52, CP-55.
+
+**Pesquisa e caso concreto.** O Technology and Innovation Report 2025 da UNCTAD situa a IA numa distribuição desigual de investimento, capacidades e participação no desenvolvimento tecnológico; o resumo público destaca concentração empresarial de pesquisa e desenvolvimento [E63]. Em decisão de 05/09/2025, a Comissão Europeia aplicou multa de € 2,95 bilhões ao Google por abuso no setor de intermediação de publicidade digital, conforme registro institucional de 30/09/2025 [E56]. Não se presume aqui que recursos ou medidas posteriores já foram concluídos.
+
+**Leitura crítica.** “Tecnocracia mundial” pode nomear uma lente sobre decisões coletivas deslocadas para especialistas, proprietários de infraestrutura e sistemas de pontuação. Empresas, Estados, reguladores e trabalhadores disputam interesses e capacidades de decisão em escalas diferentes. A pergunta concreta é quem define os objetivos, detém os meios de cálculo e pode contestar seus resultados. Eficiência é uma escolha política quando o indicador privilegia crescimento, vigilância ou renda de alguns e deixa outros custos fora da conta.
+
+**Associação.** O Mago manipula os instrumentos, mas talvez não seja seu proprietário. O Mundo pode ser uma rede de dependências, não um centro onipotente. **Se todos precisam atravessar a mesma plataforma, quem decide a direção do caminho?**
+
+## [CP-55] Algoritmos e extrema direita: efeitos causais, assimetrias e limites
+
+**Status:** ESTUDO EXPERIMENTAL + ASSOCIAÇÃO CRÍTICA
+**Verificação:** 2026-10-16
+**Tags:** `algoritmos`, `feed`, `X`, `Twitter`, `recomendação`, `conservadorismo`, `extrema direita`, `atenção`, `causalidade`
+**Arcanos associados:** O Mago, A Lua, O Diabo, A Roda da Fortuna, O Imperador.
+**Conexões:** CP-12, CP-18, CP-20, CP-24, CP-49, CP-54, CP-56.
+
+**Resultado e alcance.** Artigo de Gauthier e colegas publicado na Nature em 18/02/2026 relata experimento de sete semanas realizado em 2023 com usuários do X nos EUA. A passagem do feed cronológico ao algorítmico deslocou opiniões medidas em direção mais conservadora; a troca inversa não produziu efeito comparável. Não houve efeito significativo sobre identificação partidária declarada ou polarização afetiva. Os autores também contrastam o resultado com experimentos nas plataformas da Meta durante a eleição norte-americana de 2020, sem efeitos detectáveis sobre atitudes políticas nas condições estudadas [E57].
+
+**Leitura crítica.** Isso oferece evidência de que o ordenamento da informação pode participar da formação de preferências. Não demonstra que uma plataforma determinou uma eleição brasileira, que todos os algoritmos têm o mesmo efeito ou que “conservador” e “fascista” sejam medidas equivalentes. O mecanismo interessa justamente porque depende de exposição, escolhas, contexto e tempo; sua força não precisa ser absoluta para ter consequências políticas.
+
+**Associação.** A carta que parece ter surgido espontaneamente pode ter sido colocada no alto do monte por uma regra invisível. **Você escolheu o que viu ou escolheu entre as coisas que alguém tornou mais fáceis de ver?**
+
+## [CP-56] Da interface ao voto: uma intervenção digital pode mover corpos
+
+**Status:** EXPERIMENTO HISTÓRICO, PUBLICADO EM 2012 + ASSOCIAÇÃO
+**Verificação:** 2026-10-16
+**Tags:** `mobilização`, `voto`, `Facebook`, `influência social`, `interface`, `ações reais`, `história`, `agência`
+**Arcanos associados:** O Julgamento, O Carro, O Mago, A Roda da Fortuna.
+**Conexões:** CP-07, CP-14, CP-15, CP-24, CP-55, CP-59.
+
+**Evidência experimental.** Bond e colegas estudaram mensagens de mobilização enviadas a cerca de 61 milhões de usuários do Facebook nas eleições legislativas dos EUA de 2010. O artigo, publicado na Nature em 2012, encontrou efeitos sobre expressão política, busca de informação e comparecimento eleitoral verificado, com transmissão social particularmente entre amigos próximos [E58]. É um experimento de mensagem e influência social, não uma prova sobre todo algoritmo de recomendação nem sobre quem ganhou uma eleição.
+
+**Leitura crítica.** “Virtual” não significa sem efeito material: uma pequena mudança de interface pode contribuir para alguém buscar informação, sair de casa ou falar com outra pessoa. Esses comportamentos se acumulam numa história coletiva, mas o experimento não autoriza escolher retrospectivamente um vencedor contrafactual. Uma relação causal localizada é mais informativa que a ideia de uma máquina que controla tudo.
+
+**Associação.** A trombeta do Julgamento pode ser uma notificação: ela chama, mas a resposta depende de relações que já existem entre pessoas. **Quantos gestos reais começam numa tela que parece apenas mostrar informações?**
+
+## [CP-57] Bets no Brasil: receita, proibição e os limites de controlar um mercado digital
+
+**Status:** DADOS ADMINISTRATIVOS E ATOS DATADOS + ASSOCIAÇÃO
+**Verificação:** 2026-10-16
+**Tags:** `bets`, `apostas`, `Brasil`, `dívida`, `GGR`, `MP 1394`, `proibição`, `bloqueio`, `economia da atenção`
+**Arcanos associados:** A Roda da Fortuna, O Diabo, A Justiça, A Temperança, A Torre.
+**Conexões:** CP-14, CP-19, CP-22, CP-41, CP-58, CP-59.
+
+**Economia e mudança normativa.** O Relatório de Gestão Integrado 2025 do Ministério da Fazenda registra aproximadamente R$ 37 bilhões de receita bruta de apostas (GGR) naquele ano [E59]. Essa medida não é lucro líquido, nem deve ser confundida com depósitos ou com todo o volume apostado. O texto da MP 1.394, de 25/09/2026, proíbe exploração, oferta, intermediação e publicidade de apostas de quota fixa, com exclusão das demais modalidades lotéricas autorizadas por lei [E60].
+
+**Atualização operacional.** Em notícia de 09/10/2026, atualizada em 15/10, o Ministério da Justiça informou que mais de 20 mil sites ilegais de apostas e publicidade haviam sido identificados e encaminhados para bloqueio [E61]. Encaminhar para bloqueio não significa que todos tenham sido efetivamente bloqueados ou que o mercado clandestino tenha desaparecido. A situação de uma medida provisória deve ser checada novamente antes de apresentações posteriores.
+
+**Associação crítica.** O circuito pode ligar desejo de ascensão, publicidade, repetição do gesto e transferência de dinheiro. São mecanismos e hipóteses de leitura, não diagnóstico de um espectador. A proibição e seus limites também permitem perguntar quem controla a passagem entre tela, pagamento e território. **O que muda na vida real quando a promessa de sorte ocupa cada intervalo de atenção?**
+
+## [CP-58] Quando a aposta tenta fabricar o acontecimento: Penalidade Máxima
+
+**Status:** DENÚNCIA CRIMINAL DATADA, SEGUNDO O MPGO + ASSOCIAÇÃO
+**Verificação:** 2026-10-16
+**Tags:** `Penalidade Máxima`, `manipulação esportiva`, `apostas`, `futebol`, `cartões`, `incentivos`, `previsão`, `ações reais`
+**Arcanos associados:** A Roda da Fortuna, O Mago, O Diabo, A Justiça, O Carro.
+**Conexões:** CP-07, CP-14, CP-19, CP-57, CP-59.
+
+**Documento e condição processual.** Em notícia sobre a Operação Penalidade Máxima II, o Ministério Público de Goiás descreve denúncia relativa a partidas de 2022 e 2023 e acusações de combinação de condutas como receber cartões e cometer pênaltis. O órgão informa que a denúncia foi recebida pelo Judiciário [E62]. Recebimento de denúncia não é condenação; este bloco não atribui culpa final a atletas nem atualiza o desfecho individual de cada processo.
+
+**Leitura crítica.** O caso investigado permite inverter a relação entre previsão e realidade: em vez de apenas apostar sobre um acontecimento, alguém pode tentar remunerar condutas para produzir o evento sobre o qual aposta. O incentivo econômico participa da ação corporal. Isso não implica que toda aposta ou todo resultado esportivo seja manipulado, e relações entre mercados distintos exigem provas próprias.
+
+**Associação.** A Roda pode ter jogadores tentando alterar seu mecanismo. O gesto aparentemente pequeno — uma falta ou um cartão — permite perguntar por efeitos encadeados sem inventar um campeonato cujo vencedor teria sido outro. **Quando a previsão passa a pagar pelo gesto, ainda estamos observando o futuro ou tentando fabricá-lo?**
+
+## [CP-59] Mudar o curso da história: circuitos de decisão e contingência
+
+**Status:** SÍNTESE ASSOCIATIVA EDITORIAL, NÃO NOVA ALEGAÇÃO FACTUAL
+**Verificação:** 2026-10-16
+**Tags:** `história`, `algoritmos`, `bets`, `decisão`, `incentivos`, `classificação`, `responsabilidade`, `contingência`, `circuitos`
+**Arcanos associados:** O Mago, A Roda da Fortuna, O Carro, A Justiça, O Julgamento, O Mundo.
+**Conexões:** CP-01, CP-07, CP-14, CP-21, CP-24, CP-50, CP-51, CP-52, CP-55, CP-56, CP-57, CP-58.
+
+**Hipótese para a leitura.** Relacionar três operações: um sistema classifica o que merece aparecer; dinheiro ou reconhecimento tornam certas ações vantajosas; pessoas respondem e o mundo produz novos dados. Os casos anteriores permitem examinar partes desses circuitos, cada qual com evidência e escala próprias. A aproximação é uma construção editorial; vínculos entre bancos, movimentos políticos, governos, redes e casas de apostas exigem documentação própria.
+
+**Tensão dramatúrgica.** A máquina pode afetar probabilidades sem abolir a ação humana. A repetição de pequenos estímulos pode alterar trajetórias; também pode encontrar recusa, organização, fiscalização ou resultados imprevistos. O bot participa do problema ao classificar a carta e oferecer um enquadramento para quem olha. Ele pode reconhecer esse poder e seu limite, em vez de declarar o destino do público.
+
+**Pergunta aberta.** **Se aquilo que prevê seu comportamento também reorganiza suas opções, onde você consegue interromper o circuito?** A pergunta deve nascer dos elementos efetivamente vistos na carta e do contexto da conversa, sem funcionar como fala obrigatória.
+
+---
+
+# PARTE VI — REGRAS PARA A INTERPRETAÇÃO DO BOT
 
 ## [RAG-01] Recuperação com procedência
 
@@ -942,7 +1118,7 @@ Evitar frases de manual: "esta carta significa X", "segundo a tradição você v
 
 ## [RAG-06] Atualização de política e acontecimentos antes de cada apresentação
 
-**Este documento é uma fotografia de 15/10/2026, não um feed de notícias.** O segundo turno presidencial brasileiro está marcado para 25/10/2026; as eleições legislativas americanas estão marcadas para 03/11/2026. Um espetáculo posterior a essas datas **não pode** apresentar a disputa, o estado do processo ou os resultados como se o futuro ainda estivesse aberto sem confirmar o que aconteceu. De modo semelhante, a vigência e a situação legislativa da MP nº 1.394/2026 precisam ser revalidadas.
+**O arquivo-base é uma fotografia de 15/10/2026; CP-48 a CP-59 foram pesquisados em 16/10/2026. Não é um feed de notícias.** O segundo turno presidencial brasileiro está marcado para 25/10/2026; as eleições legislativas americanas estão marcadas para 03/11/2026. Um espetáculo posterior a essas datas **não pode** apresentar a disputa, o estado do processo ou os resultados como se o futuro ainda estivesse aberto sem confirmar o que aconteceu. De modo semelhante, a vigência e a situação legislativa da MP nº 1.394/2026 precisam ser revalidadas.
 
 - Guardar cada notícia datada, fonte, URL, cargo/nome exato e data da consulta. Distinguir resultados oficiais, pesquisas e opiniões.
 - Se não houver atualização confiável antes do espetáculo, preferir o contexto histórico ou dizer “no registro disponível em outubro de 2026”, sem usar “hoje”, “agora” ou “amanhã”.
@@ -952,7 +1128,7 @@ Evitar frases de manual: "esta carta significa X", "segundo a tradição você v
 - Tratar fascismo, tecnocracia, populismo e capitalismo como **conceitos com definições e autores**, não apenas insultos, efeitos de áudio ou respostas automáticas. Comparar fatos, interpretações e contradições.
 - Em carta com imagem de autoridade, o bot pode falar de poder sem mencionar um político específico. Em carta com dinheiro, pode falar de desigualdade sem afirmar que o portador da carta aposta ou tem dívidas.
 
-**Economia de tokens:** processar documentos e fontes localmente e, por resposta, enviar apenas trechos relevantes de `[CP-15]` a `[CP-25]`, com seus metadados e data de recorte. Não mandar todos os números, estudos e relatórios ao mesmo tempo. Se citar estatística, incluir unidade, população, período e fonte no contexto.
+**Economia de tokens:** processar documentos e fontes localmente e, por resposta, enviar apenas trechos relevantes dos núcleos políticos `[CP-15]` a `[CP-24]` e `[CP-48]` a `[CP-59]`, com seus metadados e data de recorte. Não mandar todos os números, estudos e relatórios ao mesmo tempo. Se citar estatística, incluir unidade, população, período e fonte no contexto.
 
 ## [RAG-07] Tensões éticas de humor e alucinação em temas políticos
 
@@ -1043,8 +1219,26 @@ Fontes organizadas por confiabilidade e proximidade com os núcleos. Links consu
 - **[E47]** Federal Reserve — *Distributional Financial Accounts: Compare Wealth Components across Groups* (EUA, ativos por percentis patrimoniais): https://www.federalreserve.gov/releases/z1/dataviz/dfa/compare/chart/
 - **[E48]** Maria Luiza Belloni — *A formação na sociedade do espetáculo: gênese e atualidade do conceito*, Revista Brasileira de Educação / SciELO (Guy Debord): https://www.scielo.br/j/rbedu/a/TxVGXqDSP3vkp4LXgW5XcyN/?lang=pt
 
+**Complemento político, financeiro e algorítmico — consulta em 16/10/2026**
+
+- **[E49]** Banco Central do Brasil — *Comunicado nº 44.234, de 18/11/2025: liquidação extrajudicial do Banco Master S.A.* (ato administrativo): https://www.bcb.gov.br/estabilidadefinanceira/exibenormativo?numero=44234&tipo=Comunicado
+- **[E50]** Polícia Federal — *PF deflagra 10ª fase da Operação Compliance Zero*, 09/07/2026, atualizado 10/07/2026 (objeto e alegações da investigação): https://www.gov.br/pf/pt-br/assuntos/noticias/2026/07/policia-federal-deflagra-10a-fase-da-operacao-compliance-zero
+- **[E51]** Jonatas Martins / CNN Brasil — *Caso Master: Vorcaro presta hoje novo depoimento à PF sobre o BRB*, 15/10/2026, atualizado às 12h44 (notícia de oitiva prevista, não conclusão do caso): https://www.cnnbrasil.com.br/politica/caso-master-vorcaro-presta-hoje-novo-depoimento-a-pf-sobre-o-brb/
+- **[E52]** STF — *STF fixa penas de 16 a 27 anos para condenados por tentativa de golpe de Estado*, 11/09/2025 (decisão na AP 2.668): https://noticias.stf.jus.br/postsnoticias/stf-fixa-penas-de-16-a-27-anos-para-condenados-por-tentativa-de-golpe-de-estado/
+- **[E53]** Casa Branca — *Addressing Threats to the United States by the Government of Brazil*, Ordem Executiva 14323, 30/07/2025 (ato e justificativas do governo dos EUA naquele momento): https://www.whitehouse.gov/presidential-actions/2025/07/addressing-threats-to-the-us/
+- **[E54]** U.S. Department of State / Federal Register — *Global Magnitsky Human Rights Accountability Act Annual Report*, 25/03/2026, 91 FR 14617 (registra a retirada das sanções em 12/12/2025): https://www.federalregister.gov/documents/2026/03/25/2026-05753/global-magnitsky-human-rights-accountability-act-annual-report
+- **[E55]** U.S. Department of State, Office of the Historian — *Telegram From the Department of State to the Embassy in Brazil*, 31/03/1964, documento 198 de *FRUS, 1964–1968, Volume XXXI* (preparativos da operação Brother Sam): https://history.state.gov/historicaldocuments/frus1964-68v31/d198
+- **[E56]** Comissão Europeia / DG Competition — carta institucional de 30/09/2025 sobre a decisão de 05/09/2025 no caso Google Adtech (multa e medidas então determinadas): https://commission.europa.eu/document/download/490b2511-42bd-4461-9da9-9ecfd2076829_en?filename=Pet+Control+-+google.pdf
+- **[E57]** Germain Gauthier, Roland Hodler, Philine Widmer e Ekaterina Zhuravskaya — *The political effects of X’s feed algorithm*, Nature, publicado 18/02/2026, DOI 10.1038/s41586-026-10098-2 (experimento de 2023 e comparação com estudos anteriores): https://www.nature.com/articles/s41586-026-10098-2
+- **[E58]** Robert M. Bond e colegas — *A 61-million-person experiment in social influence and political mobilization*, Nature, 2012, DOI 10.1038/nature11421 (eleições legislativas dos EUA de 2010): https://www.nature.com/articles/nature11421
+- **[E59]** Ministério da Fazenda — *Relatório de Gestão Integrado 2025*, p. 95 (receita de apostas / GGR de 2025): https://www.gov.br/fazenda/pt-br/acesso-a-informacao/auditorias/arquivos/rgi_mf_2025_vf.pdf
+- **[E60]** Presidência da República / Planalto — *Medida Provisória nº 1.394, de 25/09/2026* (texto e âmbito da proibição): https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/mpv/mpv1394.htm
+- **[E61]** Ministério da Justiça e Segurança Pública — *Mais de 20 mil sites ilegais de apostas e de publicidade são encaminhados para bloqueio*, 09/10/2026, atualizado 15/10/2026 (encaminhamento, não comprovação de todos os bloqueios): https://www.gov.br/mj/pt-br/assuntos/noticias-1/mais-de-20-mil-sites-ilegais-de-apostas-e-de-publicidade-sao-encaminhados-para-bloqueio
+- **[E62]** Ministério Público de Goiás — *MP/Gaeco denuncia 16 pessoas por fraudes em resultados de 13 partidas de futebol; 8 delas são do Campeonato Brasileiro da Série A* (denúncia sobre jogos de 2022 e 2023; conteúdo público indexado consultado): https://www.mpgo.mp.br/portal/noticia/mp-gaeco-denuncia-16-pessoas-por-fraudes-em-resultados-de-13-partidas-de-futebol-8-delas-sao-do-campeonato-brasileiro-da-serie-a
+- **[E63]** UNCTAD — *Technology and Innovation Report 2025: Inclusive Artificial Intelligence for Development* (resumo público indexado consultado; PDF integral não obtido nesta consulta): https://unctad.org/system/files/official-document/tir2025_en.pdf
+
 # ATUALIZAÇÃO NECESSÁRIA ANTES DE USAR COMO FONTE CANÔNICA
 
 O roteiro consultado é um **rascunho parcial de agosto de 2026**. Sua CENA 8, a CENA 9 e o futuro ato 2 são descritos como desenvolvimento, testes ou ideias. O roteiro de operação também registra uma configuração de jogos e efeitos de ensaio, que pode ter sido alterada no repositório desde então. **Não tenho acesso direto à versão atual do repositório nesta edição.** Antes da importação definitiva, o sistema deve comparar os nomes de cenas, o elenco, o texto final, a posição do prólogo de Tarô e o final holográfico com o roteiro atual, preservando as diferenças e as fontes.
 
-**Proposta de indexação:** dividir pelos cabeçalhos `[CP-01]` até `[CP-47]` (CP-26 a CP-47: interpretações editoriais dos arcanos) e `[RAG-01]` até `[RAG-07]`; salvar cada segmento com campos `id`, `titulo`, `status`, `tags`, `fonte_interna`, `fontes_externas`, `arcanos`, `texto`, `versao`. Tratar perguntas e associações como material criativo, não como citações. Recuperar poucos segmentos pertinentes por interação para manter baixo custo de tokens.
+**Proposta de indexação:** dividir pelos cabeçalhos `[CP-01]` até `[CP-59]` (CP-26 a CP-47: interpretações editoriais dos arcanos; CP-48 a CP-59: complemento político pesquisado em 16/10/2026) e `[RAG-01]` até `[RAG-07]`; salvar cada segmento com campos `id`, `titulo`, `status`, `tags`, `fonte_interna`, `fontes_externas`, `arcanos`, `texto`, `versao`, `verificacao`. Tratar perguntas e associações como material criativo, não como citações. Recuperar poucos segmentos pertinentes por interação para manter baixo custo de tokens.

@@ -32,6 +32,7 @@ try{
  const normal=await test('search',16,'normal'),associative=await test('search'),hallucinatory=await test('search',18,'hallucinatory','percepção pareidolia simulação');
  assert(normal.references.expansion.length===0&&associative.references.expansion.length>0);
  assert(associative.references.chunks.some(c=>c.sectionId==='CP-02'));assert(hallucinatory.references.mode==='hallucinatory');
+ const politics=await test('search',4,'associative','Banco Master Daniel Vorcaro BRB liquidação');assert(politics.references.chunks.some(c=>c.sectionId==='CP-50'&&c.checkedAt==='2026-10-16'));assert(politics.references.characters<=politics.references.limits.maxChars);
  assert.deepEqual(stable(await get('/api/tarot')),stable(initial));checks.push('offline HTTP index/search, origin/session/card guards and three retrieval modes preserve the presentation session');
  await command('references',{settings:{themes:{politica:false},maxChunks:2}});
  assert((await test('search',4,'associative','democracia autoridade')).references.chunks.every(c=>c.theme!=='politica'));
@@ -42,7 +43,7 @@ try{
  await page.getByText(/Documento principal carregado/).waitFor();
  await page.getByLabel('Pergunta para a busca contextual').fill('queda avião colisão registro');
  await page.getByRole('button',{name:'TESTAR ASSOCIAÇÕES',exact:true}).click();await page.getByText(/RESULTADO ASSOCIATIVA/).waitFor();
- assert(await page.getByText(/CP-02/).count()>0);await page.getByRole('checkbox',{name:'Política e democracia',exact:true}).uncheck();
+ assert(await page.getByText(/CP-02/).count()>0);await page.getByLabel('Pergunta para a busca contextual').fill('Banco Master Daniel Vorcaro BRB liquidação');await page.getByRole('button',{name:'TESTAR ASSOCIAÇÕES',exact:true}).click();await page.getByText(/CP-50/).first().waitFor();assert(await page.getByText(/fontes consultadas em 2026-10-16/).count()>0);await page.screenshot({path:output+'/political-references.png',fullPage:true});checks.push('new Master/Vorcaro sources and per-section consultation date are retrieved and rendered without changing the session');await page.getByRole('checkbox',{name:'Política e democracia',exact:true}).uncheck();
  await page.waitForFunction(()=>!document.querySelector('input[type="checkbox"]:checked')?.disabled);await page.screenshot({path:output+'/references.png',fullPage:true});
  checks.push('rendered TARÔ controls load status, search with provenance and independently disable a theme');
  const beforePreview=stable(await get('/api/tarot'));

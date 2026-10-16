@@ -38,7 +38,7 @@ export default function TarotReferenceControls({tarot,cards,sessionId,command,hi
       <p>{result.references.chunks.length} trechos · {result.references.characters} caracteres · ≈ {result.references.estimatedTokens} tokens de referências (o prompt e o histórico são adicionais).</p>
       <p>Conceitos visuais: {result.references.visualConcepts.join(' · ')}</p>
       <details><summary>TERMOS E PONTES DA BUSCA</summary><p>{result.references.searchTerms.join(', ')}</p><p>{result.references.expansion.join(' → ')}</p><p>Pessoas selecionadas: {result.references.people.map(p=>p.name).join(', ')||'nenhuma'}</p></details>
-      {result.references.chunks.map(c=><article key={c.id}><strong>{c.title} · {REFERENCE_THEMES[c.theme]}</strong><p>{c.origin} · {c.cutoff?`recorte ${c.cutoff}, não revalidado`:'memória local'}</p><p>{c.relations.join(' · ')}</p><p style={{whiteSpace:'pre-line'}}>{c.text}</p><details><summary>PROCEDÊNCIA E FONTES</summary><p>{c.headings.join(' / ')}</p><p>{c.metadata}</p>{c.sources.map(source=><p key={source}>{source}</p>)}</details></article>)}
+      {result.references.chunks.map(c=><article key={c.id}><strong>{c.title} · {REFERENCE_THEMES[c.theme]}</strong><p>{c.origin} · {c.checkedAt?`fontes consultadas em ${c.checkedAt}; sem atualização posterior`:c.cutoff?`recorte ${c.cutoff}, não revalidado`:'memória local'}</p><p>{c.relations.join(' · ')}</p><p style={{whiteSpace:'pre-line'}}>{c.text}</p><details><summary>PROCEDÊNCIA E FONTES</summary><p>{c.headings.join(' / ')}</p><p>{c.metadata}</p>{c.sources.map(source=><p key={source}>{source}</p>)}</details></article>)}
     </div></details>)}
     {error?<p role="alert">{error}</p>:null}
   </div></details>;
