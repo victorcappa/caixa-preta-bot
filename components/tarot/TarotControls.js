@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useState, useRef } from "react";
 import { prepareDeck, tarotCommand } from "@/lib/tarot/client";
 import {TarotHallucinationControls,TarotFacePreparation,TarotPreview} from "./TarotHallucinationControls";
+import TarotReferenceControls from "./TarotReferenceControls";
 import TarotCatalogEditor from "./TarotCatalogEditor";
 import PublicOperatorControls from "@/components/PublicOperatorControls";
 import {hallucinationReadiness} from "@/lib/tarot/hallucination";
 import { DEFAULT_TAROT_VISUAL } from "@/lib/tarot/state";
+import { referenceSettings } from "@/lib/tarot/reference-settings";
 import styles from "./TarotControls.module.css";
 
 const configFields = [["questionsUntilAutonomy","Perguntas até autonomia"],["maxCards","Máximo de cartas"],["intervalMs","Intervalo entre cartas (ms)"],["maxDurationMs","Duração total (ms)"],["reflectionSeconds","Reflexão aproximada (s)"],["questionFrequency","Perguntar a cada N cartas"],["associationIntensity","Intensidade de associações (0–100)"]];
@@ -15,10 +17,10 @@ const profileFields = [["humor","Humor"],["provocation","Provocação"],["philos
 export default function TarotControls() {
   const [snapshot,setSnapshot]=useState(null),[cards,setCards]=useState([]),[back,setBack]=useState(null);
   const [section,setSection]=useState("apresentacao");
-  const [library,setLibrary]=useState({faces:[],fusions:[],templates:[],sources:[]}),[memoryTitle,setMemoryTitle]=useState(""),[memoryText,setMemoryText]=useState("");
+  const [library,setLibrary]=useState({faces:[],fusions:[],templates:[],sources:[]}),[memoryTitle,setMemoryTitle]=useState(""),[memoryText,setMemoryText]=useState(""),[memoryPeople,setMemoryPeople]=useState([]);
   const [selected,setSelected]=useState(0),[editor,setEditor]=useState(false),[pending,setPending]=useState(false),[error,setError]=useState("");
   const [question,setQuestion]=useState(""),[instruction,setInstruction]=useState(""),[preparation,setPreparation]=useState("");
-  const [context,setContext]=useState({text:"",date:"",url:""});
+  const [context,setContext]=useState({text:"",date:"",url:"",checkedAt:"",verification:"unverified"});
   const refreshSequence=useRef(0),settingsPending=useRef(0);
   const tarot=snapshot?.tarot,sessionId=snapshot?.sessionId;
   const readiness=tarot?.hallucination?hallucinationReadiness(tarot):null;
@@ -34,10 +36,10 @@ export default function TarotControls() {
   const loadCatalog=useCallback(async()=>{const r=await fetch("/api/tarot/catalog",{cache:"no-store"});if(r.ok){const data=await r.json();setCards(data.cards);setBack(data.back);}},[]);
   useEffect(()=>{void refresh();void loadCatalog();const timer=setInterval(()=>void refresh().catch(()=>{}),1500);return()=>clearInterval(timer);},[refresh,loadCatalog]);
   async function command(action,data={}) {
-    const setting=["config","camera","visual","profile"].includes(action)&&data[action];
+    const setting=action==="references"?data.settings:["config","camera","visual","profile"].includes(action)&&data[action];
     if(setting){
       settingsPending.current++;refreshSequence.current++;
-      setSnapshot((old)=>old?{...old,tarot:{...old.tarot,[action]:{...old.tarot[action],...setting}}}:old);
+      setSnapshot((old)=>old?{...old,tarot:{...old.tarot,[action]:action==="references"?referenceSettings(setting,old.tarot.references):{...old.tarot[action],...setting}}}:old);
     }
     setError("");
     try { await tarotCommand(sessionId,action,data);await refresh(true);return true; }
@@ -82,7 +84,8 @@ export default function TarotControls() {
           <TarotHallucinationControls h={tarot.hallucination} section={section} command={command} cards={cards}/>
           <TarotFacePreparation section={section} sessionId={sessionId} cards={cards} library={library} onLibrary={setLibrary}/>
           <details open hidden={section!=="testes"}><summary>11 — TESTES / SEM WEBCAM</summary><TarotPreview library={library} cards={cards} h={tarot.hallucination} sessionId={sessionId} onLibrary={setLibrary}/></details>
-          <details hidden={section!=="memoria"}><summary>TEXTOS, DOCUMENTOS E ENTREVISTAS (OPCIONAIS)</summary><div className={styles.section}><label>Título<input value={memoryTitle} onChange={e=>setMemoryTitle(e.target.value)}/></label><label>Texto / entrevista<textarea value={memoryText} onChange={e=>setMemoryText(e.target.value)}/></label><label>Importar documento de texto UTF-8<input type="file" accept=".txt,.md,text/plain" onChange={async e=>{const file=e.target.files[0];if(file){setMemoryTitle(file.name);setMemoryText((await file.text()).slice(0,12000));}}}/></label><button disabled={!memoryText.trim()} onClick={async()=>{if(await command("hallucination-memory",{memories:[...tarot.hallucination.memories,{id:crypto.randomUUID(),title:memoryTitle,text:memoryText,enabled:true}]})){setMemoryText("");setMemoryTitle("");}}}>SALVAR NA MEMÓRIA TEXTUAL</button>{tarot.hallucination.memories.map(m=><div key={m.id}><label className={styles.check}><input type="checkbox" checked={m.enabled} onChange={e=>command("hallucination-memory",{memories:tarot.hallucination.memories.map(v=>v.id===m.id?{...v,enabled:e.target.checked}:v)})}/>{m.title}</label><button onClick={()=>command("hallucination-memory",{memories:tarot.hallucination.memories.filter(v=>v.id!==m.id)})}>REMOVER TEXTO</button></div>)}</div></details>
+          <div hidden={section!=="memoria"}><TarotReferenceControls tarot={tarot} cards={cards} sessionId={sessionId} command={command} history={snapshot.history}/></div>
+          <details hidden={section!=="memoria"}><summary>TEXTOS, DOCUMENTOS E ENTREVISTAS (OPCIONAIS)</summary><div className={styles.section}><label>Título<input value={memoryTitle} onChange={e=>setMemoryTitle(e.target.value)}/></label><label>Texto / entrevista<textarea value={memoryText} onChange={e=>setMemoryText(e.target.value)}/></label><label>Importar documento de texto UTF-8<input type="file" accept=".txt,.md,text/plain" onChange={async e=>{const file=e.target.files[0];if(file){setMemoryTitle(file.name);const text=await file.text();if(text.length>120000){setError("Documento excede 120.000 caracteres; divida por seções antes de importar.");return;}setMemoryText(text);}}}/></label><p className={styles.hint}>Até 120.000 caracteres por documento. Vincule entrevistas às pessoas cadastradas, sem atribuir identidades às figuras da carta.</p>{library.faces.map(face=><label className={styles.check} key={face.id}><input type="checkbox" checked={memoryPeople.includes(face.id)} onChange={e=>setMemoryPeople(old=>e.target.checked?[...old,face.id]:old.filter(id=>id!==face.id))}/>{face.name}</label>)}<button disabled={!memoryText.trim()||memoryText.length>120000} onClick={async()=>{if(await command("hallucination-memory",{memories:[...tarot.hallucination.memories,{id:crypto.randomUUID(),title:memoryTitle,text:memoryText,enabled:true,personIds:memoryPeople}]})){setMemoryText("");setMemoryTitle("");setMemoryPeople([]);}}}>SALVAR NA MEMÓRIA TEXTUAL</button>{tarot.hallucination.memories.map(m=><div key={m.id}><label className={styles.check}><input type="checkbox" checked={m.enabled} onChange={e=>command("hallucination-memory",{memories:tarot.hallucination.memories.map(v=>v.id===m.id?{...v,enabled:e.target.checked}:v)})}/>{m.title}</label><button onClick={()=>command("hallucination-memory",{memories:tarot.hallucination.memories.filter(v=>v.id!==m.id)})}>REMOVER TEXTO</button></div>)}</div></details>
         </>:null}
 
         <details open hidden={section!=="apresentacao"}><summary>APRESENTAÇÃO</summary><div className={styles.section}><p className={styles.hint}>Câmera e processamento pertencem à tela pública. A prévia usa a referência e o estado compartilhado, sem vídeo remoto.</p><div className={styles.actions}><button onClick={()=>command("start")}>INICIAR</button><button onClick={()=>command("end")}>ENCERRAR PRÓLOGO</button><button onClick={()=>command("reset")}>REINICIAR TREINAMENTO</button><button onClick={()=>command("interrupt")}>INTERROMPER FALA</button><button onClick={()=>command("resume-speech")}>RETOMAR FALA</button><a href="/" target="_blank" rel="noreferrer">PRINCIPAL ↗</a></div>{tarot.currentCard?<div className={styles.preview}><img src={tarot.currentCard.imageUrl} alt={tarot.currentCard.name}/><div><strong>{tarot.currentCard.name}</strong><p>{tarot.response?.text||"Aguardando interpretação automática."}</p></div></div>:<p>Inicie o prólogo e mostre uma carta. O inventário visual das 22 referências já está incluído.</p>}</div></details>
@@ -136,8 +139,9 @@ export default function TarotControls() {
         <details hidden={section!=="contexto"}><summary>CONTEXTO CONTEMPORÂNEO</summary><div className={styles.section}>
           <p className={styles.hint}>Prepare antes do espetáculo. Cada fato exige data e fonte; a consulta durante a apresentação usa os dados locais.</p>
           <label>Acontecimento<textarea value={context.text} onChange={(e)=>setContext({...context,text:e.target.value})}/></label><label>Data<input type="date" value={context.date} onChange={(e)=>setContext({...context,date:e.target.value})}/></label><label>Fonte<input type="url" value={context.url} onChange={(e)=>setContext({...context,url:e.target.value})}/></label>
-          <button disabled={!context.text||!context.date||!/^https?:\/\//.test(context.url)} onClick={async()=>{if(await command("contexts",{contexts:[...tarot.contexts,{...context,enabled:true}]}))setContext({text:"",date:"",url:""});}}>ADICIONAR CONTEXTO</button>
-          {tarot.contexts.map((c,i)=><label className={styles.check} key={`${i}:${c.url}`}><input type="checkbox" checked={c.enabled} onChange={(e)=>command("contexts",{contexts:tarot.contexts.map((item,n)=>n===i?{...item,enabled:e.target.checked}:item)})}/><span>{c.date} · {c.text} <a href={c.url} target="_blank" rel="noreferrer">FONTE ↗</a></span></label>)}
+          <label>Data de consulta / atualização<input type="date" value={context.checkedAt} onChange={e=>setContext({...context,checkedAt:e.target.value})}/></label><label>Verificação<select value={context.verification} onChange={e=>setContext({...context,verification:e.target.value})}><option value="unverified">Não verificado</option><option value="uncertain">Incerto</option><option value="verified">Verificado pelo operador</option></select></label>
+          <button disabled={!context.text||!context.date||(context.verification==="verified"&&!context.checkedAt)||!/^https?:\/\//.test(context.url)} onClick={async()=>{if(await command("contexts",{contexts:[...tarot.contexts,{...context,enabled:true}]}))setContext({text:"",date:"",url:"",checkedAt:"",verification:"unverified"});}}>ADICIONAR CONTEXTO</button>
+          {tarot.contexts.map((c,i)=><label className={styles.check} key={`${i}:${c.url}`}><input type="checkbox" checked={c.enabled} onChange={(e)=>command("contexts",{contexts:tarot.contexts.map((item,n)=>n===i?{...item,enabled:e.target.checked}:item)})}/><span>{c.date} · consulta {c.checkedAt||"não registrada"} · {c.verification||"unverified"} · {c.text} <a href={c.url} target="_blank" rel="noreferrer">FONTE ↗</a></span></label>)}
         </div></details>
         <details open hidden={section!=="visual"}><summary>VISUAL</summary><div className={styles.section}>
           <p className={styles.hint}>A carta mantém a cor e a nitidez. Os efeitos ficam fora de seu quadrilátero e acompanham a geometria real.</p>

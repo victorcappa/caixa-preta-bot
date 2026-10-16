@@ -85,6 +85,7 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 - Cinematic focus/progressive reveal -> `components/tarot/TarotCameraFocus.js`, `TarotTraining.js`, `lib/tarot/geometry.js`; stable automatic analysis -> `recognition.js` / `useTarotCamera.js`; Matrix -> `TarotMatrix.js`.
 - Six readings / 22 backs / geometric choice / removal / reveal / closing -> `lib/tarot/floor.js`, `controller.js`, `app/api/tarot/back/`; real back reference -> `assets/tarot/carta-fundo.jpeg`.
 - Local image matching/flow -> `public/tarot-tracker.worker.js`, vendored OpenCV; catalogue -> `assets/tarot`, `lib/tarot/catalog.js`, `app/api/tarot/`.
+- Associative references / BM25 / cache / private previews -> `lib/knowledge-retrieval.js`, `lib/tarot/references.js`, `reference-settings.js`, `components/tarot/TarotReferenceControls.js`, `/api/tarot/references`; live context injection -> `service.js` / `lib/openai.js`; usage/checks -> `docs/TAROT_REFERENCIAS.md`, `scripts/tarot-references-*.js`.
 - Research, costs, preparation, physical-validation limits -> `docs/TAROT_TREINAMENTO.md`, per-card review -> `docs/TAROT_CATALOGO_VISUAL.md`; checks -> `scripts/tarot-*-test.js`.
 
 ## Validation

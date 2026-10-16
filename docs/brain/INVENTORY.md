@@ -9,6 +9,9 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 ## Package scripts
 
 - `npm run test:tarot` -> `node --no-warnings scripts/tarot-test.js`
+- `npm run test:tarot:references` -> `node --no-warnings scripts/tarot-references-test.js`
+- `npm run test:tarot:references:browser` -> `node --no-warnings scripts/tarot-references-browser-test.js`
+- `npm run test:tarot:references:live` -> `node --no-warnings --env-file-if-exists=.env.local scripts/tarot-references-browser-test.js --live`
 - `npm run test:tarot:experience` -> `node --no-warnings scripts/tarot-experience-test.js`
 - `npm run test:tarot:catalog` -> `node --no-warnings scripts/tarot-catalog-test.js`
 - `npm run test:tarot:vision` -> `node --no-warnings scripts/tarot-vision-test.js`
@@ -133,6 +136,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `GET, POST /api/tarot/faces` -> `app/api/tarot/faces/route.js`
 - `GET /api/tarot/faces/source` -> `app/api/tarot/faces/source/route.js`
 - `GET /api/tarot/reference/[id]` -> `app/api/tarot/reference/[id]/route.js`
+- `GET, POST /api/tarot/references` -> `app/api/tarot/references/route.js`
 - `GET, POST /api/tarot` -> `app/api/tarot/route.js`
 - `POST /api/training/chat` -> `app/api/training/chat/route.js`
 - `GET, POST /api/training/examples` -> `app/api/training/examples/route.js`
@@ -185,6 +189,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/tarot/TarotEffects.js`
 - `components/tarot/TarotHallucinationControls.js`
 - `components/tarot/TarotMatrix.js`
+- `components/tarot/TarotReferenceControls.js`
 - `components/tarot/TarotTraining.js`
 - `components/tarot/useTarotCamera.js`
 - `components/Terminal.js`
@@ -313,6 +318,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/tarot-hallucination-browser-test.js`
 - `scripts/tarot-hallucination-controls-browser-test.js`
 - `scripts/tarot-hallucination-test.js`
+- `scripts/tarot-references-browser-test.js`
+- `scripts/tarot-references-test.js`
 - `scripts/tarot-test.js`
 - `scripts/tarot-vision-test.js`
 - `scripts/verdade-ou-bolo-layout-browser-test.js`
