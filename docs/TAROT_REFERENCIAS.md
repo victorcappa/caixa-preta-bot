@@ -1,6 +1,6 @@
 # Referências e memória do Tarô
 
-O arquivo original `assets/tarot/CAIXA_PRETA_REFERENCIAS_TARO.md` permanece integral e sem alterações. Ele amplia o repertório do Tarô; a dramaturgia canônica de `knowledge/` continua sendo a fonte principal sobre os acontecimentos do espetáculo. O sistema usa o mesmo modelo, personalidade, histórico, `showState`, recuperação da sessão e SSE existentes.
+O arquivo `assets/tarot/CAIXA_PRETA_REFERENCIAS_TARO.md` preserva o conteúdo de referência original e recebeu, na edição 2.1, interpretações editoriais individuais dos 22 Arcanos Maiores (CP-26 a CP-47). Ele amplia o repertório do Tarô; a dramaturgia canônica de `knowledge/` continua sendo a fonte principal sobre os acontecimentos do espetáculo. O sistema usa o mesmo modelo, personalidade, histórico, `showState`, recuperação da sessão e SSE existentes.
 
 ## Busca local
 
@@ -10,9 +10,11 @@ Os trechos preservam parágrafos completos, hierarquia de títulos, núcleo CP, 
 
 O índice dos arquivos é armazenado em `.runtime/tarot-reference-index.json`. Tamanho e data dos arquivos invalidam o cache; o texto não é relido nem reindexado em cada interpretação. Documentos dinâmicos usam um cache em memória por conteúdo. `REINDEXAR REFERÊNCIAS` força a reconstrução local. O índice não é uma segunda fonte editorial: é derivado dos arquivos existentes.
 
+As interpretações individuais da Parte IV usam o mesmo formato CP do índice, a numeração real (VIII Justiça / XI Força) e a seleção temática **Referências filosóficas**. Cada leitura traz potencial simbólico, tensão/contraponto e uma pergunta associativa, sem alterar o catálogo visual ou a interpretação nele cadastrada. A data de corte das notícias permanece 15/10/2026; a revisão editorial de 16/10/2026 não revalida os recortes políticos.
+
 A consulta combina inventário visual real, conceitos do catálogo, pergunta, seis mensagens recentes e pessoas selecionadas na biblioteca de rostos. Grupos de conceitos ampliam a busca; as conexões CP fornecem uma preferência adicional por relações editoriais. BM25 favorece também os conceitos principais e a pergunta. A seleção penaliza trechos e temas recentes e favorece diversidade de núcleos. Em alucinação, reduz a penalidade de repetição e amplia as pontes, sem modificar a memória. A recuperação é lexical e associativa por metadados; não é um modelo semântico de embeddings.
 
-Entrevistas podem ser vinculadas aos IDs de pessoas cadastradas na seção de importação. Uma pessoa selecionada favorece documentos vinculados e seu nome participa da consulta. Isso não constitui reconhecimento de identidade na carta. Textos desativados não entram na busca. A importação aceita até 30 textos UTF-8 de 120.000 caracteres cada; excedentes são rejeitados explicitamente. Um parágrafo maior que o orçamento não é cortado: outro trecho é selecionado.
+Entrevistas podem ser vinculadas aos IDs de pessoas cadastradas na seção de importação. Uma pessoa selecionada favorece documentos vinculados e seu nome participa da consulta. O peso do vínculo explícito acompanha a escala de pontuação do corpus para que sua ampliação não torne entrevistas vinculadas irrelevantes. Isso não constitui reconhecimento de identidade na carta. Textos desativados não entram na busca. A importação aceita até 30 textos UTF-8 de 120.000 caracteres cada; excedentes são rejeitados explicitamente. Um parágrafo maior que o orçamento não é cortado: outro trecho é selecionado.
 
 ## Operação privada
 
@@ -70,3 +72,7 @@ Após autorização explícita, foram executadas **quatro gerações reais**, to
 | A Torre / fluxo ativo temporário | Temas morte, dramaturgia e Big Techs | 4.281 caracteres / ≈ 1.427 tokens | Evidência congelada, arquivo, pixels e laudos sem restaurar o sentido. |
 
 As respostas reais foram diferentes e mostram uso interpretativo do repertório, além da correspondência lexical da busca. Essa amostra não certifica todos os arcanos, consistência futura, qualidade poética em todas as condições ou comparação causal de modos na mesma carta; a interface permite repetir essa comparação privadamente. A formulação verbal da alucinação ainda pode precisar de ajuste editorial. Webcam, áudio/projeção físicos e ensaio completo permanecem sem nova validação. Os fatos contemporâneos do arquivo não foram rechecados na internet nesta entrega.
+
+### Atualização editorial — 16/10/2026
+
+A Parte IV recebeu 22 interpretações individuais (CP-26 a CP-47), preservando a tabela anterior, a bibliografia e o catálogo. A checagem local confirmou 22 seções únicas indexadas e a recuperação da leitura correspondente para cada carta, dentro do orçamento de contexto. Os 14 grupos de `test:tarot:references`, ESLint de `references.js` e `brain:sync` / `brain:check` passaram. Foi corrigida a regressão de prioridade das entrevistas vinculadas detectada com o corpus ampliado. Não foram feitas novas chamadas ao modelo ou validações físicas nesta revisão editorial.

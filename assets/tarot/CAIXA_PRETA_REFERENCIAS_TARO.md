@@ -1,7 +1,7 @@
 ---
 titulo: "CAIXA PRETA — Arquivo de referências para o Tarô"
 subtitulo: "Memória, corpo, automação, queda, imagem, política, desigualdade, plataformas, repetição e alucinação"
-versao: "2.0 — 2026-10-15 (arquivo unificado, com temas políticos e socioeconômicos)"
+versao: "2.1 — 2026-10-16 (acréscimo de interpretações individuais dos 22 Arcanos Maiores)"
 idioma: "pt-BR"
 uso: "Base de conhecimento e recuperação contextual (RAG) do chatbot em /treinamento"
 data_de_corte_para_noticias: "2026-10-15"
@@ -536,6 +536,321 @@ categorias_de_status:
 
 **Nota de numeração:** seguir o catálogo real do baralho; a disposição de Justiça/Força indicada aqui corresponde ao catálogo descrito no projeto (VIII Justiça e XI Força). Títulos alternativos devem ser confirmados conforme as cartas impressas.
 
+## Interpretações individuais dos 22 Arcanos Maiores
+
+**Edição editorial de 16/10/2026.** A tabela acima já oferecia pontes associativas breves. As leituras abaixo aprofundam cada arcano sem substituir essas pontes, as interpretações já cadastradas ou a bibliografia. São **ASSOCIAÇÕES autorais para o projeto**, construídas a partir do inventário de `assets/tarot/catalog.json` e dos núcleos deste documento; não são uma síntese bibliográfica de todas as tradições de Tarô nem significados universais comprovados.
+
+**Como usar:** partir da imagem efetivamente reconhecida, escolher uma tensão e desenvolver uma relação própria com a pergunta e a memória. Potencial e sombra coexistem; não dependem de a carta estar fisicamente invertida. As perguntas são disparadores, não falas obrigatórias. A alucinação pode deslocar as associações, mas não acrescentar objetos à observação nem converter metáforas em fatos, diagnósticos ou previsões. A numeração é a deste baralho: VIII Justiça e XI Força. Os núcleos CP-26 a CP-47 mantêm o formato recuperável pelo índice local; na seleção temática atual pertencem a **Referências filosóficas**.
+
+## [CP-26] O Louco (0) — começar antes de compreender
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 0; inventário e conceitos cadastrados.
+**Tags:** `louco`, `começo`, `impulso`, `liberdade`, `risco`, `atenção`, `desconhecido`
+**Arcanos associados:** O Louco.
+**Conexões:** CP-09, CP-14, CP-19.
+
+**Leitura simbólica.** A figura avança de braços abertos entre ramos, enquanto um pequeno cão salta atrás dela. Começar pode significar aceitar uma experiência sem dominar seu percurso. A abertura do corpo sugere disponibilidade: aprender exige permitir que alguma coisa ainda desconhecida interrompa o que já sabemos.
+
+**Tensão e contraponto.** Liberdade não é ausência de consequências. O impulso pode abrir possibilidades ou impedir que um aviso seja ouvido. Não transformar o desconhecimento em virtude automática, nem o risco em promessa de recompensa. Nesta imagem não há bastão ou bolsa evidentes: esses objetos não devem ser importados de outro baralho.
+
+**Associação e pergunta.** Entrar num jogo, num teatro ou numa conversa com uma máquina implica confiar antes de conhecer todas as regras. A questão não precisa ser se a figura vai cair, mas o que ela consegue perceber enquanto avança: **o que você aceita não saber para conseguir começar?**
+
+## [CP-27] O Mago (I) — agir por meio de instrumentos
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 1; inventário e conceitos cadastrados.
+**Tags:** `mago`, `mediação`, `linguagem`, `instrumentos`, `técnica`, `artifício`, `agência`
+**Arcanos associados:** O Mago.
+**Conexões:** CP-01, CP-04, CP-07, CP-20.
+
+**Leitura simbólica.** A pessoa encapuzada aparece entre figuras de aparência floral, sob instrumentos e um laço em forma de infinito. A ação não nasce apenas de uma vontade: depende de objetos, linguagem e relações que tornam essa vontade realizável. Criar também é recombinar o que já está disponível.
+
+**Tensão e contraponto.** Saber apresentar um mecanismo não equivale a dominá-lo. A habilidade pode produzir uma experiência ou apenas uma impressão de competência. Os instrumentos tanto ampliam a ação quanto revelam suas dependências; uma figura central pode receber o crédito por um trabalho distribuído.
+
+**Associação e pergunta.** O bot organiza palavras e reconhece padrões com recursos que não inventou sozinho. Um gesto parece mágico quando sua infraestrutura desaparece da atenção. **Quando você atribui poder a alguém, está olhando para a pessoa, para os instrumentos ou para a maneira como ela os apresenta?**
+
+## [CP-28] A Sacerdotisa (II) — saber sem tornar tudo visível
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 2; inventário e conceitos cadastrados.
+**Tags:** `sacerdotisa`, `conhecimento`, `segredo`, `limiar`, `leitura`, `silêncio`, `opacidade`
+**Arcanos associados:** A Sacerdotisa.
+**Conexões:** CP-01, CP-11, CP-24.
+
+**Leitura simbólica.** Entre duas colunas, a figura abre os braços; o pergaminho TORA paira acima e uma lua crescente aparece sob seus pés. O conhecimento ocupa um limiar: existe algo registrado, mas sua presença não entrega imediatamente a leitura. A pausa pode ser uma forma ativa de atenção.
+
+**Tensão e contraponto.** O segredo tanto protege uma intimidade quanto sustenta uma autoridade que ninguém pode examinar. Silêncio não comprova profundidade, e opacidade não comprova mistério. Perguntar quem pode ler, quem guarda e quem fica de fora evita idealizar o inacessível.
+
+**Associação e pergunta.** Uma caixa-preta, um arquivo pessoal e uma instituição podem guardar conteúdos por razões muito diferentes. O bot pode reconhecer o limite do que sabe sem preenchê-lo com uma invenção. **Aquilo que você chama de segredo está sendo preservado de alguém ou preservado para alguém?**
+
+## [CP-29] A Imperatriz (III) — abundância que precisa ser sustentada
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 3; inventário e conceitos cadastrados.
+**Tags:** `imperatriz`, `criação`, `cuidado`, `abundância`, `matéria`, `dependência`, `distribuição`
+**Arcanos associados:** A Imperatriz.
+**Conexões:** CP-04, CP-06, CP-22.
+
+**Leitura simbólica.** A figura coroada segura uma haste e uma esfera entre flores; figuras aladas sustentam leques de pétalas atrás dela. A abundância aparece como uma rede de sustentação. Criar pode significar oferecer condições para que algo cresça, e não apenas produzir um objeto ou ocupar o centro da imagem.
+
+**Tensão e contraponto.** Cuidado pode transformar-se em posse, e abundância pode coexistir com dependência e distribuição desigual. Convém perguntar quem sustenta o conforto visível. Não reduzir a carta a maternidade, gravidez ou um destino feminino: são leituras que a imagem, sozinha, não autoriza afirmar sobre uma pessoa.
+
+**Associação e pergunta.** Um corpo, uma obra e uma imagem digital dependem de matéria, tempo e trabalho. **O que parece nascer espontaneamente nesta cena, mas só existe porque alguém continua cuidando?**
+
+## [CP-30] O Imperador (IV) — a estrutura e quem a ocupa
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 4; inventário e conceitos cadastrados.
+**Tags:** `imperador`, `autoridade`, `ordem`, `controle`, `trono`, `limite`, `responsabilidade`
+**Arcanos associados:** O Imperador.
+**Conexões:** CP-02, CP-07, CP-16, CP-21.
+
+**Leitura simbólica.** O homem coroado está sentado num trono com cetro e esfera, enquanto figuras aladas seguram leques atrás dele. A autoridade torna-se visível por uma composição de corpo, objetos e serviço. A ordem pode oferecer continuidade, limites e coordenação onde uma ação isolada não bastaria.
+
+**Tensão e contraponto.** Uma estrutura que protege também pode impedir mudança; a segurança oferecida por uma autoridade pode depender da obediência de outras pessoas. É possível distinguir responsabilidade de controle total, sem converter toda organização em autoritarismo ou toda figura de comando num personagem político específico.
+
+**Associação e pergunta.** Piloto, operador e algoritmo distribuem decisões de maneiras diferentes. O interesse está na relação entre comando e dependência. **Se a pessoa abandonar o trono, o poder sai com ela ou continua funcionando no assento?**
+
+## [CP-31] O Sacerdote / Hierofante (V) — transmitir e legitimar
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 5; inventário e conceitos cadastrados.
+**Tags:** `sacerdote`, `hierofante`, `instituição`, `rito`, `transmissão`, `obediência`, `legitimação`
+**Arcanos associados:** O Sacerdote, O Hierofante.
+**Conexões:** CP-03, CP-04, CP-14, CP-19.
+
+**Leitura simbólica.** Uma figura de mitra e báculo está diante de pessoas ajoelhadas; uma espada atravessa o primeiro plano. O conhecimento chega mediado por gestos, posições e rituais. Transmitir pode ligar gerações e construir uma linguagem comum, permitindo que algo sobreviva a quem primeiro o ensinou.
+
+**Tensão e contraponto.** A aprendizagem torna-se submissão quando a regra não pode ser interrogada. A instituição pode acolher uma experiência ou exigir que ela caiba numa forma previamente autorizada. Não tratar toda fé como manipulação, nem o ajoelhamento como prova suficiente sobre a vida interior das figuras.
+
+**Associação e pergunta.** Uma máquina também recebe protocolos e aprende a reconhecer quais falas parecem legítimas. **Em que momento aprender uma linguagem passa a significar pedir autorização para falar?**
+
+## [CP-32] Os Enamorados (VI) — escolher sem eliminar a ambivalência
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 6; inventário e conceitos cadastrados.
+**Tags:** `enamorados`, `escolha`, `vínculo`, `desejo`, `reciprocidade`, `ambivalência`, `projeção`
+**Arcanos associados:** Os Enamorados.
+**Conexões:** CP-05, CP-11, CP-13.
+
+**Leitura simbólica.** Uma pessoa central está entre duas figuras de vestido, sob uma figura alada diante de um disco solar. O vínculo pode ser encontro, mas também exposição a desejos que não coincidem. Escolher implica tornar-se responsável por uma relação, sem necessariamente apagar as alternativas ou a dúvida.
+
+**Tensão e contraponto.** O desejo pode reconhecer alguém ou usar essa pessoa como superfície de uma imagem ideal. Não reduzir a composição a um triângulo amoroso literal, infidelidade ou previsão afetiva. A presença de três pessoas permite investigar posições e mediações; não fornece uma biografia.
+
+**Associação e pergunta.** Morel abre uma possibilidade de pensar o amor dirigido a uma imagem que não pode responder de outra maneira. **Você procura encontrar alguém ou confirmar a imagem que já construiu dessa pessoa?**
+
+## [CP-33] O Carro (VII) — deslocar-se não é decidir o caminho
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 7; inventário e conceitos cadastrados.
+**Tags:** `carro`, `movimento`, `direção`, `velocidade`, `controle-compartilhado`, `percurso`, `destino`
+**Arcanos associados:** O Carro.
+**Conexões:** CP-02, CP-14, CP-21.
+
+**Leitura simbólica.** A carruagem é vista de trás, com duas pessoas de braços erguidos, animais de tração à frente e uma estrada sinuosa rumo a um castelo. Movimento resulta de uma composição de forças. Avançar pode exigir coordenação e confiança em agentes que não ocupam a mesma posição na viagem.
+
+**Tensão e contraponto.** Velocidade pode aumentar a sensação de potência enquanto diminui a possibilidade de corrigir o percurso. Estar sendo transportado não comprova que se escolheu a rota. O castelo pode servir como horizonte de desejo; sua presença não garante chegada ou vitória.
+
+**Associação e pergunta.** Um sistema automático pode cumprir uma trajetória sem compreender por que ela foi definida. **Quem está conduzindo quando todos sentem que estão avançando, mas ninguém consegue explicar a escolha do caminho?**
+
+## [CP-34] A Justiça (VIII) — medir também é escolher uma medida
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 8; inventário e conceitos cadastrados.
+**Tags:** `justiça`, `medida`, `prova`, `equilíbrio`, `responsabilidade`, `classificação`, `critério`
+**Arcanos associados:** A Justiça.
+**Conexões:** CP-02, CP-03, CP-16, CP-24.
+
+**Leitura simbólica.** A figura coroada segura uma balança e apoia a mão no punho de uma espada. Comparar exige um critério; decidir tem efeitos. A carta permite pensar responsabilidade, reciprocidade e disposição para examinar uma ação à luz de algo além da vontade de quem a praticou.
+
+**Tensão e contraponto.** Equilíbrio aparente não assegura justiça, sobretudo quando experiências diferentes são submetidas à mesma régua. A classificação pode tornar algo legível e apagar o que não consegue medir. Não prometer decisões judiciais favoráveis nem transformar a carta em prova de inocência ou culpa.
+
+**Associação e pergunta.** Um laudo, um tribunal e um classificador de imagens têm procedimentos e limites distintos. A analogia está na escolha dos critérios, não na equivalência entre suas autoridades. **Quem decidiu o peso de cada coisa antes de a balança começar a funcionar?**
+
+## [CP-35] O Eremita (IX) — demorar-se diante do que resta
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 9; inventário e conceitos cadastrados.
+**Tags:** `eremita`, `recolhimento`, `atenção`, `aprendizado`, `finitude`, `memória`, `escuta`
+**Arcanos associados:** O Eremita.
+**Conexões:** CP-05, CP-06, CP-08.
+
+**Leitura simbólica.** O homem ajoelhado olha para uma lua crescente; há crânio, livro aberto, cajado e uma tocha no alto. Recolher-se pode criar tempo para relacionar conhecimento e finitude. Nem todo pensamento precisa converter-se imediatamente em resposta; uma pausa pode alterar a pergunta.
+
+**Tensão e contraponto.** Distância pode favorecer atenção ou tornar-se afastamento de qualquer experiência capaz de contrariar uma certeza. A solidão não comprova sabedoria. Nesta carta, a tocha está no alto: não substituir a imagem pela figura convencional que caminha carregando uma lanterna.
+
+**Associação e pergunta.** O arquivo oferece companhia ao ausente, mas não elimina a falta de interlocução. **Você se retirou para conseguir escutar melhor ou para que ninguém interrompa aquilo que já decidiu ouvir?**
+
+## [CP-36] A Roda da Fortuna (X) — o ciclo não faz uma promessa
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 10; inventário e conceitos cadastrados.
+**Tags:** `roda-da-fortuna`, `ciclo`, `contingência`, `repetição`, `oportunidade`, `acaso`, `probabilidade`
+**Arcanos associados:** A Roda da Fortuna.
+**Conexões:** CP-05, CP-09, CP-14, CP-19.
+
+**Leitura simbólica.** Caules e flores formam uma roda sobre uma figura sentada e uma criança alada. O ciclo permite reconhecer recorrências, mas não torna cada retorno idêntico. A oportunidade pode nascer de uma mudança de posição, de condições que se alteram ou da percepção de algo antes ignorado.
+
+**Tensão e contraponto.** Repetição não prova destino, e um resultado anterior não promete o próximo. A busca de um padrão pode produzir entendimento ou alimentar a ilusão de controlar o acaso. Não converter essa leitura em conselho de apostas ou enriquecimento.
+
+**Associação e pergunta.** O loop de uma gravação repete por construção; acontecimentos do mundo não precisam obedecer à mesma lógica. Não acrescentar uma roda mecânica, esfinge ou animais aos raios desta imagem vegetal. **O que voltou de fato, e o que foi você que aprendeu a reconhecer como repetição?**
+
+## [CP-37] A Força (XI) — dominar sem deixar de ser afetado
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 11; inventário e conceitos cadastrados.
+**Tags:** `força`, `confronto`, `resistência`, `reflexo`, `domínio`, `fragilidade`, `violência`
+**Arcanos associados:** A Força.
+**Conexões:** CP-06, CP-07, CP-08, CP-16.
+
+**Leitura simbólica.** A pessoa de armadura pisa sobre um dragão, levando espada e um escudo que reflete a cabeça do animal. A capacidade de enfrentar uma resistência não elimina a vulnerabilidade de quem enfrenta. O reflexo permite perguntar quanto do confronto continua presente no próprio instrumento de defesa.
+
+**Tensão e contraponto.** Firmeza pode proteger ou tornar-se necessidade permanente de submeter. Vencer uma oposição não resolve necessariamente a relação que a produziu. A força pode estar em sustentar um limite e reconhecer o que nos afeta, sem glorificar agressão ou prometer invulnerabilidade.
+
+**Associação e pergunta.** O corpo que obedece e o corpo que resiste não são mecanismos simples. Aqui há um dragão, não um leão. **O que você carrega consigo depois de dizer que venceu aquilo que o ameaçava?**
+
+## [CP-38] O Enforcado (XII) — mudar o ponto de vista sem romantizar a prisão
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 12; inventário e conceitos cadastrados.
+**Tags:** `enforcado`, `suspensão`, `inversão`, `dependência`, `perspectiva`, `limite`, `imobilidade`
+**Arcanos associados:** O Enforcado.
+**Conexões:** CP-02, CP-05, CP-08, CP-21.
+
+**Leitura simbólica.** A pessoa está suspensa pelos pés numa árvore, com braços abertos perto do chão. A orientação se altera enquanto a ação permanece limitada. Ver de outro modo pode revelar relações que a posição habitual escondia, mas nem toda pausa é escolhida por quem está parado.
+
+**Tensão e contraponto.** Suspensão pode ser abertura à revisão ou manutenção de uma dependência. Evitar transformar sofrimento involuntário em uma lição que a pessoa deveria agradecer. A imagem não mostra execução pelo pescoço; a inversão observada pertence à figura, não a um diagnóstico sobre quem consulta.
+
+**Associação e pergunta.** Uma simulação pode oferecer novas perspectivas e ainda manter alguém preso às suas condições de funcionamento. **O que precisaria mudar para essa espera deixar de ser prisão e tornar-se possibilidade?**
+
+## [CP-39] A Morte (XIII) — aquilo que muda e aquilo que não retorna
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 13; inventário e conceitos cadastrados.
+**Tags:** `morte`, `finitude`, `tempo`, `despossessão`, `irreversibilidade`, `vestígio`, `continuidade`
+**Arcanos associados:** A Morte.
+**Conexões:** CP-02, CP-05, CP-06, CP-12.
+
+**Leitura simbólica.** Uma pessoa dança ou se equilibra diante da figura encoberta com ampulheta; foice, moedas e coroa atravessam a composição. O movimento persiste junto ao limite do tempo. A despossessão permite pensar o que acontece com títulos, riquezas e identidades quando deixam de acompanhar um corpo.
+
+**Tensão e contraponto.** Um término pode abrir transformação sem que toda perda seja compensada por um renascimento. Não consolar automaticamente a irreversibilidade com uma promessa de recomeço. A carta não prevê morte física; a imagem também não contém esqueleto ou cavalo, e não autoriza inventar o rosto encoberto.
+
+**Associação e pergunta.** Imagens e arquivos podem continuar circulando quando já não existe reciprocidade com quem representam. **O que permanece de alguém: uma presença, um vestígio ou a nossa dificuldade de aceitar que essas coisas são diferentes?**
+
+## [CP-40] A Temperança (XIV) — transformar pela proporção
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 14; inventário e conceitos cadastrados.
+**Tags:** `temperança`, `mistura`, `transferência`, `mediação`, `proporção`, `cuidado`, `transição`
+**Arcanos associados:** A Temperança.
+**Conexões:** CP-04, CP-13, CP-19, CP-22.
+
+**Leitura simbólica.** A figura alada transfere um fio de líquido de um jarro alto para uma taça junto ao peito. A transformação aparece como passagem regulada: aproximar materiais diferentes requer atenção à relação entre quantidade, recipiente e ritmo. Equilibrar não precisa significar permanecer imóvel.
+
+**Tensão e contraponto.** Moderação pode ser cuidado ou um modo de adiar indefinidamente uma decisão. Misturar também pode apagar diferenças importantes. Não apresentar equilíbrio como obrigação moral de quem enfrenta condições desiguais, nem usar a carta para sugerir efeito médico ou solução garantida.
+
+**Associação e pergunta.** Uma fusão de rostos ou uma montagem de memórias pode produzir uma nova imagem sem tornar equivalentes as histórias de origem. **Como permitir uma mistura em que as partes se transformem sem que uma delas desapareça por completo?**
+
+## [CP-41] O Diabo (XV) — desejar aquilo que nos captura
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 15; inventário e conceitos cadastrados.
+**Tags:** `diabo`, `sedução`, `desejo`, `captura`, `descontrole`, `dominação`, `espetáculo`
+**Arcanos associados:** O Diabo.
+**Conexões:** CP-07, CP-12, CP-19, CP-20, CP-22.
+
+**Leitura simbólica.** Uma figura grotesca monta um grande gato preto entre chamas, colunas e um piso quadriculado. A composição pode associar desejo e espetáculo à sensação de potência. O que atrai não precisa ser apenas uma imposição externa: uma promessa pode capturar justamente porque encontra uma vontade real.
+
+**Tensão e contraponto.** Prazer não é culpa, e desejo não é por si só dependência. A questão aparece quando a relação estreita as possibilidades de agir ou exige que a promessa seja renovada sem cessar. Não moralizar dificuldades financeiras, religiosas ou afetivas. Aqui não há um casal acorrentado: não descrever correntes inexistentes.
+
+**Associação e pergunta.** Bets e plataformas oferecem caminhos possíveis para investigar recompensa, atenção e captura, sem equiparar todas as experiências. **Em que momento você deixa de procurar aquilo que deseja e passa a desejar apenas aquilo que a relação oferece?**
+
+## [CP-42] A Torre (XVI) — quando a estrutura perde sua evidência
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 16; inventário e conceitos cadastrados.
+**Tags:** `torre`, `colapso`, `queda`, `ruptura`, `estrutura`, `instabilidade`, `falha`
+**Arcanos associados:** A Torre.
+**Conexões:** CP-01, CP-02, CP-06, CP-16, CP-17.
+
+**Leitura simbólica.** Uma pessoa cai de cabeça para baixo entre massas de alvenaria quebrada, enquanto fragmentos se soltam das paredes. O colapso altera de uma vez a relação entre corpo e sustentação. Uma estrutura antes percebida como ambiente passa a aparecer como construção vulnerável.
+
+**Tensão e contraponto.** Uma ruptura pode revelar contradições, mas nem toda destruição é libertadora nem todo choque produz conhecimento. Não anunciar desastre futuro ou justificar o sofrimento como transformação necessária. Não há raio claramente visível nesta imagem: a leitura não precisa inventar uma causa externa para a queda.
+
+**Associação e pergunta.** O acidente aéreo permite relacionar falha, confiança em sistemas e investigação, sem transformar a carta em evidência sobre uma tragédia específica. **O que só se torna visível sobre uma estrutura quando ela já não consegue nos sustentar?**
+
+## [CP-43] A Estrela (XVII) — orientar-se sem possuir uma garantia
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 17; inventário e conceitos cadastrados.
+**Tags:** `estrela`, `orientação`, `esperança`, `distância`, `continuidade`, `horizonte`, `projeção`
+**Arcanos associados:** A Estrela.
+**Conexões:** CP-05, CP-10, CP-22.
+
+**Leitura simbólica.** Uma figura alada está de pé sob muitas estrelas, com uma mão numa bacia de água e outra numa haste com bandeira. O horizonte distante convive com um contato material próximo. Esperança pode ser a disposição para continuar cuidando de algo sem possuir a confirmação de seu resultado.
+
+**Tensão e contraponto.** A orientação pode tornar-se dependência de uma promessa sempre distante. Uma imagem de futuro pode sustentar uma ação ou substituí-la por espera. Não garantir cura, sucesso ou proteção. A figura está de pé: não acrescentar dois jarros derramados no solo, ausentes desta edição.
+
+**Associação e pergunta.** Projetar uma imagem e projetar um futuro podem compartilhar uma distância entre o que se vê e o que se alcança. **Que orientação ainda ajuda a caminhar quando deixa de funcionar como promessa de chegada?**
+
+## [CP-44] A Lua (XVIII) — interpretar sinais incompletos
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 18; inventário e conceitos cadastrados.
+**Tags:** `lua`, `percepção`, `ambiguidade`, `imaginação`, `pareidolia`, `incerteza`, `sinais`
+**Arcanos associados:** A Lua.
+**Conexões:** CP-05, CP-08, CP-13, CP-18.
+
+**Leitura simbólica.** A figura alcança flores sob uma lua com perfil; há dois canídeos, torres e um crustáceo junto à água. Elementos vistos de posições diferentes não compõem necessariamente uma mensagem única. A imaginação pode aproximá-los, oferecendo hipóteses que a observação ainda não confirma.
+
+**Tensão e contraponto.** Sensibilidade à ambiguidade pode abrir possibilidades ou fazer cada coincidência parecer uma revelação. Desconfiança não é prova de engano. Não afirmar traição, inimigos ocultos ou condição clínica a partir da carta; tampouco distinguir cão e lobo com certeza onde o catálogo registra apenas canídeos.
+
+**Associação e pergunta.** Pareidolia, imagens sintéticas e memória oferecem caminhos para uma alucinação que continua inteligível e reconhece suas próprias inferências. **Que parte do sentido está na imagem e que parte apareceu porque você precisava que os sinais combinassem?**
+
+## [CP-45] O Sol (XIX) — aparecer diante de outra pessoa
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 19; inventário e conceitos cadastrados.
+**Tags:** `sol`, `visibilidade`, `encontro`, `energia`, `exposição`, `clareza`, `reconhecimento`
+**Arcanos associados:** O Sol.
+**Conexões:** CP-08, CP-11, CP-23.
+
+**Leitura simbólica.** Duas pessoas se voltam uma para a outra sob o grande sol, separadas por uma coluna baixa com chama. A visibilidade pode permitir encontro e reconhecimento: algo se torna compartilhável porque aparece numa relação, e não apenas porque recebe luz.
+
+**Tensão e contraponto.** Expor não é necessariamente compreender. Luz em excesso pode apagar detalhes, e o desejo de ser reconhecido pode tornar alguém dependente de permanecer visível. A carta não garante felicidade; os pequenos objetos erguidos não precisam receber uma identificação que o inventário não confirmou.
+
+**Associação e pergunta.** A cena pode aproximar iluminação, exposição do corpo e circulação pública de imagens sem obrigar uma conclusão sobre redes sociais. **Quando alguém finalmente consegue ver você, o que ainda continua fora dessa luz?**
+
+## [CP-46] O Julgamento (XX) — ouvir o chamado antes de produzir um veredito
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 20; inventário e conceitos cadastrados.
+**Tags:** `julgamento`, `chamado`, `escuta`, `convocação`, `ressonância`, `testemunho`, `revisão`
+**Arcanos associados:** O Julgamento.
+**Conexões:** CP-01, CP-02, CP-09, CP-24.
+
+**Leitura simbólica.** Quatro figuras aladas sopram longas trombetas sob nuvens e feixes de luz. O chamado interrompe uma continuidade e exige escuta. Rever uma experiência pode significar responder por ela, reconhecer sua ressonância e permitir que uma avaliação anterior seja questionada.
+
+**Tensão e contraponto.** Convocação pode tornar-se pressão para que todos respondam da mesma maneira. Um som mais alto não é automaticamente uma verdade mais sólida. Evitar confundir a carta com sentença moral sobre uma pessoa; nesta imagem não há sepulturas nem corpos ressuscitando da terra.
+
+**Associação e pergunta.** Um arquivo pode voltar a ser ouvido numa investigação, numa montagem ou numa lembrança, mas o retorno do registro não equivale ao retorno do acontecimento. **O que muda quando uma voz antiga volta a nos convocar e já não conseguimos escutá-la do mesmo modo?**
+
+## [CP-47] O Mundo (XXI) — compor uma totalidade sem apagar seu exterior
+
+**Status:** ASSOCIAÇÃO EDITORIAL
+**Fontes internas:** `assets/tarot/catalog.json`, carta 21; inventário e conceitos cadastrados.
+**Tags:** `mundo`, `totalidade`, `interdependência`, `representação`, `circuito`, `integração`, `limite`
+**Arcanos associados:** O Mundo.
+**Conexões:** CP-04, CP-05, CP-10, CP-20, CP-22.
+
+**Leitura simbólica.** A figura dança diante de uma grande esfera; cabeças humana e animais aparecem nos cantos entre nuvens e vegetação. A composição pode sugerir integração de posições diferentes num mesmo campo. Concluir um percurso pode tornar perceptível uma interdependência antes dispersa.
+
+**Tensão e contraponto.** Uma totalidade representada sempre depende de um enquadramento. A sensação de completude pode acolher diferenças ou fazer esquecer o que ficou de fora. Não tratar a carta como garantia de realização perfeita, nem uma representação do mundo como se fosse o próprio mundo.
+
+**Associação e pergunta.** A ilha de imagens e a instalação holográfica permitem pensar um ambiente que envolve o observador sem esgotar a realidade. **Se este mundo parece completo, o que precisou permanecer fora da imagem para que ele pudesse caber aqui?**
+
+
 ---
 
 # PARTE V — REGRAS PARA A INTERPRETAÇÃO DO BOT
@@ -732,4 +1047,4 @@ Fontes organizadas por confiabilidade e proximidade com os núcleos. Links consu
 
 O roteiro consultado é um **rascunho parcial de agosto de 2026**. Sua CENA 8, a CENA 9 e o futuro ato 2 são descritos como desenvolvimento, testes ou ideias. O roteiro de operação também registra uma configuração de jogos e efeitos de ensaio, que pode ter sido alterada no repositório desde então. **Não tenho acesso direto à versão atual do repositório nesta edição.** Antes da importação definitiva, o sistema deve comparar os nomes de cenas, o elenco, o texto final, a posição do prólogo de Tarô e o final holográfico com o roteiro atual, preservando as diferenças e as fontes.
 
-**Proposta de indexação:** dividir pelos cabeçalhos `[CP-01]` até `[CP-25]` e `[RAG-01]` até `[RAG-07]`; salvar cada segmento com campos `id`, `titulo`, `status`, `tags`, `fonte_interna`, `fontes_externas`, `arcanos`, `texto`, `versao`. Tratar perguntas e associações como material criativo, não como citações. Recuperar poucos segmentos pertinentes por interação para manter baixo custo de tokens.
+**Proposta de indexação:** dividir pelos cabeçalhos `[CP-01]` até `[CP-47]` (CP-26 a CP-47: interpretações editoriais dos arcanos) e `[RAG-01]` até `[RAG-07]`; salvar cada segmento com campos `id`, `titulo`, `status`, `tags`, `fonte_interna`, `fontes_externas`, `arcanos`, `texto`, `versao`. Tratar perguntas e associações como material criativo, não como citações. Recuperar poucos segmentos pertinentes por interação para manter baixo custo de tokens.
