@@ -17,7 +17,7 @@ export default function TarotEffects({h,time,geometries=[],cards=[],videoRef,ima
    const {h,time,geometries,cards,videoRef,image,present}=latest.current,canvas=canvasRef.current;if(!h||!geometries.length){ctx.clearRect(0,0,canvas.width,canvas.height);return;}
    const w=geometries[0].width,hg=geometries[0].height;if(canvas.width!==w||canvas.height!==hg){canvas.width=w;canvas.height=hg;}ctx.clearRect(0,0,w,hg);
    const {levels:L}=evaluate(h,time,present);const motion=Object.values(L).some(n=>n>0);if(!motion)return;
-   for(const g of geometries){const card=cards.find(c=>c.id===g.id);if(!card||!g.matrix)continue;const source=image||videoRef?.current;
+   for(const g of geometries){if(h.run.randomCardIds&&!h.run.randomCardIds.includes(g.id))continue;const card=cards.find(c=>c.id===g.id);if(!card||!g.matrix)continue;const source=image||videoRef?.current;
     const project=(u,v)=>projectPoint(g.matrix,u,v);const [sx,sy,sw,sh]=[0,0,1,1];
     // Deformed triangles and displaced copies must never paint the table or captions.
     const boundary=(card.surface||[[0,0],[1,0],[1,1],[0,1]]).map(p=>project(...p));if(boundary.some(p=>!p))continue;

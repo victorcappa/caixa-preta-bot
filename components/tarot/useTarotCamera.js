@@ -100,6 +100,14 @@ export default function useTarotCamera({ sessionId, tarot, videoRef }) {
       if(!current?.active||current.suspended||current.autonomy.status!=="off"||selection.current.locked||(!force&&gate.wasSubmittedRecently(key,Date.now())))return;
       if(phase==="interpreting"&&!same)return;
       if(current.response?.interruptedBy==="tracking-lost"&&matched.length<readingCards(current).length&&matched.some((m)=>readingCards(current).some((c)=>c.id===m.id))&&!returning)return;
+      if(phase!=="await-reveal"&&same&&returning&&current.hallucination?.randomEnabled&&!repeat&&!force){
+        gate.consumeReturn();gate.submitted(key,Date.now());
+        try{
+          await post("hallucination-card-return",{signature:key});lossReported="";
+          if(current.response?.interruptedBy==="tracking-lost")await post("tracking-resumed",{signature:key});
+        }catch{}
+        return;
+      }
       if(same&&current.response?.interruptedBy==="tracking-lost"){
         gate.consumeReturn();gate.submitted(key,Date.now());void post("tracking-resumed",{signature:key}).catch(()=>{});return;
       }

@@ -18,7 +18,7 @@ As falas, perguntas, contingências e instruções do tarô aparecem somente em 
 
 Uma pausa manual permanece ativa mesmo se a carta continuar visível: o reconhecimento não reinicia sozinho a fala cancelada. Retome pelo controle ou inicie explicitamente outra análise.
 
-Se um processo anterior ainda estiver aberto, a API pode informar `TAROT_RUNTIME_RESTART_REQUIRED`: esta evolução exige controller **v7**, que aceita subconjuntos de versos. O singleton ativo não é apagado pelo hot reload. Reinicie o servidor em um momento adequado e use a recuperação existente se necessário. Antes de reiniciar, compare sessão/revisão ao vivo e em disco: uma recuperação antiga protegida não é backup da execução atual.
+Se um processo anterior ainda estiver aberto, a API pode informar `TAROT_RUNTIME_RESTART_REQUIRED`: esta evolução exige controller **v8**, que aceita subconjuntos de versos. O singleton ativo não é apagado pelo hot reload. Reinicie o servidor em um momento adequado e use a recuperação existente se necessário. Antes de reiniciar, compare sessão/revisão ao vivo e em disco: uma recuperação antiga protegida não é backup da execução atual.
 
 ## Seis leituras e os versos visíveis no chão
 

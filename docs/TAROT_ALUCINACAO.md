@@ -8,7 +8,7 @@ O preset **CARTA-ESTRANHA** mantém disponíveis os controles faciais, mas desli
 
 O canvas recorta todos os efeitos pela superfície projetada da carta, inclusive cópias deslocadas e bordas cromáticas: não desenha na mesa nem no texto da leitura. Na sessão local de 16/10, essa calibração foi aplicada e salva como **Carta estranha**, com o preset anterior guardado em **Antes da calibração (16-10)**. As preferências persistentes mantêm essa seleção nas próximas sessões. O disparo continua respeitando a contagem atual (3 cartas distintas) e a presença da carta.
 
-`npm run test:tarot:effects:browser` verifica o renderizador em uma superfície oblíqua: pixels visíveis dentro da carta, nenhum fora dela e canvas de texto vazio. É uma prévia sintética, sem webcam física nem chamadas ao modelo.
+`npm run test:tarot:effects:browser` verifica o renderizador em uma superfície oblíqua: pixels visíveis dentro da carta, nenhum fora dela e canvas de texto vazio. Também verifica sorteios reais pela API com vídeo sintético: vencedora preservada ao entrar uma segunda carta perdedora, ausência de efeitos na perdedora e novo sorteio no retorno estável. Não usa webcam física nem chamadas ao modelo.
 
 ## Preparação local
 
@@ -28,6 +28,10 @@ Recortes e fusões ficam em `.runtime/tarot-faces`, fora do Git, e são reutiliz
 **07 — Alucinação** concentra a chave geral, início automático após **três cartas distintas**, filtro de cartas elegíveis, opção de aguardar fusão aprovada, comportamento na retirada e presets. Reconhecimentos repetidos e o retorno breve da mesma carta não somam. A contagem da alucinação é independente das seis leituras completas da etapa do chão.
 
 O painel mantém um aviso de **Estado da alucinação** em todas as seções: contagem, timeline, filtro de cartas, chave geral, ausência e falta de fusões aprovadas são informados separadamente. **TODAS AS CARTAS** remove a restrição de arcanos sem reiniciar contagem, timeline ou efeitos. Para restringir, use **ESCOLHER CARTAS ESPECÍFICAS** e marque as cartas pelo nome; selecionar apenas uma limita o disparo automático a ela. Após remover uma restrição com a execução parada, a próxima apresentação válida respeita a contagem já atingida. A aprovação artística das fusões continua obrigatória para mostrar rostos.
+
+O botão **ATIVAR ALUCINAÇÃO RANDÔMICA**, em **07 — Alucinação**, troca a regra de quantidade por um sorteio independente por carta, desde a primeira apresentação. **Chance de alucinação por carta (%)** começa em 50%, aceita de 0% (nunca) a 100% (sempre) e fica salva com o modo e os presets. Desativar restaura a regra anterior de quantidade, sem mudar sua configuração nem a calibração dos efeitos. A chave geral, pausa e filtros de cartas/fusão continuam valendo.
+
+O resultado aparece em **Último sorteio**. Quadros repetidos, movimento e a entrada de uma segunda carta não ressorteiam a carta que permanece visível. Só as vencedoras recebem efeitos; retirar e reapresentar uma carta por tempo suficiente para confirmar uma nova visita permite outro sorteio. A retomada da fala permanece independente, sem gerar uma leitura extra. Resultados e máscaras são execução transitória: não são restaurados como preferência ou retomados após reinício.
 
 **08 — Timeline** oferece PLAY, PAUSE, STOP, RESTART e eventos editáveis por campos numéricos em segundos. Cada evento tem trilha, início, entrada, permanência, saída, intensidade, transição, habilitação, repetições e intervalo. Duplicar cria outro evento com ID próprio; alterar início reorganiza sua posição temporal. Eventos sobrepostos do mesmo efeito usam a maior intensidade, sem somas inesperadas.
 

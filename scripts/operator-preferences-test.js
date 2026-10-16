@@ -37,7 +37,7 @@ showState.controlTarot('instruction',{text:'Preferência privada do teste.'});
 showState.controlTarot('contexts',{contexts:[{text:'Um registro editorial.',url:'https://example.org/archive',date:'2026-10-15',checkedAt:'2026-10-16',verification:'verified'}]});
 showState.controlTarot('references',{settings:{maxChunks:2,themes:{politica:false}}});
 showState.controlTarot('camera',{automatic:false,deviceId:'test-camera'});
-showState.controlTarot('hallucination',{patch:{afterCards:4,requireFusion:true,effects:{fusion:{mix:73},wave:{enabled:false}}}});
+showState.controlTarot('hallucination',{patch:{randomEnabled:true,randomChance:37,afterCards:4,requireFusion:true,effects:{fusion:{mix:73},wave:{enabled:false}}}});
 showState.controlTarot('hallucination-memory',{memories:[{id:'interview',title:'Entrevista',text:'Memória editorial de teste.',personIds:['face-a']}]});
 showState.controlTarot('hallucination-preset',{operation:'save',name:'Preferência teste'});
 const expected=extractOperatorPreferences(showState.privateSnapshot());
