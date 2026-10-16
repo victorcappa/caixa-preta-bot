@@ -8,6 +8,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 
 ## Package scripts
 
+- `npm run test:operator-preferences` -> `node --no-warnings scripts/operator-preferences-test.js`
+- `npm run test:operator-preferences:browser` -> `node --no-warnings scripts/operator-preferences-browser-test.js`
 - `npm run test:tarot` -> `node --no-warnings scripts/tarot-test.js`
 - `npm run test:tarot:references` -> `node --no-warnings scripts/tarot-references-test.js`
 - `npm run test:tarot:references:browser` -> `node --no-warnings scripts/tarot-references-browser-test.js`
@@ -119,6 +121,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `POST /api/instagram/panel` -> `app/api/instagram/panel/route.js`
 - `POST /api/instagram/password` -> `app/api/instagram/password/route.js`
 - `GET /api/instagram/stream` -> `app/api/instagram/stream/route.js`
+- `GET, POST /api/operator-preferences` -> `app/api/operator-preferences/route.js`
 - `POST /api/operator-public` -> `app/api/operator-public/route.js`
 - `POST /api/operator` -> `app/api/operator/route.js`
 - `POST /api/performance/interaction` -> `app/api/performance/interaction/route.js`
@@ -163,6 +166,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/OperatorBotSettings.js`
 - `components/OperatorConsole.js`
 - `components/OperatorLivePreview.js`
+- `components/OperatorPreferencesStatus.js`
 - `components/OperatorPublicLauncher.js`
 - `components/OperatorTypedReply.js`
 - `components/PerformanceLayer.js`
@@ -291,6 +295,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/instagram-controller-test.js`
 - `scripts/internet-voice-test.js`
 - `scripts/manual-sound-check-browser-test.js`
+- `scripts/operator-preferences-browser-test.js`
+- `scripts/operator-preferences-test.js`
 - `scripts/operator-public-browser-test.js`
 - `scripts/operator-public-live-test.js`
 - `scripts/operator-public-test.js`

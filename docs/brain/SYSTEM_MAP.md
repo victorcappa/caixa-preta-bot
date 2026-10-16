@@ -22,6 +22,7 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 - Stable public 65/35 layout -> `app/layout.js` -> `components/ProjectionOperatorSurface.js` -> `components/PublicOperatorLayout.js`.
 
 - Bot parameters tab -> `app/operator/page.js`, `components/OperatorBotSettings.js`, `components/RobotSoundControls.js`, and `components/PublicOperatorControls.js` (`parametersOnly`); timing helpers in `lib/robot-sound/state.js`. Save acknowledgement/dirty-field merging lives in `RobotSoundControls`; `_refreshRobotSoundSettings` in `lib/showState.js` refreshes the live normalization after development reload. The technical console remains in the Principal OP drawer.
+- Persistent current operator/Tarot choices -> `lib/operatorPreferences.js`, `lib/showState.js`, `/api/operator-preferences`, `components/OperatorPreferencesStatus.js`; scope/activation -> `docs/PREFERENCIAS_OPERADOR.md`; checks -> `scripts/operator-preferences-*.js`.
 - Public text/layout/typing -> `components/Chat.js` and `components/Chat.module.css`.
 - Visual performance event -> `components/PerformanceLayer.js` -> `lib/performanceEvents.js`.
 - Chat request/model envelope -> `app/api/chat/route.js` -> `lib/openai.js`.

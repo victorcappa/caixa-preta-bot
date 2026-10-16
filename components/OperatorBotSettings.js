@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import PublicOperatorControls from "./PublicOperatorControls";
 import RobotSoundControls from "./RobotSoundControls";
+import OperatorPreferencesStatus from "./OperatorPreferencesStatus";
 import Terminal from "./Terminal";
 import Link from "next/link";
 import styles from "./OperatorBotSettings.module.css";
@@ -36,6 +37,7 @@ export default function OperatorBotSettings() {
   return (
     <Terminal title="OPERATOR">
       <div className={styles.settings} aria-label="Parâmetros ajustáveis do bot">
+        <OperatorPreferencesStatus />
         <RobotSoundControls settings={state.robotSound} typingOnly />
         <PublicOperatorControls parametersOnly />
         <section className={styles.model}><Link href="/treinamento/controle">TREINAMENTO · ABRIR CONTROLE DO TARÔ →</Link></section>

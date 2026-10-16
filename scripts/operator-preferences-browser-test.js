@@ -1,0 +1,44 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {spawn} from 'node:child_process';
+import {chromium} from 'playwright';
+import {prepareOperatorAudit} from './operator-public-audit-utils.js';
+import {extractOperatorPreferences} from '../lib/operatorPreferences.js';
+const root=process.cwd(),auditRoot=process.env.CAIXA_PRETA_OPERATOR_AUDIT_ROOT||await prepareOperatorAudit();
+assert.notEqual(path.resolve(root),path.resolve(auditRoot));
+const output=await fs.mkdtemp('/private/tmp/operator-preferences-evidence-'),runtime=path.join(output,'runtime'),base='http://127.0.0.1:3319';
+let occupied=false;try{await fetch(base,{signal:AbortSignal.timeout(400)});occupied=true;}catch{}assert(!occupied,'Port 3319 occupied; no process stopped');
+let server,browser,log='';const errors=[],checks=[];
+async function poll(run,label){const deadline=Date.now()+25000;while(Date.now()<deadline){if(await run())return;await new Promise(r=>setTimeout(r,80));}throw new Error('Timeout: '+label);}
+async function start(){server=spawn(process.execPath,['node_modules/next/dist/bin/next','start','--port','3319','--hostname','127.0.0.1'],{cwd:auditRoot,env:{...process.env,OPENAI_API_KEY:'',CAIXA_PRETA_SHOW_RUNTIME_DIR:runtime},stdio:['ignore','pipe','pipe']});server.stdout.on('data',c=>log+=c);server.stderr.on('data',c=>log+=c);await poll(async()=>{try{return(await fetch(base+'/api/health?skipOptional=1')).ok;}catch{return false;}},'server');}
+async function stop(){if(server&&!server.exitCode){const target=server;const ended=new Promise(r=>target.once('exit',r));target.kill('SIGTERM');const timeout=setTimeout(()=>target.kill('SIGKILL'),5000);await ended;clearTimeout(timeout);}server=null;}
+const get=async route=>{const r=await fetch(base+route);assert(r.ok,route);return r.json();};
+const post=async(route,body,status=200)=>{const r=await fetch(base+route,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await r.json();assert.equal(r.status,status,JSON.stringify(data));return data;};
+const preferences=async()=>{const s=await get('/api/state'),t=await get('/api/tarot');return extractOperatorPreferences({...s,tarot:t.tarot});};
+try{
+ await start();let t=await get('/api/tarot');const sessionId=t.sessionId,command=(action,data={})=>post('/api/tarot',{sessionId,action,...data});
+ await post('/api/operator-public',{action:'patch',personality:{sarcasm:84,rebellion:37,curiosity:92,verbosity:58}});
+ await post('/api/robot-sound',{settings:{typingIntervalMs:95,typingPauseMs:700,messageGapMs:1300,displayFont:'courier'}});
+ await post('/api/global-volume',{volume:.61});await post('/api/operator',{command:'/model gpt-5-nano'});
+ await command('config',{config:{maxWords:119,associationIntensity:83}});
+ await command('profile',{profile:{humor:23,poetry:79}});await command('instruction',{text:'Instrução privada preservada.'});
+ await command('hallucination',{patch:{afterCards:4,effects:{fusion:{mix:77},wave:{enabled:false}}}});
+ await command('references',{settings:{maxChunks:3,themes:{politica:false}}});
+ const expected=await preferences(),saved=JSON.parse(await fs.readFile(path.join(runtime,'operator-preferences.json'),'utf8'));assert.deepEqual(saved.values,expected);
+ assert.equal(expected.operatorPublic.personality.sarcasm,84);assert.equal(expected.robotSound.typingPauseMs,700);assert.equal(expected.model,'gpt-5-nano');
+ checks.push('real HTTP edits are acknowledged only after writing exact parameter values to the local file');
+ const status=await get('/api/operator-preferences');assert(status.saved&&status.runtimeReady&&!status.error);
+ await post('/api/operator-preferences',{action:'save-current',sessionId:'stale'},409);
+ const cross=await fetch(base+'/api/operator-preferences',{method:'POST',headers:{'Content-Type':'application/json',origin:'https://invalid.example'},body:JSON.stringify({action:'save-current',sessionId})});assert.equal(cross.status,403);
+ browser=await chromium.launch({headless:true});const page=await browser.newPage({viewport:{width:1440,height:1000}});page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(base+'/operator');await page.getByRole('status',{name:'Salvamento dos parâmetros'}).getByText(/Ajustes salvos automaticamente/).waitFor();await page.screenshot({path:output+'/operator-saved.png'});
+ await command('reset');assert.deepEqual(await preferences(),expected);
+ await post('/api/show-session',{action:'new'});assert.deepEqual(await preferences(),expected);t=await get('/api/tarot');assert.equal(t.history.length,0);assert.equal(t.tarot.active,false);
+ checks.push('rendered operator status confirms persistence; Tarot reset and a new presentation keep every current setting');
+ await page.goto('about:blank');await stop();await start();assert.deepEqual(await preferences(),expected);
+ const fresh=await get('/api/tarot');assert.equal(fresh.tarot.active,false);assert.equal(fresh.tarot.camera.enabled,false);assert.equal(fresh.tarot.hallucination.run.status,'stopped');assert.deepEqual(fresh.tarot.hallucination.seenCards,[]);
+ await page.goto(base+'/treinamento/controle');await page.getByRole('status',{name:'Salvamento dos parâmetros'}).getByText(/Ajustes salvos automaticamente/).waitFor();await page.screenshot({path:output+'/tarot-after-restart.png'});
+ checks.push('a stopped/restarted production process restores settings automatically without resuming history, timers, camera or effects');
+ assert.deepEqual(errors,[]);await fs.writeFile(path.join(output,'report.json'),JSON.stringify({ok:true,checks},null,2));console.log(JSON.stringify({ok:true,checks,output},null,2));
+}finally{await browser?.close();await stop();await fs.writeFile(path.join(output,'server.log'),log);}

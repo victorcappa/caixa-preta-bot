@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:operator-preferences": "node --no-warnings scripts/operator-preferences-test.js",
+    "test:operator-preferences:browser": "node --no-warnings scripts/operator-preferences-browser-test.js",
     "test:tarot": "node --no-warnings scripts/tarot-test.js",
     "test:tarot:references": "node --no-warnings scripts/tarot-references-test.js",
     "test:tarot:references:browser": "node --no-warnings scripts/tarot-references-browser-test.js",

@@ -6,6 +6,7 @@ import {TarotHallucinationControls,TarotFacePreparation,TarotPreview} from "./Ta
 import TarotReferenceControls from "./TarotReferenceControls";
 import TarotCatalogEditor from "./TarotCatalogEditor";
 import PublicOperatorControls from "@/components/PublicOperatorControls";
+import OperatorPreferencesStatus from "@/components/OperatorPreferencesStatus";
 import {hallucinationReadiness} from "@/lib/tarot/hallucination";
 import { DEFAULT_TAROT_VISUAL } from "@/lib/tarot/state";
 import { referenceSettings } from "@/lib/tarot/reference-settings";
@@ -71,7 +72,7 @@ export default function TarotControls() {
     catch(error){setError(error.message);}finally{setPending(false);}
   }
   return <section className={styles.controls} aria-label="Controle do treinamento">
-    <header className={styles.controlHeader}><div><h1>TARÔ / TREINAMENTO</h1><p>{tarot ? `SESSÃO ${sessionId.slice(0,8)} · ${tarot.active?"ATIVO":"EM ESPERA"} · ${tarot.generation} · ${tarot.autonomy.status}` : "CONECTANDO À SESSÃO"}</p></div>
+    <header className={styles.controlHeader}><div><h1>TARÔ / TREINAMENTO</h1><p>{tarot ? `SESSÃO ${sessionId.slice(0,8)} · ${tarot.active?"ATIVO":"EM ESPERA"} · ${tarot.generation} · ${tarot.autonomy.status}` : "CONECTANDO À SESSÃO"}</p><OperatorPreferencesStatus /></div>
       <div className={styles.actions}><button disabled={!tarot} onClick={()=>command("start")}>INICIAR PRÓLOGO</button><button disabled={!tarot} onClick={()=>command("interrupt")}>INTERROMPER FALA</button><button disabled={!tarot} onClick={()=>command("end")}>ENCERRAR PRÓLOGO</button><a href="/treinamento" target="_blank" rel="noreferrer">ABRIR PROJEÇÃO ↗</a></div>
     </header>
     <div className={styles.workspace}><nav className={styles.sectionNav} aria-label="Seções do treinamento">
