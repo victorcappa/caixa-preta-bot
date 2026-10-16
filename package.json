@@ -58,7 +58,8 @@
     "brain:summary": "node scripts/brain-summary.js",
     "generate:elderly-voice": "node scripts/generate-elderly-voice.js",
     "test:tarot:hallucination": "node --no-warnings scripts/tarot-hallucination-test.js",
-    "test:tarot:hallucination:browser": "node --no-warnings scripts/tarot-hallucination-browser-test.js"
+    "test:tarot:hallucination:browser": "node --no-warnings scripts/tarot-hallucination-browser-test.js",
+    "test:tarot:hallucination:controls": "node --no-warnings scripts/tarot-hallucination-controls-browser-test.js"
   },
   "dependencies": {
     "@fontsource/vt323": "5.3.0",

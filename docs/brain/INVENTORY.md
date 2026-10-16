@@ -64,6 +64,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run generate:elderly-voice` -> `node scripts/generate-elderly-voice.js`
 - `npm run test:tarot:hallucination` -> `node --no-warnings scripts/tarot-hallucination-test.js`
 - `npm run test:tarot:hallucination:browser` -> `node --no-warnings scripts/tarot-hallucination-browser-test.js`
+- `npm run test:tarot:hallucination:controls` -> `node --no-warnings scripts/tarot-hallucination-controls-browser-test.js`
 
 ## App pages
 
@@ -310,6 +311,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/tarot-catalog-test.js`
 - `scripts/tarot-experience-test.js`
 - `scripts/tarot-hallucination-browser-test.js`
+- `scripts/tarot-hallucination-controls-browser-test.js`
 - `scripts/tarot-hallucination-test.js`
 - `scripts/tarot-test.js`
 - `scripts/tarot-vision-test.js`

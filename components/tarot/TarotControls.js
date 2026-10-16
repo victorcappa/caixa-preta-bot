@@ -5,6 +5,7 @@ import { prepareDeck, tarotCommand } from "@/lib/tarot/client";
 import {TarotHallucinationControls,TarotFacePreparation,TarotPreview} from "./TarotHallucinationControls";
 import TarotCatalogEditor from "./TarotCatalogEditor";
 import PublicOperatorControls from "@/components/PublicOperatorControls";
+import {hallucinationReadiness} from "@/lib/tarot/hallucination";
 import { DEFAULT_TAROT_VISUAL } from "@/lib/tarot/state";
 import styles from "./TarotControls.module.css";
 
@@ -20,6 +21,7 @@ export default function TarotControls() {
   const [context,setContext]=useState({text:"",date:"",url:""});
   const refreshSequence=useRef(0),settingsPending=useRef(0);
   const tarot=snapshot?.tarot,sessionId=snapshot?.sessionId;
+  const readiness=tarot?.hallucination?hallucinationReadiness(tarot):null;
   const refresh=useCallback(async(force=false)=>{
     if(settingsPending.current&&!force)return;
     const sequence=++refreshSequence.current;
@@ -74,9 +76,10 @@ export default function TarotControls() {
       {[["apresentacao","01 — Apresentação"],["camera","02 — Câmera e reconhecimento"],["conversa","03 — Conversa"],["baralho","04 — Baralho"],["memoria","05 — Memória"],["fusao","06 — Fusão facial"],["alucinacao","07 — Alucinação"],["timeline","08 — Timeline"],["autonomia","09 — Autonomia"],["contexto","10 — Personalidade e contexto"],["testes","11 — Testes"],["chao","Cartas no chão"],["visual","Visual"]].map(([id,label])=><button key={id} type="button" aria-current={section===id?"page":undefined} onClick={()=>setSection(id)}>{label}</button>)}
     </nav><div className={styles.content}>
 
+      {readiness?<aside className={styles.readiness} role="status" aria-label="Estado da alucinação" data-hallucination-status={readiness.code}><strong>ALUCINAÇÃO · {readiness.count}/{readiness.threshold} CARTAS</strong><p>{readiness.message}</p>{readiness.restricted?<p>FILTRO ATIVO: somente {tarot.hallucination.eligibleCardIds.map(id=>cards.find(c=>c.id===id)?.name||`Arcano ${id}`).join(", ")}. <button type="button" onClick={()=>command("hallucination",{patch:{eligibleCardIds:[]}})}>PERMITIR TODAS AS CARTAS</button></p>:null}<p>{readiness.faceMessage}{!readiness.matchingFusions?<button type="button" onClick={()=>setSection("testes")}>REVISAR FUSÕES</button>:null}</p></aside>:null}
       {tarot ? <>
         {tarot.hallucination?<>
-          <TarotHallucinationControls h={tarot.hallucination} section={section} command={command}/>
+          <TarotHallucinationControls h={tarot.hallucination} section={section} command={command} cards={cards}/>
           <TarotFacePreparation section={section} sessionId={sessionId} cards={cards} library={library} onLibrary={setLibrary}/>
           <details open hidden={section!=="testes"}><summary>11 — TESTES / SEM WEBCAM</summary><TarotPreview library={library} cards={cards} h={tarot.hallucination} sessionId={sessionId} onLibrary={setLibrary}/></details>
           <details hidden={section!=="memoria"}><summary>TEXTOS, DOCUMENTOS E ENTREVISTAS (OPCIONAIS)</summary><div className={styles.section}><label>Título<input value={memoryTitle} onChange={e=>setMemoryTitle(e.target.value)}/></label><label>Texto / entrevista<textarea value={memoryText} onChange={e=>setMemoryText(e.target.value)}/></label><label>Importar documento de texto UTF-8<input type="file" accept=".txt,.md,text/plain" onChange={async e=>{const file=e.target.files[0];if(file){setMemoryTitle(file.name);setMemoryText((await file.text()).slice(0,12000));}}}/></label><button disabled={!memoryText.trim()} onClick={async()=>{if(await command("hallucination-memory",{memories:[...tarot.hallucination.memories,{id:crypto.randomUUID(),title:memoryTitle,text:memoryText,enabled:true}]})){setMemoryText("");setMemoryTitle("");}}}>SALVAR NA MEMÓRIA TEXTUAL</button>{tarot.hallucination.memories.map(m=><div key={m.id}><label className={styles.check}><input type="checkbox" checked={m.enabled} onChange={e=>command("hallucination-memory",{memories:tarot.hallucination.memories.map(v=>v.id===m.id?{...v,enabled:e.target.checked}:v)})}/>{m.title}</label><button onClick={()=>command("hallucination-memory",{memories:tarot.hallucination.memories.filter(v=>v.id!==m.id)})}>REMOVER TEXTO</button></div>)}</div></details>

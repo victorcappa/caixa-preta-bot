@@ -19,6 +19,8 @@ Recortes e fusões ficam em `.runtime/tarot-faces`, fora do Git, e são reutiliz
 
 **07 — Alucinação** concentra a chave geral, início automático após **três cartas distintas**, filtro de cartas elegíveis, opção de aguardar fusão aprovada, comportamento na retirada e presets. Reconhecimentos repetidos e o retorno breve da mesma carta não somam. A contagem da alucinação é independente das seis leituras completas da etapa do chão.
 
+O painel mantém um aviso de **Estado da alucinação** em todas as seções: contagem, timeline, filtro de cartas, chave geral, ausência e falta de fusões aprovadas são informados separadamente. **TODAS AS CARTAS** remove a restrição de arcanos sem reiniciar contagem, timeline ou efeitos. Para restringir, use **ESCOLHER CARTAS ESPECÍFICAS** e marque as cartas pelo nome; selecionar apenas uma limita o disparo automático a ela. Após remover uma restrição com a execução parada, a próxima apresentação válida respeita a contagem já atingida. A aprovação artística das fusões continua obrigatória para mostrar rostos.
+
 **08 — Timeline** oferece PLAY, PAUSE, STOP, RESTART e eventos editáveis por campos numéricos em segundos. Cada evento tem trilha, início, entrada, permanência, saída, intensidade, transição, habilitação, repetições e intervalo. Duplicar cria outro evento com ID próprio; alterar início reorganiza sua posição temporal. Eventos sobrepostos do mesmo efeito usam a maior intensidade, sem somas inesperadas.
 
 O preset inicial faz a primeira fusão começar em 10 s, entrar em 3 s, **permanecer por 45 s** e sair em 3 s (retorno ao original em 61 s). Para mudar os 45 s, abra o primeiro evento e altere **Permanência (s)**. A segunda aparição começa em 68 s; a terceira em 98 s. Ajuste início/intervalos para criar períodos normais entre aparições.
@@ -41,6 +43,7 @@ A prévia usa os mesmos renderizadores da apresentação e permite carta, rosto,
 
 ## Validação e limites
 
+- `test:tarot:hallucination:controls`: servidor isolado via `CAIXA_PRETA_TAROT_TEST_URL`; reproduz seis cartas contadas e filtro restrito ao arcano 2, valida avisos e a remoção explícita do filtro sem alterar relógio/efeitos.
 - `test:tarot:hallucination`: relógio, 45 s, retornos, repetições, gates independentes, mistura, intervenção manual, retirada, privacidade e recuperação.
 - `test:tarot:hallucination:browser`: requer `CAIXA_PRETA_TAROT_TEST_URL` de servidor isolado (recusa porta 3000); percorre preparação real das oito fotos, detecção de duas pessoas, cache, fusões, mistura 0–100%, prévia, aprovação e timeline; confirma fusão acompanhando a carta em vídeo sintético e limpeza na retirada. Evidências em `/private/tmp/tarot-hallucination-evidence`.
 - Passaram reconhecimento das 22 cartas (`test:tarot:vision`), catálogo, experiência, `test:tarot`, `test:tarot:browser`, os novos testes de alucinação, confiabilidade do show, áudio procedural, warmup, lint focado, build de produção isolada e `brain:sync/check`. O teste integrado usa vídeo sintético e transporte textual simulado; não comprova câmera física nem modelo real.

@@ -61,3 +61,8 @@
 .sectionNav { overflow-y:auto; }
 
 .controls input[type=range], .controls input[type=checkbox] { accent-color:#00ff66; }
+
+.readiness { border:1px solid #174b2b; padding:10px 12px; background:#041009; flex-shrink:0; line-height:1.5; }
+.readiness p { margin:5px 0; }
+.readiness button { margin-left:8px; }
+.readiness[data-hallucination-status=card-filter], .readiness[data-hallucination-status=fusion-required] { border-color:#97bd5a; }
