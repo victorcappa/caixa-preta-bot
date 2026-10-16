@@ -52,19 +52,24 @@ try{
 
   const y=create();
   for(let i=0;i<6;i++){const a=card(i);y.c.control("select",{card:a,source:"camera",owner:"camera"});const job=y.c.begin({requestId:`read-${i}`});y.c.finish(job,narrative([a]),a.elements);if(i===5)assert.equal(y.state.floor.phase,"idle");ack(y);if(i<5)assert.equal(y.state.floor.phase,"idle");}
-  assert.equal(y.state.floor.phase,"inviting");assert.match(y.state.response.text,/22 arcanos/);ack(y);assert.equal(y.state.floor.phase,"scanning");
+  assert.equal(y.state.floor.phase,"inviting");assert.match(y.state.response.text,/arcanos maiores/);ack(y);assert.equal(y.state.floor.phase,"scanning");
   const layout=Array.from({length:22},(_,i)=>{const x=.04+i%6*.155,y=.04+Math.floor(i/6)*.235;return {quad:[[x,y],[x+.1,y],[x+.1,y+.18],[x,y+.18]],verification:"reference"};});
   const post=(cards)=>y.c.control("floor-layout",{owner:"camera",cards});
-  post(layout.slice(0,21));now+=2000;post(layout.slice(0,21));assert.equal(y.state.floor.phase,"scanning");
+  post([]);now+=2000;post([]);assert.equal(y.state.floor.phase,"scanning");
   post(layout.map((c)=>({...c,verification:"contour-only"})));now+=1500;post(layout.map((c)=>({...c,verification:"contour-only"})));assert.equal(y.state.floor.phase,"scanning");
-  post(layout);now+=1300;post(layout);assert.equal(y.state.floor.phase,"announcing");
-  const selected=y.state.floor.selected,ordered=normalizeFloorLayout(layout);assert.equal(ordered.length,22);assert.match(y.state.response.text,/fileira/);assert.equal(y.state.response.text,removalInstruction(selected.slot,selected));
+  const visible=[layout[0],layout[1],layout[6],layout[7]];post(visible);now+=500;post(visible);assert.equal(y.state.floor.phase,"scanning","visible subset must stabilize");now+=800;post(visible);assert.equal(y.state.floor.phase,"announcing");
+  const selected=y.state.floor.selected,ordered=normalizeFloorLayout(visible);assert.equal(ordered.length,4);assert.match(y.state.response.text,/fileira/);assert.equal(y.state.response.text,removalInstruction(selected.slot,selected));
   ack(y);assert.equal(y.state.floor.phase,"await-removal");
   post([]);now+=800;post([]);assert.equal(y.state.floor.phase,"await-removal","loss of the scene is not removal of the chosen card");
   const remaining=ordered.filter((_,i)=>i!==selected.slot-1);post(remaining);now+=400;post(remaining);now+=400;post(remaining);assert.equal(y.state.floor.phase,"await-reveal");
   assert.throws(()=>y.c.control("select",{card:card(0),cards:[card(0),card(17)],source:"camera",owner:"camera",newVisit:true}),/SHOW_CHOSEN_CARD_ONLY/);
   const chosen=card(17);y.c.control("select",{card:chosen,source:"camera",owner:"camera",newVisit:true});assert.equal(y.state.floor.phase,"interpreting");const job=y.c.begin({requestId:"chosen"});y.c.finish(job,narrative([chosen]),chosen.elements);assert.equal(y.state.floor.phase,"interpreting");ack(y);assert.equal(y.state.floor.phase,"closing");assert.match(y.state.response.text,/Vamos embaralhar realidades/);ack(y);assert.equal(y.state.floor.phase,"complete");y.c.cancel();
-  checks.push("six completed distinct cards; 22 verified backs required; stable geometric selection; row/right-to-left instruction; whole-scene loss cannot confirm removal; selected-card reveal/interpretation then authored closing");
+  for(const count of [1,21,22]){
+    const z=create();z.c.control("floor-start");ack(z);
+    const subset=layout.slice(0,count),zp=cards=>z.c.control("floor-layout",{owner:"camera",cards});zp(subset);now+=1300;zp(subset);assert.equal(z.state.floor.phase,"announcing",`${count} backs can be chosen`);ack(z);
+    const rest=normalizeFloorLayout(subset).filter((_,i)=>i!==z.state.floor.selected.slot-1);zp(rest);now+=400;zp(rest);now+=400;zp(rest);assert.equal(z.state.floor.phase,"await-reveal",`${count} backs removal`);z.c.cancel();
+  }
+  checks.push("six completed distinct cards; 1, 4, 21 and 22 verified backs accepted; stable geometric selection; row/right-to-left instruction; whole-scene loss cannot confirm removal; selected-card reveal/interpretation then authored closing");
   const v=normalizeTarotVisual({textSize:500,matrixStyle:"orbits",matrixDensity:500,matrixSymbols:"☉ ☽ ∞",matrixColor:"#12ab34"});assert.equal(v.textSize,64);assert.equal(v.matrixDensity,90);assert.equal(v.matrixStyle,"orbits");assert.equal(v.matrixColor,"#12ab34");
   checks.push("larger text and bounded editable Matrix styles, symbols, color, density and movement");
   console.log(JSON.stringify({ok:true,checks,physicalCameraValidated:false},null,2));

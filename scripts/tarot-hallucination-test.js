@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {createHallucination,patchHallucination,transport,evaluate,elapsed,removeHallucination,restoreHallucination,hallucinationSnapshot,eventLevel,hallucinationReadiness} from '../lib/tarot/hallucination.js';
+import {createHallucination,patchHallucination,transport,evaluate,elapsed,removeHallucination,restoreHallucination,hallucinationSnapshot,eventLevel,hallucinationReadiness,builtInPreset,EFFECTS} from '../lib/tarot/hallucination.js';
 import {createTarotState,publicTarotSnapshot} from '../lib/tarot/state.js';
 import {createTarotController} from '../lib/tarot/controller.js';
 const h=createHallucination();h.enabled=true;transport(h,'restart',8,'8:v',1000);
@@ -28,3 +28,9 @@ c.control('select',{card:{id:8,name:'A Justiça',version:'v',elements:[]},source
 c.control('hallucination',{patch:{requireFusion:true}});c.control('select',{card:{id:5,name:'O Sacerdote',version:'v',elements:[]},source:'camera',owner:'filter-test',newVisit:true});assert.equal(hallucinationReadiness(state).code,'fusion-required');
 c.control('hallucination',{patch:{enabled:false}});assert.equal(hallucinationReadiness(state).code,'master-off');
 console.log(JSON.stringify({ok:true,checks:['45-second hold and gaps, editable envelopes and repetitions','independent gates, master suspension, manual precedence and unchanged clock','monotonic pause/resume; run invalidation and removal clears overrides','third distinct presentation; brief returns do not count; no old-run resurrection','six-card filter regression; explicit readiness and missing-fusion diagnostics; clearing restriction preserves count and clock','public privacy; recovery stopped; emergency pause cancels effects; no model calls']} ,null,2));
+
+const cardOnly=createHallucination();cardOnly.effects.morph.intensity=85;patchHallucination(cardOnly,builtInPreset('carta-estranha'));transport(cardOnly,'restart',8,'8:v',1000);
+assert.equal(cardOnly.effects.morph.intensity,85,'Disabled face settings remain available');
+for(const t of [0,2,5,10,49,51,120,1000]){const {levels}=evaluate(cardOnly,t);for(const [key,[,group]]of Object.entries(EFFECTS))if(group!=='carta'||key==='symbols')assert.equal(levels[key],0,`${key} disabled at ${t}`);}
+assert(evaluate(cardOnly,2).levels.breathing>0);assert(evaluate(cardOnly,5).levels.wave>.5);assert(evaluate(cardOnly,10).levels.double>0);assert(!cardOnly.requireFusion);
+console.log(JSON.stringify({ok:true,cardOnlyPreset:true}));

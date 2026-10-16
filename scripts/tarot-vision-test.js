@@ -74,6 +74,7 @@ try {
     const variants=[
       {name:"perspective",quad:[[240,70],[560,130],[510,540],[180,490]]},
       {name:"rotation",quad:[[330,50],[625,230],[410,565],[110,390]]},
+      {name:"upside-down",quad:[[555,535],[220,525],[210,65],[560,75]]},
       {name:"scale-small",quad:[[300,160],[510,160],[510,440],[300,440]]},
       {name:"lighting-dark",quad,brightness:.62},
       {name:"partial-occlusion",quad,occlusion:true}
@@ -102,10 +103,19 @@ try {
       for(let i=0;i<count;i++){if(fronts)source.getContext("2d").putImageData(references[i].image,0,0);ctx.drawImage(fronts?source:backImage,35+i%6*122,25+Math.floor(i/6)*140,92,125);}
       return ctx.getImageData(0,0,800,600);
     }
-    for(const [name,count,fronts] of [["twenty-two-backs",22,false],["twenty-one-backs",21,false],["faces-are-not-backs",22,true]]){
+    for(const [name,count,fronts] of [["single-back",1,false],["four-backs",4,false],["twenty-two-backs",22,false],["twenty-one-backs",21,false],["faces-are-not-backs",22,true]]){
       messages=[];worker.postMessage({type:"frame",floor:true,image:await floorImage(count,fronts)});await wait("frame-done");const error=messages.find((m)=>m.type==="error");if(error)throw Error(error.error);
       const detected=messages.find((m)=>m.type==="floor");cases.push({case:name,expected:fronts?0:count,actual:detected?.cards?.length??null,ms:detected?.processingMs,diagnostics:detected?.diagnostics});
     }
+    // Oblique, overlapping backs on a light table with an uneven shadow, like the reported camera view.
+    const oblique=document.createElement("canvas");oblique.width=800;oblique.height=600;const oc=oblique.getContext("2d");oc.fillStyle="#ddd8ce";oc.fillRect(0,0,800,600);
+    for(const quad of [[[40,145],[225,160],[180,490],[0,465]],[[200,160],[390,145],[390,500],[175,490]],[[390,160],[555,135],[635,505],[405,500]],[[555,155],[700,105],[795,460],[645,510]]]){
+      const layer=warp(backRef,quad),base=oc.getImageData(0,0,800,600);
+      for(let i=0;i<layer.data.length;i+=4)if(layer.data[i]!==15||layer.data[i+1]!==20||layer.data[i+2]!==18)for(let c=0;c<4;c++)base.data[i+c]=layer.data[i+c];oc.putImageData(base,0,0);
+    }
+    const shade=oc.createLinearGradient(0,0,800,600);shade.addColorStop(0,"rgba(0,0,0,0)");shade.addColorStop(1,"rgba(0,0,0,.55)");oc.fillStyle=shade;oc.fillRect(0,0,800,600);
+    messages=[];worker.postMessage({type:"frame",floor:true,image:oc.getImageData(0,0,800,600)});await wait("frame-done");
+    const obliqueResult=messages.find(m=>m.type==="floor");cases.push({case:"oblique-overlapping-backs-shadow",minimum:2,actual:obliqueResult?.cards?.length??0,diagnostics:obliqueResult?.diagnostics});
     if(!onlyFloor){
       await frame(new ImageData(800,600));const backsAsFace=await frame(await floorImage(22));cases.push({case:"backs-have-no-front-identity",expected:null,actual:backsAsFace?.id??null});
       const ground=await floorImage(21),canvas=document.createElement("canvas");canvas.width=800;canvas.height=600;const ctx=canvas.getContext("2d");ctx.putImageData(ground,0,0);
@@ -117,5 +127,5 @@ try {
   const report={synthetic:true,physicalWebcamValidated:false,cases:result};
   await fs.mkdir("/private/tmp/tarot-vision-evidence",{recursive:true});await fs.writeFile("/private/tmp/tarot-vision-evidence/result.json",JSON.stringify(report,null,2));
   console.log(JSON.stringify(report,null,2));
-  for(const item of result){assert.equal(item.actual,item.expected,item.case);if(item.maxCornerError!==undefined)assert(item.maxCornerError<22,`${item.case} geometry ${item.maxCornerError}`);}
+  for(const item of result){if(item.minimum!==undefined)assert(item.actual>=item.minimum,`${item.case}: ${item.actual}`);else assert.equal(item.actual,item.expected,item.case);if(item.maxCornerError!==undefined)assert(item.maxCornerError<22,`${item.case} geometry ${item.maxCornerError}`);}
 }finally{await browser?.close();await new Promise((resolve)=>server.close(resolve));}

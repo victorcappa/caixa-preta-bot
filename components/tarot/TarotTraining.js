@@ -96,7 +96,7 @@ export default function TarotTraining(){
     <header className={styles.header}><h1>TARÔ <span>/</span> TREINAMENTO</h1><span className={styles.readingTitle}>{floorStage?phase==="complete"?"PRÓXIMO TREINAMENTO":phase==="await-reveal"?"MOSTRE A CARTA ESCOLHIDA":"AS CARTAS NO CHÃO":cards.length===2?"LEITURA EM CONJUNTO":""}</span></header>
     <section className={styles.body}>
       <div className={styles.vision}>
-        <div className={styles.visionHeader}><span>{digital?"CARTA ESCOLHIDA PELO BOT":floorStage?"22 ARCANOS · VERSOS":""}</span><span>{!floorStage?cards.map((c)=>`${String(c.number).padStart(2,"0")} / ${c.name.toUpperCase()}`).join(" + "):""}</span></div>
+        <div className={styles.visionHeader}><span>{digital?"CARTA ESCOLHIDA PELO BOT":floorStage?"CARTAS VISÍVEIS · VERSOS":""}</span><span>{!floorStage?cards.map((c)=>`${String(c.number).padStart(2,"0")} / ${c.name.toUpperCase()}`).join(" + "):""}</span></div>
         <div className={styles.imageStage}>
           <video ref={videoRef} autoPlay muted playsInline className={digital?styles.hiddenVideo:styles.video} aria-label="Imagem das cartas" style={{filter:focus.length?`blur(${visual.blur}px) brightness(${1-visual.dimming}) saturate(.82)`:"none",transition:visual.animations?"filter 260ms ease":"none"}}/>
           <TarotCameraFocus videoRef={videoRef} geometries={focus} visual={visual}/>
@@ -109,7 +109,7 @@ export default function TarotTraining(){
           </svg>:null}
           <div className={styles.corners}/>
         </div>
-        <footer className={styles.visionFooter}><span>{floorStage?phase==="scanning"?`${frame?.cards?.length||0}/22 VERSOS`:phase==="await-reveal"?"AGUARDANDO A FRENTE":"":geometries.length?"":"APRESENTE UMA CARTA"}</span><span>TARÔ DA HARMONIA · 22 ARCANOS</span></footer>
+        <footer className={styles.visionFooter}><span>{floorStage?phase==="scanning"?`${frame?.cards?.length||0} VERSOS RECONHECIDOS`:phase==="await-reveal"?"AGUARDANDO A FRENTE":"":geometries.length?"":"APRESENTE UMA CARTA"}</span><span>TARÔ DA HARMONIA · 22 ARCANOS</span></footer>
       </div>
       <aside className={styles.elements}><h2>{floorStage?"ESCOLHA DO SISTEMA":"ELEMENTOS"}</h2><div className={styles.elementList}>
         {elements.length?elements.map((e)=>{
@@ -118,7 +118,7 @@ export default function TarotTraining(){
             {e.region&&source?.imageUrl?<div className={styles.crop} style={{backgroundImage:`url("${source.imageUrl}")`,backgroundSize:`${100/e.region[2]}% ${100/e.region[3]}%`,backgroundPosition:`${e.region[0]/(1-e.region[2]||1)*100}% ${e.region[1]/(1-e.region[3]||1)*100}%`}}/>:<span className={styles.elementMark}>⌖</span>}
             <div><h3>{e.name}</h3><p>{e.description}</p></div>
           </article>;
-        }):<div className={styles.empty}><p>{floorStage?phase==="scanning"?"Mantenha os 22 versos separados e visíveis.":selected&&!selected.removed?`A carta escolhida está destacada na imagem.`:phase==="await-reveal"?"Mostre a frente da carta retirada.":"":tarot?.generation==="pending"?"":"Os elementos surgem conforme a fala avança."}</p></div>}
+        }):<div className={styles.empty}><p>{floorStage?phase==="scanning"?"Mantenha algumas cartas de costas visíveis e estáveis. Vou escolher entre as que reconhecer.":selected&&!selected.removed?`A carta escolhida está destacada na imagem.`:phase==="await-reveal"?"Mostre a frente da carta retirada.":"":tarot?.generation==="pending"?"":"Os elementos surgem conforme a fala avança."}</p></div>}
       </div><footer>REFERÊNCIAS LOCAIS <span>●</span></footer></aside>
     </section>
     <section className={styles.speech} style={{position:"relative"}} aria-label="Fala do bot"><div className={styles.speechHeader}><h2>FALA DO BOT</h2><span>{response?.origin==="catalog"?"CONTEÚDO CADASTRADO":response?.interruptedBy==="tracking-lost"?"AGUARDANDO A CARTA":tarot?.generation==="pending"?"":""}</span></div>

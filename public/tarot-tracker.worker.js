@@ -177,24 +177,26 @@ function referenceVectors(gray,surface){
 function floorCards(gray){
   floorDiagnostics={contours:0,large:0,quads:0,ratios:0,bestScores:[]};
   if(!backReference)return [];
-  const smooth=new cv.Mat(),edges=new cv.Mat(),binary=new cv.Mat(),contours=new cv.MatVector(),hierarchy=new cv.Mat();
+  const smooth=new cv.Mat(),edges=new cv.Mat(),binary=new cv.Mat(),local=new cv.Mat(),contours=new cv.MatVector(),hierarchy=new cv.Mat();
   const candidates=[];
   try{
     cv.GaussianBlur(gray,smooth,new cv.Size(5,5),0);cv.Canny(smooth,edges,45,120);
     const kernel=cv.Mat.ones(3,3,cv.CV_8U);cv.morphologyEx(edges,edges,cv.MORPH_CLOSE,kernel);kernel.delete();
     cv.threshold(smooth,binary,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU);
-    for(const segmentation of [edges,binary]){
+    // Local thresholds retain white borders under shadows where one global threshold merges cards.
+    cv.adaptiveThreshold(smooth,local,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY,31,5);
+    for(const segmentation of [edges,binary,local]){
     cv.findContours(segmentation,contours,hierarchy,cv.RETR_LIST,cv.CHAIN_APPROX_SIMPLE);
     floorDiagnostics.contours+=contours.size();
     for(let i=0;i<contours.size();i++){
       const contour=contours.get(i),approx=new cv.Mat();
       try{
         const area=cv.contourArea(contour);if(area<gray.rows*gray.cols*.0015||area>gray.rows*gray.cols*.5)continue;floorDiagnostics.large++;
-        cv.approxPolyDP(contour,approx,.025*cv.arcLength(contour,true),true);
+        for(const epsilon of [.025,.015,.04]){cv.approxPolyDP(contour,approx,epsilon*cv.arcLength(contour,true),true);if(approx.rows===4&&cv.isContourConvex(approx))break;}
         if(approx.rows!==4||!cv.isContourConvex(approx))continue;floorDiagnostics.quads++;
         const quad=quadOrder(Array.from({length:4},(_,j)=>[approx.data32S[j*2],approx.data32S[j*2+1]]));
         const sides=quad.map((a,j)=>Math.hypot(a[0]-quad[(j+1)%4][0],a[1]-quad[(j+1)%4][1]));
-        const ratio=Math.min(sides[0]+sides[2],sides[1]+sides[3])/Math.max(sides[0]+sides[2],sides[1]+sides[3]);if(ratio<.42||ratio>.88)continue;floorDiagnostics.ratios++;
+        const ratio=Math.min(sides[0]+sides[2],sides[1]+sides[3])/Math.max(sides[0]+sides[2],sides[1]+sides[3]);if(ratio<.3||ratio>.95)continue;floorDiagnostics.ratios++;
         const vector=patchVector(gray,quad),similarity=Math.max(...backReference.vectors.map((v)=>correlation(vector,v)));
         floorDiagnostics.bestScores.push(Math.round(similarity*1000)/1000);floorDiagnostics.bestScores.sort((a,b)=>b-a);floorDiagnostics.bestScores=floorDiagnostics.bestScores.slice(0,8);
         if(similarity<.48)continue;
@@ -202,7 +204,7 @@ function floorCards(gray){
       }finally{dispose(contour,approx);}
     }
     }
-  }finally{dispose(smooth,edges,binary,contours,hierarchy);}
+  }finally{dispose(smooth,edges,binary,local,contours,hierarchy);}
   // Nested outlines of one physical card must not become separate choices.
   candidates.sort((a,b)=>b.similarity-a.similarity);const accepted=[];
   for(const item of candidates){if(accepted.some((other)=>Math.hypot(item.center[0]-other.center[0],item.center[1]-other.center[1])<Math.sqrt(Math.min(item.area,other.area))*.35))continue;accepted.push(item);if(accepted.length===22)break;}

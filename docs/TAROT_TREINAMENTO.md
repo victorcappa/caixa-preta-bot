@@ -18,20 +18,20 @@ As falas, perguntas, contingências e instruções do tarô aparecem somente em 
 
 Uma pausa manual permanece ativa mesmo se a carta continuar visível: o reconhecimento não reinicia sozinho a fala cancelada. Retome pelo controle ou inicie explicitamente outra análise.
 
-Se um processo anterior ainda estiver aberto, a API pode informar `TAROT_RUNTIME_RESTART_REQUIRED`: esta evolução exige controller **v5**, que preserva a fala da tela principal. O singleton ativo não é apagado pelo hot reload. Reinicie o servidor em um momento adequado e use a recuperação existente se necessário. Não se reiniciou a sessão real durante os testes.
+Se um processo anterior ainda estiver aberto, a API pode informar `TAROT_RUNTIME_RESTART_REQUIRED`: esta evolução exige controller **v7**, que aceita subconjuntos de versos. O singleton ativo não é apagado pelo hot reload. Reinicie o servidor em um momento adequado e use a recuperação existente se necessário. Antes de reiniciar, compare sessão/revisão ao vivo e em disco: uma recuperação antiga protegida não é backup da execução atual.
 
-## Seis leituras e os 22 versos no chão
+## Seis leituras e os versos visíveis no chão
 
 Em **Cartas no chão**, o padrão é **6 cartas distintas interpretadas até o fim**, ajustável entre 1 e 22. Uma dupla conta duas cartas. Perguntas adicionais sobre a mesma carta, movimento e respostas interrompidas não aumentam essa contagem. A etapa pode ser desligada ou iniciada manualmente. **REINICIAR CONTAGEM DAS CARTAS** limpa essa contagem e a escolha do chão, preservando a conversa.
 
-Após atingir o limite, o bot pede para espalhar os **22 arcanos maiores**, separados e virados de costas. O Worker compara os quadriláteros encontrados à fotografia real **`assets/tarot/carta-fundo.jpeg`**. Não usa uma frente como substituta do verso. Contornos isolados ou somente 21 versos não autorizam a escolha.
+Após atingir o limite, o bot pede para espalhar os arcanos maiores virados de costas. O Worker compara os quadriláteros encontrados à fotografia real **`assets/tarot/carta-fundo.jpeg`**. Não usa uma frente como substituta do verso. A busca combina bordas, limiar global e limiar local para tolerar sombras e perspectiva. Contornos sem confirmação pelo padrão do verso não autorizam a escolha. Pode usar **qualquer subconjunto de 1 a 22 versos reconhecidos**, sem esperar o baralho inteiro; partes cobertas ou fora do quadro não entram na escolha.
 
 O fluxo é:
 
-- Esperar **22 versos confirmados e uma disposição estável** por 1.200 ms, ajustável no controle.
+- Esperar **ao menos um verso confirmado e uma disposição estável** por 1.200 ms, ajustável no controle.
 - Escolher uma posição e destacar seu quadrilátero na imagem. A escolha é espacial: as costas iguais não revelam qual arcano está embaixo.
 - Ordenar fileiras **de cima para baixo**, e cartas **da direita para a esquerda** na imagem da câmera. Quando houver fileiras, a fala informa a fileira e a posição dentro dela, por exemplo: “Na segunda fileira, de cima para baixo, retire a terceira carta da direita para a esquerda.”
-- Confirmar que **a posição escolhida desapareceu enquanto as outras 21 continuam nas posições esperadas**, por três observações e pelo menos 700 ms. Perder a cena inteira ou esconder várias cartas não confirma uma retirada.
+- Confirmar que **a posição escolhida desapareceu enquanto as demais cartas reconhecidas continuam nas posições esperadas**, por três observações e pelo menos 700 ms. Com várias cartas reconhecidas, perder a cena inteira ou esconder várias não confirma uma retirada. Com uma única carta, a ausência sustentada libera a apresentação da frente, pois não há outras posições para confirmar a permanência da cena.
 - Esperar a frente da carta retirada, reconhecê-la e fazer uma nova interpretação em três parágrafos.
 - Só depois da apresentação terminar, publicar o encerramento: “Aprendi a reconhecer os signos e a relacionar seus significados. Estou pronto para o próximo treinamento. Vamos embaralhar realidades e ver o que elas nos contam.”
 
@@ -81,9 +81,9 @@ Uma concessão exclusiva impede duas projeções de abrirem câmeras simultânea
 ## Validação
 
 - `npm run test:tarot`: geometria, privacidade, concessão, concorrência, cancelamento, autonomia, recuperação e catálogo/upload.
-- `npm run test:tarot:experience`: três parágrafos concisos, frases/perguntas completas na meta de palavras, rejeição de trechos incompletos e cache antigo, offsets/revelação, dupla, pausa/retomada exata, seis leituras, exigência de 22 versos, seleção/retirada espacial, frente escolhida e encerramento.
+- `npm run test:tarot:experience`: três parágrafos concisos, frases/perguntas completas na meta de palavras, rejeição de trechos incompletos e cache antigo, offsets/revelação, dupla, pausa/retomada exata, seis leituras, subconjuntos de 1, 4, 21 e 22 versos, seleção/retirada espacial, frente escolhida e encerramento.
 - `npm run test:tarot:catalog`: 22 inventários e 182 âncoras; revisão visual em `/private/tmp/tarot-catalog-review/index.html`.
-- `npm run test:tarot:vision`: OpenCV real e fotos fornecidas no Chromium. Todas as 22 frentes, perspectiva/rotação/escala/luz/oclusão, reflexo saturado sintético, duas cartas, fluxo, perda/retorno; 22 e 21 cópias do verso real, piso texturizado, rejeição de frentes como costas e frente revelada sobre os outros 21 versos.
+- `npm run test:tarot:vision`: OpenCV real e fotos fornecidas no Chromium. Todas as 22 frentes, perspectiva/rotação/escala/luz/oclusão, reflexo saturado sintético, duas cartas, fluxo, perda/retorno; 1, 4, 21 e 22 cópias do verso real, sobreposição/perspectiva/sombra sintéticas, piso texturizado, rejeição de frentes como costas e frente revelada sobre os outros 21 versos.
 - `npm run test:tarot:browser`: produção, sessão e catálogo isolados, câmera sintética, transporte textual simulado. Inclui pausa na perda, retorno sem nova chamada, ausência de flash na lateral, leitura dupla, texto maior, rótulos removidos, Matrix editável, seis leituras e ciclo completo do chão. Confere o cursor da principal antes do boot, reabertura com histórico do tarô e ausência de publicação na principal durante leituras, chão e retorno.
 - `node --no-warnings scripts/scene-zero-suitcase-regression-browser-test.js`: APIs interceptadas; snapshot antigo do tarô não vaza antes do boot, instrução da mala permanece com histórico do tarô, inclusive ao reabrir. Pode apontar para o servidor isolado por `CAIXA_PRETA_URL`.
 - Regressão: `test:show-reliability`, `test:robot-sound`, `test:audience-warmup`, `test:games`, lint focado, build de produção isolada e `brain:sync`/`brain:check`.

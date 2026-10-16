@@ -2,6 +2,14 @@
 
 A navegação **TARÔ** abre `/treinamento/controle`. A projeção continua em `/treinamento`; o operador convencional conserva seu link discreto. As onze seções são recolhíveis. Cartas no chão e Visual continuam disponíveis.
 
+## Calibração somente na carta
+
+O preset **CARTA-ESTRANHA** mantém disponíveis os controles faciais, mas desliga fusão, morph, oscilação e troca de identidade. Também desliga todos os efeitos de texto e narrativa, além da pulsação das anotações. Ativa somente respiração (55%, velocidade 28), ondulação (85%, 38), textura (70%, 32), aberração cromática (45%, 30) e duplicação (40%, 24). Entram em 0, 1, 2,5, 4 e 7 segundos, com entrada suave de 2 s, permanência de 45 s e saída de 3 s, repetidas até 50 vezes. Não exige fusões aprovadas nem muda o limite atual de cartas para início automático.
+
+O canvas recorta todos os efeitos pela superfície projetada da carta, inclusive cópias deslocadas e bordas cromáticas: não desenha na mesa nem no texto da leitura. Na sessão local de 16/10, essa calibração foi aplicada e salva como **Carta estranha**, com o preset anterior guardado em **Antes da calibração (16-10)**. As preferências persistentes mantêm essa seleção nas próximas sessões. O disparo continua respeitando a contagem atual (3 cartas distintas) e a presença da carta.
+
+`npm run test:tarot:effects:browser` verifica o renderizador em uma superfície oblíqua: pixels visíveis dentro da carta, nenhum fora dela e canvas de texto vazio. É uma prévia sintética, sem webcam física nem chamadas ao modelo.
+
 ## Preparação local
 
 1. Em **05 — Memória**, clique **PREPARAR ROSTOS DE assets/rostos** para as oito fotografias fornecidas, ou **IMPORTAR FOTOGRAFIAS** para fotos inteiras individuais/em lote. Um Worker usa MediaPipe CPU local e extrai os rostos automaticamente. Uma foto com um rosto já o seleciona; numa foto de grupo, marque os rostos desejados. Falhas individuais não interrompem o lote. Correção manual é fallback explícito.

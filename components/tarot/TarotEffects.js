@@ -19,6 +19,10 @@ export default function TarotEffects({h,time,geometries=[],cards=[],videoRef,ima
    const {levels:L}=evaluate(h,time,present);const motion=Object.values(L).some(n=>n>0);if(!motion)return;
    for(const g of geometries){const card=cards.find(c=>c.id===g.id);if(!card||!g.matrix)continue;const source=image||videoRef?.current;
     const project=(u,v)=>projectPoint(g.matrix,u,v);const [sx,sy,sw,sh]=[0,0,1,1];
+    // Deformed triangles and displaced copies must never paint the table or captions.
+    const boundary=(card.surface||[[0,0],[1,0],[1,1],[0,1]]).map(p=>project(...p));if(boundary.some(p=>!p))continue;
+    ctx.save();ctx.beginPath();boundary.forEach((p,i)=>ctx[i?'lineTo':'moveTo'](...p));ctx.closePath();ctx.clip();
+    try{
     const transformed=(u,v)=>{const p=project(u,v),center=project(.5,.5);if(!p||!center)return null;const breathe=1+Math.sin(time*(.3+h.effects.breathing.speed/25))*L.breathing*.025;return [center[0]+(p[0]-center[0])*breathe+Math.sin(v*20+time*(.4+h.effects.wave.speed/15))*L.wave*w*.006,center[1]+(p[1]-center[1])*breathe+Math.sin(u*24+time*(.5+h.effects.texture.speed/15))*L.texture*hg*.004];};
     if(source&&(L.breathing||L.wave||L.texture||L.double||L.chromatic)&&(!videoRef||source.readyState>=2)){
      ctx.save();ctx.globalAlpha=Math.max(L.breathing,L.wave,L.texture,L.double,L.chromatic);const sourceW=source.videoWidth||source.naturalWidth||source.width,sourceH=source.videoHeight||source.naturalHeight||source.height;
@@ -31,6 +35,7 @@ export default function TarotEffects({h,time,geometries=[],cards=[],videoRef,ima
     const region=asset.region;if(!region)continue;const [rx,ry,rw,rh]=region;
     ctx.save();ctx.globalAlpha=L.fusion*((h.effects.fusion.mix??85)/100)*(L.oscillation?1-L.oscillation*(.5+.5*Math.sin(time*(.3+h.effects.oscillation.speed/10))):1);
     const grid=4;for(let y=0;y<grid;y++)for(let x=0;x<grid;x++){const uv=[[x/grid,y/grid],[(x+1)/grid,y/grid],[(x+1)/grid,(y+1)/grid],[x/grid,(y+1)/grid]],src=uv.map(([u,v])=>[u*texture.naturalWidth,v*texture.naturalHeight]),dest=uv.map(([u,v])=>transformed(rx+u*rw+Math.sin(v*Math.PI)*Math.sin(time*(.3+h.effects.morph.speed/15))*L.morph*.004,ry+v*rh));if(dest.some(p=>!p))continue;for(const ids of [[0,1,2],[0,2,3]])drawTriangle(ctx,texture,ids.map(i=>src[i]),ids.map(i=>dest[i]));}ctx.restore();
+    }finally{ctx.restore();}
    }
   }frame=requestAnimationFrame(draw);return()=>{closed=true;cancelAnimationFrame(frame);textures.clear();};
  },[]);
