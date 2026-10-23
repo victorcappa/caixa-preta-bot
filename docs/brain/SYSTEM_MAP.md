@@ -77,7 +77,7 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 
 ## Tarô / Treinamento
 
-- Public camera/annotations/speech -> `app/treinamento/page.js` -> `components/tarot/TarotTraining.js` / `useTarotCamera.js`.
+- Public camera/annotations/speech and one-shot **INTERPRETAR** question -> `app/treinamento/page.js` -> `components/tarot/TarotTraining.js` / `useTarotCamera.js`.
 - Private operation/catalogue/anchors -> `app/treinamento/controle/page.js` -> `components/tarot/TarotControls.js` / `TarotCatalogEditor.js` (TARÔ navigation).
 - Faces/fusion preparation -> `components/tarot/TarotHallucinationControls.js`, `public/tarot-face.worker.js`, `lib/tarot/face-store.js`, `/api/tarot/faces/`; permanent templates -> `assets/tarot/face-templates.json`.
 - Hallucination clock, per-card random draw, filters/readiness, gates, manual priority/presets -> `lib/tarot/hallucination.js`, `controller.js`; shared live/preview renderer -> `components/tarot/TarotEffects.js`; usage/limits -> `docs/TAROT_ALUCINACAO.md`.

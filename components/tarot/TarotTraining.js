@@ -32,10 +32,18 @@ function CardAnnotations({card,geometry,elements,visibleIds,activeIds,outline}){
   </g>;
 }
 export default function TarotTraining(){
+  const [question,setQuestion]=useState(""),[commandPending,setCommandPending]=useState(false),[questionError,setQuestionError]=useState("");
   const [state,setState]=useState({}),[cursor,setCursor]=useState({id:null,chars:0}),[digitalSize,setDigitalSize]=useState([960,1280]);
   const videoRef=useRef(null),digitalImageRef=useRef(null),textRef=useRef(null),stateRef=useRef(state),cursorRef=useRef(cursor);stateRef.current=state;cursorRef.current=cursor;
   const tarot=state.tarot,response=tarot?.response,card=tarot?.currentCard,cards=tarot?readingCards(tarot):[],sessionId=state.reliability?.sessionId;
   const camera=useTarotCamera({sessionId,tarot,videoRef}),visual={...DEFAULT_TAROT_VISUAL,...tarot?.visual};
+  const interpretation=tarot?.interpretation;
+  async function interpretationCommand(action,data={}){
+    setCommandPending(true);setQuestionError("");
+    try{await tarotCommand(sessionId,action,data);if(action!=="analyze")setQuestion("");}
+    catch{setQuestionError("Não foi possível concluir. Tente novamente.");}
+    finally{setCommandPending(false);}
+  }
   const hallTime=useHallucinationClock(tarot?.hallucination);
   const digital=card?.source==="bot",phase=tarot?.floor?.phase||"idle",floorStage=!["idle","interpreting"].includes(phase);
   const tracked=camera.tracking?.cards|| (camera.tracking?[camera.tracking]:[]);
@@ -93,7 +101,7 @@ export default function TarotTraining(){
   const view=selectedGeometry||geometries[0];
   return <main className={styles.screen} data-bot-font={state.robotSound?.displayFont||"modern-dos-8x16"} data-response-id={response?.id||""} style={{"--tarot-text-size":`${visual.textSize}px`}}>
     <ProjectionWindowClient/>
-    <header className={styles.header}><h1>TARÔ <span>/</span> TREINAMENTO</h1><span className={styles.readingTitle}>{floorStage?phase==="complete"?"PRÓXIMO TREINAMENTO":phase==="await-reveal"?"MOSTRE A CARTA ESCOLHIDA":"AS CARTAS NO CHÃO":cards.length===2?"LEITURA EM CONJUNTO":""}</span></header>
+    <header className={styles.header}><h1>TARÔ <span>/</span> TREINAMENTO</h1><span className={styles.readingTitle}>{floorStage?phase==="complete"?"PRÓXIMO TREINAMENTO":phase==="await-reveal"?"MOSTRE A CARTA ESCOLHIDA":"AS CARTAS NO CHÃO":cards.length===2?"LEITURA EM CONJUNTO":""}</span><button className={styles.interpretButton} disabled={!tarot?.active||tarot?.suspended||phase!=="idle"||Boolean(interpretation)||commandPending} onClick={()=>void interpretationCommand("interpretation-start")}>INTERPRETAR</button></header>
     <section className={styles.body}>
       <div className={styles.vision}>
         <div className={styles.visionHeader}><span>{digital?"CARTA ESCOLHIDA PELO BOT":floorStage?"CARTAS VISÍVEIS · VERSOS":""}</span><span>{!floorStage?cards.map((c)=>`${String(c.number).padStart(2,"0")} / ${c.name.toUpperCase()}`).join(" + "):""}</span></div>
@@ -121,7 +129,18 @@ export default function TarotTraining(){
         }):<div className={styles.empty}><p>{floorStage?phase==="scanning"?"Mantenha algumas cartas de costas visíveis e estáveis. Vou escolher entre as que reconhecer.":selected&&!selected.removed?`A carta escolhida está destacada na imagem.`:phase==="await-reveal"?"Mostre a frente da carta retirada.":"":tarot?.generation==="pending"?"":"Os elementos surgem conforme a fala avança."}</p></div>}
       </div><footer>REFERÊNCIAS LOCAIS <span>●</span></footer></aside>
     </section>
-    <section className={styles.speech} style={{position:"relative"}} aria-label="Fala do bot"><div className={styles.speechHeader}><h2>FALA DO BOT</h2><span>{response?.origin==="catalog"?"CONTEÚDO CADASTRADO":response?.interruptedBy==="tracking-lost"?"AGUARDANDO A CARTA":tarot?.generation==="pending"?"":""}</span></div>
+    <section className={styles.speech} style={{position:"relative"}} data-question-mode={Boolean(interpretation||questionError)} aria-label="Fala do bot"><div className={styles.speechHeader}><h2>FALA DO BOT</h2><span>{response?.origin==="catalog"?"CONTEÚDO CADASTRADO":response?.interruptedBy==="tracking-lost"?"AGUARDANDO A CARTA":tarot?.generation==="pending"?"":""}</span></div>
+      {interpretation||questionError?<div className={styles.questionPanel}>
+        {interpretation?.status==="input"?<form className={styles.questionForm} onSubmit={event=>{event.preventDefault();if(question.trim())void interpretationCommand("interpretation-question",{question});}}>
+          <label htmlFor="tarot-question">QUAL É A SUA PERGUNTA?</label>
+          <div><input id="tarot-question" autoFocus maxLength={4000} value={question} onChange={event=>setQuestion(event.target.value)} placeholder="Digite sua pergunta" disabled={commandPending}/><button disabled={!question.trim()||commandPending} type="submit">ENVIAR PERGUNTA</button></div>
+        </form>:interpretation?<div className={styles.questionDisplay} aria-live="polite"><p>{interpretation.question}</p><small>{tarot?.generation==="failed"?"Não consegui interpretar esta carta. Tente novamente.":interpretation.status==="waiting"?"AGUARDANDO A CARTA":interpretation.status==="generating"?"INTERPRETANDO A CARTA":"INTERPRETAÇÃO"}</small></div>:null}
+        {questionError?<p role="alert">{questionError}</p>:null}
+        <div className={styles.questionActions}>
+          {interpretation&&tarot?.generation==="failed"?<button disabled={commandPending} onClick={()=>void interpretationCommand("analyze")}>TENTAR NOVAMENTE</button>:null}
+          {interpretation?<button disabled={commandPending} onClick={()=>void interpretationCommand("interpretation-cancel")}>CANCELAR</button>:null}
+        </div>
+      </div>:null}
       <div className={styles.speechText} ref={textRef} aria-live="off">{response?.text?response.text.slice(0,response.status==="complete"?response.text.length:chars):<span className={styles.placeholder}>_</span>}{response?.status!=="complete"?<span className={styles.cursor}>▌</span>:null}</div>
     <TarotTextEffects h={tarot?.hallucination} time={hallTime} text={response?.text?.slice(0,chars)||""} present={hallPresent}/>
     </section>

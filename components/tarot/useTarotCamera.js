@@ -89,6 +89,7 @@ export default function useTarotCamera({ sessionId, tarot, videoRef }) {
     }
     async function selectCards(matches){
       const current=latest.current,phase=current?.floor?.phase||"idle";
+      if(current?.interpretation?.status==="input")return;
       if(!["idle","await-reveal","interpreting"].includes(phase))return;
       if(phase==="await-reveal"&&matches.length!==1)return;
       const matched=matches.map((match)=>catalog.current.find((c)=>c.id===match.id)).filter(Boolean);
@@ -96,7 +97,7 @@ export default function useTarotCamera({ sessionId, tarot, videoRef }) {
       const key=readingSignature(matched),force=current?.camera.captureSequence>selection.current.captureSequence;
       const returning=gate.isReturning(key),repeat=returning&&current?.presentation?.repeatOnReturn;
       const same=readingSignature(readingCards(current))===key&&["camera","manual-camera"].includes(current.currentCard?.source);
-      const unstarted=current?.presentation?.autoAnalyze!==false&&!current?.response&&current?.generation==="idle";
+      const unstarted=(current?.presentation?.autoAnalyze!==false||current?.interpretation?.status==="waiting")&&!current?.response&&current?.generation==="idle";
       if(!current?.active||current.suspended||current.autonomy.status!=="off"||selection.current.locked||(!force&&gate.wasSubmittedRecently(key,Date.now())))return;
       if(phase==="interpreting"&&!same)return;
       if(current.response?.interruptedBy==="tracking-lost"&&matched.length<readingCards(current).length&&matched.some((m)=>readingCards(current).some((c)=>c.id===m.id))&&!returning)return;
@@ -117,7 +118,7 @@ export default function useTarotCamera({ sessionId, tarot, videoRef }) {
       try{
         await post("select",{cardIds:matched.map((c)=>c.id),source:"camera",newVisit:Boolean(repeat||phase==="await-reveal"),inliers:matches[0].inliers,matches:matches[0].matches});
         selection.current.captureSequence=current.camera.captureSequence;gate.submitted(key,Date.now());lossReported="";
-        if(current.presentation?.autoAnalyze!==false)void post("analyze",{requestId:crypto.randomUUID(),cardId:matched[0].id,automatic:true}).catch((error)=>{if(!closed)void post("camera-status",{status:"live",error:error.message}).catch(()=>{});});
+        if(current.presentation?.autoAnalyze!==false||current.interpretation?.status==="waiting")void post("analyze",{requestId:crypto.randomUUID(),cardId:matched[0].id,automatic:true}).catch((error)=>{if(!closed)void post("camera-status",{status:"live",error:error.message}).catch(()=>{});});
       }catch(error){void post("camera-status",{status:"live",error:error.message}).catch(()=>{});}finally{selection.current.locked=false;}
     }
     worker = new Worker("/tarot-tracker.worker.js");

@@ -18,7 +18,7 @@ Install with `npm install` and configure `OPENAI_API_KEY` only for live model ca
 ## Implemented
 
 - Public chatbot `/`; `/operator` owns typing/font, personality/model and a link to training controls. Public conversation uses Principal’s right-menu launcher; technical commands stay in its OP drawer. Timing/font share `showState.robotSound`/SSE with Videomapping. Local fonts: Modern DOS 8×16 (default, CC0), 9×16, VT323 and Courier. Live Operator: `OPERATOR_PUBLICO.md`.
-- Tarô: public `/treinamento`, private `/treinamento/controle`; shared SSE/history, isolated Principal speech. Local vision, visible-back selection; CARTA-ESTRANHA clips effects to cards, disables faces/text: `docs/TAROT_TREINAMENTO.md`, `docs/TAROT_ALUCINACAO.md`.
+- Tarô: `/treinamento`, private `/treinamento/controle`; SSE/history, isolated speech. **INTERPRETAR**: question for one card, then free reading. Local vision/backs; CARTA-ESTRANHA clips effects, disables faces/text: `docs/TAROT_TREINAMENTO.md`, `docs/TAROT_ALUCINACAO.md`.
 - Tarô memory: cached BM25, bounded excerpts, theme/document controls, linked interviews and private previews: `docs/TAROT_REFERENCIAS.md`. Operator/Tarô tuning now persists independently of recovery: `docs/PREFERENCIAS_OPERADOR.md`.
 - Operator offers explicit resume/new choices after an interrupted snapshot. `MODO EMERGÊNCIA` in the technical terminal persists, blocks external requests, pauses automation/media, and retains manual controls and `STOP ALL`. `/api/health` separates core from optional services.
 - Principal and Videomapping are wrapped by a public error boundary; render failures and internal 404s show only `SINAL INTERROMPIDO`, while the real error is retained in private reliability diagnostics.

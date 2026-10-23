@@ -50,6 +50,39 @@ try{
   assert(!("readCards" in publicTarotSnapshot(x.state)));x.c.cancel();
   checks.push("joint reading; three concise paragraphs; complete sentences/questions at the word target, no fabricated full stops or labels; offsets; old clipped readings cannot replay; progressive IDs; immediate loss interruption; exact-cursor resume only for the full pair");
 
+  const q=create();
+  q.c.control("select",{card:a,source:"camera",owner:"camera"});
+  const interrupted=q.c.begin({requestId:"before-question"});
+  q.c.control("interpretation-start");assert(interrupted.controller.signal.aborted);
+  assert.equal(q.state.currentCard,null);assert.equal(q.state.interpretation.status,"input");
+  q.c.control("select",{card:a,source:"camera",owner:"camera"});assert.equal(q.state.currentCard,null);
+  assert.throws(()=>q.c.begin({requestId:"during-input"}),/AWAIT_QUESTION_CARD/);
+  assert.throws(()=>q.c.control("interpretation-question",{question:"  "}),/QUESTION_EMPTY/);
+  q.c.control("interpretation-question",{question:"  Como atravessar esta mudança?  "});
+  assert.equal(publicTarotSnapshot(q.state).interpretation.question,"Como atravessar esta mudança?");
+  assert.throws(()=>q.c.begin({requestId:"before-card"}),/AWAIT_QUESTION_CARD/);
+  q.c.control("select",{card:a,source:"camera",owner:"camera"});
+  const answer=q.c.begin({requestId:"question-answer",automatic:true});
+  assert.equal(answer.question,"Como atravessar esta mudança?");
+  q.c.finish(answer,narrative([a]),a.elements);assert.equal(q.state.interpretation.status,"presenting");
+  assert.equal(q.messages.at(-1).tarot.question,answer.question);
+  q.c.control("tracking-lost",{owner:"camera",signature:readingSignature([a]),responseId:q.state.response.id,chars:10});
+  assert.equal(q.state.interpretation.question,answer.question);
+  q.c.control("tracking-resumed",{owner:"camera",signature:readingSignature([a])});ack(q);
+  assert.equal(q.state.interpretation,null);assert.equal(q.state.autonomy.status,"off");
+  q.c.control("select",{card:b,source:"camera",owner:"camera"});
+  const normal=q.c.begin({requestId:"normal-after-question",automatic:true});assert.equal(normal.question,"");q.c.fail(normal,"OFFLINE");
+  q.c.control("interpretation-start");q.c.control("interpretation-question",{question:"Outra pergunta?"});
+  q.c.control("select",{card:a,source:"camera",owner:"camera"});
+  const failed=q.c.begin({requestId:"failed-question"});q.c.fail(failed,"OFFLINE");
+  assert.equal(q.state.interpretation.status,"waiting");
+  const retry=q.c.begin({requestId:"retry-question"});assert.equal(retry.question,"Outra pergunta?");
+  q.c.control("select",{card:b,source:"camera",owner:"camera"});assert(retry.controller.signal.aborted);assert.equal(q.state.interpretation,null);
+  q.c.control("interpretation-start");assert.equal(restoredTarotState(q.state).interpretation,null);
+  q.c.control("interpretation-cancel");assert.equal(q.state.interpretation,null);
+  q.c.control("interpretation-start");q.c.control("end");assert.equal(q.state.interpretation,null);q.c.cancel();
+  checks.push("one-shot question: pauses capture/generation during input, waits for a fresh detection, binds question to one reading, survives tracking loss and retry, clears on completion/card change/cancel/end/recovery; next card is question-free");
+
   const y=create();
   for(let i=0;i<6;i++){const a=card(i);y.c.control("select",{card:a,source:"camera",owner:"camera"});const job=y.c.begin({requestId:`read-${i}`});y.c.finish(job,narrative([a]),a.elements);if(i===5)assert.equal(y.state.floor.phase,"idle");ack(y);if(i<5)assert.equal(y.state.floor.phase,"idle");}
   assert.equal(y.state.floor.phase,"inviting");assert.match(y.state.response.text,/arcanos maiores/);ack(y);assert.equal(y.state.floor.phase,"scanning");
