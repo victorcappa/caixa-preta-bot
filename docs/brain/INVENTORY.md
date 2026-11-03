@@ -38,6 +38,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:openai:failures` -> `node --no-warnings scripts/openai-failure-audit.js`
 - `npm run test:participant-fallback` -> `node --no-warnings scripts/participant-fallback-test.js`
 - `npm run test:openai:live` -> `node --no-warnings scripts/openai-live-audit.js --live`
+- `npm run test:public-composition:browser` -> `node --no-warnings scripts/public-composition-browser-test.js`
 - `npm run test:operator-public` -> `node --no-warnings scripts/operator-public-test.js`
 - `npm run test:operator-public:browser` -> `node --no-warnings scripts/operator-public-browser-test.js`
 - `npm run test:operator-public:live` -> `node --no-warnings scripts/operator-public-live-test.js --live`
@@ -174,9 +175,11 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/PreparedSceneController.js`
 - `components/ProjectionOperatorSurface.js`
 - `components/ProjectionWindowClient.js`
+- `components/PublicCompositionControls.js`
 - `components/PublicErrorBoundary.js`
 - `components/PublicErrorProbe.js`
 - `components/PublicGlitchLayer.js`
+- `components/PublicModule.js`
 - `components/PublicOperatorControls.js`
 - `components/PublicOperatorLayout.js`
 - `components/PublicOperatorPanel.js`
@@ -304,6 +307,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/participant-fallback-test.js`
 - `scripts/performance-system-test.js`
 - `scripts/play-unlock-browser-test.js`
+- `scripts/public-composition-browser-test.js`
 - `scripts/public-realtime-browser-test.js`
 - `scripts/research-director-test.js`
 - `scripts/robot-sound-browser-test.js`

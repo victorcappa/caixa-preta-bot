@@ -7,6 +7,7 @@ import {tarotCommand} from "@/lib/tarot/client";
 import {activeElementIds,projectPoint,regionPoints,visibleElementIds} from "@/lib/tarot/geometry";
 import {center,nearby,readingCards,readingSignature} from "@/lib/tarot/floor";
 import {DEFAULT_TAROT_VISUAL} from "@/lib/tarot/state";
+import PublicModule from "@/components/PublicModule";
 import ProjectionWindowClient from "@/components/ProjectionWindowClient";
 import useTarotCamera from "./useTarotCamera";
 import TarotCameraFocus from "./TarotCameraFocus";
@@ -101,9 +102,9 @@ export default function TarotTraining(){
   const view=selectedGeometry||geometries[0];
   return <main className={styles.screen} data-bot-font={state.robotSound?.displayFont||"modern-dos-8x16"} data-response-id={response?.id||""} style={{"--tarot-text-size":`${visual.textSize}px`}}>
     <ProjectionWindowClient/>
-    <header className={styles.header}><h1>TARÔ <span>/</span> TREINAMENTO</h1><span className={styles.readingTitle}>{floorStage?phase==="complete"?"PRÓXIMO TREINAMENTO":phase==="await-reveal"?"MOSTRE A CARTA ESCOLHIDA":"AS CARTAS NO CHÃO":cards.length===2?"LEITURA EM CONJUNTO":""}</span><button className={styles.interpretButton} disabled={!tarot?.active||tarot?.suspended||phase!=="idle"||Boolean(interpretation)||commandPending} onClick={()=>void interpretationCommand("interpretation-start")}>INTERPRETAR</button></header>
+    <PublicModule as="header" id="tarot-header" className={styles.header}><h1>TARÔ <span>/</span> TREINAMENTO</h1><span className={styles.readingTitle}>{floorStage?phase==="complete"?"PRÓXIMO TREINAMENTO":phase==="await-reveal"?"MOSTRE A CARTA ESCOLHIDA":"AS CARTAS NO CHÃO":cards.length===2?"LEITURA EM CONJUNTO":""}</span><button className={styles.interpretButton} disabled={!tarot?.active||tarot?.suspended||phase!=="idle"||Boolean(interpretation)||commandPending} onClick={()=>void interpretationCommand("interpretation-start")}>INTERPRETAR</button></PublicModule>
     <section className={styles.body}>
-      <div className={styles.vision}>
+      <PublicModule id="tarot-vision" className={styles.vision}>
         <div className={styles.visionHeader}><span>{digital?"CARTA ESCOLHIDA PELO BOT":floorStage?"CARTAS VISÍVEIS · VERSOS":""}</span><span>{!floorStage?cards.map((c)=>`${String(c.number).padStart(2,"0")} / ${c.name.toUpperCase()}`).join(" + "):""}</span></div>
         <div className={styles.imageStage}>
           <video ref={videoRef} autoPlay muted playsInline className={digital?styles.hiddenVideo:styles.video} aria-label="Imagem das cartas" style={{filter:focus.length?`blur(${visual.blur}px) brightness(${1-visual.dimming}) saturate(.82)`:"none",transition:visual.animations?"filter 260ms ease":"none"}}/>
@@ -118,8 +119,8 @@ export default function TarotTraining(){
           <div className={styles.corners}/>
         </div>
         <footer className={styles.visionFooter}><span>{floorStage?phase==="scanning"?`${frame?.cards?.length||0} VERSOS RECONHECIDOS`:phase==="await-reveal"?"AGUARDANDO A FRENTE":"":geometries.length?"":"APRESENTE UMA CARTA"}</span><span>TARÔ DA HARMONIA · 22 ARCANOS</span></footer>
-      </div>
-      <aside className={styles.elements}><h2>{floorStage?"ESCOLHA DO SISTEMA":"ELEMENTOS"}</h2><div className={styles.elementList}>
+      </PublicModule>
+      <PublicModule as="aside" id="tarot-elements" className={styles.elements}><h2>{floorStage?"ESCOLHA DO SISTEMA":"ELEMENTOS"}</h2><div className={styles.elementList}>
         {elements.length?elements.map((e)=>{
           const source=cards.find((c)=>c.id===e.cardId)||card;
           return <article key={e.id} data-element-id={e.id} data-active={activeIds.includes(e.id)}>
@@ -127,9 +128,9 @@ export default function TarotTraining(){
             <div><h3>{e.name}</h3><p>{e.description}</p></div>
           </article>;
         }):<div className={styles.empty}><p>{floorStage?phase==="scanning"?"Mantenha algumas cartas de costas visíveis e estáveis. Vou escolher entre as que reconhecer.":selected&&!selected.removed?`A carta escolhida está destacada na imagem.`:phase==="await-reveal"?"Mostre a frente da carta retirada.":"":tarot?.generation==="pending"?"":"Os elementos surgem conforme a fala avança."}</p></div>}
-      </div><footer>REFERÊNCIAS LOCAIS <span>●</span></footer></aside>
+      </div><footer>REFERÊNCIAS LOCAIS <span>●</span></footer></PublicModule>
     </section>
-    <section className={styles.speech} style={{position:"relative"}} data-question-mode={Boolean(interpretation||questionError)} aria-label="Fala do bot"><div className={styles.speechHeader}><h2>FALA DO BOT</h2><span>{response?.origin==="catalog"?"CONTEÚDO CADASTRADO":response?.interruptedBy==="tracking-lost"?"AGUARDANDO A CARTA":tarot?.generation==="pending"?"":""}</span></div>
+    <PublicModule as="section" id="tarot-speech" className={styles.speech} data-question-mode={Boolean(interpretation||questionError)} aria-label="Fala do bot"><div className={styles.speechHeader}><h2>{!floorStage && cards.length ? cards.map(c=>c.name).join(" + ") : "INTERPRETAÇÃO"}</h2><span>{response?.origin==="catalog"?"CONTEÚDO CADASTRADO":response?.interruptedBy==="tracking-lost"?"AGUARDANDO A CARTA":tarot?.generation==="pending"?"":""}</span></div>
       {interpretation||questionError?<div className={styles.questionPanel}>
         {interpretation?.status==="input"?<form className={styles.questionForm} onSubmit={event=>{event.preventDefault();if(question.trim())void interpretationCommand("interpretation-question",{question});}}>
           <label htmlFor="tarot-question">QUAL É A SUA PERGUNTA?</label>
@@ -143,7 +144,7 @@ export default function TarotTraining(){
       </div>:null}
       <div className={styles.speechText} ref={textRef} aria-live="off">{response?.text?response.text.slice(0,response.status==="complete"?response.text.length:chars):<span className={styles.placeholder}>_</span>}{response?.status!=="complete"?<span className={styles.cursor}>▌</span>:null}</div>
     <TarotTextEffects h={tarot?.hallucination} time={hallTime} text={response?.text?.slice(0,chars)||""} present={hallPresent}/>
-    </section>
+    </PublicModule>
     {state.displayBlackout?.targets?.chatbot?<div className={styles.blackout}/>:null}
   </main>;
 }

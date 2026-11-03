@@ -657,9 +657,9 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             </p>
             <div className={`${styles.controlGrid} ${styles.suitcaseControlGrid}`}>
               <button disabled={pending} onClick={() => sendOperatorCommand("/mala start", "MALA ERROR")} type="button">INICIAR JOGO DAS MALAS</button>
-              <button disabled={pending} onClick={() => sendOperatorCommand("/mala 1", "MALA ERROR")} type="button">MALA 1 / NOME</button>
-              <button disabled={pending} onClick={() => sendOperatorCommand("/mala 2", "MALA ERROR")} type="button">MALA 2 / INSTAGRAM</button>
-              <button disabled={pending} onClick={() => sendOperatorCommand("/mala 3", "MALA ERROR")} type="button">MALA 3 / MINI GAME</button>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala 1", "MALA ERROR")} type="button">MALA ESQUERDA / NOME</button>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala 2", "MALA ERROR")} type="button">MALA CENTRO / INSTAGRAM</button>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala 3", "MALA ERROR")} type="button">MALA DIREITA / MINI GAME</button>
               <button disabled={pending} onClick={() => sendOperatorCommand("/mala next", "MALA ERROR")} type="button">PRÓXIMA PESSOA</button>
               <button disabled={pending} onClick={() => sendOperatorCommand("/mala win", "MALA ERROR")} type="button">FORÇAR VITÓRIA</button>
               <button disabled={pending} onClick={() => sendOperatorCommand("/mala lose", "MALA ERROR")} type="button">FORÇAR DERROTA</button>

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {createTarotController} from "../lib/tarot/controller.js";
-import {createTarotState,normalizeNarrative,publicTarotSnapshot,normalizeTarotVisual,restoredTarotState} from "../lib/tarot/state.js";
+import {createTarotState,normalizeNarrative,tarotWordLimit,publicTarotSnapshot,normalizeTarotVisual,restoredTarotState} from "../lib/tarot/state.js";
 import {readingSignature,normalizeFloorLayout,removalInstruction} from "../lib/tarot/floor.js";
 import {visibleElementIds} from "../lib/tarot/geometry.js";
 const checks=[];
@@ -28,6 +28,10 @@ try{
   ack(x);assert.deepEqual(x.state.readCards,[0,13]);
   const cancelled=x.c.begin({requestId:"manual-stop-pending",automatic:true});x.c.control("interrupt");assert(cancelled.controller.signal.aborted);assert(x.state.suspended);
   assert.throws(()=>x.c.begin({requestId:"auto-after-interrupt",automatic:true}),/TAROT_PAUSED/);x.c.control("resume-speech");assert(!x.state.suspended);
+  assert.equal(tarotWordLimit({maxWords:150},{verbosity:100}),60,"old preferences cannot bypass concision");
+  assert.equal(tarotWordLimit({maxWords:60},{verbosity:0}),30);
+  assert.equal(tarotWordLimit({maxWords:60},{verbosity:30}),39);
+  assert.throws(()=>normalizeNarrative(Object.fromEntries(["observation","interpretation","association"].map(key=>[key,[{text:"Uma frase " + "extensa ".repeat(30) + "termina.",elementIds:[]}]])),[],{maxWords:60}),/TAROT_NARRATIVE_TOO_LONG/);
   const long=normalizeNarrative(Object.fromEntries(["observation","interpretation","association"].map((k)=>[k,[{text:Array(3).fill("Uma frase completa mantém a ideia e termina com pontuação.").join(" "),elementIds:[]}]])),[],{maxWords:60});
   assert.equal(long.text.split("\n\n").length,3);assert(long.text.split(/\s+/).length<=60);
   const association="Cena teatral: um transporte que promete chegada enquanto recicla a ideia de progresso — tecnologia/arquivo que move corpos e delega controle. Pergunta curta para a plateia: quem aqui pede para chegar sem escolher o caminho?";
@@ -103,7 +107,7 @@ try{
     const rest=normalizeFloorLayout(subset).filter((_,i)=>i!==z.state.floor.selected.slot-1);zp(rest);now+=400;zp(rest);now+=400;zp(rest);assert.equal(z.state.floor.phase,"await-reveal",`${count} backs removal`);z.c.cancel();
   }
   checks.push("six completed distinct cards; 1, 4, 21 and 22 verified backs accepted; stable geometric selection; row/right-to-left instruction; whole-scene loss cannot confirm removal; selected-card reveal/interpretation then authored closing");
-  const v=normalizeTarotVisual({textSize:500,matrixStyle:"orbits",matrixDensity:500,matrixSymbols:"☉ ☽ ∞",matrixColor:"#12ab34"});assert.equal(v.textSize,64);assert.equal(v.matrixDensity,90);assert.equal(v.matrixStyle,"orbits");assert.equal(v.matrixColor,"#12ab34");
+  const v=normalizeTarotVisual({textSize:500,matrixStyle:"orbits",matrixDensity:500,matrixSymbols:"☉ ☽ ∞",matrixColor:"#12ab34"});assert.equal(v.textSize,96);assert.equal(v.matrixDensity,90);assert.equal(v.matrixStyle,"orbits");assert.equal(v.matrixColor,"#12ab34");
   checks.push("larger text and bounded editable Matrix styles, symbols, color, density and movement");
   console.log(JSON.stringify({ok:true,checks,physicalCameraValidated:false},null,2));
 }finally{Date.now=realNow;}

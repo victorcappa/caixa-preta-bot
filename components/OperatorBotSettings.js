@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { subscribePublicRealtime } from "@/lib/publicRealtime";
+import PublicCompositionControls from "./PublicCompositionControls";
 import PublicOperatorControls from "./PublicOperatorControls";
 import RobotSoundControls from "./RobotSoundControls";
 import OperatorPreferencesStatus from "./OperatorPreferencesStatus";
@@ -40,6 +41,7 @@ export default function OperatorBotSettings() {
         <OperatorPreferencesStatus />
         <RobotSoundControls settings={state.robotSound} typingOnly />
         <PublicOperatorControls parametersOnly />
+        <PublicCompositionControls />
         <section className={styles.model}><Link href="/treinamento/controle">TREINAMENTO · ABRIR CONTROLE DO TARÔ →</Link></section>
         <section className={styles.model} aria-label="Modelo do bot">
           <label htmlFor="bot-model">MODELO DO BOT</label>

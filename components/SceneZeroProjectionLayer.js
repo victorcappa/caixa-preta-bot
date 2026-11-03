@@ -1,5 +1,6 @@
 "use client";
 
+import { suitcaseLabel } from "@/lib/suitcaseLabels";
 import { useEffect, useRef, useState } from "react";
 import { PLAY_UNLOCK_CONFIG, PLAY_UNLOCK_STATES, playUnlockBootLines, playUnlockSequenceLines } from "@/data/scene-zero-unlock";
 import {
@@ -228,7 +229,7 @@ function PlayUnlockProjection({ unlock, now, pitchScale = 1, soundStyle = "robot
       <section className={styles.biosOverlay} aria-label="BIOS da Cena 0" aria-live="polite">
         <div className={styles.biosTerminal}>
           <div className={styles.biosLines}>
-            {lines.map((line, index) => <p key={`${index}-${line}`}>{line || "\u00a0"}</p>)}
+            {lines.slice(-18).map((line, index) => <p key={`${index}-${line}`}>{line || "\u00a0"}</p>)}
           </div>
           <UnlockProgressBar key="bios-progress" label="CARREGAMENTO DA BIOS" progress={unlock.bootProgress} />
           {unlock.bootPaused ? <p className={styles.biosPaused}>BIOS PAUSADA PELO OPERADOR</p> : null}
@@ -697,14 +698,14 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup, bo
         </div>
       ) : null}
       {showSuitcaseSelection ? (
-        <div className={styles.suitcaseCueOverlay} key={sceneZero.suitcaseGame.suitcaseSelectionSequence} aria-label={`Mala indicada: ${sceneZero.suitcaseGame.currentSuitcase}`} aria-live="assertive">
+        <div className={styles.suitcaseCueOverlay} key={sceneZero.suitcaseGame.suitcaseSelectionSequence} aria-label={`Mala indicada: ${suitcaseLabel(sceneZero.suitcaseGame.currentSuitcase)}`} aria-live="assertive">
           <span>{manualSuitcaseCue ? suitcaseCuePhase === "open" ? "ABRA A MALA" : "" : suitcaseCueFrame.phase === "reveal" ? "ABRA A MALA" : ""}</span>
-          <strong key={`${suitcaseCueFrame.phase}-${suitcaseCueFrame.number}`}>{suitcaseCueFrame.number}</strong>
+          <strong key={`${suitcaseCueFrame.phase}-${suitcaseCueFrame.number}`}>{suitcaseLabel(suitcaseCueFrame.number)}</strong>
         </div>
       ) : null}
       {showPhysicalChallenge ? (
-        <section className={`${styles.physicalChallengeOverlay} ${physicalUrgent ? styles.physicalChallengeUrgent : ""}`} aria-label="Desafio das bexigas da Mala 2" aria-live="assertive">
-          <header><span>MALA 2</span><b>BEXIGAS E CHAVE</b></header>
+        <section className={`${styles.physicalChallengeOverlay} ${physicalUrgent ? styles.physicalChallengeUrgent : ""}`} aria-label="Desafio das bexigas da Mala Centro" aria-live="assertive">
+          <header><span>MALA CENTRO</span><b>BEXIGAS E CHAVE</b></header>
           <div className={styles.physicalChallengeBody}>
             <div className={styles.physicalChallengeSteps}>
               <article data-active="true">

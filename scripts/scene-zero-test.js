@@ -314,13 +314,15 @@ async function main() {
   assert.equal(suitcaseGame.shouldShowSceneZeroSuitcaseCue({ ...forcaCue, cuePhase: "complete" }, cueNow + 10000), false);
   assert.equal(suitcaseGame.shouldShowSceneZeroSuitcaseCue({ ...forcaCue, cuePhase: "automatic" }, cueNow + 4999), true);
   assert.equal(suitcaseGame.shouldShowSceneZeroSuitcaseCue({ ...forcaCue, cuePhase: "automatic" }, cueNow + 5000), false);
-  assert.equal(suitcaseGame.buildSuitcaseSelectionCue(2), "2");
+  assert.equal(suitcaseGame.buildSuitcaseSelectionCue(2), "Centro");
+  assert.equal(suitcaseGame.buildSuitcaseSelectionCue(1), "Esquerda");
+  assert.equal(suitcaseGame.buildSuitcaseSelectionCue(3), "Direita");
   assert.equal(suitcaseGame.buildSuitcaseSelectionCue(4), "");
   assert.equal(suitcaseGame.SCENE_ZERO_SUITCASE_CUE_DURATION_MS, 5000);
   assert.deepEqual(suitcaseGame.sceneZeroSuitcaseBriefingSteps(2), [
     {
       id: "game-explanation",
-      text: "O jogo é simples: eu indico uma mala. Quando o número aparecer, vá até ela, abra a mala e espere minhas instruções antes de começar. Vou escolher uma mala agora."
+      text: "O jogo é simples: eu indico uma mala. Quando a posição aparecer, vá até ela, abra a mala e espere minhas instruções antes de começar. Vou escolher uma mala agora."
     },
     {
       id: "lighting-cue",
@@ -358,7 +360,7 @@ async function main() {
   assert.match(sceneZeroControllerSource, /\["challenge_result", "challenge_complete"\]\.includes\(suitcaseChoice\.status\)[\s\S]*suitcase-predraw-continue/, "o modo manual deve sempre conseguir seguir da vitória da forca para o sorteio");
   assert.match(sceneZeroControllerSource, /emergenceWaiting[\s\S]*suitcase-emergence-continue/, "o lapso entre malas deve ter avanço manual explícito");
   assert.match(sceneZeroControllerSource, /gincanaRetryWaiting[\s\S]*gincana-retry-start[\s\S]*hangmanRetryWaiting[\s\S]*hangman-retry-start/, "as duas repetições devem permanecer avançáveis no modo manual");
-  assert.match(sceneZeroControllerSource, /SORTEAR MALA 2[\s\S]*SORTEAR MALA 3[\s\S]*SORTEAR MALA 1/, "o modo manual deve expor um sorteio de recuperação para cada mala");
+  assert.match(sceneZeroControllerSource, /SORTEAR MALA CENTRO[\s\S]*SORTEAR MALA DIREITA[\s\S]*SORTEAR MALA ESQUERDA/, "o modo manual deve expor um sorteio de recuperação para cada mala");
   assert.match(sceneZeroControllerSource, /suitcaseAdvanceToken[\s\S]*suitcaseAdvanceLockRef[\s\S]*runSuitcaseAdvance/, "a seta deve permanecer travada até o estado da etapa mudar");
   assert.match(sceneZeroRouteSource, /action === "suitcase-manual-draw"[\s\S]*manualSuitcaseDrawInFlight[\s\S]*activateSuitcase\(suitcaseNumber[\s\S]*force: true/, "o sorteio manual deve serializar a recuperação e forçar somente a mala escolhida");
   assert.match(showStateSource, /action === "suitcase-manual-recover"[\s\S]*clearSceneZeroGincanaTimer\(\)[\s\S]*clearSceneZeroHangmanTimer\(\)[\s\S]*openedSuitcases/, "a recuperação deve cancelar a etapa atual sem apagar as malas já realizadas");

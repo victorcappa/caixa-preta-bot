@@ -1,5 +1,6 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- Raw reference pixels are used by the local vision pipeline. */
+import PublicCompositionControls from "@/components/PublicCompositionControls";
 import { useCallback, useEffect, useState, useRef } from "react";
 import { prepareDeck, tarotCommand } from "@/lib/tarot/client";
 import {TarotHallucinationControls,TarotFacePreparation,TarotPreview} from "./TarotHallucinationControls";
@@ -98,7 +99,7 @@ export default function TarotControls() {
           <label className={styles.check}><input type="checkbox" checked={Boolean(tarot.config.repeatOnReturn)} onChange={(e)=>command("config",{config:{repeatOnReturn:e.target.checked}})} />Repetir análise quando uma carta retorna (desmarcado: retomar contexto)</label>
           <label className={styles.check}><input type="checkbox" checked={tarot.config.glareProtection!==false} onChange={(e)=>command("config",{config:{glareProtection:e.target.checked}})}/>Proteção contra reflexos e contraste local</label>
           <p className={styles.hint}>Até duas cartas recebem uma interpretação conjunta. Ao perder qualquer carta da leitura, a fala para; reapresentá-la retoma do ponto interrompido. Reflexos que apagam a impressão exigem mudar a inclinação ou a luz.</p>
-          <label>Palavras por reflexão<input type="number" min="45" max="150" defaultValue={tarot.config.maxWords||90} onBlur={(e)=>command("config",{config:{maxWords:Number(e.target.value)}})}/></label>
+          <label>Palavras por reflexão<input type="number" min="30" max="60" defaultValue={Math.min(60,tarot.config.maxWords||60)} onBlur={(e)=>command("config",{config:{maxWords:Number(e.target.value)}})}/></label>
           <label>Estabilidade mínima (ms)<input type="number" min="200" max="3000" defaultValue={tarot.config.stabilityMs||450} onBlur={(e)=>command("config",{config:{stabilityMs:Number(e.target.value)}})}/></label>
           <p>CÂMERA: {tarot.camera.status} · CARTA: {tarot.currentCard?.name||"NENHUMA"}{tarot.currentCard?.source?` · ${tarot.currentCard.source}`:""}</p>
           <label>Carta / correção manual<select value={selected} onChange={(e)=>{setSelected(Number(e.target.value));setEditor(false);}}>{cards.map((card)=><option key={card.id} value={card.id}>{card.number} · {card.name}{!card.imageUrl?" · SEM IMAGEM":""}</option>)}</select></label>
@@ -144,10 +145,11 @@ export default function TarotControls() {
           <button disabled={!context.text||!context.date||(context.verification==="verified"&&!context.checkedAt)||!/^https?:\/\//.test(context.url)} onClick={async()=>{if(await command("contexts",{contexts:[...tarot.contexts,{...context,enabled:true}]}))setContext({text:"",date:"",url:"",checkedAt:"",verification:"unverified"});}}>ADICIONAR CONTEXTO</button>
           {tarot.contexts.map((c,i)=><label className={styles.check} key={`${i}:${c.url}`}><input type="checkbox" checked={c.enabled} onChange={(e)=>command("contexts",{contexts:tarot.contexts.map((item,n)=>n===i?{...item,enabled:e.target.checked}:item)})}/><span>{c.date} · consulta {c.checkedAt||"não registrada"} · {c.verification||"unverified"} · {c.text} <a href={c.url} target="_blank" rel="noreferrer">FONTE ↗</a></span></label>)}
         </div></details>
+        <div hidden={section!=="visual"}><PublicCompositionControls /></div>
         <details open hidden={section!=="visual"}><summary>VISUAL</summary><div className={styles.section}>
           <p className={styles.hint}>A carta mantém a cor e a nitidez. Os efeitos ficam fora de seu quadrilátero e acompanham a geometria real.</p>
           {[["blur","Desfoque do fundo",18,1],["dimming","Escurecimento do fundo",.85,.01],["green","Tonalidade verde",.6,.01],["matrix","Efeito Matrix",.5,.01],["outline","Contorno da carta",1,.01]].map(([key,label,max,step])=><RangeSetting key={key} label={label} value={tarot.visual?.[key]??DEFAULT_TAROT_VISUAL[key]} max={max} step={step} onCommit={(value)=>command("visual",{visual:{[key]:value}})}/>) }
-          <RangeSetting label="Tamanho do texto do bot" value={tarot.visual?.textSize||38} min={24} max={64} step={1} onCommit={(value)=>command("visual",{visual:{textSize:value}})}/>
+          <RangeSetting label="Tamanho do texto do bot" value={tarot.visual?.textSize||48} min={24} max={96} step={1} onCommit={(value)=>command("visual",{visual:{textSize:value}})}/>
           <label>Formato Matrix<select aria-label="Formato Matrix" value={tarot.visual?.matrixStyle||"rain"} onChange={(e)=>command("visual",{visual:{matrixStyle:e.target.value}})}><option value="rain">Chuva de códigos</option><option value="constellation">Constelação de signos</option><option value="orbits">Órbitas e conexões</option><option value="runes">Círculos e runas</option></select></label>
           {[["matrixDensity","Quantidade de símbolos",4,90,1],["matrixSpeed","Velocidade Matrix",.1,4,.1],["matrixSize","Tamanho dos símbolos",8,40,1],["matrixGlow","Brilho dos símbolos",0,25,1],["matrixTrails","Persistência dos rastros",0,.97,.01],["matrixScanlines","Linhas de varredura",0,.6,.01],["matrixPulse","Pulsação",0,1,.05],["matrixRotation","Rotação do campo",0,180,1]].map(([key,label,min,max,step])=><RangeSetting key={key} label={label} value={tarot.visual?.[key]??DEFAULT_TAROT_VISUAL[key]} min={min} max={max} step={step} onCommit={(value)=>command("visual",{visual:{[key]:value}})}/>)}
           <label>Alfabeto de símbolos<textarea aria-label="Alfabeto de símbolos" key={tarot.visual?.matrixSymbols} defaultValue={tarot.visual?.matrixSymbols||DEFAULT_TAROT_VISUAL.matrixSymbols} maxLength={180} onBlur={(e)=>command("visual",{visual:{matrixSymbols:e.target.value}})}/></label>

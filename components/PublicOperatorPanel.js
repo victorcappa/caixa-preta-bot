@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { PERSONALITY_PARAMETERS, createOperatorPublicState } from "@/lib/operatorPublic";
 import styles from "./PublicOperator.module.css";
+import PublicModule from "./PublicModule";
 import OperatorTypedReply from "./OperatorTypedReply";
 
 export default function PublicOperatorPanel({ channel = createOperatorPublicState(), privateControls = null, connection = "connecting", publicSurface = false, parametersOnly = false, typingSettings, initialMessageIds }) {
@@ -13,7 +14,7 @@ export default function PublicOperatorPanel({ channel = createOperatorPublicStat
   }, []);
   useEffect(followHistory, [channel.messages, followHistory]);
   const parameters = (
-    <section className={styles.personality} aria-label="Parâmetros de personalidade">
+    <PublicModule as="section" id="operator-personality" disabled={!publicSurface} className={styles.personality} aria-label="Parâmetros de personalidade">
       <h3>{parametersOnly ? "PERSONALIDADE DO BOT" : "PERSONALITY PARAMETERS"}</h3>
       {PERSONALITY_PARAMETERS.map(({ id, label }) => (
         <div className={styles.parameter} key={id}>
@@ -28,7 +29,7 @@ export default function PublicOperatorPanel({ channel = createOperatorPublicStat
           </div>
         </div>
       ))}
-    </section>
+    </PublicModule>
   );
   if (parametersOnly) return parameters;
   return (
@@ -40,7 +41,7 @@ export default function PublicOperatorPanel({ channel = createOperatorPublicStat
       <div className={styles.activity} aria-live="polite">
         {channel.status === "generating" ? "MODEL ACTIVE · GERANDO" : "MODEL READY · CONVERSA PARALELA"}
       </div>
-      <div className={styles.history} ref={history} role="log" aria-label="Histórico da conversa" aria-live="off"
+      <PublicModule id="operator-history" disabled={!publicSurface} className={styles.history} ref={history} role="log" aria-label="Histórico da conversa" aria-live="off"
         onScroll={() => { const el = history.current; follow.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60; }}>
         {channel.messages.map((message) => (
           <article key={message.id} data-role={message.role} data-message-id={message.id}>
@@ -51,11 +52,13 @@ export default function PublicOperatorPanel({ channel = createOperatorPublicStat
             {message.status === "cancelled" ? <small>INTERROMPIDO</small> : null}
           </article>
         ))}
-      </div>
+      </PublicModule>
       {parameters}
+      <PublicModule id="operator-input" disabled={!publicSurface}>
       {privateControls ? privateControls.input : (
         <div className={styles.draft} aria-label="Texto sendo digitado pelo operador"><small>OPERADOR &gt;</small><p>{channel.draft || "_"}</p></div>
       )}
+      </PublicModule>
     </section>
   );
 }

@@ -1,0 +1,16 @@
+.module { overflow: hidden; container-type: size; }
+.module > [class*="quadrantCanvas"] { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; display: block !important; transform: none !important; }
+.editor { border: 1px solid #267642; padding: 16px; margin: 16px 0; color: #b9e8ca; }
+.editor summary { cursor: pointer; font-size: 18px; color: #00ff66; }
+.editor p { font-size: 14px; line-height: 1.5; }
+.fields { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin: 12px 0; }
+.fields label { display: grid; gap: 6px; font-size: 14px; }
+.editor input, .editor select, .editor button { font: inherit; color: #dcffe6; background: #07150d; border: 1px solid #267642; padding: 8px; }
+.fields input[type=number] { width: 90px; }
+.fields input[type=color] { width: 64px; height: 40px; padding: 3px; }
+.editor button { cursor: pointer; }
+.canvas { position: relative; aspect-ratio: 16 / 9; width: min(100%, 760px); background: #000; border: 1px solid #477c58; overflow: hidden; touch-action: none; }
+.box { position: absolute; border: 1px solid #3c7851; background: #0c2a1980; color: #9abcaa; padding: 5px; font-size: 12px; overflow: hidden; pointer-events: none; }
+.box[data-selected=true] { border: 2px solid #fff; color: #fff; background: #12552ba0; z-index: 2; cursor: move; pointer-events: auto; }
+.box button { position: absolute; right: 0; bottom: 0; width: 28px; height: 28px; padding: 0; cursor: nwse-resize; touch-action: none; }
+.editor :focus-visible { outline: 2px solid #fff; outline-offset: 2px; }

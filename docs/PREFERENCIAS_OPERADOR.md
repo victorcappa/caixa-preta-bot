@@ -9,6 +9,7 @@ O salvamento usa os valores reais de `showState`, sem substituir pelos padrões 
 | Grupo | Configurações preservadas |
 | --- | --- |
 | Operador | Personalidade, modelo, parâmetros de som, velocidade/pausa/intervalo de digitação, fonte, frequência dos cliques e volume global. |
+| Composição pública | Posição/tamanho de cada módulo e cor dos textos públicos do Operator. |
 | Tarô | Configuração de leitura/autonomia, visual/Matrix, perfil complementar, instrução privada, referências e temas, contexto contemporâneo, câmera escolhida e modo automático. |
 | Alucinação | Chaves gerais, limite de cartas, filtros, política de retirada, efeitos, intensidades, mistura facial, eventos da timeline, presets e memórias/entrevistas vinculadas. |
 | Outros controles de estado | Parâmetros/preset/áudio do glitch e transição, intensidade dos shaders, volume do sampler, texto/subdivisão/ritmo/fade/modos da Queda Avião, orientação de personalidade e som do BIOS, opções de aquecimento e configuração de pesquisa. |

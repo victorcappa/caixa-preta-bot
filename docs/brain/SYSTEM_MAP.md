@@ -19,7 +19,8 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 - LIVE reply pacing -> `components/OperatorTypedReply.js`, using private `robotSound` typing speed/punctuation pause; completed history is restored immediately.
 - Training conversation/feedback -> `components/TrainingConsole.js`, `app/api/training/`, and `lib/training.js`; visible composer sends by Enter or button and preserves the draft after errors.
 - Editable public conversation/sliders reuse `components/PublicOperatorControls.js` with `publicSurface`; private operational commands remain outside the projection.
-- Stable public 65/35 layout -> `app/layout.js` -> `components/ProjectionOperatorSurface.js` -> `components/PublicOperatorLayout.js`.
+- Public composition editor/modules -> `components/PublicCompositionControls.js`, `components/PublicModule.js`, `lib/publicComposition.js`; persisted under `operatorPublic.composition`, patched through the existing operator API/SSE.
+- Default public 65/35 layout -> `app/layout.js` -> `components/ProjectionOperatorSurface.js` -> `components/PublicOperatorLayout.js`.
 
 - Bot parameters tab -> `app/operator/page.js`, `components/OperatorBotSettings.js`, `components/RobotSoundControls.js`, and `components/PublicOperatorControls.js` (`parametersOnly`); timing helpers in `lib/robot-sound/state.js`. Save acknowledgement/dirty-field merging lives in `RobotSoundControls`; `_refreshRobotSoundSettings` in `lib/showState.js` refreshes the live normalization after development reload. The technical console remains in the Principal OP drawer.
 - Persistent current operator/Tarot choices -> `lib/operatorPreferences.js`, `lib/showState.js`, `/api/operator-preferences`, `components/OperatorPreferencesStatus.js`; scope/activation -> `docs/PREFERENCIAS_OPERADOR.md`; checks -> `scripts/operator-preferences-*.js`.

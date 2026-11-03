@@ -14,6 +14,7 @@ import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
 import { ROBOT_DISPLAY_FONT_DEFAULT, robotTypingIntervalMs, robotTypingDelayMs, robotMessageGapMs } from "@/lib/robot-sound/state";
 import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import { isMainProjectionMessage } from "@/lib/publicText";
+import PublicModule from "./PublicModule";
 import { PUBLIC_LAYOUT_CHANGE_EVENT, PUBLIC_LAYOUTS } from "@/lib/projectionScreens";
 import {
   sceneZeroEmergenceCueForMessage,
@@ -920,7 +921,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
         ref={chatPaneRef}
       >
         <DisplayBlackout blackout={displayBlackout} target="chatbot" />
-        <section className={`${styles.layoutRegion} ${styles.sceneZeroRegion}`} aria-label="Quadrante de status, BIOS e Cena 0">
+        <PublicModule as="section" id="main-status" className={`${styles.layoutRegion} ${styles.sceneZeroRegion}`} aria-label="Quadrante de status, BIOS e Cena 0">
           <div className={styles.quadrantCanvas}>
             <SceneZeroStatusProjection
               pitchScale={robotSound?.pitchScale}
@@ -928,8 +929,8 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
               soundStyle={robotSound?.soundStyle}
             />
           </div>
-        </section>
-        <section className={`${styles.layoutRegion} ${styles.sceneZeroAuxRegion}`} aria-label="Quadrante de contagens e conteúdos da Cena 0">
+        </PublicModule>
+        <PublicModule as="section" id="main-scene" className={`${styles.layoutRegion} ${styles.sceneZeroAuxRegion}`} aria-label="Quadrante de contagens e conteúdos da Cena 0">
           <div className={styles.quadrantCanvas}>
             <SceneZeroProjectionLayer
               audienceWarmup={audienceWarmup}
@@ -938,8 +939,8 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
               sceneZero={sceneZero}
             />
           </div>
-        </section>
-        <section className={`${styles.layoutRegion} ${styles.performanceRegion}`} aria-label="Quadrante de elementos visuais e conteúdos auxiliares">
+        </PublicModule>
+        <PublicModule as="section" id="main-performance" className={`${styles.layoutRegion} ${styles.performanceRegion}`} aria-label="Quadrante de elementos visuais e conteúdos auxiliares">
           <div className={styles.quadrantCanvas}>
             <PerformanceLayer
               activities={performanceActivities}
@@ -950,9 +951,9 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
               phoneProjection={phoneProjection}
             />
           </div>
-        </section>
+        </PublicModule>
 
-        <main className={styles.publicStage} aria-label="Fala atual da Caixa Preta" data-bot-font={robotSound?.displayFont || ROBOT_DISPLAY_FONT_DEFAULT}>
+        <PublicModule as="main" id="main-speech" className={styles.publicStage} aria-label="Fala atual da Caixa Preta" data-bot-font={robotSound?.displayFont || ROBOT_DISPLAY_FONT_DEFAULT}>
           <div className={styles.currentMessage}>
             {warmupSilentCursor ? (
               <p className={styles.machine} aria-label="Cursor de espera da Caixa Preta">
@@ -1001,8 +1002,8 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
             <div ref={scrollRef} />
           </div>
           <footer className={styles.publicInput}>{publicInput}</footer>
-        </main>
-        <section className={`${styles.layoutRegion} ${styles.contextRegion}`} aria-label="Quadrante de conteúdos contextuais">
+        </PublicModule>
+        <PublicModule as="section" id="main-context" className={`${styles.layoutRegion} ${styles.contextRegion}`} aria-label="Quadrante de conteúdos contextuais">
           {visibleInstagramPanel ? (
             <>
             <div
@@ -1028,7 +1029,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
             />
             </>
           ) : null}
-        </section>
+        </PublicModule>
       </section>
 
       {operatorMounted && operatorOpen ? (

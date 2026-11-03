@@ -75,3 +75,27 @@
 @media (max-width: 1000px) { .privateGrid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-height: 760px) { .rail .panel { gap: 8px; } .rail .header { padding-bottom: 8px; } .rail .parameter { margin-bottom: 2px; } .rail .personality h3 { margin-bottom: 6px; } .rail .draft { height: 76px; } }
 @media (prefers-reduced-motion: reduce) { .original, .rail { transition: none; } .cursor { animation: none; } }
+
+/* Projection-only sizing and color; private controls retain their own scale. */
+.panel { position: relative; }
+.publicControls { --operator-ink: var(--public-operator-color, #00ff66); }
+.publicControls .panel { overflow: auto; color: var(--operator-ink); gap: 14px; }
+.publicControls .header strong { font-size: clamp(24px,2vw,38px); }
+.publicControls .header span, .publicControls .header small, .publicControls .activity,
+.publicControls .parameter label, .publicControls .parameter output, .publicControls .personality h3,
+.publicControls .history small, .publicControls .draft small, .publicControls .input label,
+.publicControls .input textarea, .publicControls button { color: var(--operator-ink); }
+.publicControls .history p, .publicControls .draft p, .publicControls .input textarea { font-size: clamp(24px,1.65vw,34px); }
+.publicControls .header small, .publicControls .activity, .publicControls .history small,
+.publicControls .personality h3, .publicControls .parameter label, .publicControls .input label { font-size: clamp(14px,1.05vw,20px); }
+.publicControls .parameter output { font-size: clamp(24px,1.8vw,34px); }
+.publicControls .sliderRow { min-height: 40px; }
+.publicControls .sliderRow input::-webkit-slider-runnable-track { height: 8px; background: linear-gradient(to right, var(--operator-ink) var(--parameter-percent), #184a2d var(--parameter-percent)); }
+.publicControls .sliderRow input::-webkit-slider-thumb { width: 22px; height: 22px; margin-top: -7px; border-color: var(--operator-ink); }
+.publicControls .sliderRow input::-moz-range-track, .publicControls .sliderRow input::-moz-range-progress { height: 8px; }
+.publicControls .sliderRow input::-moz-range-progress { background: var(--operator-ink); }
+.publicControls .sliderRow input::-moz-range-thumb { width: 20px; height: 20px; border-color: var(--operator-ink); }
+.publicControls button { font-size: 16px; min-height: 44px; }
+.publicControls .history { flex-basis: 180px; flex-shrink: 0; }
+.publicControls [data-public-module=operator-input] { flex: none; }
+.rail[data-module-custom=true] { z-index: 20; }
