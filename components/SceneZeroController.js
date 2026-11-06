@@ -1265,8 +1265,8 @@ export default function SceneZeroController() {
             <strong>RECUPERAÇÃO MANUAL</strong>
             <span>Interrompe a etapa atual e inicia a roleta escolhida.</span>
             <Button danger onClick={() => sceneAction("suitcase-manual-draw", { suitcase: 2 })} pending={pending}>SORTEAR MALA CENTRO</Button>
-            <Button danger onClick={() => sceneAction("suitcase-manual-draw", { suitcase: 3 })} pending={pending}>SORTEAR MALA DIREITA</Button>
-            <Button danger onClick={() => sceneAction("suitcase-manual-draw", { suitcase: 1 })} pending={pending}>SORTEAR MALA ESQUERDA</Button>
+            <Button danger onClick={() => sceneAction("suitcase-manual-draw", { suitcase: 3 })} pending={pending}>SORTEAR MALA ESQUERDA</Button>
+            <Button danger onClick={() => sceneAction("suitcase-manual-draw", { suitcase: 1 })} pending={pending}>SORTEAR MALA DIREITA</Button>
           </div>
         ) : null}
         <div className={styles.suitcaseOverview}>

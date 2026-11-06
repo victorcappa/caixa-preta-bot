@@ -55,7 +55,7 @@ try {
   await projection.getByLabel("Cursor da Caixa Preta", { exact: true }).waitFor();
   state = suitcaseState;
   await projection.goto(baseUrl, { waitUntil: "domcontentloaded" });
-  const cue = projection.getByLabel("Mala indicada: 3", { exact: true });
+  const cue = projection.getByLabel("Mala indicada: Esquerda", { exact: true });
   await cue.waitFor();
   assert.match(await cue.textContent(), /ABRA A MALA/);
   assert.equal(await projection.getByText(previousMessage.content, { exact: true }).count(), 0,
