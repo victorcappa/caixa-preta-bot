@@ -3,6 +3,7 @@ import {createTarotController} from "../lib/tarot/controller.js";
 import {createTarotState,normalizeNarrative,tarotWordLimit,publicTarotSnapshot,normalizeTarotVisual,restoredTarotState} from "../lib/tarot/state.js";
 import {readingSignature,normalizeFloorLayout,removalInstruction} from "../lib/tarot/floor.js";
 import {visibleElementIds} from "../lib/tarot/geometry.js";
+import {generateValidatedNarrative} from "../lib/tarot/narrative.js";
 const checks=[];
 let now=1700000000000;const realNow=Date.now;Date.now=()=>now;
 const create=()=>{let state=createTarotState();const messages=[];const c=createTarotController({get:()=>state,set:(v)=>{state=v;},emit:()=>{},addMessage:(role,content,source)=>{const m={id:`m${messages.length}`,role,content,source};messages.push(m);return m;},runTurn:async()=>{},sessionId:()=>"isolated"});c.control("claim-camera",{owner:"camera"});c.control("start");return {c,get state(){return state;},messages};};
@@ -10,6 +11,18 @@ const card=(id)=>({id,number:id,name:`Carta ${id}`,version:"v1",imageUrl:`/local
 const narrative=(cards)=>normalizeNarrative({observation:cards.map((c)=>({text:`Elemento ${c.id}. Um gesto visível na imagem.`,elementIds:[c.elements[0].id]})),interpretation:[{text:"Um limite abre uma possibilidade.",elementIds:[]}],association:[{text:"Aprender signos muda o modo de ver.",elementIds:[]}]},cards.flatMap((c)=>c.elements));
 const ack=(x)=>x.c.control("presented",{owner:"camera",responseId:x.state.response.id,chars:x.state.response.text.length});
 try{
+  const prepared=card(2),short={observation:[{text:"Uma figura observa.",elementIds:[prepared.elements[0].id]}],interpretation:[{text:"O silêncio também controla.",elementIds:[]}],association:[{text:"Quem guarda o arquivo?",elementIds:[]}]};
+  const overlong={...short,observation:[{text:"Uma figura " + "silenciosa ".repeat(40) + "observa.",elementIds:[prepared.elements[0].id]}]};
+  for(const bad of [overlong,{...short,association:[{text:"Uma frase pela metade",elementIds:[]}]},null]){
+    const attempts=[];
+    const repaired=await generateValidatedNarrative({cards:[prepared],maxWords:30,generate:async({repairReason})=>{attempts.push(repairReason);if(attempts.length>1)return short;if(!bad)throw new SyntaxError("Invalid JSON");return bad;}});
+    assert.equal(attempts.length,2);assert.equal(attempts[0],"");assert.match(attempts[1],/^TAROT_NARRATIVE_/);assert.equal(repaired.text.split("\n\n").length,3);assert(repaired.text.split(/\s+/).length<=30);
+  }
+  let attempts=0;
+  await assert.rejects(()=>generateValidatedNarrative({cards:[prepared],maxWords:30,generate:async()=>{attempts++;return overlong;}}),/TAROT_NARRATIVE_TOO_LONG/);assert.equal(attempts,2);
+  attempts=0;await assert.rejects(()=>generateValidatedNarrative({cards:[prepared],maxWords:30,generate:async()=>{attempts++;throw new Error("PROVIDER_OFFLINE");}}),/PROVIDER_OFFLINE/);assert.equal(attempts,1);
+  attempts=0;const aborted=new AbortController();await assert.rejects(()=>generateValidatedNarrative({cards:[prepared],maxWords:30,signal:aborted.signal,generate:async()=>{attempts++;aborted.abort(new Error("CARD_REMOVED"));return overlong;}}),/CARD_REMOVED/);assert.equal(attempts,1);
+  checks.push("30-word readings: oversized/incomplete/invalid JSON gets exactly one correction; second failure is surfaced; provider failures and card-removal cancellation never trigger a correction");
   const x=create(),a=card(0),b=card(13);
   x.c.control("select",{card:a,cards:[a,b],source:"camera",owner:"camera"});
   const pending=x.c.begin({requestId:"double"});x.c.finish(pending,narrative([a,b]),[...a.elements,...b.elements]);
@@ -29,8 +42,9 @@ try{
   const cancelled=x.c.begin({requestId:"manual-stop-pending",automatic:true});x.c.control("interrupt");assert(cancelled.controller.signal.aborted);assert(x.state.suspended);
   assert.throws(()=>x.c.begin({requestId:"auto-after-interrupt",automatic:true}),/TAROT_PAUSED/);x.c.control("resume-speech");assert(!x.state.suspended);
   assert.equal(tarotWordLimit({maxWords:150},{verbosity:100}),60,"old preferences cannot bypass concision");
-  assert.equal(tarotWordLimit({maxWords:60},{verbosity:0}),30);
-  assert.equal(tarotWordLimit({maxWords:60},{verbosity:30}),39);
+  assert.equal(tarotWordLimit({maxWords:60},{verbosity:0}),60,"zero verbosity cannot silently halve the configured reading budget");
+  assert.equal(tarotWordLimit({maxWords:60},{verbosity:30}),60);
+  assert.equal(tarotWordLimit({maxWords:30},{verbosity:100}),30,"personality cannot expand the configured limit either");
   assert.throws(()=>normalizeNarrative(Object.fromEntries(["observation","interpretation","association"].map(key=>[key,[{text:"Uma frase " + "extensa ".repeat(30) + "termina.",elementIds:[]}]])),[],{maxWords:60}),/TAROT_NARRATIVE_TOO_LONG/);
   const long=normalizeNarrative(Object.fromEntries(["observation","interpretation","association"].map((k)=>[k,[{text:Array(3).fill("Uma frase completa mantém a ideia e termina com pontuação.").join(" "),elementIds:[]}]])),[],{maxWords:60});
   assert.equal(long.text.split("\n\n").length,3);assert(long.text.split(/\s+/).length<=60);

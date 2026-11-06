@@ -42,7 +42,7 @@ export default function TarotTraining(){
   async function interpretationCommand(action,data={}){
     setCommandPending(true);setQuestionError("");
     try{await tarotCommand(sessionId,action,data);if(action!=="analyze")setQuestion("");}
-    catch{setQuestionError("Não foi possível concluir. Tente novamente.");}
+    catch(error){if(error.message!=="TAROT_ANALYSIS_FAILED")setQuestionError("Não foi possível concluir. Tente novamente.");}
     finally{setCommandPending(false);}
   }
   const hallTime=useHallucinationClock(tarot?.hallucination);
@@ -127,18 +127,19 @@ export default function TarotTraining(){
             {e.region&&source?.imageUrl?<div className={styles.crop} style={{backgroundImage:`url("${source.imageUrl}")`,backgroundSize:`${100/e.region[2]}% ${100/e.region[3]}%`,backgroundPosition:`${e.region[0]/(1-e.region[2]||1)*100}% ${e.region[1]/(1-e.region[3]||1)*100}%`}}/>:<span className={styles.elementMark}>⌖</span>}
             <div><h3>{e.name}</h3><p>{e.description}</p></div>
           </article>;
-        }):<div className={styles.empty}><p>{floorStage?phase==="scanning"?"Mantenha algumas cartas de costas visíveis e estáveis. Vou escolher entre as que reconhecer.":selected&&!selected.removed?`A carta escolhida está destacada na imagem.`:phase==="await-reveal"?"Mostre a frente da carta retirada.":"":tarot?.generation==="pending"?"":"Os elementos surgem conforme a fala avança."}</p></div>}
+        }):<div className={styles.empty}><p>{floorStage?phase==="scanning"?"Mantenha algumas cartas de costas visíveis e estáveis. Vou escolher entre as que reconhecer.":selected&&!selected.removed?`A carta escolhida está destacada na imagem.`:phase==="await-reveal"?"Mostre a frente da carta retirada.":"":tarot?.generation==="failed"?"A interpretação não foi concluída.":tarot?.generation==="pending"?"INTERPRETANDO A CARTA":response?"Os elementos surgem conforme a fala avança.":card?"CARTA RECONHECIDA":"APRESENTE UMA CARTA"}</p></div>}
       </div><footer>REFERÊNCIAS LOCAIS <span>●</span></footer></PublicModule>
     </section>
-    <PublicModule as="section" id="tarot-speech" className={styles.speech} data-question-mode={Boolean(interpretation||questionError)} aria-label="Fala do bot"><div className={styles.speechHeader}><h2>{!floorStage && cards.length ? cards.map(c=>c.name).join(" + ") : "INTERPRETAÇÃO"}</h2><span>{response?.origin==="catalog"?"CONTEÚDO CADASTRADO":response?.interruptedBy==="tracking-lost"?"AGUARDANDO A CARTA":tarot?.generation==="pending"?"":""}</span></div>
-      {interpretation||questionError?<div className={styles.questionPanel}>
+    <PublicModule as="section" id="tarot-speech" className={styles.speech} data-question-mode={Boolean(interpretation||questionError||tarot?.generation==="failed")} aria-label="Fala do bot"><div className={styles.speechHeader}><h2>{!floorStage && cards.length ? cards.map(c=>c.name).join(" + ") : "INTERPRETAÇÃO"}</h2><span>{response?.origin==="catalog"?"CONTEÚDO CADASTRADO":response?.interruptedBy==="tracking-lost"?"AGUARDANDO A CARTA":tarot?.generation==="pending"?"INTERPRETANDO A CARTA":""}</span></div>
+      {interpretation||questionError||tarot?.generation==="failed"?<div className={styles.questionPanel}>
         {interpretation?.status==="input"?<form className={styles.questionForm} onSubmit={event=>{event.preventDefault();if(question.trim())void interpretationCommand("interpretation-question",{question});}}>
           <label htmlFor="tarot-question">QUAL É A SUA PERGUNTA?</label>
           <div><input id="tarot-question" autoFocus maxLength={4000} value={question} onChange={event=>setQuestion(event.target.value)} placeholder="Digite sua pergunta" disabled={commandPending}/><button disabled={!question.trim()||commandPending} type="submit">ENVIAR PERGUNTA</button></div>
         </form>:interpretation?<div className={styles.questionDisplay} aria-live="polite"><p>{interpretation.question}</p><small>{tarot?.generation==="failed"?"Não consegui interpretar esta carta. Tente novamente.":interpretation.status==="waiting"?"AGUARDANDO A CARTA":interpretation.status==="generating"?"INTERPRETANDO A CARTA":"INTERPRETAÇÃO"}</small></div>:null}
+        {!interpretation&&tarot?.generation==="failed"?<p role="alert">Não consegui interpretar esta carta. Tente novamente.</p>:null}
         {questionError?<p role="alert">{questionError}</p>:null}
         <div className={styles.questionActions}>
-          {interpretation&&tarot?.generation==="failed"?<button disabled={commandPending} onClick={()=>void interpretationCommand("analyze")}>TENTAR NOVAMENTE</button>:null}
+          {tarot?.generation==="failed"?<button disabled={commandPending||!tarot?.active||tarot?.suspended||!card} onClick={()=>void interpretationCommand("analyze",{cardId:card.id,requestId:crypto.randomUUID()})}>TENTAR NOVAMENTE</button>:null}
           {interpretation?<button disabled={commandPending} onClick={()=>void interpretationCommand("interpretation-cancel")}>CANCELAR</button>:null}
         </div>
       </div>:null}

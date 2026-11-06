@@ -10,6 +10,7 @@
     "test:tarot:references:browser": "node --no-warnings scripts/tarot-references-browser-test.js",
     "test:tarot:references:live": "node --no-warnings --env-file-if-exists=.env.local scripts/tarot-references-browser-test.js --live",
     "test:tarot:experience": "node --no-warnings scripts/tarot-experience-test.js",
+    "test:tarot:recovery:browser": "node --no-warnings scripts/tarot-analysis-recovery-browser-test.js",
     "test:tarot:catalog": "node --no-warnings scripts/tarot-catalog-test.js",
     "test:tarot:vision": "node --no-warnings scripts/tarot-vision-test.js",
     "test:tarot:browser": "node --no-warnings scripts/tarot-browser-test.js",

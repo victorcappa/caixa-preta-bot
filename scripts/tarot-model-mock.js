@@ -13,6 +13,11 @@ if(fixture){
     if(config.failure)return Response.json({error:{message:"offline"}},{status:503});
     const content=JSON.parse(request.input.at(-1).content);
     const first=content.elements[0],second=content.elements.find((e)=>e.cardNumber!==first?.cardNumber)||content.elements[1];
+    if(config.compact){
+      const repairing=request.input.some((m)=>m.content.includes("CORREÇÃO OBRIGATÓRIA:"));
+      const text=JSON.stringify({observation:[{text:config.overlong&&(!config.repairSucceeds||!repairing)?"Uma figura "+"silenciosa ".repeat(70)+"observa.":`${first.name}.`,elementIds:[first.id]}],interpretation:[{text:"O silêncio também controla.",elementIds:[]}],association:[{text:"Quem guarda o arquivo?",elementIds:[]}]});
+      return Response.json({id:"tarot-test",object:"response",status:"completed",output:[{type:"message",role:"assistant",content:[{type:"output_text",text,annotations:[]}]}]});
+    }
     const observation=[{text:first?`${first.name}. Um limite para o olhar.`:"Uma carta. Ainda há muito a observar.",elementIds:first?[first.id]:[]}];
     if(second)observation.push({text:`${second.name}. Esta presença muda a relação entre as formas.`,elementIds:[second.id]});
     const text=JSON.stringify({observation,interpretation:[{text:content.cards?.length>1?"As duas cartas ligam impulso e transformação numa única tensão.":"O gesto sugere uma tensão entre movimento e limite.",elementIds:first?[first.id]:[]}],association:[{text:config.association||"Uma máquina também aprende a reconhecer padrões antes de lhes atribuir sentido.",elementIds:[]}]});

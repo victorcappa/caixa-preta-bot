@@ -3,7 +3,8 @@ import { sameOrigin, currentSession } from '@/lib/tarot/http';
 import { readCatalog } from '@/lib/tarot/catalog';
 import { referenceStatus, retrieveTarotReferences } from '@/lib/tarot/references';
 import { generateTarotTurn } from '@/lib/openai';
-import { normalizeNarrative } from '@/lib/tarot/state';
+import { tarotWordLimit } from '@/lib/tarot/state';
+import { generateValidatedNarrative } from '@/lib/tarot/narrative';
 export const dynamic='force-dynamic';
 export const runtime='nodejs';
 export async function GET() {
@@ -31,8 +32,8 @@ export async function POST(request) {
     const question=typeof body.question==='string'?body.question.slice(0,4000):'';
     const references=await retrieveTarotReferences({state,cards:[card],question,mode:body.mode});
     if(body.action==='search')return Response.json({references});
-    const generated=await generateTarotTurn({state,card,cards:[card],question,references,signal:request.signal});
-    const narrative=normalizeNarrative(generated,card.elements,{maxWords:state.tarot.config.maxWords});
+    const narrative=await generateValidatedNarrative({cards:[card],maxWords:tarotWordLimit(state.tarot.config,state.operatorPublic?.personality),signal:request.signal,
+      generate:({repairReason})=>generateTarotTurn({state,card,cards:[card],question,references,signal:request.signal,repairReason})});
     if(!currentSession(body))throw new Error('TAROT_SESSION_CHANGED');
     return Response.json({references,narrative});
   } catch(error) {return Response.json({error:/^TAROT_[A-Z_]+$/.test(error.message||'')?error.message:'TAROT_REFERENCE_TEST_FAILED'},{status:409});}

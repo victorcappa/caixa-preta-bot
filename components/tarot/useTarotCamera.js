@@ -118,7 +118,9 @@ export default function useTarotCamera({ sessionId, tarot, videoRef }) {
       try{
         await post("select",{cardIds:matched.map((c)=>c.id),source:"camera",newVisit:Boolean(repeat||phase==="await-reveal"),inliers:matches[0].inliers,matches:matches[0].matches});
         selection.current.captureSequence=current.camera.captureSequence;gate.submitted(key,Date.now());lossReported="";
-        if(current.presentation?.autoAnalyze!==false||current.interpretation?.status==="waiting")void post("analyze",{requestId:crypto.randomUUID(),cardId:matched[0].id,automatic:true}).catch((error)=>{if(!closed)void post("camera-status",{status:"live",error:error.message}).catch(()=>{});});
+        // The service already records the analysis failure. Reporting its generic
+        // HTTP error as a camera error would overwrite the actual private cause.
+        if(current.presentation?.autoAnalyze!==false||current.interpretation?.status==="waiting")void post("analyze",{requestId:crypto.randomUUID(),cardId:matched[0].id,automatic:true}).catch(()=>{});
       }catch(error){void post("camera-status",{status:"live",error:error.message}).catch(()=>{});}finally{selection.current.locked=false;}
     }
     worker = new Worker("/tarot-tracker.worker.js");

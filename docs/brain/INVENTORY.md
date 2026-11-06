@@ -15,6 +15,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:tarot:references:browser` -> `node --no-warnings scripts/tarot-references-browser-test.js`
 - `npm run test:tarot:references:live` -> `node --no-warnings --env-file-if-exists=.env.local scripts/tarot-references-browser-test.js --live`
 - `npm run test:tarot:experience` -> `node --no-warnings scripts/tarot-experience-test.js`
+- `npm run test:tarot:recovery:browser` -> `node --no-warnings scripts/tarot-analysis-recovery-browser-test.js`
 - `npm run test:tarot:catalog` -> `node --no-warnings scripts/tarot-catalog-test.js`
 - `npm run test:tarot:vision` -> `node --no-warnings scripts/tarot-vision-test.js`
 - `npm run test:tarot:browser` -> `node --no-warnings scripts/tarot-browser-test.js`
@@ -323,6 +324,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/show-reliability-test.js`
 - `scripts/sound-control-browser-test.js`
 - `scripts/suitcase-director-test.js`
+- `scripts/tarot-analysis-recovery-browser-test.js`
 - `scripts/tarot-browser-test.js`
 - `scripts/tarot-card-effects-browser-test.js`
 - `scripts/tarot-catalog-test.js`
