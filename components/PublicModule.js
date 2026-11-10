@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { subscribePublicRealtime } from '@/lib/publicRealtime';
-import { normalizePublicComposition, publicModuleStyle } from '@/lib/publicComposition';
+import { normalizePublicComposition, publicModuleStyle, publicTextScale } from '@/lib/publicComposition';
 import styles from './PublicComposition.module.css';
 
 export default function PublicModule({ id, as: Tag = 'div', className = '', style, children, disabled = false, ...props }) {
@@ -12,5 +12,6 @@ export default function PublicModule({ id, as: Tag = 'div', className = '', styl
   }), [disabled]);
   const rect = disabled ? null : composition.modules[id];
   return <Tag {...props} data-public-module={disabled ? undefined : id} data-module-custom={Boolean(rect)}
-    className={`${className} ${rect ? styles.module : ''}`} style={{ ...style, ...publicModuleStyle(rect) }}>{children}</Tag>;
+    className={`${className} ${rect ? styles.module : ''}`} style={{ ...style, ...publicModuleStyle(rect),
+      ...(!disabled ? { '--public-text-scale': publicTextScale(composition, id) } : {}) }}>{children}</Tag>;
 }

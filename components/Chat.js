@@ -820,6 +820,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
       <div
         className={`${styles.workspace} ${operatorOpen ? styles.workspaceWithOperator : ""} ${bootStandby ? styles.bootStandby : ""}`}
         data-public-layout={publicLayout}
+        data-projection-workspace
         ref={workspaceRef}
         style={layoutStyle}
       >

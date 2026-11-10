@@ -73,3 +73,14 @@ textarea {
 nextjs-portal {
   display: none !important;
 }
+
+/* Optional projection profile. Dramaturgical colors and non-text effects are retained. */
+[data-projection-readability="true"]:not([data-projection-font="scene"]) [data-public-module],
+[data-projection-readability="true"]:not([data-projection-font="scene"]) [data-public-module] :is(p, h1, h2, h3, label, output, small, strong, b, textarea, button, span) {
+  font-family: var(--projection-font) !important;
+}
+[data-projection-readability="true"] [data-public-module],
+[data-projection-readability="true"] [data-public-module] :is(p, h1, h2, h3, label, output, small, strong, b, textarea, button, span) {
+  font-weight: var(--projection-weight) !important;
+}
+[data-projection-no-glow="true"] [data-public-module] :is(p, h1, h2, h3, label, output, small, strong, b, textarea, button, span) { text-shadow: none !important; }
