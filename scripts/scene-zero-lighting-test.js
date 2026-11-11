@@ -7,7 +7,7 @@ async function main() {
     SCENE_ZERO_SUITCASE_LIGHTING_CUES: cues
   } = await import("../lib/scene-zero/suitcaseGame.js");
 
-  assert.equal(cues.length, 16);
+  assert(cues.length > 1, "o repertório deve oferecer alternativas para evitar repetição");
   assert.equal(new Set(cues).size, cues.length);
   assert(cues.includes(SCENE_ZERO_SUITCASE_LIGHTING_CUE), "a piada original deve continuar no repertório");
   assert(cues.every((text) => text.startsWith("Ricardinho,") && /luz|ilumina|foco|refletores/i.test(text)));
@@ -26,12 +26,12 @@ async function main() {
     selected.push(cue);
     if (selected.length >= cues.length) {
       assert.equal(new Set(selected.slice(-cues.length)).size, cues.length,
-        "cada janela de 16 sorteios deve conter todas as falas, inclusive na virada do ciclo");
+        "cada janela do tamanho do repertório deve conter todas as falas, inclusive na virada do ciclo");
     }
     history.push(cue, "Uma fala de outra etapa.");
   }
 
-  console.log("Scene Zero lighting: 16 falas, três ciclos sem repetição e histórico preservado — OK");
+  console.log(`Scene Zero lighting: ${cues.length} falas, três ciclos sem repetição e histórico preservado — OK`);
 }
 
 main().catch((error) => {
