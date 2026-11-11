@@ -44,7 +44,7 @@ export async function POST(request) {
     if (!image || typeof image.arrayBuffer !== 'function') return json({ error: 'INVALID_IMAGE' }, 400);
     if (form.get('confirmCost') !== 'yes') return json({ error: 'COST_CONFIRMATION_REQUIRED' }, 400);
     const task = await service.create({ id: form.get('requestId'), name: image.name, mime: image.type,
-      buffer: Buffer.from(await image.arrayBuffer()), preset: form.get('preset') || 'standard',
+      buffer: Buffer.from(await image.arrayBuffer()), preset: form.get('preset') || 'draft',
       removeBackground: form.get('removeBackground') === 'yes' });
     return json({ task }, 202);
   } catch (error) { return errorResponse(error); }

@@ -7,6 +7,7 @@ const { randomUUID } = require('node:crypto');
 const store = require('../lib/model-3d/store.cjs');
 const service = require('../lib/model-3d/service.cjs');
 const { startupFailure } = require('../lib/model-3d/workerHealth.cjs');
+const { waitForAdmission, guardedFetch, installSubmissionGuard } = require('../lib/model-3d/submissionGuard.cjs');
 
 async function fixture() {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'caixa-preta-model-3d-test-'));
@@ -14,6 +15,8 @@ async function fixture() {
   await fs.mkdir(source, { recursive: true });
   await fs.writeFile(path.join(source, 'config.js'), `exports.config=()=>({root:process.env.STUDIO_DATA_DIR,blender:process.env.CAIXA_PRETA_BLENDER_BIN,endpoint:'fixture-endpoint',runpodKey:'fixture-key',flags:{runpod:true}});`);
   await fs.writeFile(path.join(source, 'runpod-management.js'), `exports.get=async()=>({image:'fixture-image',registry:'fixture-registry'});`);
+  await fs.writeFile(path.join(source, 'runpod-capacity.js'), `exports.ensureReady=async()=>({restored:false});`);
+  await fs.writeFile(path.join(source, 'generation-limits.js'), `exports.limits={'GENERATING 3D':300000,EXPORTING:600000};`);
   await fs.writeFile(path.join(source, 'store.js'), `
     const fs=require('node:fs/promises'),path=require('node:path');
     const file=(kind,id,name='manifest.json')=>path.join(process.env.STUDIO_DATA_DIR,kind,id,name);
@@ -62,6 +65,7 @@ async function fixture() {
   process.env.CAIXA_PRETA_BLENDER_BIN = path.join(root, 'blender');
   process.env.CAIXA_PRETA_FFMPEG_BIN = path.join(root, 'ffmpeg');
   process.env.CAIXA_PRETA_FFPROBE_BIN = path.join(root, 'ffprobe');
+  process.env.CAIXA_PRETA_MODEL_3D_RENDERER = 'blender';
   return root;
 }
 async function waitFor(id, status) {
@@ -74,6 +78,35 @@ async function waitFor(id, status) {
   throw Error(`Timeout: ${status}, ${JSON.stringify(await store.publicTask(await store.read(id)))}`);
 }
 async function test() {
+  const limits = { 'GENERATING 3D': 300000, EXPORTING: 600000 }, capacity = { ensureReady: async () => ({}) };
+  const restore = installSubmissionGuard({ config: () => ({ endpoint: 'fixture' }), requireSource: name => name === './generation-limits' ? { limits } : capacity }, () => {});
+  assert.equal(limits['GENERATING 3D'], 900000); assert.equal(limits.EXPORTING, 600000);
+  restore(); assert.equal(limits['GENERATING 3D'], 300000, 'the Caixa Preta adapter must not alter the Studio limits permanently');
+  let clock = 0, observations = 0;
+  await waitForAdmission({ endpoint: 'fixture-endpoint', runpodKey: 'fixture' }, {
+    fetchImpl: async () => Response.json({ id: 'fixture-endpoint', workersMax: ++observations < 3 ? 0 : 1 }),
+    now: () => clock, delay: async ms => { clock += ms; },
+  });
+  assert.equal(observations, 4, 'require two enabled observations after a stale paused view');
+  clock = 0;
+  await assert.rejects(waitForAdmission({ endpoint: 'fixture-endpoint', runpodKey: 'fixture' }, {
+    fetchImpl: async () => Response.json({ id: 'fixture-endpoint', workersMax: 0 }),
+    now: () => clock, delay: async ms => { clock += ms; }, timeoutMs: 2000,
+  }), /RUNPOD_ADMISSION_PAUSED/);
+  const rejections = [];
+  const conflictFetch = guardedFetch(async () => Response.json({ code: 'ENDPOINT_PAUSED', detail: 'private URL https://private.invalid/?token=secret' }, { status: 409 }), { endpoint: 'fixture-endpoint' }, r => rejections.push(r), { maxAttempts: 1 });
+  const rejected = await conflictFetch('https://api.runpod.ai/v2/fixture-endpoint/run', { method: 'POST' });
+  assert.equal(rejected.status, 409); assert.equal(rejections.length, 1); assert.equal(rejections[0].reason, 'ENDPOINT_PAUSED');
+  assert(!JSON.stringify(rejections).includes('secret'), 'provider prose and URLs must never enter the rejection receipt');
+  let deliveries = 0, reconciliations = 0;
+  const reconciled = guardedFetch(async () => ++deliveries === 1 ? Response.json({ code: 'ENDPOINT_PAUSED' }, { status: 409 }) : Response.json({ id: 'one-accepted-job' }), { endpoint: 'fixture-endpoint' }, () => {}, { admission: async () => { reconciliations++; } });
+  assert.equal((await (await reconciled('https://api.runpod.ai/v2/fixture-endpoint/run', { method: 'POST' })).json()).id, 'one-accepted-job');
+  assert.equal(deliveries, 2); assert.equal(reconciliations, 1);
+  for (const response of [Response.json({ code: 'ENDPOINT_PAUSED', id: 'possibly-accepted' }, { status: 409 }), Response.json({ error: 'unknown conflict' }, { status: 409 }), Response.json({ error: 'provider crashed' }, { status: 503 })]) {
+    deliveries = 0;
+    await guardedFetch(async () => { deliveries++; return response; }, { endpoint: 'fixture-endpoint' }, () => {}, { admission: async () => { throw Error('MUST_NOT_RETRY'); } })('https://api.runpod.ai/v2/fixture-endpoint/run', { method: 'POST' });
+    assert.equal(deliveries, 1, 'never retry unknown, uncertain or possibly accepted submissions');
+  }
   const calls = [];
   const cfg = { endpoint: 'test-endpoint', runpodKey: 'fixture-key' };
   const startup = { status: 'STARTING GPU', providerId: 'one-job', workerBaseline: { workers: [] } };
@@ -84,6 +117,7 @@ async function test() {
   };
   const failedStartup = await startupFailure(startup, cfg, { fetchImpl: workerFetch });
   assert.equal(failedStartup.code, 'GHCR_IMAGE_PULL_DENIED');
+  assert.equal((await startupFailure({ ...startup, workerBaseline: { workers: [{ id: 'own-worker', status: 'INITIALIZING' }] } }, cfg, { fetchImpl: workerFetch })).code, 'GHCR_IMAGE_PULL_DENIED');
   assert(!JSON.stringify(failedStartup).includes('never-persist'));
   assert(calls.every(c => c.method === 'GET'), 'startup diagnostics must never submit inference');
   assert.equal(await startupFailure({ ...startup, workerBaseline: undefined }, cfg, { fetchImpl: workerFetch }), null, 'unknown baseline must not blame another worker');
@@ -152,7 +186,7 @@ async function test() {
   delete process.env.MODEL3D_FIXTURE_STARTUP_DENIED;
   await assert.rejects(service.create({ ...payload, id: randomUUID() }), /GENERATION_UNAVAILABLE/);
   await assert.rejects(service.create({ ...payload, id: '../bad' }), /INVALID_ID/);
-  console.log(JSON.stringify({ ok: true, checks: ['complete orchestration with a fake provider', 'lost HTTP response reuses the task', 'request payload conflicts rejected', 'video failure/restart keeps a single provider submission', 'uncertain provider submission is never replayed', 'dead-worker recovery', 'single-flight admission', 'cancellation and invalid IDs', 'startup failure attribution without exposing logs', 'GHCR denial cancels the original job and blocks new submissions', 'unconfirmed cancellation retains retry controls and blocks admission'], output: root }, null, 2));
+  console.log(JSON.stringify({ ok: true, checks: ['complete orchestration with a fake provider', 'lost HTTP response reuses the task', 'request payload conflicts rejected', 'video failure/restart keeps a single provider submission', 'uncertain provider submission is never replayed', 'dead-worker recovery', 'single-flight admission', 'cancellation and invalid IDs', 'startup failure attribution without exposing logs', 'GHCR denial cancels the original job and blocks new submissions', 'unconfirmed cancellation retains retry controls and blocks admission', 'capacity propagation confirmed before dispatch', 'only explicit pre-admission rejection can be retried'], output: root }, null, 2));
 }
 if (require.main === module) test().catch(error => { console.error(error); process.exitCode = 1; });
 module.exports = { fixture, waitFor };

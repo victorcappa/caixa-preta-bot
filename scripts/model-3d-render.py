@@ -31,10 +31,18 @@ for obj in objects:
         obj.parent = pivot
         obj.matrix_world = matrix
 
-scene.render.engine = 'CYCLES'
-scene.cycles.device = 'CPU'
-scene.cycles.samples = 12
-scene.cycles.use_denoising = True
+renderer = settings.get('renderer', 'eevee')
+if renderer == 'cycles':
+    scene.render.engine = 'CYCLES'
+    scene.cycles.device = 'CPU'
+    scene.cycles.samples = 12
+    scene.cycles.use_denoising = True
+elif renderer == 'eevee':
+    scene.render.engine = 'BLENDER_EEVEE_NEXT'
+    if hasattr(scene.eevee, 'taa_render_samples'):
+        scene.eevee.taa_render_samples = 32
+else:
+    raise ValueError('INVALID_RENDERER')
 scene.render.resolution_x = settings['width']
 scene.render.resolution_y = settings['height']
 scene.render.resolution_percentage = 100

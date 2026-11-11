@@ -8,19 +8,31 @@ const { fixture, waitFor } = require('./model-3d-test.cjs');
 const base = 'http://127.0.0.1:3321';
 async function main() {
   const output = await fixture();
+  // Do not share .next with the running show or concurrent build/dev sessions.
+  const buildDirectory = path.join('.runtime/model-3d/_validation', path.basename(output) + '-build');
+  const testEnv = { ...process.env, OPENAI_API_KEY: '', CAIXA_PRETA_SHOW_RUNTIME_DIR: path.join(output, 'show'), CAIXA_PRETA_NEXT_DIST_DIR: buildDirectory };
+  const build = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'build'], { env: testEnv, stdio: ['ignore', 'pipe', 'pipe'] });
+  let buildLog = '';
+  build.stdout.on('data', c => { buildLog += c; }); build.stderr.on('data', c => { buildLog += c; });
+  const buildCode = await new Promise((resolve, reject) => { build.once('exit', resolve); build.once('error', reject); });
+  await fs.writeFile(path.join(output, 'browser-build.log'), buildLog);
+  assert.equal(buildCode, 0, `Browser test build failed; see ${path.join(output, 'browser-build.log')}`);
   const available = await new Promise(resolve => { const s = net.createServer(); s.once('error', () => resolve(false)); s.listen(3321, '127.0.0.1', () => s.close(() => resolve(true))); });
   assert(available, 'Port 3321 occupied; no process was stopped');
   const server = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '--port', '3321', '--hostname', '127.0.0.1'], {
-    env: { ...process.env, OPENAI_API_KEY: '', CAIXA_PRETA_SHOW_RUNTIME_DIR: path.join(output, 'show') }, stdio: ['ignore', 'pipe', 'pipe'],
+    env: testEnv, stdio: ['ignore', 'pipe', 'pipe'],
   });
   let log = '', browser;
   server.stdout.on('data', c => { log += c; }); server.stderr.on('data', c => { log += c; });
   try {
     const deadline = Date.now() + 25000;
+    let ready = false;
     while (Date.now() < deadline) {
-      if (await fetch(base + '/api/modelo-3d').then(r => r.ok, () => false)) break;
+      if (server.exitCode !== null || server.signalCode !== null) throw Error('TEST_SERVER_EXITED');
+      if (await fetch(base + '/api/modelo-3d').then(r => r.ok, () => false)) { ready = true; break; }
       await new Promise(resolve => setTimeout(resolve, 100));
     }
+    assert(ready, 'Test server did not become ready');
     browser = await chromium.launch({ headless: true });
     const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
     const errors = []; page.on('pageerror', e => errors.push(e.message));
@@ -28,6 +40,7 @@ async function main() {
     await page.goto(base + '/operator'); await page.getByRole('link', { name: 'modelo-3D', exact: true }).click();
     await page.getByRole('heading', { name: 'modelo-3D', exact: true }).waitFor();
     const generate = page.getByRole('button', { name: 'Gerar modelo + vídeo' }); assert(await generate.isDisabled());
+    assert.equal(await page.getByRole('combobox').inputValue(), 'draft');
     await page.locator('input[type=file]').setInputFiles({ name: 'objeto-teste.png', mimeType: 'image/png', buffer: Buffer.from('fixture image') });
     assert(await generate.isDisabled(), 'cost authorization required');
     await page.getByLabel('Autorizar esta geração no RunPod', { exact: false }).check();
@@ -50,9 +63,11 @@ async function main() {
     console.log(JSON.stringify({ ok: true, output, checks: ['Operator tab navigation', 'image upload and explicit per-generation authorization', 'task completion and reload persistence with a fake provider', 'GLB downloads and MP4 byte-range playback', 'cross-origin mutations and private-file access rejected', 'model tasks absent from public showState', 'no browser errors'], scope: 'fake provider and video; real local render is checked separately' }, null, 2));
   } finally {
     await browser?.close();
-    const stopped = new Promise(resolve => server.once('exit', resolve)); server.kill('SIGTERM');
-    const timeout = setTimeout(() => server.kill('SIGKILL'), 5000); await stopped; clearTimeout(timeout);
     await fs.writeFile(path.join(output, 'browser-server.log'), log);
+    if (server.exitCode === null && server.signalCode === null) {
+      const stopped = new Promise(resolve => server.once('exit', resolve)); server.kill('SIGTERM');
+      const timeout = setTimeout(() => server.kill('SIGKILL'), 5000); await stopped; clearTimeout(timeout);
+    }
   }
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

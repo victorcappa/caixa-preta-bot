@@ -20,16 +20,20 @@ const errors = {
   RUNPOD_WORKER_UNHEALTHY: 'O worker falhou durante a inicialização. A tentativa foi cancelada. Confira o diagnóstico e os logs no RunPod.',
   GENERATION_CANCEL_PENDING: 'O cancelamento no RunPod ficou sem confirmação. Use Cancelar tarefa novamente e confira o job original no RunPod antes de outra geração.',
   GENERATION_UNAVAILABLE: 'A geração está bloqueada pelo diagnóstico. Corrija o acesso à imagem privada do worker e verifique novamente antes de enviar outra imagem.',
+  RUNPOD_409: 'O RunPod rejeitou o envio por conflito de configuração. A geração não foi reenviada. Confira o diagnóstico do endpoint.',
+  RUNPOD_ADMISSION_PAUSED: 'O serviço de execução ainda vê o endpoint pausado após a ativação. A geração não foi enviada.',
+  RUNPOD_ADMISSION_UNVERIFIED: 'Não foi possível confirmar a ativação no serviço de execução. A geração não foi enviada.',
+  TRELLIS_STAGE_TIMEOUT: 'A fase de geração excedeu o limite local de tempo e o job foi cancelado. Não houve nova inferência.',
 };
 const labels = { queued: 'Na fila', preparing: 'Preparando imagem', generating: 'Gerando modelo 3D', rendering: 'Renderizando vídeo', encoding: 'Montando MP4', done: 'Concluído', failed: 'Falhou', cancelled: 'Cancelado', interrupted: 'Processo interrompido' };
-const stages = { QUEUED: 'Aguardando processamento', PREPROCESSING: 'Preparando a imagem', 'STARTING GPU': 'Iniciando a GPU. A primeira execução pode levar alguns minutos.', 'LOADING MODEL': 'Carregando o gerador', 'GENERATING 3D': 'Construindo a geometria 3D', TEXTURING: 'Aplicando as texturas', EXPORTING: 'Exportando o modelo', POSTPROCESSING: 'Finalizando o modelo', OPTIMIZING: 'Otimizando o arquivo', 'ANALYZING GEOMETRY': 'Conferindo a geometria', UPLOADING: 'Recebendo os arquivos gerados', VALIDATING: 'Validando o modelo', DONE: 'Modelo 3D gerado' };
+const stages = { QUEUED: 'Aguardando processamento', PREPROCESSING: 'Preparando a imagem', 'STARTING GPU': 'Iniciando a GPU sob demanda. Essa etapa pode levar alguns minutos.', 'LOADING MODEL': 'Carregando o gerador', 'GENERATING 3D': 'Construindo a geometria 3D', TEXTURING: 'Aplicando as texturas', EXPORTING: 'Exportando o modelo', POSTPROCESSING: 'Finalizando o modelo', OPTIMIZING: 'Otimizando o arquivo', 'ANALYZING GEOMETRY': 'Conferindo a geometria', UPLOADING: 'Recebendo os arquivos gerados', VALIDATING: 'Validando o modelo', DONE: 'Modelo 3D gerado' };
 const message = code => errors[code] || `A tarefa parou (${code}). Consulte o diagnóstico abaixo. Nenhum novo envio é feito automaticamente.`;
 const pendingKey = 'caixa-preta:model-3d-request';
 
 export default function Model3DController() {
   const [image, setImage] = useState(null), [preview, setPreview] = useState('');
   const [tasks, setTasks] = useState([]), [diagnostic, setDiagnostic] = useState(null);
-  const [preset, setPreset] = useState('standard'), [removeBackground, setRemoveBackground] = useState(false);
+  const [preset, setPreset] = useState('draft'), [removeBackground, setRemoveBackground] = useState(false);
   const [confirmed, setConfirmed] = useState(false), [busy, setBusy] = useState(false), [checking, setChecking] = useState(false);
   const [error, setError] = useState(''), [connectionError, setConnectionError] = useState('');
   const requestRef = useRef(null), uploadInput = useRef(null);
@@ -92,7 +96,7 @@ export default function Model3DController() {
         <label className={styles.upload}>Imagem de referência<input ref={uploadInput} type="file" accept="image/png,image/jpeg,image/webp" onChange={e => { setImage(e.target.files?.[0] || null); requestRef.current = null; setError(''); }} required /><small>PNG, JPEG ou WebP · até 20 MB. Prefira um objeto inteiro e bem iluminado.</small></label>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {preview && <img className={styles.preview} src={preview} alt="Imagem de referência selecionada" />}
-        <label>Qualidade<select value={preset} onChange={e => { setPreset(e.target.value); requestRef.current = null; }}><option value="draft">Rápida · 512</option><option value="standard">Padrão · 1024</option><option value="high">Alta · 1536</option></select></label>
+        <label>Qualidade<select value={preset} onChange={e => { setPreset(e.target.value); requestRef.current = null; }}><option value="draft">Rápida · 512 · recomendada</option><option value="standard">Padrão · 1024 · mais demorada</option><option value="high">Alta · 1536 · mais demorada</option></select></label>
         <label className={styles.check}><input type="checkbox" checked={removeBackground} onChange={e => { setRemoveBackground(e.target.checked); requestRef.current = null; }} />Remover o fundo da imagem antes de gerar</label>
         <p className={styles.note}>MP4: 1920×1080 · 30 fps · 20 segundos · sem áudio. O fundo do vídeo será sempre preto. Você pode fechar esta aba e voltar depois.</p>
         <label className={styles.check}><input type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} />Autorizar esta geração no RunPod, com cobrança de GPU na conta configurada.</label>
@@ -108,6 +112,8 @@ export default function Model3DController() {
           <p role="status">{stages[task.detail] || task.detail}</p>
           {task.status === 'rendering' && <><progress value={task.frame} max={task.frames} aria-label="Renderização do vídeo" /><small>{task.frame} / {task.frames} quadros</small></>}
           {task.error && <p className={styles.error}>{message(task.error)}</p>}
+          {task.failedStage && <p className={styles.error}>Fase interrompida: {stages[task.failedStage] || task.failedStage}</p>}
+          {task.submissionRejection && <p className={styles.error}>Resposta do serviço: {task.submissionRejection.reason} · HTTP {task.submissionRejection.httpStatus}</p>}
           {task.videoUrl && <video className={styles.video} src={task.videoUrl} controls loop muted playsInline preload="metadata" />}
           <div className={styles.actions}>
             {task.modelUrl && <a href={`${task.modelUrl}?download`}>Baixar modelo GLB</a>}

@@ -8,6 +8,8 @@ const { createHash } = require('node:crypto');
 const store = require('../lib/model-3d/store.cjs');
 const { loadBridge, diagnose } = require('../lib/model-3d/bridge.cjs');
 const { startupFailure } = require('../lib/model-3d/workerHealth.cjs');
+const { installSubmissionGuard } = require('../lib/model-3d/submissionGuard.cjs');
+const { recordTurntable } = require('../lib/model-3d/browserRender.cjs');
 const exec = promisify(execFile);
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const exists = file => fs.access(file).then(() => true, () => false);
@@ -43,24 +45,51 @@ async function runProcess(bin, args, { cancelled, progress, timeout = 90 * 60000
 }
 async function renderVideo(task, blender) {
   const settings = {
-    input: store.file(task.id, 'model.glb'), output: store.file(task.id, 'frames'),
+    input: store.file(task.id, 'model.glb'), output: store.file(task.id, 'frames'), renderer: 'eevee',
     frames: 600, fps: 30, width: 1920, height: 1080,
   };
   await fs.mkdir(settings.output, { recursive: true });
   await fs.writeFile(store.file(task.id, 'render.json'), JSON.stringify(settings), { mode: 0o600 });
   task.status = 'rendering'; task.error = null; task.detail = 'Renderizando a rotação em Y · 1920×1080 · 20 segundos';
   await store.save(task);
-  let updates = Promise.resolve();
-  await runProcess(blender, ['--background', '--factory-startup', '--disable-autoexec', '--python-exit-code', '1',
-    '--python', path.join(__dirname, 'model-3d-render.py'), '--', store.file(task.id, 'render.json')], {
-    cancelled: () => exists(store.file(task.id, 'cancel')),
-    progress: frame => { updates = updates.then(async () => { task.frame = frame; await store.save(task); }); },
-  }).finally(() => updates);
-  task.status = 'encoding'; task.detail = 'Montando o MP4 em loop'; await store.save(task);
   const ffmpeg = process.env.CAIXA_PRETA_FFMPEG_BIN || 'ffmpeg';
   const ffprobe = process.env.CAIXA_PRETA_FFPROBE_BIN || 'ffprobe';
-  await runProcess(ffmpeg, ['-hide_banner', '-loglevel', 'error', '-y', '-framerate', '30', '-i', path.join(settings.output, '%04d.png'),
-    '-frames:v', '600', '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-an',
+  const capture = store.file(task.id, 'turntable.capture');
+  let recording, recordingStream;
+  if (process.env.CAIXA_PRETA_MODEL_3D_RENDERER !== 'blender') {
+    try {
+      recording = await recordTurntable({ ...settings, output: capture }, {
+        cancelled: () => exists(store.file(task.id, 'cancel')),
+        progress: async frame => { task.frame = frame; await store.save(task); },
+      });
+      const probe = await exec(ffprobe, ['-v', 'error', '-count_frames', '-show_streams', '-show_format', '-of', 'json', capture], { timeout: 30000 });
+      const report = JSON.parse(probe.stdout); recordingStream = report.streams.find(s => s.codec_type === 'video');
+      if (Number(recordingStream?.nb_read_frames) !== 600) throw Error('INCOMPLETE_VIDEO_CAPTURE');
+      recording.duration = Number(report.format.duration);
+      task.localRenderer = 'webgl'; await store.save(task);
+    } catch (error) {
+      if (error.message === 'CANCELLED') throw error;
+      recording = null; task.localRenderer = 'blender'; task.detail = 'Usando renderização local alternativa'; task.frame = 0; await store.save(task);
+    }
+  }
+  if (!recording) {
+    let updates = Promise.resolve();
+    await runProcess(blender, ['--background', '--factory-startup', '--disable-autoexec', '--python-exit-code', '1',
+      '--python', path.join(__dirname, 'model-3d-render.py'), '--', store.file(task.id, 'render.json')], {
+      cancelled: () => exists(store.file(task.id, 'cancel')),
+      progress: frame => { updates = updates.then(async () => { task.frame = frame; await store.save(task); }); },
+    }).finally(() => updates);
+  }
+  if (await exists(store.file(task.id, 'cancel'))) throw Error('CANCELLED');
+  task.status = 'encoding'; task.detail = 'Montando o MP4 em loop'; await store.save(task);
+  const copyRecording = recording && recordingStream.codec_name === 'h264' && recordingStream.pix_fmt === 'yuv420p' && recordingStream.has_b_frames === 0;
+  const inputArgs = recording ? ['-i', capture] : ['-framerate', '30', '-i', path.join(settings.output, '%04d.png')];
+  // The frame angles are deterministic. Normalize capture timestamps without
+  // re-encoding only when there are no reordered frames (B-frames).
+  const codecArgs = copyRecording
+    ? ['-c:v', 'copy', '-bsf:v', 'setts=pts=N:dts=N:duration=1:time_base=1/30', '-video_track_timescale', '30000', '-r', '30']
+    : [...(recording ? ['-vf', 'setpts=N/(30*TB)', '-r', '30'] : []), '-frames:v', '600', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-pix_fmt', 'yuv420p'];
+  await runProcess(ffmpeg, ['-hide_banner', '-loglevel', 'error', '-y', ...inputArgs, ...codecArgs, '-an',
     '-movflags', '+faststart', store.file(task.id, 'loop.partial.mp4')], { cancelled: () => exists(store.file(task.id, 'cancel')) });
   const { stdout } = await exec(ffprobe, ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', store.file(task.id, 'loop.partial.mp4')], { timeout: 30000 });
   const report = JSON.parse(stdout), video = report.streams.find(s => s.codec_type === 'video');
@@ -68,16 +97,19 @@ async function renderVideo(task, blender) {
       Number(video.nb_frames) !== 600 || Math.abs(Number(report.format.duration) - 20) > .05 || report.streams.some(s => s.codec_type === 'audio')) throw Error('VIDEO_VALIDATION_FAILED');
   await fs.rename(store.file(task.id, 'loop.partial.mp4'), store.file(task.id, 'loop.mp4'));
   await fs.writeFile(store.file(task.id, 'video-info.json'), JSON.stringify(report, null, 2), { mode: 0o600 });
+  if (recording) await fs.writeFile(store.file(task.id, 'render-info.json'), JSON.stringify(recording, null, 2), { mode: 0o600 });
+  if (await exists(store.file(task.id, 'cancel'))) throw Error('CANCELLED');
   task.videoReady = true; task.status = 'done'; task.detail = 'Modelo e vídeo prontos'; task.frame = 600;
   await store.save(task);
   // Only disposable rendered frames are removed; input, GLB and final video remain.
   await fs.rm(settings.output, { recursive: true, force: true });
+  await fs.rm(capture, { force: true });
 }
 async function main(id) {
   const release = await store.claim(id);
   if (!release) return;
   const task = await store.read(id);
-  let jobs, studioStore, currentJob, bridge, lastWorkerCheck = 0;
+  let jobs, studioStore, currentJob, bridge, restoreSubmissionGuard, lastWorkerCheck = 0;
   const cancelled = () => exists(store.file(id, 'cancel'));
   async function cancelJob(jobId) {
     try {
@@ -116,7 +148,7 @@ async function main(id) {
       if (job.providerId) task.providerId = job.providerId;
       await store.save(task);
       if (job.status === 'DONE') return job;
-      if (['FAILED', 'CANCELLED'].includes(job.status)) throw Error(job.error || job.status);
+      if (['FAILED', 'CANCELLED'].includes(job.status)) { task.failedStage = job.failedStage || null; throw Error(job.error || job.status); }
       if (job.providerId && job.status === 'STARTING GPU' && Date.now() - lastWorkerCheck > 15000) {
         lastWorkerCheck = Date.now();
         const failure = await startupFailure(job, bridge.config()).catch(() => null);
@@ -140,6 +172,11 @@ async function main(id) {
     bridge = loadBridge(store.directory(id));
     jobs = bridge.requireSource('./jobs'); studioStore = bridge.requireSource('./store');
     const assets = bridge.requireSource('./assets');
+    restoreSubmissionGuard = installSubmissionGuard(bridge, async rejection => {
+      task.submissionRejection = rejection;
+      task.submissionRejections = [...(task.submissionRejections || []), rejection];
+      await store.save(task);
+    });
     if (await cancelled()) {
       // Reconcile/cancel the original provider job after process interruption.
       for (const job of await studioStore.list('jobs')) if (!jobs.terminal.has(job.status) || (task.cancelPending && job.providerId)) await cancelJob(job.id);
@@ -186,7 +223,7 @@ async function main(id) {
     task.status = safe === 'CANCELLED' ? 'cancelled' : 'failed'; task.error = safe;
     task.detail = task.modelReady ? 'O modelo foi salvo. Você pode retomar somente o vídeo.' : 'A tarefa parou. Nenhuma nova geração será enviada automaticamente.';
     await store.save(task);
-  } finally { await release(); }
+  } finally { restoreSubmissionGuard?.(); await release(); }
 }
 async function diagnostic() {
   const report = await diagnose(path.join(store.root(), '_diagnostic'));

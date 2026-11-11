@@ -1,4 +1,4 @@
-// Real CPU-only preparation, Blender render and H.264 loop check; no provider jobs.
+// Real local preparation, fallback render and complete GPU video; no provider jobs.
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
@@ -48,6 +48,27 @@ async function main() {
   const { stdout } = await exec('ffprobe', ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', video]);
   const report = JSON.parse(stdout); assert.equal(report.streams[0].codec_name, 'h264'); assert.equal(report.streams[0].nb_frames, '12'); assert.equal(Number(report.format.duration), 1);
   await fs.copyFile(path.join(frames, '0000.png'), path.join(output, 'preview.png'));
-  console.log(JSON.stringify({ ok: true, output, checks: ['real ImaginAR image preparation without network', 'real GLB import and CPU turntable render', 'black background and visible rotating model', 'H.264/yuv420p with no duplicated endpoint frame'], scope: '12 frames at 320x180; paid inference and full-resolution export are separate checks' }, null, 2));
+
+  process.env.CAIXA_PRETA_MODEL_3D_DIR = path.join(output, 'tasks');
+  const taskStore = require('../lib/model-3d/store.cjs');
+  const { renderVideo } = require('./model-3d-worker.cjs');
+  const task = { id: randomUUID(), name: 'local fixture', modelReady: true, frames: 600, createdAt: new Date().toISOString() };
+  await fs.mkdir(taskStore.directory(task.id), { recursive: true });
+  await fs.copyFile(model, taskStore.file(task.id, 'model.glb')); await taskStore.save(task);
+  const started = Date.now(); await renderVideo(task, blender);
+  const elapsedMs = Date.now() - started;
+  assert.equal(task.status, 'done'); assert.equal(task.localRenderer, 'webgl', 'fast renderer must be exercised, not silently bypassed');
+  const full = JSON.parse(await fs.readFile(taskStore.file(task.id, 'video-info.json')));
+  assert.equal(full.streams[0].r_frame_rate, '30/1'); assert.equal(full.streams[0].nb_frames, '600'); assert.equal(Number(full.format.duration), 20);
+  await exec('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-i', taskStore.file(task.id, 'loop.mp4'), '-vf', 'select=eq(n\\,0)+eq(n\\,1)+eq(n\\,150)+eq(n\\,599)', '-fps_mode', 'vfr', path.join(output, 'verified-%02d.png')], { timeout: 30000 });
+  const decoded = await Promise.all([1, 2, 3, 4].map(n => sharp(path.join(output, `verified-${String(n).padStart(2, '0')}.png`)).resize(320, 180).removeAlpha().raw().toBuffer()));
+  const difference = (a, b) => a.reduce((sum, v, i) => sum + Math.abs(v - b[i]), 0) / a.length;
+  assert(difference(decoded[0], decoded[2]) > 1, 'model must rotate during the exported video');
+  assert(difference(decoded[0], decoded[3]) < Math.max(1, difference(decoded[0], decoded[1]) * 3), 'loop seam must be comparable to adjacent frames');
+  for (const pixels of decoded) {
+    assert(pixels.subarray(0, 320 * 3).every(v => v < 8) && pixels.subarray(-320 * 3).every(v => v < 8), 'black margins must remain clear throughout rotation');
+    assert(pixels.some(v => v > 80), 'model must remain visible');
+  }
+  console.log(JSON.stringify({ ok: true, output, elapsedMs, checks: ['real ImaginAR image preparation without provider network', 'Blender fallback at 320x180/12 frames', 'complete WebGL/FFmpeg export at 1920x1080/600 frames/30 fps/20 seconds', 'black margins, visible rotation and continuous loop seam'], scope: 'synthetic local GLB; no paid image-to-3D inference' }, null, 2));
 }
 main().then(() => process.exit(0)).catch(error => { console.error(error); process.exit(1); });
