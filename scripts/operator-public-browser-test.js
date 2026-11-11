@@ -105,8 +105,8 @@ try {
   await settings.getByRole("slider", { name: "SARCASMO", exact: true }).fill("45");
   await poll(async () => { const s = await state(); return s.robotSound.typingIntervalMs === 50
     && s.robotSound.typingPauseMs === 300 && s.robotSound.messageGapMs === 700 && s.operatorPublic.personality.sarcasm === 45; }, "Operator settings persist");
-  await settings.getByRole("combobox", { name: "Modelo GPT", exact: true }).selectOption("gpt-5-nano");
-  await poll(async () => (await state()).model === "gpt-5-nano", "model adjustment");
+  await settings.getByRole("combobox", { name: "Modelo GPT", exact: true }).selectOption("gpt-5.6-luna");
+  await poll(async () => (await state()).model === "gpt-5.6-luna", "model adjustment");
   await operator.reload({ waitUntil: "domcontentloaded" });
   await poll(async () => await settings.getByRole("slider", { name: "Pausa na pontuação do bot", exact: true }).inputValue() === "300", "settings recovered after reload");
   await operator.screenshot({ path: path.join(output, "operator-settings.png") });
@@ -132,7 +132,7 @@ try {
   await fs.writeFile(fixture, JSON.stringify({ mode: "stream" }));
   checks.push("actual projected typing respects punctuation pause and minimum interval between lines");
   await post("/api/robot-sound", { settings: { typingIntervalMs: 60, typingPauseMs: 0, messageGapMs: 0 } });
-  await post("/api/operator", { command: "/model gpt-5-mini" });
+  await post("/api/operator", { command: "/model gpt-5.6-terra" });
   checks.push("Operator tab: bot settings only, speed/punctuation/gap/personality/model persist and recover after reload");
   await settings.getByRole("slider", { name: "Velocidade da digitação do robô", exact: true }).fill("10");
   await poll(async () => (await state()).robotSound.typingIntervalMs === 100, "slow Operator typing configured privately");
@@ -241,6 +241,8 @@ try {
   assert(intermediate.length < (await state()).operatorPublic.messages.at(-1).content.length);
   assert.equal((await state()).conversation.length, beforeConversation, "parallel chat cannot overwrite main conversation");
   const request = JSON.parse(await fs.readFile(`${fixture}.request.json`, "utf8"));
+  assert.equal(request.model, "gpt-5.6-terra");
+  assert.deepEqual(request.reasoning, { effort: "low" });
   assert.equal(request.stream, true);
   assert(!request.tools, "parallel dialogue has no operational tools");
   assert(JSON.stringify(request).includes(`SARCASMO: ${percent - 5}%`));
@@ -248,6 +250,8 @@ try {
   await post("/api/operator-public", { action: "patch", personality: { sarcasm: 10 } });
   await post("/api/chat", { message: "Uma intervenção curta sem comandos." });
   const principalRequest = JSON.parse(await fs.readFile(`${fixture}.request.json`, "utf8"));
+  assert.equal(principalRequest.model, "gpt-5.6-terra");
+  assert.deepEqual(principalRequest.reasoning, { effort: "low" });
   assert(principalRequest.input.some(({ content }) => typeof content === "string" && content.includes("SARCASMO: 10%")));
   await post("/api/operator-public", { action: "patch", personality: { sarcasm: percent - 5 } });
   checks.push("progressive SDK stream, personality/context sent, no tools, principal history independent");

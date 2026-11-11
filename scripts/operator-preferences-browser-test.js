@@ -26,7 +26,7 @@ try{
  await command('hallucination',{patch:{afterCards:4,effects:{fusion:{mix:77},wave:{enabled:false}}}});
  await command('references',{settings:{maxChunks:3,themes:{politica:false}}});
  const expected=await preferences(),saved=JSON.parse(await fs.readFile(path.join(runtime,'operator-preferences.json'),'utf8'));assert.deepEqual(saved.values,expected);
- assert.equal(expected.operatorPublic.personality.sarcasm,84);assert.equal(expected.robotSound.typingPauseMs,700);assert.equal(expected.model,'gpt-5-nano');
+ assert.equal(expected.operatorPublic.personality.sarcasm,84);assert.equal(expected.robotSound.typingPauseMs,700);assert.equal(expected.model,'gpt-5.6-luna');
  checks.push('real HTTP edits are acknowledged only after writing exact parameter values to the local file');
  const status=await get('/api/operator-preferences');assert(status.saved&&status.runtimeReady&&!status.error);
  await post('/api/operator-preferences',{action:'save-current',sessionId:'stale'},409);

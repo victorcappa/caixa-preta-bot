@@ -14,6 +14,8 @@ Effect: writes dependencies under `node_modules/` and may access the package reg
 
 For live model calls, create `.env.local` with `OPENAI_API_KEY=<your-key>`. `OPENAI_MODEL` is optional. Never commit or paste values into the brain. `docs/brain/INVENTORY.md` lists environment variable names only.
 
+Bot models are `gpt-5.6-terra` (default) and `gpt-5.6-luna`. `lib/openaiModels.js` migrates retired mini/nano aliases, environment overrides and saved choices by tier. Responses requests previously using `minimal` now use supported `low` effort. Check migration/recovery with `npm run test:operator-preferences`. These replacements have higher per-token prices than the retired models. See the [official deprecations](https://developers.openai.com/api/docs/deprecations) and [model pricing](https://developers.openai.com/api/docs/pricing).
+
 ## Development and build
 
 ```bash

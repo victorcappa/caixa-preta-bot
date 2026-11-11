@@ -889,7 +889,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
                 </div>
                 <div>
                   <dt>/model modelo</dt>
-                  <dd>Alterna entre gpt-5-mini e gpt-5-nano.</dd>
+                  <dd>Alterna entre gpt-5.6-terra e gpt-5.6-luna.</dd>
                 </div>
                 <div>
                   <dt>/phone approve|hide</dt>

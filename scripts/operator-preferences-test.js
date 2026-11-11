@@ -3,13 +3,20 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import {registerHooks} from 'node:module';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createOperatorPreferenceStore,extractOperatorPreferences} from '../lib/operatorPreferences.js';
+import {DEFAULT_OPENAI_MODEL,OPENAI_MODEL_OPTIONS,normalizeOpenAIModel,resolveOpenAIModel} from '../lib/openaiModels.js';
 
 const child=process.argv[2]==='--child';
 const directory=child?process.argv[3]:fs.mkdtempSync(path.join(os.tmpdir(),'caixa-preferences-test-'));
 process.env.CAIXA_PRETA_SHOW_RUNTIME_DIR=directory;
+if (!child) {
+  const values = {model:'gpt-5-mini',globalVolume:.39};
+  const checksum = createHash('sha256').update(JSON.stringify(values)).digest('hex');
+  fs.writeFileSync(path.join(directory,'operator-preferences.json'), JSON.stringify({schemaVersion:1,values,checksum}), {mode:0o600});
+}
 registerHooks({resolve(specifier,context,nextResolve){
   let url;
   if(specifier.startsWith('@/'))url=pathToFileURL(path.resolve(specifier.slice(2))).href;
@@ -27,9 +34,35 @@ if(child){
   process.exit(0);
 }
 const checks=[];
+assert.equal(saved().values.model,'gpt-5.6-terra');
+const hotState = {model:'gpt-5-nano',conversation:[{content:'keep this session'}]};
+const hotStore = createOperatorPreferenceStore({file:path.join(directory,'hot-model.json')});
+hotStore.save(hotState);
+assert.equal(hotState.model,'gpt-5.6-luna');
+assert.deepEqual(hotState.conversation,[{content:'keep this session'}]);
+assert.equal(DEFAULT_OPENAI_MODEL,'gpt-5.6-terra');
+assert.deepEqual(OPENAI_MODEL_OPTIONS,['gpt-5.6-terra','gpt-5.6-luna']);
+for (const [legacy,current] of [
+  ['gpt-5-mini','gpt-5.6-terra'], ['gpt-5-mini-2025-08-07','gpt-5.6-terra'],
+  ['gpt-5-nano','gpt-5.6-luna'], ['gpt-5-nano-2025-08-07','gpt-5.6-luna']
+]) {
+  assert.equal(normalizeOpenAIModel(` ${legacy} `),current);
+  showState.setModel(legacy);
+  assert.equal(showState.snapshot().model,current);
+  assert.equal(saved().values.model,current);
+}
+assert.equal(recoveryState.model,'gpt-5.6-terra');
+assert.equal(recoveryState.globalVolume,.39);
+assert.equal(normalizeOpenAIModel('gpt-5'),null);
+assert.equal(normalizeOpenAIModel('o3'),null);
+assert.equal(normalizeOpenAIModel('__proto__'),null);
+assert.equal(resolveOpenAIModel('invalid','gpt-5-nano'),'gpt-5.6-luna');
+assert.equal(resolveOpenAIModel(null,'invalid'),DEFAULT_OPENAI_MODEL);
+checks.push('retired mini/nano aliases, environment values and persisted preferences migrate by tier, including cold startup');
 showState.patchOperatorPublic({personality:{sarcasm:88,rebellion:49,curiosity:91,verbosity:52}});
 showState.controlRobotSound({typingIntervalMs:83,typingPauseMs:650,messageGapMs:900,displayFont:'courier',typingVolume:.17});
 showState.setModel('gpt-5-nano');showState.setGlobalVolume(.42);
+assert.equal(showState.snapshot().model,'gpt-5.6-luna');
 showState.controlTarot('config',{config:{maxWords:113,associationIntensity:87,automatic:true}});
 showState.controlTarot('visual',{visual:{matrix:.31,textSize:44}});
 showState.controlTarot('profile',{profile:{humor:19,poetry:81}});
