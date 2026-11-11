@@ -11,7 +11,7 @@ function sameOrigin(request) {
   catch { return false; }
 }
 function errorResponse(error) {
-  const known = new Set(['INVALID_ID', 'INVALID_IMAGE', 'IMAGE_TOO_LARGE', 'INVALID_OPTIONS', 'ADMISSION_BUSY', 'REQUEST_CONFLICT', 'TASK_ACTIVE', 'NOT_RESUMABLE', 'INVALID_ACTION']);
+  const known = new Set(['INVALID_ID', 'INVALID_IMAGE', 'IMAGE_TOO_LARGE', 'INVALID_OPTIONS', 'ADMISSION_BUSY', 'REQUEST_CONFLICT', 'TASK_ACTIVE', 'NOT_RESUMABLE', 'INVALID_ACTION', 'GENERATION_UNAVAILABLE']);
   return json({ error: known.has(error.message) ? error.message : 'LOCAL_STORAGE_FAILED' }, error.status || (error.code === 'ENOENT' ? 404 : 500));
 }
 export async function GET(request) {

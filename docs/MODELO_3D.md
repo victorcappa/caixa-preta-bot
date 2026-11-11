@@ -23,6 +23,10 @@ Arquivos privados ficam em `.runtime/model-3d/<id>/`: original, `task.json`, fil
 
 O worker reutiliza `.env` do Studio e `api/local.settings.json` do ImaginAR somente no processo privado; valores de ambiente já definidos têm precedência. Nenhuma chave, URL assinada ou resposta bruta do provedor é enviada à interface. A fila e os arquivos do Studio original não são alterados.
 
+Durante a inicialização, o worker local consulta os estados dos workers RunPod a cada 15 segundos. Quando identifica falha no worker associado ao job, ou uma inicialização sem workers anteriores em que todos os workers atuais falharam, cancela o job original. Logs são classificados em memória; não são salvos nem enviados à interface. Uma falha de permissão do registro é exibida como `GHCR_IMAGE_PULL_DENIED`. Se o cancelamento ficar sem confirmação, a aba mantém **Cancelar tarefa** e bloqueia novas gerações até reconciliar o job.
+
+Após um acesso negado confirmado, `.runtime/model-3d/provider-block.json` impede novos envios com a mesma imagem e credencial de registro. O diagnóstico volta a avaliar a configuração depois de a credencial vinculada ao endpoint mudar; consultar o diagnóstico não inicia workers. A substituição de credenciais precisa de autorização operacional própria.
+
 | Variável opcional | Padrão / finalidade |
 | --- | --- |
 | `CAIXA_PRETA_IMAGINAR_ROOT` | `../../ImaginAR/8th wall/buildable/imaginar`, relativo à raiz do Caixa Preta |
@@ -36,11 +40,13 @@ O ImaginAR deve ter dependências instaladas, Python de preparação em `STUDIO_
 
 O diagnóstico é somente leitura. Confere dependências, configuração e saúde do endpoint, mas nenhum worker é iniciado por abrir a página, consultar status ou verificar novamente. A submissão explícita reutiliza a ativação sob demanda do ImaginAR (`min=0`, `max` de 0 para 1 quando necessário, idle timeout 10 s), sem alterar imagem, credencial, pool ou mínimo de workers. Isso não comprova custo zero em repouso; confira o faturamento RunPod.
 
-A falha registrada em 06/11/2026 foi `denied` no download da imagem privada GHCR, antes da inferência. A credencial de registro vinculada ao endpoint precisa permitir esse download. Uma verificação de saúde sem workers não prova acesso ao registro. A integração exibe falhas e não cria endpoints, corrige credenciais ou troca imagens automaticamente.
+A tentativa única autorizada em 11/11/2026 foi enviada pela nova aba com `objeto-01.png`, qualidade padrão, sem remoção de fundo. A preparação local concluiu, mas o worker confirmou novamente `denied` ao baixar a imagem privada GHCR, antes da inferência. Job local `5d2285fe-159f-41a3-9470-25eb6838c3d0`; job RunPod `d57dc17c-2ce2-4ebe-b694-92de9cd5b613-u1`. O monitor de teste cancelou o job e restaurou `min=0,max=0`; a leitura final mostrou fila vazia e nenhum worker. Não houve GLB nem MP4, nem repetição da inferência. A consulta imediata de faturamento não mostrou lançamentos, o que não comprova custo final zero. Evidências privadas: `.runtime/model-3d/_validation/2026-11-11/receipt.json`.
+
+A credencial `imaginar-ghcr-trellis` existe, mas o acesso do RunPod à imagem privada permanece bloqueado. Uma verificação de saúde sem workers não prova acesso ao registro. A integração não cria endpoints, corrige credenciais ou troca imagens automaticamente; precisa concluir essa correção e uma nova validação autorizada para aceitar o caminho real completo.
 
 ## Verificação
 
-- `npm run test:modelo-3d`: orquestração com provedor local simulado, idempotência, falha do vídeo, retomada, cancelamento, submissão incerta e admissão concorrente.
+- `npm run test:modelo-3d`: orquestração com provedor local simulado, idempotência, falha do vídeo, retomada, cancelamento, submissão incerta, admissão concorrente, atribuição da falha de startup, cancelamento em acesso GHCR negado e bloqueio de novos envios/cancelamento pendente.
 - `npm run test:modelo-3d:local`: preparação real do ImaginAR sem rede e render CPU com Blender/FFmpeg/FFprobe de um GLB de teste, em 320×180/12 quadros. Confere fundo, enquadramento, rotação e codificação. Não envia jobs RunPod.
 - `npm run build` e `npm run test:modelo-3d:browser`: navegador na porta isolada 3321, com provedor/vídeo simulados, upload, autorização, recuperação da lista, downloads, byte ranges, separação pública/privada e bloqueio de outra origem. Não usa nem reseta a porta 3000.
 

@@ -16,6 +16,10 @@ const errors = {
   LOCAL_PROCESS_FAILED: 'A renderização ou montagem do vídeo falhou. O modelo permanece salvo; use Retomar vídeo.',
   LOCAL_TOOL_UNAVAILABLE: 'Blender, FFmpeg ou FFprobe não está disponível no servidor.',
   LOCAL_STORAGE_FAILED: 'Não foi possível acessar as tarefas locais. Confira o processo e o diretório de armazenamento.',
+  GHCR_IMAGE_PULL_DENIED: 'O RunPod não conseguiu baixar a imagem privada do gerador no GHCR. Corrija a credencial de registro do endpoint antes de gerar novamente. A tentativa foi cancelada.',
+  RUNPOD_WORKER_UNHEALTHY: 'O worker falhou durante a inicialização. A tentativa foi cancelada. Confira o diagnóstico e os logs no RunPod.',
+  GENERATION_CANCEL_PENDING: 'O cancelamento no RunPod ficou sem confirmação. Use Cancelar tarefa novamente e confira o job original no RunPod antes de outra geração.',
+  GENERATION_UNAVAILABLE: 'A geração está bloqueada pelo diagnóstico. Corrija o acesso à imagem privada do worker e verifique novamente antes de enviar outra imagem.',
 };
 const labels = { queued: 'Na fila', preparing: 'Preparando imagem', generating: 'Gerando modelo 3D', rendering: 'Renderizando vídeo', encoding: 'Montando MP4', done: 'Concluído', failed: 'Falhou', cancelled: 'Cancelado', interrupted: 'Processo interrompido' };
 const stages = { QUEUED: 'Aguardando processamento', PREPROCESSING: 'Preparando a imagem', 'STARTING GPU': 'Iniciando a GPU. A primeira execução pode levar alguns minutos.', 'LOADING MODEL': 'Carregando o gerador', 'GENERATING 3D': 'Construindo a geometria 3D', TEXTURING: 'Aplicando as texturas', EXPORTING: 'Exportando o modelo', POSTPROCESSING: 'Finalizando o modelo', OPTIMIZING: 'Otimizando o arquivo', 'ANALYZING GEOMETRY': 'Conferindo a geometria', UPLOADING: 'Recebendo os arquivos gerados', VALIDATING: 'Validando o modelo', DONE: 'Modelo 3D gerado' };
@@ -79,7 +83,7 @@ export default function Model3DController() {
       await refresh();
     } catch (err) { setError(message(err.message)); } finally { setBusy(false); }
   }
-  const active = tasks.some(t => !['done', 'failed', 'cancelled'].includes(t.status));
+  const active = tasks.some(t => t.canCancel || !['done', 'failed', 'cancelled'].includes(t.status));
   return <main className={styles.main}>
     <header><span className={styles.eyebrow}>PRODUÇÃO · CAIXA PRETA</span><h1>modelo-3D</h1><p>Uma imagem vira um modelo 3D e um vídeo com fundo preto, girando em loop no eixo Y.</p></header>
     <div className={styles.columns}>
@@ -109,7 +113,7 @@ export default function Model3DController() {
             {task.modelUrl && <a href={`${task.modelUrl}?download`}>Baixar modelo GLB</a>}
             {task.videoUrl && <a href={`${task.videoUrl}?download`}>Baixar vídeo MP4</a>}
             {task.canResume && <button type="button" disabled={busy} onClick={() => act(task.id, 'resume')}>{task.modelReady ? 'Retomar vídeo' : 'Retomar tarefa'}</button>}
-            {!['done', 'failed', 'cancelled'].includes(task.status) && <button type="button" disabled={busy} onClick={() => act(task.id, 'cancel')}>Cancelar tarefa</button>}
+            {task.canCancel && <button type="button" disabled={busy} onClick={() => act(task.id, 'cancel')}>Cancelar tarefa</button>}
           </div>
         </article>)}
       </section>

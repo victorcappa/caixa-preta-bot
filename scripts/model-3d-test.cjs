@@ -6,12 +6,14 @@ const path = require('node:path');
 const { randomUUID } = require('node:crypto');
 const store = require('../lib/model-3d/store.cjs');
 const service = require('../lib/model-3d/service.cjs');
+const { startupFailure } = require('../lib/model-3d/workerHealth.cjs');
 
 async function fixture() {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'caixa-preta-model-3d-test-'));
   const source = path.join(root, 'imaginar/api/_shared/model-studio');
   await fs.mkdir(source, { recursive: true });
-  await fs.writeFile(path.join(source, 'config.js'), `exports.config=()=>({root:process.env.STUDIO_DATA_DIR,blender:process.env.CAIXA_PRETA_BLENDER_BIN});`);
+  await fs.writeFile(path.join(source, 'config.js'), `exports.config=()=>({root:process.env.STUDIO_DATA_DIR,blender:process.env.CAIXA_PRETA_BLENDER_BIN,endpoint:'fixture-endpoint',runpodKey:'fixture-key',flags:{runpod:true}});`);
+  await fs.writeFile(path.join(source, 'runpod-management.js'), `exports.get=async()=>({image:'fixture-image',registry:'fixture-registry'});`);
   await fs.writeFile(path.join(source, 'store.js'), `
     const fs=require('node:fs/promises'),path=require('node:path');
     const file=(kind,id,name='manifest.json')=>path.join(process.env.STUDIO_DATA_DIR,kind,id,name);
@@ -26,6 +28,8 @@ async function fixture() {
   `);
   await fs.writeFile(path.join(source, 'jobs.js'), `
     const fs=require('node:fs/promises'),path=require('node:path'),s=require('./store');
+    if(process.env.MODEL3D_FIXTURE_STARTUP_DENIED==='1')global.fetch=async url=>String(url).includes('/logs?')?new Response('data: error pulling image: denied'):
+      Response.json({workers:[{id:'failed-worker',status:'UNHEALTHY',isStale:false}]});
     exports.terminal=new Set(['DONE','FAILED','CANCELLED']);exports.recover=async()=>{};
     exports.create=async p=>{
       const old=await s.get('jobs',p.requestId).catch(()=>null);if(old)return [old];
@@ -34,11 +38,12 @@ async function fixture() {
       else {const countFile=path.join(process.env.STUDIO_DATA_DIR,'provider-submissions');
         const count=Number(await fs.readFile(countFile,'utf8').catch(()=>0));await fs.writeFile(countFile,String(count+1));
         if(process.env.MODEL3D_FIXTURE_UNCERTAIN==='1'){t.status='FAILED';t.error='SUBMISSION_UNCERTAIN_DO_NOT_RETRY'}
-        else {t.providerId='original-provider-id';await s.save('jobs',t);await fs.writeFile(s.file('jobs',t.id,'final.glb'),'fixture GLB')}
+        else {t.providerId='original-provider-id';if(process.env.MODEL3D_FIXTURE_STARTUP_DENIED==='1'){t.status='STARTING GPU';t.workerBaseline={workers:[]}}
+          await s.save('jobs',t);await fs.writeFile(s.file('jobs',t.id,'final.glb'),'fixture GLB')}
       }
       return [await s.save('jobs',t)];
     };
-    exports.cancel=async id=>{const t=await s.get('jobs',id);t.status='CANCELLED';return s.save('jobs',t)};
+    exports.cancel=async id=>{if(process.env.MODEL3D_FIXTURE_CANCEL_FAIL==='1')throw Error('RUNPOD_UNAVAILABLE');const t=await s.get('jobs',id);t.status='CANCELLED';return s.save('jobs',t)};
   `);
   const tool = path.join(root, 'tool.cjs');
   await fs.writeFile(tool, `#!/usr/bin/env node
@@ -69,6 +74,21 @@ async function waitFor(id, status) {
   throw Error(`Timeout: ${status}, ${JSON.stringify(await store.publicTask(await store.read(id)))}`);
 }
 async function test() {
+  const calls = [];
+  const cfg = { endpoint: 'test-endpoint', runpodKey: 'fixture-key' };
+  const startup = { status: 'STARTING GPU', providerId: 'one-job', workerBaseline: { workers: [] } };
+  const workerFetch = async (url, options) => {
+    calls.push({ url, method: options.method || 'GET' });
+    return url.includes('/logs?') ? new Response('data: {"line":"error pulling image: denied https://private.invalid/?token=never-persist"}\n\n')
+      : Response.json({ workers: [{ id: 'own-worker', status: 'UNHEALTHY', isStale: false }] });
+  };
+  const failedStartup = await startupFailure(startup, cfg, { fetchImpl: workerFetch });
+  assert.equal(failedStartup.code, 'GHCR_IMAGE_PULL_DENIED');
+  assert(!JSON.stringify(failedStartup).includes('never-persist'));
+  assert(calls.every(c => c.method === 'GET'), 'startup diagnostics must never submit inference');
+  assert.equal(await startupFailure({ ...startup, workerBaseline: undefined }, cfg, { fetchImpl: workerFetch }), null, 'unknown baseline must not blame another worker');
+  const sharedFetch = async () => Response.json({ workers: [{ id: 'failed', status: 'UNHEALTHY' }, { id: 'ready', status: 'IDLE' }] });
+  assert.equal(await startupFailure(startup, cfg, { fetchImpl: sharedFetch }), null, 'do not cancel a queued job just because another worker is unhealthy');
   const root = await fixture();
   const payload = { id: randomUUID(), name: 'objeto.png', mime: 'image/png', buffer: Buffer.from('image fixture') };
   await service.create(payload);
@@ -110,8 +130,29 @@ async function test() {
   await assert.rejects(service.create({ ...payload, id: randomUUID() }), /TASK_ACTIVE/);
   await fs.writeFile(store.file(active.id, 'cancel'), '');
   await service.action(active.id, 'cancel'); await waitFor(active.id, 'cancelled');
+  const pending = await store.read(active.id); pending.status = 'failed'; pending.cancelPending = true; await store.save(pending);
+  assert.equal((await store.publicTask(pending)).canCancel, true);
+  await assert.rejects(service.create({ ...payload, id: randomUUID() }), /TASK_ACTIVE/);
+  pending.cancelPending = false; await store.save(pending);
+  process.env.MODEL3D_FIXTURE_STARTUP_DENIED = '1';
+  process.env.MODEL3D_FIXTURE_CANCEL_FAIL = '1';
+  const cancelFailed = { ...payload, id: randomUUID() }; await service.create(cancelFailed);
+  const unconfirmed = await waitFor(cancelFailed.id, 'failed');
+  assert.equal(unconfirmed.error, 'GENERATION_CANCEL_PENDING'); assert.equal(unconfirmed.cancelPending, true);
+  await assert.rejects(service.create({ ...payload, id: randomUUID() }), /TASK_ACTIVE/);
+  delete process.env.MODEL3D_FIXTURE_CANCEL_FAIL;
+  await service.action(cancelFailed.id, 'cancel');
+  assert.equal((await waitFor(cancelFailed.id, 'cancelled')).cancelPending, false);
+  const denied = { ...payload, id: randomUUID() }; await service.create(denied);
+  const deniedTask = await waitFor(denied.id, 'failed');
+  assert.equal(deniedTask.error, 'GHCR_IMAGE_PULL_DENIED');
+  assert.equal((await fs.readFile(store.file(denied.id, `studio/jobs/${deniedTask.generationJobId}/manifest.json`), 'utf8').then(JSON.parse)).status, 'CANCELLED');
+  assert.equal(await count(denied.id), '1');
+  assert.equal(JSON.parse(await fs.readFile(path.join(store.root(), 'provider-block.json'), 'utf8')).reason, 'GHCR_IMAGE_PULL_DENIED');
+  delete process.env.MODEL3D_FIXTURE_STARTUP_DENIED;
+  await assert.rejects(service.create({ ...payload, id: randomUUID() }), /GENERATION_UNAVAILABLE/);
   await assert.rejects(service.create({ ...payload, id: '../bad' }), /INVALID_ID/);
-  console.log(JSON.stringify({ ok: true, checks: ['complete orchestration with a fake provider', 'lost HTTP response reuses the task', 'request payload conflicts rejected', 'video failure/restart keeps a single provider submission', 'uncertain provider submission is never replayed', 'dead-worker recovery', 'single-flight admission', 'cancellation and invalid IDs'], output: root }, null, 2));
+  console.log(JSON.stringify({ ok: true, checks: ['complete orchestration with a fake provider', 'lost HTTP response reuses the task', 'request payload conflicts rejected', 'video failure/restart keeps a single provider submission', 'uncertain provider submission is never replayed', 'dead-worker recovery', 'single-flight admission', 'cancellation and invalid IDs', 'startup failure attribution without exposing logs', 'GHCR denial cancels the original job and blocks new submissions', 'unconfirmed cancellation retains retry controls and blocks admission'], output: root }, null, 2));
 }
 if (require.main === module) test().catch(error => { console.error(error); process.exitCode = 1; });
 module.exports = { fixture, waitFor };

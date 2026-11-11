@@ -7,6 +7,7 @@ const { promisify } = require('node:util');
 const { createHash } = require('node:crypto');
 const store = require('../lib/model-3d/store.cjs');
 const { loadBridge, diagnose } = require('../lib/model-3d/bridge.cjs');
+const { startupFailure } = require('../lib/model-3d/workerHealth.cjs');
 const exec = promisify(execFile);
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const exists = file => fs.access(file).then(() => true, () => false);
@@ -76,31 +77,73 @@ async function main(id) {
   const release = await store.claim(id);
   if (!release) return;
   const task = await store.read(id);
-  let jobs, studioStore, currentJob;
+  let jobs, studioStore, currentJob, bridge, lastWorkerCheck = 0;
   const cancelled = () => exists(store.file(id, 'cancel'));
+  async function cancelJob(jobId) {
+    try {
+      const job = await studioStore.get('jobs', jobId);
+      if (jobs.terminal.has(job.status) && job.providerId && !['COMPLETED', 'FAILED', 'CANCELLED', 'TIMED_OUT'].includes(job.providerTerminalStatus))
+        await bridge.requireSource('./runpod-service').cancel(job.providerId, job.provider);
+      else {
+        const result = await jobs.cancel(jobId);
+        if (result.status === 'CANCELLING' || (job.submissionStarted && !job.providerId)) {
+          // Keep the source submitter alive until its non-idempotent HTTP call settles.
+          // Exiting immediately here could lose a provider ID that is still arriving.
+          const deadline = Date.now() + 35000;
+          let confirmed = false;
+          while (Date.now() < deadline) {
+            const latest = await studioStore.get('jobs', jobId);
+            if (latest.providerId) {
+              await bridge.requireSource('./runpod-service').cancel(latest.providerId, latest.provider);
+              confirmed = true; break;
+            }
+            if (latest.error === 'SUBMISSION_UNCERTAIN_DO_NOT_RETRY') break;
+            await sleep(250);
+          }
+          if (!confirmed) throw Error('GENERATION_CANCEL_PENDING');
+        }
+      }
+      task.cancelPending = false;
+    } catch { task.cancelPending = true; throw Error('GENERATION_CANCEL_PENDING'); }
+  }
   async function waitJob(jobId) {
     currentJob = jobId;
     const deadline = Date.now() + 35 * 60000;
     while (Date.now() < deadline) {
       const job = await studioStore.get('jobs', jobId);
-      if (await cancelled()) { await jobs.cancel(jobId); throw Error('CANCELLED'); }
+      if (await cancelled()) { await cancelJob(jobId); throw Error('CANCELLED'); }
       task.detail = job.status;
       if (job.providerId) task.providerId = job.providerId;
       await store.save(task);
       if (job.status === 'DONE') return job;
       if (['FAILED', 'CANCELLED'].includes(job.status)) throw Error(job.error || job.status);
+      if (job.providerId && job.status === 'STARTING GPU' && Date.now() - lastWorkerCheck > 15000) {
+        lastWorkerCheck = Date.now();
+        const failure = await startupFailure(job, bridge.config()).catch(() => null);
+        if (failure) {
+          task.startupFailure = failure;
+          await cancelJob(jobId);
+          if (failure.code === 'GHCR_IMAGE_PULL_DENIED') {
+            const cfg = bridge.config();
+            const endpoint = await bridge.requireSource('./runpod-management').get(`https://api.runpod.io/v2/serverless/${cfg.endpoint}`, cfg.runpodKey).catch(() => null);
+            if (endpoint) await fs.writeFile(path.join(store.root(), 'provider-block.json'), JSON.stringify({ endpointId: cfg.endpoint, image: endpoint.image, registry: endpoint.registry, reason: failure.code, checkedAt: failure.checkedAt }), { mode: 0o600 }).catch(() => {});
+          }
+          throw Error(failure.code);
+        }
+      }
       await sleep(1500);
     }
-    await jobs.cancel(jobId);
+    await cancelJob(jobId);
     throw Error('GENERATION_TIMEOUT');
   }
   try {
-    const bridge = loadBridge(store.directory(id));
+    bridge = loadBridge(store.directory(id));
     jobs = bridge.requireSource('./jobs'); studioStore = bridge.requireSource('./store');
     const assets = bridge.requireSource('./assets');
     if (await cancelled()) {
       // Reconcile/cancel the original provider job after process interruption.
-      for (const job of await studioStore.list('jobs')) if (!jobs.terminal.has(job.status)) await jobs.cancel(job.id);
+      for (const job of await studioStore.list('jobs')) if (!jobs.terminal.has(job.status) || (task.cancelPending && job.providerId)) await cancelJob(job.id);
+      task.cancelPending = false;
       throw Error('CANCELLED');
     }
     if (task.modelReady && await exists(store.file(id, 'model.glb'))) {
@@ -138,7 +181,7 @@ async function main(id) {
     task.modelReady = true; await store.save(task);
     await renderVideo(task, process.env.CAIXA_PRETA_BLENDER_BIN || bridge.config().blender);
   } catch (error) {
-    if (currentJob && await cancelled()) await jobs?.cancel(currentJob).catch(() => {});
+    if (currentJob && !task.modelReady && task.cancelPending !== false && await cancelled()) await cancelJob(currentJob).catch(() => { error = Error('GENERATION_CANCEL_PENDING'); });
     const safe = /^[A-Z][A-Z0-9_ ]{1,90}$/.test(error.message || '') ? error.message : 'PIPELINE_FAILED';
     task.status = safe === 'CANCELLED' ? 'cancelled' : 'failed'; task.error = safe;
     task.detail = task.modelReady ? 'O modelo foi salvo. Você pode retomar somente o vídeo.' : 'A tarefa parou. Nenhuma nova geração será enviada automaticamente.';
