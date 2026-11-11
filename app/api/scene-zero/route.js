@@ -9,6 +9,7 @@ import { SHOW_MODES } from "@/prompts/modes";
 import { findInstagramParticipantByName } from "@/lib/suitcases/SuitcaseDirector";
 import {
   buildGincanaPresentation,
+  chooseSceneZeroSuitcaseLightingCue,
   isSceneZeroFinalSuitcaseInstructionReady,
   nextSceneZeroSuitcase,
   SCENE_ZERO_FIRST_CHALLENGE,
@@ -16,7 +17,6 @@ import {
   SCENE_ZERO_LAST_SUITCASE_INSTRUCTION,
   SCENE_ZERO_NEXT_SUITCASE_COMMENTS,
   SCENE_ZERO_SUITCASE_GAME_EXPLANATION,
-  SCENE_ZERO_SUITCASE_LIGHTING_CUE,
   SCENE_ZERO_INSTAGRAM_TARGETS,
   SCENE_ZERO_SUITCASE_CUE_DURATION_MS,
   SCENE_ZERO_SUITCASE_ROULETTE_DURATION_MS,
@@ -427,9 +427,19 @@ function startEmergenceMessage(cue) {
   };
 }
 
+function nextSuitcaseLightingCue() {
+  const previousCues = showState.privateSnapshot().conversation
+    .filter((message) => message.role === "assistant" && (
+      message.source === "scene-zero-suitcase-briefing:2:lighting-cue"
+      || message.source === "scene-zero-suitcase-choice"
+    ))
+    .map((message) => message.content.replace(`${SCENE_ZERO_SUITCASE_GAME_EXPLANATION} `, ""));
+  return chooseSceneZeroSuitcaseLightingCue(previousCues);
+}
+
 function suitcaseChoiceAnnouncementText(suitcaseNumber) {
   return Number(suitcaseNumber) === 2
-    ? `${SCENE_ZERO_SUITCASE_GAME_EXPLANATION} ${SCENE_ZERO_SUITCASE_LIGHTING_CUE}`
+    ? `${SCENE_ZERO_SUITCASE_GAME_EXPLANATION} ${nextSuitcaseLightingCue()}`
     : SCENE_ZERO_NEXT_SUITCASE_COMMENTS[Number(suitcaseNumber)] || "Próxima mala. Tentem acompanhar.";
 }
 
@@ -456,16 +466,17 @@ function publishSuitcaseChoiceAnnouncement(targetSuitcase) {
 function publishSuitcaseBriefingStep(targetSuitcase, briefingIndex) {
   const step = sceneZeroSuitcaseBriefingSteps(targetSuitcase)[briefingIndex];
   if (!step) return publishSuitcaseChoiceAnnouncement(targetSuitcase);
+  const text = step.id === "lighting-cue" ? nextSuitcaseLightingCue() : step.text;
   const source = `scene-zero-suitcase-briefing:${targetSuitcase}:${step.id}`;
-  const message = showState.addMessage("assistant", step.text, source);
+  const message = showState.addMessage("assistant", text, source);
   const announced = showState.controlSceneZero("suitcase-choice-briefing", {
     targetSuitcase,
     messageId: message.id,
     briefingIndex
   }, { source: "system" });
   if (!announced.applied) return announced;
-  queueSuitcaseFlowFallback(message.id, step.text);
-  return { ...announced, text: step.text, messageId: message.id };
+  queueSuitcaseFlowFallback(message.id, text);
+  return { ...announced, text, messageId: message.id };
 }
 
 function advanceSuitcaseBriefing(messageId) {
