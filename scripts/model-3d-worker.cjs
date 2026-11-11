@@ -10,6 +10,7 @@ const { loadBridge, diagnose } = require('../lib/model-3d/bridge.cjs');
 const { startupFailure } = require('../lib/model-3d/workerHealth.cjs');
 const { installSubmissionGuard } = require('../lib/model-3d/submissionGuard.cjs');
 const { recordTurntable } = require('../lib/model-3d/browserRender.cjs');
+const view = require('../lib/model-3d/turntable-view.json');
 const exec = promisify(execFile);
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const exists = file => fs.access(file).then(() => true, () => false);
@@ -45,12 +46,12 @@ async function runProcess(bin, args, { cancelled, progress, timeout = 90 * 60000
 }
 async function renderVideo(task, blender) {
   const settings = {
-    input: store.file(task.id, 'model.glb'), output: store.file(task.id, 'frames'), renderer: 'eevee',
-    frames: 600, fps: 30, width: 1920, height: 1080,
+    input: store.file(task.id, 'model.glb'), output: store.file(task.id, `frames-${view.version}`), renderer: 'eevee',
+    frames: 600, fps: 30, width: 1920, height: 1080, view,
   };
   await fs.mkdir(settings.output, { recursive: true });
   await fs.writeFile(store.file(task.id, 'render.json'), JSON.stringify(settings), { mode: 0o600 });
-  task.status = 'rendering'; task.error = null; task.detail = 'Renderizando a rotação em Y · 1920×1080 · 20 segundos';
+  task.status = 'rendering'; task.error = null; task.detail = 'Renderizando a vista de cima e lateral · 1920×1080 · 20 segundos';
   await store.save(task);
   const ffmpeg = process.env.CAIXA_PRETA_FFMPEG_BIN || 'ffmpeg';
   const ffprobe = process.env.CAIXA_PRETA_FFPROBE_BIN || 'ffprobe';

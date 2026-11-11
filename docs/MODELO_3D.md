@@ -7,7 +7,7 @@ Abra a aba **modelo-3D** no cabeçalho dos controles (ao lado de Operator), em `
 3. Autorize a cobrança dessa geração na conta RunPod configurada e clique em **Gerar modelo + vídeo**.
 4. Acompanhe preparação, geração, renderização e montagem do vídeo. Ao concluir, baixe o GLB e o MP4. O vídeo pode ser visualizado em loop na própria aba.
 
-O MP4 usa H.264/yuv420p, 1920×1080, 30 fps, 600 quadros/20 segundos, sem áudio e com giro uniforme de 360 graus no Y do GLB. O último quadro não repete o primeiro. O enquadramento considera a extensão total da rotação; materiais e geometria importados são preservados. As partes ocultas do objeto são estimativas do gerador a partir de uma única imagem.
+O MP4 usa H.264/yuv420p, 1920×1080, 30 fps, 600 quadros/20 segundos, sem áudio e com giro uniforme de 360 graus no Y do GLB. A câmera fica 25° acima do objeto e começa em três quartos (35° de lateral), mostrando o topo e os lados. WebGL e Blender compartilham o perfil em `lib/model-3d/turntable-view.json`. O último quadro não repete o primeiro. O enquadramento considera a extensão total da rotação e a profundidade projetada pela câmera elevada; materiais e geometria importados são preservados. As partes ocultas do objeto são estimativas do gerador a partir de uma única imagem.
 
 ## Execução e recuperação
 
@@ -19,7 +19,7 @@ Um processo Node separado continua trabalhando ao fechar a aba ou reiniciar apen
 
 **Cancelar tarefa** cancela o job original quando há um identificador confirmado e interrompe o render local. O cancelamento depende de acesso ao provedor; uma falha de conexão não comprova interrupção da cobrança. Há uma tarefa ativa por vez. Os resultados prontos ficam disponíveis após recarregar ou reiniciar o servidor.
 
-Arquivos privados ficam em `.runtime/model-3d/<id>/`: original, `task.json`, fila isolada `studio/`, `model.glb`, `loop.mp4` e relatório de vídeo. Não entram no `showState`, SSE, reset de apresentação ou projeção. Quadros intermediários são removidos após um MP4 validado; em falhas ficam para retomada. Esses dados locais não têm retenção automática: acompanhe o espaço em disco e faça backup dos resultados necessários.
+Arquivos privados ficam em `.runtime/model-3d/<id>/`: original, `task.json`, fila isolada `studio/`, `model.glb`, `loop.mp4` e relatório de vídeo. Não entram no `showState`, SSE, reset de apresentação ou projeção. Quadros intermediários ficam em `frames-<versão do perfil>` e são removidos após um MP4 validado; em falhas ficam para retomada. A versão separa os quadros da câmera elevada dos antigos quadros frontais. Vídeos já concluídos mantêm o ângulo anterior até serem renderizados novamente a partir do GLB salvo. Esses dados locais não têm retenção automática: acompanhe o espaço em disco e faça backup dos resultados necessários.
 
 ## Configuração do servidor
 

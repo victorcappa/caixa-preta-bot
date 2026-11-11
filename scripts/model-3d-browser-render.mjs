@@ -24,9 +24,14 @@ try {
   const center = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3());
   const pivot = new THREE.Group(); scene.add(pivot); pivot.add(model); model.position.sub(center);
   const radius = Math.max(.001, Math.hypot(size.x, size.z) / 2), height = Math.max(size.y, .001);
-  const aspect = config.width / config.height, scale = Math.max(height, 2 * radius / aspect) * 1.18;
+  const elevation = THREE.MathUtils.degToRad(config.view.elevationDegrees), azimuth = THREE.MathUtils.degToRad(config.view.azimuthDegrees);
+  // Fit the entire rotating cylinder, including depth projected by the elevated view.
+  const projectedHeight = height * Math.cos(elevation) + 2 * radius * Math.sin(elevation);
+  const aspect = config.width / config.height, scale = Math.max(projectedHeight, 2 * radius / aspect) * config.view.padding;
   const camera = new THREE.OrthographicCamera(-scale * aspect / 2, scale * aspect / 2, scale / 2, -scale / 2, .001, Math.max(radius, height, 1) * 50);
-  camera.position.set(0, 0, Math.max(radius * 5, height * 3, 1)); camera.lookAt(0, 0, 0);
+  const distance = Math.max(radius * 5, height * 3, 1);
+  camera.position.set(distance * Math.cos(elevation) * Math.sin(azimuth), distance * Math.sin(elevation), distance * Math.cos(elevation) * Math.cos(azimuth));
+  camera.lookAt(0, 0, 0);
   await renderer.compileAsync(scene, camera); renderer.render(scene, camera);
   window.recordTurntable = async () => {
     const started = performance.now(), stream = renderer.domElement.captureStream(0);
@@ -50,7 +55,7 @@ try {
     const uploaded = await fetch('upload', { method: 'POST', headers: { 'Content-Type': mime }, body: blob });
     if (!uploaded.ok) throw Error('VIDEO_UPLOAD_FAILED');
     await fetch('progress', { method: 'POST', body: JSON.stringify({ frame: config.frames }) });
-    return { renderer: 'webgl', requestedFrames: config.frames, mime, elapsedSeconds: (performance.now() - started) / 1000, bytes: blob.size };
+    return { renderer: 'webgl', view: config.view, requestedFrames: config.frames, mime, elapsedSeconds: (performance.now() - started) / 1000, bytes: blob.size };
   };
   window.turntableReady = true;
 } catch { window.turntableError = 'MODEL_RENDER_SETUP_FAILED'; }

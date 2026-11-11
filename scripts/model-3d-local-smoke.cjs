@@ -29,7 +29,8 @@ async function main() {
   assert.equal(result.status, 'DONE', result.error); assert(result.preparation.id);
   const model = path.join(output, 'asymmetric.glb');
   const generator = path.join(output, 'fixture.py');
-  await fs.writeFile(generator, `import bpy\nbpy.ops.wm.read_factory_settings(use_empty=True)\nbpy.ops.mesh.primitive_cube_add()\nobj=bpy.context.object\nobj.scale=(0.4,0.2,0.7)\nm=bpy.data.materials.new('Orange');m.diffuse_color=(0.8,0.2,0.03,1);obj.data.materials.append(m)\nbpy.ops.export_scene.gltf(filepath=${JSON.stringify(model)},export_format='GLB')\n`);
+  // A shallow object exposes the old eye-level camera: its green top disappears.
+  await fs.writeFile(generator, `import bpy\nbpy.ops.wm.read_factory_settings(use_empty=True)\nbpy.ops.mesh.primitive_cube_add()\nobj=bpy.context.object\nobj.scale=(0.7,0.4,0.15)\nfor name,color in [('Orange',(0.8,0.2,0.03,1)),('Top',(0.03,0.8,0.03,1)),('Side',(0.03,0.03,0.8,1))]:\n m=bpy.data.materials.new(name);m.diffuse_color=color;obj.data.materials.append(m)\nfor face in obj.data.polygons:\n face.material_index=1 if face.normal.z>0.5 else (2 if face.normal.x>0.5 else 0)\nbpy.ops.export_scene.gltf(filepath=${JSON.stringify(model)},export_format='GLB')\n`);
   const blender = process.env.CAIXA_PRETA_BLENDER_BIN || cfg.blender;
   await exec(blender, ['--background', '--factory-startup', '--disable-autoexec', '--python-exit-code', '1', '--python', generator], { timeout: 60000, maxBuffer: 1000000 });
   const settings = path.join(output, 'settings.json'), frames = path.join(output, 'frames');
@@ -42,6 +43,18 @@ async function main() {
   assert(frame0.data.subarray(0, rowBytes).every(v => v < 8), 'model must fit below the top edge');
   assert(frame0.data.subarray(-rowBytes).every(v => v < 8), 'model must fit above the bottom edge');
   assert(frame0.data.some(v => v > 80), 'model must be visible');
+  const assertThreeQuarterView = pixels => {
+    let top = 0, side = 0, front = 0;
+    for (let i = 0; i < pixels.length; i += 3) {
+      const [r, g, b] = pixels.subarray(i, i + 3);
+      if (g > 80 && g > r + 15 && g > b + 15) top++;
+      if (b > 80 && b > r + 15 && b > g + 15) side++;
+      if (r > 80 && r > g + 15 && r > b + 15) front++;
+    }
+    assert(top > 100, 'elevated view must reveal the top of a shallow object');
+    assert(side > 100 && front > 100, 'initial three-quarter view must reveal both side faces');
+  };
+  assertThreeQuarterView(frame0.data);
   assert.notDeepEqual(await fs.readFile(path.join(frames, '0000.png')), await fs.readFile(path.join(frames, '0003.png')), 'model must rotate');
   const video = path.join(output, 'smoke.mp4');
   await exec('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-framerate', '12', '-i', path.join(frames, '%04d.png'), '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-an', '-movflags', '+faststart', video], { timeout: 30000 });
@@ -62,6 +75,7 @@ async function main() {
   assert.equal(full.streams[0].r_frame_rate, '30/1'); assert.equal(full.streams[0].nb_frames, '600'); assert.equal(Number(full.format.duration), 20);
   await exec('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-i', taskStore.file(task.id, 'loop.mp4'), '-vf', 'select=eq(n\\,0)+eq(n\\,1)+eq(n\\,150)+eq(n\\,599)', '-fps_mode', 'vfr', path.join(output, 'verified-%02d.png')], { timeout: 30000 });
   const decoded = await Promise.all([1, 2, 3, 4].map(n => sharp(path.join(output, `verified-${String(n).padStart(2, '0')}.png`)).resize(320, 180).removeAlpha().raw().toBuffer()));
+  assertThreeQuarterView(decoded[0]);
   const difference = (a, b) => a.reduce((sum, v, i) => sum + Math.abs(v - b[i]), 0) / a.length;
   assert(difference(decoded[0], decoded[2]) > 1, 'model must rotate during the exported video');
   assert(difference(decoded[0], decoded[3]) < Math.max(1, difference(decoded[0], decoded[1]) * 3), 'loop seam must be comparable to adjacent frames');
@@ -69,6 +83,6 @@ async function main() {
     assert(pixels.subarray(0, 320 * 3).every(v => v < 8) && pixels.subarray(-320 * 3).every(v => v < 8), 'black margins must remain clear throughout rotation');
     assert(pixels.some(v => v > 80), 'model must remain visible');
   }
-  console.log(JSON.stringify({ ok: true, output, elapsedMs, checks: ['real ImaginAR image preparation without provider network', 'Blender fallback at 320x180/12 frames', 'complete WebGL/FFmpeg export at 1920x1080/600 frames/30 fps/20 seconds', 'black margins, visible rotation and continuous loop seam'], scope: 'synthetic local GLB; no paid image-to-3D inference' }, null, 2));
+  console.log(JSON.stringify({ ok: true, output, elapsedMs, checks: ['real ImaginAR image preparation without provider network', 'Blender fallback at 320x180/12 frames', 'visible top and both sides of a shallow object in Blender and WebGL', 'complete WebGL/FFmpeg export at 1920x1080/600 frames/30 fps/20 seconds', 'black margins, visible rotation and continuous loop seam'], scope: 'synthetic local GLB; no paid image-to-3D inference' }, null, 2));
 }
 main().then(() => process.exit(0)).catch(error => { console.error(error); process.exit(1); });

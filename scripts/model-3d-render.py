@@ -7,6 +7,7 @@ import sys
 from mathutils import Vector
 
 settings = json.load(open(sys.argv[sys.argv.index('--') + 1], encoding='utf-8'))
+view = json.load(open(os.path.join(os.path.dirname(__file__), '../lib/model-3d/turntable-view.json'), encoding='utf-8'))
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=settings['input'])
 scene = bpy.context.scene
@@ -56,13 +57,19 @@ scene.world.node_tree.nodes['Background'].inputs['Color'].default_value = (0, 0,
 scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value = 0
 scene.view_settings.view_transform = 'AgX'
 distance = max(radius * 5, height * 3, 1)
+elevation = math.radians(view['elevationDegrees'])
+azimuth = math.radians(view['azimuthDegrees'])
+aspect = settings['width'] / settings['height']
+projected_height = height * math.cos(elevation) + 2 * radius * math.sin(elevation)
 camera_data = bpy.data.cameras.new('Turntable camera')
 camera_data.type = 'ORTHO'
-camera_data.ortho_scale = max(2 * radius, height * (settings['width'] / settings['height'])) * 1.18
+camera_data.ortho_scale = max(2 * radius, projected_height * aspect) * view['padding']
 camera_data.clip_end = distance * 20
 camera = bpy.data.objects.new('Turntable camera', camera_data)
 scene.collection.objects.link(camera)
-camera.location = center + Vector((0, -distance, 0))
+camera.location = center + Vector((distance * math.cos(elevation) * math.sin(azimuth),
+                                   -distance * math.cos(elevation) * math.cos(azimuth),
+                                   distance * math.sin(elevation)))
 camera.rotation_euler = (center - camera.location).to_track_quat('-Z', 'Y').to_euler()
 scene.camera = camera
 for name, offset, energy in [('Key', (-2, -3, 4), 1000), ('Fill', (3, -2, 1), 700), ('Rim', (0, 3, 3), 1200)]:
