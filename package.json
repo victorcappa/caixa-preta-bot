@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:modelo-3d": "node scripts/model-3d-test.cjs",
+    "test:modelo-3d:local": "node scripts/model-3d-local-smoke.cjs",
+    "test:modelo-3d:browser": "node scripts/model-3d-browser-test.cjs",
     "test:operator-preferences": "node --no-warnings scripts/operator-preferences-test.js",
     "test:operator-preferences:browser": "node --no-warnings scripts/operator-preferences-browser-test.js",
     "test:tarot": "node --no-warnings scripts/tarot-test.js",

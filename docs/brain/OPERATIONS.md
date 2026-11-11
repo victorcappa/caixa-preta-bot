@@ -153,6 +153,8 @@ For projection calibration, open `/?menu` in a separate control tab and keep the
 
 ## Bot parameters
 
+The adjacent **modelo-3D** tab (`/modelo-3d`) owns private image uploads, TRELLIS generation and local black-background turntable MP4s. Configuration, per-generation cost authorization, recovery, checks and the unresolved live-provider acceptance boundary: `docs/MODELO_3D.md`.
+
 `/operator` exposes only typing speed (5–60 characters/s), punctuation pause (0–2 s), minimum gap between lines (0–10 s), font, typing click frequency, the four personality sliders and model selection. Conversation, preview, games, projection controls and diagnostics stay out of this tab. The right-menu launcher still opens the public conversation.
 
 Punctuation pause and minimum gap default to zero, preserving the existing pacing until adjusted. `lib/robot-sound/state.js` defines the shared timing calculations; `components/Chat.js` applies them to the public line, and server reading estimates include the pauses before automatic continuation. Authored scene holds can be longer than the configured minimum gap. The simultaneous glitch/collapse composition retains its concurrent lines. The LIVE Operator receives genuine streaming deltas and reveals new replies at the configured typing speed/punctuation pause, including text buffered after the stream ends. Private speed changes apply while it types. Completed history is restored immediately on reload; cancelled replies stop typing.

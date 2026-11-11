@@ -8,6 +8,9 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 
 ## Package scripts
 
+- `npm run test:modelo-3d` -> `node scripts/model-3d-test.cjs`
+- `npm run test:modelo-3d:local` -> `node scripts/model-3d-local-smoke.cjs`
+- `npm run test:modelo-3d:browser` -> `node scripts/model-3d-browser-test.cjs`
 - `npm run test:operator-preferences` -> `node --no-warnings scripts/operator-preferences-test.js`
 - `npm run test:operator-preferences:browser` -> `node --no-warnings scripts/operator-preferences-browser-test.js`
 - `npm run test:tarot` -> `node --no-warnings scripts/tarot-test.js`
@@ -84,6 +87,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `/forca-g-shaders-controller` -> `app/forca-g-shaders-controller/page.js`
 - `/forca-g-shaders` -> `app/forca-g-shaders/page.js`
 - `/glitch-controller` -> `app/glitch-controller/page.js`
+- `/modelo-3d` -> `app/modelo-3d/page.js`
 - `/operator` -> `app/operator/page.js`
 - `/` -> `app/page.js`
 - `/piloto-videogame-controller` -> `app/piloto-videogame-controller/page.js`
@@ -124,6 +128,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `POST /api/instagram/panel` -> `app/api/instagram/panel/route.js`
 - `POST /api/instagram/password` -> `app/api/instagram/password/route.js`
 - `GET /api/instagram/stream` -> `app/api/instagram/stream/route.js`
+- `GET /api/modelo-3d/[id]/[asset]` -> `app/api/modelo-3d/[id]/[asset]/route.js`
+- `GET, POST /api/modelo-3d` -> `app/api/modelo-3d/route.js`
 - `GET, POST /api/operator-preferences` -> `app/api/operator-preferences/route.js`
 - `POST /api/operator-public` -> `app/api/operator-public/route.js`
 - `POST /api/operator` -> `app/api/operator/route.js`
@@ -166,6 +172,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/ForcaGShadersController.js`
 - `components/GlitchOverlay.js`
 - `components/InstagramBrowserPanel.js`
+- `components/Model3DController.js`
 - `components/OperatorBotSettings.js`
 - `components/OperatorConsole.js`
 - `components/OperatorLivePreview.js`
@@ -223,6 +230,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/EditableCueController.js`
 - `components/ForcaGSamplerController.js`
 - `components/ForcaGShadersController.js`
+- `components/Model3DController.js`
 - `components/PreparedSceneController.js`
 - `components/SceneZeroController.js`
 - `lib/controllerSurfaces.js`
@@ -240,7 +248,12 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `BASE_URL`
 - `CAIXA_PRETA_AUDIT_OUTPUT`
 - `CAIXA_PRETA_BACKGROUND_MIC`
+- `CAIXA_PRETA_BLENDER_BIN`
+- `CAIXA_PRETA_FFMPEG_BIN`
+- `CAIXA_PRETA_FFPROBE_BIN`
+- `CAIXA_PRETA_IMAGINAR_ROOT`
 - `CAIXA_PRETA_INTERNET_VOICE`
+- `CAIXA_PRETA_MODEL_3D_DIR`
 - `CAIXA_PRETA_OPENAI_AUDIT_MOCK`
 - `CAIXA_PRETA_OPERATOR_AUDIT_ROOT`
 - `CAIXA_PRETA_OPERATOR_MOCK`
@@ -248,6 +261,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `CAIXA_PRETA_RELIABILITY_TESTS`
 - `CAIXA_PRETA_RESEARCH_BUDGET`
 - `CAIXA_PRETA_RESEARCH_ENABLED`
+- `CAIXA_PRETA_SEGMENTATION_MODELS`
 - `CAIXA_PRETA_SHOW_RUNTIME_DIR`
 - `CAIXA_PRETA_TAROT_AUDIT_ROOT`
 - `CAIXA_PRETA_TAROT_FACE_DIR`
@@ -261,11 +275,17 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `INSTAGRAM_EMBEDDED`
 - `INSTAGRAM_ENABLED`
 - `INTERNET_VOICE_SCENARIO`
+- `MODEL3D_FIXTURE_RENDER_FAIL`
+- `MODEL3D_FIXTURE_UNCERTAIN`
 - `NODE_ENV`
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL`
 - `OPENAI_SHOW_TIMEOUT_MS`
 - `OPENAI_WEB_SEARCH_TOOL_TYPE`
+- `STUDIO_DATA_DIR`
+- `STUDIO_GENERATOR_WARMUP`
+- `STUDIO_QUALITY_ENGINE`
+- `STUDIO_SEGMENTATION_PYTHON`
 - `TAROT_CATALOG_REVIEW_OUTPUT`
 - `TAROT_VISION_ONLY_FLOOR`
 - `TZ`
