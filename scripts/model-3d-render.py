@@ -73,6 +73,7 @@ for frame in range(settings['frames']):
     if not os.path.exists(target):
         # Excluding the duplicate 360-degree endpoint keeps the loop speed constant.
         pivot.rotation_euler.z = 2 * math.pi * frame / settings['frames']
-        scene.render.filepath = target
+        scene.render.filepath = target + '.partial.png'
         bpy.ops.render.render(write_still=True)
+        os.replace(scene.render.filepath, target)
     print(f'CP3D_FRAME:{frame + 1}', flush=True)
