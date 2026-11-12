@@ -120,14 +120,14 @@ try {
   const operator = await context.newPage();
   operator.on("pageerror", (error) => pageErrors.push(error.message));
   await operator.setViewportSize({ width: 1440, height: 1000 });
-  await operator.goto(`${BASE_URL}/operator`, { waitUntil: "domcontentloaded" });
-  await operator.getByText("CONNECTED", { exact: true }).waitFor();
-  const warmupDisclosure = operator.locator("#operator-warmup");
+  await operator.goto(`${BASE_URL}/cena-0-controller`, { waitUntil: "domcontentloaded" });
+  const warmupDisclosure = operator.locator("#scene-zero-unlock");
   const warmupToggle = warmupDisclosure.getByRole("button", { name: /ESQUENTAR PÚBLICO/ });
+  await warmupToggle.waitFor();
   assert.equal(await warmupToggle.getAttribute("aria-expanded"), "false");
   await warmupToggle.click();
   await operator.getByRole("heading", { name: "ESQUENTAR PÚBLICO" }).waitFor();
-  for (const label of ["ENCERRAR PERGUNTAS → MINI GAME", "SORTEAR JOGO", "TAPÃO", "PISCADA", "SERINHO", "INICIAR", "PAUSAR", "CONTINUAR", "REINICIAR", "ENCERRAR", "+5 SEGUNDOS", "−5 SEGUNDOS", "PULAR MINIGAME"]) {
+  for (const label of ["ENCERRAR AQUECIMENTO → SORTEIO DO MINI GAME", "SORTEAR JOGO", "TAPÃO", "PISCADA", "SERINHO", "INICIAR", "PAUSAR", "CONTINUAR", "REINICIAR", "ENCERRAR", "+5 SEGUNDOS", "−5 SEGUNDOS", "PULAR MINIGAME"]) {
     assert((await operator.getByRole("button", { name: label, exact: true }).count()) >= 1, `controle ausente: ${label}`);
   }
   for (const label of ["SORTEAR", "PULAR", "REPETIR", "PRÓXIMO", "+5s", "ENCERRAR AÇÃO"]) {
@@ -222,7 +222,7 @@ try {
     ["public-07", "QUEM VOTOU NO LULA FICA DE PÉ."],
     ["exposed-08", "QUEM VOTOU NO BOLSONARO CRUZA OS BRAÇOS."],
     ["provocative-01", "QUEM É MACONHEIRO FAZ UMA ONDA COM AS MÃOS."],
-    ["provocative-07", "QUEM TRANSOU ESTA SEMANA BATE DEZ PALMAS."],
+    ["provocative-07", "QUEM TRANSOU ESTA SEMANA LEVANTA, DÁ UMA VOLTINHA E SENTA."],
     ["provocative-04", "QUEM JÁ CHEIROU COCAÍNA TOCA NO NARIZ."]
   ];
   let expectedQuestionProgress = progressBeforeReaction;
@@ -263,7 +263,19 @@ try {
   assert.equal(state.audienceWarmup.intensity, AUDIENCE_WARMUP_FIRST_QUESTION_INTENSITY, "seta deve usar intensidade 4 por padrão");
 
   await post(context.request, "minigame-draw", {}, false);
-  await sceneOperator.keyboard.press("Space");
+  if (await sceneWarmupToggle.getAttribute("aria-expanded") !== "true") await sceneWarmupToggle.click();
+  const finishWarmup = sceneOperator.getByRole("button", { name: "ENCERRAR AQUECIMENTO → SORTEIO DO MINI GAME", exact: true });
+  await finishWarmup.scrollIntoViewIfNeeded();
+  const finishStyle = await finishWarmup.evaluate((button) => ({
+    background: getComputedStyle(button).backgroundColor,
+    height: button.getBoundingClientRect().height,
+    footerPosition: getComputedStyle(button.parentElement).position
+  }));
+  assert.equal(finishStyle.background, "rgb(215, 255, 65)");
+  assert(finishStyle.height >= 68, "o botão de encerrar aquecimento deve ter área de destaque");
+  assert.equal(finishStyle.footerPosition, "sticky");
+  await sceneOperator.screenshot({ path: "/private/tmp/caixa-preta-warmup-finish-button.png" });
+  await finishWarmup.click();
   state = await waitFor(context.request, (candidate) => candidate.publicMessage?.content === AUDIENCE_WARMUP_QUESTIONS_RESULT_COMMENT, "comentário final das perguntas");
   await display.getByText(AUDIENCE_WARMUP_QUESTIONS_RESULT_COMMENT, { exact: true }).waitFor();
   state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "ready_for_draw", "briefing depois das perguntas", 40000);
@@ -286,20 +298,21 @@ try {
   await post(context.request, "minigame-select", { gameId: "tapao" });
   await display.getByText("JOGO SELECIONADO", { exact: true }).waitFor();
   state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "ready", "regras do TAPÃO", 35000);
-  assert.equal(state.publicMessage.content, "DOIS TURNOS DE 10 SEGUNDOS.");
+  assert.equal(state.publicMessage.content, "UM TURNO: 10 SEGUNDOS.");
   await sceneOperator.waitForFunction(() => document.querySelector('[aria-label="Minigame em dupla"] p')?.textContent?.startsWith("ESTADO: READY ·"));
   await sceneOperator.keyboard.press("ArrowRight");
   await display.getByLabel("Minigame do aquecimento").waitFor();
-  await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "running", "primeiro turno do TAPÃO");
-  await post(context.request, "minigame-tapao-swap");
-  await display.getByText("TROQUEM.", { exact: true }).waitFor();
-  await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "ready_round_two", "troca do TAPÃO");
-  await sceneOperator.waitForFunction(() => document.querySelector('[aria-label="Minigame em dupla"] p')?.textContent?.startsWith("ESTADO: READY ROUND TWO ·"));
-  await sceneOperator.keyboard.press("ArrowRight");
-  await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "running" && candidate.audienceWarmup.minigame.round === 2, "segundo turno do TAPÃO");
-  await sceneOperator.keyboard.press("Space");
+  state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "running", "turno único do TAPÃO");
+  assert.equal(state.audienceWarmup.minigame.round, 1);
+  assert.equal(state.audienceWarmup.minigame.timer.durationSeconds, 10);
+  assert.equal(state.audienceWarmup.pendingAdvance?.kind, "minigame-finish");
+  assert.equal(await sceneOperator.getByRole("button", { name: "TROQUEM AGORA", exact: true }).count(), 0);
+  await post(context.request, "minigame-tapao-swap", {}, false);
+  await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "completed", "fim do turno único do TAPÃO", 12000);
   state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.phase === "complete", "fim do aquecimento depois do TAPÃO", 20000);
   assert.equal(state.audienceWarmup.minigame.status, "completed");
+  assert.equal(state.audienceWarmup.minigame.round, 1);
+  assert.equal(state.audienceWarmup.history.some((entry) => /TROQUEM|SEGUNDO TURNO/.test(entry.text)), false);
   assert(state.audienceWarmup.history.some((entry) => entry.text === AUDIENCE_WARMUP_MINIGAME_RESULT_COMMENTS.tapao));
   assert(state.sceneZero.unlock.progress >= 5, "minigame concluído deve aumentar a barra de desbloqueio em 5%");
 

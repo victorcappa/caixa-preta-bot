@@ -10,7 +10,6 @@ export const AUDIENCE_WARMUP_MINIGAMES = [
     id: "tapao",
     name: "TAPÃO",
     defaultDurationSeconds: 10,
-    defaultSwapSeconds: 3,
     rules: [
       "TAPÃO.",
       "EM DUPLAS.",
@@ -18,7 +17,7 @@ export const AUDIENCE_WARMUP_MINIGAMES = [
       "A OUTRA: MÃOS POR CIMA.",
       "QUEM ESTÁ EMBAIXO TENTA ACERTAR.",
       "QUEM ESTÁ EM CIMA TENTA ESCAPAR.",
-      "DOIS TURNOS DE 10 SEGUNDOS."
+      "UM TURNO: 10 SEGUNDOS."
     ]
   },
   {

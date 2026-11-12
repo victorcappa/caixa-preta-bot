@@ -63,7 +63,7 @@ import {
   updatePlayUnlockSoundCheckLevel
 } from "../lib/scene-zero/unlock.js";
 
-assert.equal(AUDIENCE_WARMUP_PROMPTS.length, 180, "a biblioteca deve manter vinte ações nos três primeiros degraus e sessenta nos dois mais intensos");
+assert.equal(AUDIENCE_WARMUP_PROMPTS.length, 240, "a biblioteca deve ampliar os dois degraus mais intensos com desafios práticos");
 assert.equal(new Set(AUDIENCE_WARMUP_PROMPTS.map((prompt) => prompt.id)).size, AUDIENCE_WARMUP_PROMPTS.length, "ids devem ser únicos");
 for (const prompt of AUDIENCE_WARMUP_PROMPTS) {
   assert(prompt.text && prompt.action && prompt.category && prompt.intensity && prompt.interactionType && prompt.tags.length, `metadados incompletos: ${prompt.id}`);
@@ -120,7 +120,7 @@ for (const action of AUDIENCE_WARMUP_ACTIONS) {
   assert.equal(generated.action, action.id, `geração incompatível: ${action.id}`);
 }
 assert.deepEqual(AUDIENCE_WARMUP_INTENSITIES.map((intensity) => intensity.id), ["play", "personal", "exposed", "provocative", "social_pressure"]);
-const expectedPromptCountByIntensity = { play: 20, personal: 20, exposed: 20, provocative: 60, social_pressure: 60 };
+const expectedPromptCountByIntensity = { play: 20, personal: 20, exposed: 20, provocative: 100, social_pressure: 80 };
 for (const intensity of AUDIENCE_WARMUP_INTENSITIES) {
   assert.equal(AUDIENCE_WARMUP_PROMPTS.filter((prompt) => prompt.intensity === intensity.id).length, expectedPromptCountByIntensity[intensity.id], `tamanho inesperado do repertório: ${intensity.id}`);
   const generated = chooseAudienceWarmupPrompt({ intensity: intensity.id, random: () => 0 });
@@ -160,6 +160,12 @@ for (let index = 1; index < thirtyPromptSequence.length; index += 1) {
 }
 
 for (const intensity of ["provocative", "social_pressure"]) {
+  const pool = AUDIENCE_WARMUP_PROMPTS.filter((prompt) => prompt.intensity === intensity);
+  const openingIds = new Set(pool.map((_, index) => chooseAudienceWarmupPrompt({
+    intensity,
+    random: () => (index + 0.5) / pool.length
+  }).id));
+  assert.equal(openingIds.size, pool.length, `todas as perguntas empatadas de ${intensity} devem poder abrir a rodada, sem viés da ordem do arquivo`);
   const fullIntensityHistory = [];
   for (let index = 0; index < expectedPromptCountByIntensity[intensity]; index += 1) {
     const selected = chooseAudienceWarmupPrompt({ intensity, recentPromptIds: fullIntensityHistory, random: diversityRandom });
@@ -173,7 +179,9 @@ const exactLibraryCases = {
   "public-07": "QUEM VOTOU NO LULA FICA DE PÉ.",
   "exposed-08": "QUEM VOTOU NO BOLSONARO CRUZA OS BRAÇOS.",
   "provocative-01": "QUEM É MACONHEIRO FAZ UMA ONDA COM AS MÃOS.",
-  "provocative-07": "QUEM TRANSOU ESTA SEMANA BATE DEZ PALMAS.",
+  "provocative-07": "QUEM TRANSOU ESTA SEMANA LEVANTA, DÁ UMA VOLTINHA E SENTA.",
+  "provocative-61": "MOSTRE À PESSOA À ESQUERDA A ÚLTIMA FOTO DA SUA GALERIA QUE VOCÊ TOPA COMPARTILHAR.",
+  "provocative-65": "QUEM JÁ TRANSOU SEM CAMISINHA COM UMA PESSOA DESCONHECIDA DÁ UMA VOLTINHA E VOLTA AO LUGAR.",
   "provocative-04": "QUEM JÁ CHEIROU COCAÍNA TOCA NO NARIZ."
 };
 for (const [promptId, expectedText] of Object.entries(exactLibraryCases)) {
@@ -182,6 +190,11 @@ for (const [promptId, expectedText] of Object.entries(exactLibraryCases)) {
   assert.equal(createAudienceWarmupSequence(libraryPrompt).steps[0].text, expectedText, `${promptId} deve chegar intacto à sequência pública`);
 }
 assert(AUDIENCE_WARMUP_PROMPTS.some((prompt) => prompt.text === "DANCEM MACARENA EM SILÊNCIO."));
+for (const prompt of AUDIENCE_WARMUP_PROMPTS.filter((prompt) => prompt.action === "touch_partner")) {
+  assert.match(prompt.text, /TOP[AE]/u, `contato em dupla deve explicitar o acordo: ${prompt.id}`);
+  assert.equal(createAudienceWarmupSequence(prompt).steps[0].action, "touch_partner", "contato não deve cair na ação padrão");
+}
+assert.equal(AUDIENCE_WARMUP_PROMPTS.some((prompt) => /QUEM TRANSOU.*PALMAS/u.test(prompt.text)), false, "confissão sexual deve levar a uma ação mais concreta que palmas");
 
 const politicalScore = AUDIENCE_WARMUP_PROMPTS.find((prompt) => prompt.id === "social-07");
 const politicalSequence = createAudienceWarmupSequence(politicalScore);
@@ -221,7 +234,7 @@ assert.equal(clampAudienceWarmupInterval(99999), 15000);
 
 assert.deepEqual(AUDIENCE_WARMUP_MINIGAMES.map((game) => game.name), ["TAPÃO", "PISCADA", "SERINHO"]);
 assert.deepEqual(AUDIENCE_WARMUP_MINIGAMES.map((game) => game.defaultDurationSeconds), [10, 20, 20]);
-assert.equal(AUDIENCE_WARMUP_MINIGAMES.find((game) => game.id === "tapao").rules.at(-1), "DOIS TURNOS DE 10 SEGUNDOS.");
+assert.equal(AUDIENCE_WARMUP_MINIGAMES.find((game) => game.id === "tapao").rules.at(-1), "UM TURNO: 10 SEGUNDOS.");
 assert.equal(AUDIENCE_WARMUP_MINIGAMES.find((game) => game.id === "piscada").rules.at(-1), "UM TURNO: 20 SEGUNDOS.");
 assert.equal(AUDIENCE_WARMUP_MINIGAMES.find((game) => game.id === "serinho").rules.at(-1), "UM TURNO: 20 SEGUNDOS.");
 assert.deepEqual(AUDIENCE_WARMUP_MINIGAME_INTRO, ["PERGUNTAS CONCLUÍDAS. AGORA, UM TESTE.", "ESCOLHA A PESSOA AO SEU LADO E FORME UMA DUPLA.", "UM JOGO SERÁ SORTEADO.", "SIGAM AS INSTRUÇÕES."]);
@@ -247,7 +260,7 @@ assert.equal(minigameResult.applied, true);
 minigame = { ...minigameResult.state, status: "ready", round: 1 };
 minigame.durations.tapao = 60;
 minigameResult = beginAudienceWarmupMinigameRound(minigame, "2026-09-09T00:00:02.000Z");
-assert.equal(minigameResult.state.timer.durationSeconds, 10, "cada turno do TAPÃO deve começar fixado em dez segundos");
+assert.equal(minigameResult.state.timer.durationSeconds, 10, "o único turno do TAPÃO deve começar fixado em dez segundos");
 minigameResult = pauseAudienceWarmupMinigame(minigameResult.state, "2026-09-09T00:00:06.000Z");
 assert.equal(minigameResult.state.timer.remainingSeconds, 6);
 minigameResult = adjustAudienceWarmupMinigameTime(minigameResult.state, 5, "2026-09-09T00:00:06.000Z");
@@ -257,24 +270,24 @@ assert.equal(minigameResult.state.status, "running");
 assert.equal(selectAudienceWarmupMinigame(minigameResult.state, "serinho").reason, "MINIGAME_ALREADY_STARTED", "um jogo iniciado não pode ser substituído por outro");
 assert.equal(selectAudienceWarmupMinigame({ ...minigameResult.state, status: "completed" }, "serinho").reason, "MINIGAME_ALREADY_STARTED", "perguntas não podem voltar ao bloco de minigame");
 
-for (const gameId of ["piscada", "serinho"]) {
+for (const { id: gameId, defaultDurationSeconds } of AUDIENCE_WARMUP_MINIGAMES) {
   const selected = selectAudienceWarmupMinigame(createInitialAudienceWarmupMinigameState(), gameId);
   const ready = { ...selected.state, status: "ready", round: 1 };
   const started = beginAudienceWarmupMinigameRound(ready, "2026-09-09T00:00:02.000Z");
   assert.equal(started.applied, true);
   assert.equal(started.state.round, 1, `${gameId} deve ter somente o primeiro turno`);
-  assert.equal(started.state.timer.durationSeconds, 20, `${gameId} deve começar com vinte segundos`);
+  assert.equal(started.state.timer.durationSeconds, defaultDurationSeconds, `${gameId} deve começar com a duração prevista`);
   assert.equal(
     beginAudienceWarmupMinigameRound({ ...ready, status: "ready_round_two" }).reason,
     "MINIGAME_SECOND_ROUND_NOT_AVAILABLE",
     `${gameId} não pode iniciar segundo turno`
   );
+  assert.equal(
+    beginAudienceWarmupMinigameRound({ ...ready, round: 2 }).applied,
+    false,
+    `${gameId} não pode retomar um segundo turno de estado antigo`
+  );
 }
-
-const tapaoRoundTwo = beginAudienceWarmupMinigameRound({ ...minigameResult.state, status: "ready_round_two" }, "2026-09-09T00:00:08.000Z");
-assert.equal(tapaoRoundTwo.applied, true);
-assert.equal(tapaoRoundTwo.state.round, 2);
-assert.equal(tapaoRoundTwo.state.timer.durationSeconds, 10, "o segundo turno do TAPÃO também deve ter dez segundos");
 
 let unlock = createInitialPlayUnlockState("2026-09-09T00:00:00.000Z");
 assert.equal(unlock.status, PLAY_UNLOCK_STATES.STANDBY);
@@ -404,7 +417,7 @@ assert.throws(
 );
 assert.doesNotThrow(() => assertBotCannotNavigateExternal({ source: "operator", target: "https://instagram.com/test" }));
 assert.equal(blockedAutonomousInstagramResult().code, "BOT_EXTERNAL_NAVIGATION_BLOCKED");
-assert.deepEqual(controllerNavigationSurfaces.map((surface) => surface.menuLabel), ["Principal", "Videomapping", "Sound Control", "Operator", "TARÔ", "Glitch", "Treino"]);
+assert.deepEqual(controllerNavigationSurfaces.map((surface) => surface.menuLabel), ["Principal", "Videomapping", "Sound Control", "Operator", "modelo-3D", "TARÔ", "Glitch", "Treino"]);
 assert.equal((await executeAutonomousInstagramTool({ name: "instagram_open_profile", args: { username: "test" } })).code, "BOT_EXTERNAL_NAVIGATION_BLOCKED");
 
 const research = updateResearchSettings(createInitialResearchState(), { autonomousInstagramEnabled: true });
@@ -431,7 +444,7 @@ assert.match(audienceWarmupRoute, /body\.action === "unlock-boot"[\s\S]*refreshS
 assert.doesNotMatch(audienceWarmupRoute, /generateAudienceWarmupSurprise/, "a biblioteca configurada deve ser a fonte de verdade do SURPREENDA-ME");
 assert.match(showStateSource, /step\.kind === "count" && nextStep\?\.kind === "reaction"/, "último segundo deve avançar automaticamente para a reação");
 assert.match(showStateSource, /action === "minigame-draw"/);
-assert.match(showStateSource, /action === "minigame-tapao-swap"/);
+assert.doesNotMatch(showStateSource, /action === "minigame-tapao-swap"/, "nenhuma ação pode criar uma troca para segundo turno");
 assert.match(
   showStateSource,
   /action === "surprise"\) \{\s*const reaction = reactThenDrawAudienceWarmupPrompt\(current\.intensity\);/,
@@ -497,11 +510,9 @@ assert.match(showStateSource, /action === "rewind-boot"[\s\S]*bootPaused: true/,
 assert.match(showStateSource, /pending\.kind === "reaction-resume"[\s\S]*continuation\.dueAt/, "reação automática deve retomar a continuação no instante original");
 assert.match(sceneZeroController, /minigame\?\.status === "ready_for_draw"[\s\S]*"minigame-draw"/, "seta direita deve sortear o jogo depois do briefing");
 assert.match(sceneZeroProjection, /status === PLAY_UNLOCK_STATES\.HUMAN_VERIFICATION && PLAY_UNLOCK_CONFIG\.verificationTitle/, "verificação sem título deve deixar a fala visível sob o HUD");
-assert.match(sceneZeroProjection, /const minigameTurnLabel = game\?\.id === "tapao"[\s\S]*"TURNO 1"[\s\S]*: null/, "somente o Tapão deve projetar número de turno");
-assert.match(sceneZeroProjection, /minigameTurnLabel \? <b>\{minigameTurnLabel\}<\/b> : null/, "o rótulo de turno deve ser omitido nos jogos de turno único");
-assert.doesNotMatch(sceneZeroProjection, /TURNO ÚNICO/, "Piscada e Serinho não precisam de rótulo de turno");
+assert.doesNotMatch(sceneZeroProjection, /TURNO [12]|SEGUNDO TURNO|TURNO ÚNICO/, "nenhum minigame de turno único precisa de número de turno na projeção");
 assert.match(chatStyles, /\.chatPane:not\(\.chatPaneQuadrants\):has\(\[data-unlock-hud\]\) \.publicStage\s*\{\s*padding-top:/, "projeção principal deve reservar espaço para a barra sem cobrir a fala");
-assert.match(sceneZeroController, /minigame\?\.status === "paused"[\s\S]*"minigame-resume"[\s\S]*\["ready", "ready_round_two"\][\s\S]*"minigame-start"/, "seta direita deve retomar o jogo pausado e iniciar o turno pronto");
+assert.match(sceneZeroController, /minigame\?\.status === "paused"[\s\S]*"minigame-resume"[\s\S]*minigame\?\.status === "ready"[\s\S]*"minigame-start"/, "seta direita deve retomar o jogo pausado e iniciar o turno pronto");
 assert.match(sceneZeroController, /stage === "idle" && snapshot\.audienceWarmup\?\.phase === "complete"[\s\S]*sceneAction\("set-stage", \{ stage: "participant" \}\)/, "seta direita deve ir do aquecimento concluído à seleção de participante");
 assert.match(sceneZeroController, /stage === "participant"[\s\S]*participantStatus === "selected"[\s\S]*"participant-continue"[\s\S]*participantStatus !== "complete"[\s\S]*sceneAction\("set-stage", \{ stage: "suitcases" \}\)/, "seta direita deve fechar o nome no manual e esperar as falas antes de abrir o jogo das malas");
 assert.match(chatProjection, /"scene-zero-suitcase-choice"/, "a explicação da mala deve avisar quando terminar de digitar");

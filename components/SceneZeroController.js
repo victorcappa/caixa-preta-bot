@@ -629,7 +629,7 @@ export default function SceneZeroController() {
               ? "minigame-resume"
             : Boolean(snapshot.audienceWarmup?.pendingAdvance) || snapshot.audienceWarmup?.phase === "questions"
               ? "primary-next"
-              : ["ready", "ready_round_two"].includes(snapshot.audienceWarmup?.minigame?.status)
+              : snapshot.audienceWarmup?.minigame?.status === "ready"
                 ? "minigame-start"
               : null;
       if (!action) return;

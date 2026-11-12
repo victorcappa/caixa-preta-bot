@@ -298,18 +298,8 @@ function AudienceWarmupMinigameProjection({ warmup, now }) {
   const drawIndex = Math.floor(drawElapsed / Math.max(70, 230 - Math.min(155, drawElapsed / 25))) % AUDIENCE_WARMUP_MINIGAMES.length;
   const drawName = AUDIENCE_WARMUP_MINIGAMES[drawIndex]?.name || "—";
   const seconds = timerSeconds(minigame.timer, now);
-  const timerVisible = ["countdown", "running", "paused", "exchange"].includes(minigame.status);
+  const timerVisible = ["countdown", "running", "paused"].includes(minigame.status);
   const selectedVisible = minigame.status === "selected";
-  const secondRoundReady = minigame.status === "ready_round_two";
-  const minigameTurnLabel = game?.id === "tapao"
-    ? minigame.timer?.phase === "round_two"
-      ? "TURNO 2"
-      : minigame.timer?.phase === "exchange"
-        ? "TROQUEM"
-        : minigame.timer?.phase === "countdown"
-          ? "COMEÇANDO"
-          : "TURNO 1"
-    : null;
 
   useCountdownSound(seconds, {
     active: Boolean(timerVisible && minigame.timer?.status === "running"),
@@ -325,7 +315,7 @@ function AudienceWarmupMinigameProjection({ warmup, now }) {
     if (minigame.status === "running") robotSoundEngine.gameStart();
   }, [minigame.selectedId, minigame.status, minigame.timer?.startedAt]);
 
-  if (!drawing && !selectedVisible && !timerVisible && !secondRoundReady) return null;
+  if (!drawing && !selectedVisible && !timerVisible) return null;
 
   return (
     <section className={styles.warmupMinigameOverlay} aria-label="Minigame do aquecimento" aria-live="assertive">
@@ -342,15 +332,9 @@ function AudienceWarmupMinigameProjection({ warmup, now }) {
           <span>JOGO SELECIONADO</span>
           <strong>{game?.name || "—"}</strong>
         </div>
-      ) : secondRoundReady ? (
-        <div className={styles.warmupGameSelected}>
-          <span>TAPÃO</span>
-          <strong>SEGUNDO TURNO</strong>
-          <small>AGUARDANDO OPERADOR</small>
-        </div>
       ) : (
         <div className={styles.warmupGameTimer} data-paused={minigame.status === "paused"}>
-          <header><span>{game?.name || "TESTE"}</span>{minigameTurnLabel ? <b>{minigameTurnLabel}</b> : null}</header>
+          <header><span>{game?.name || "TESTE"}</span></header>
         </div>
       )}
     </section>
@@ -532,8 +516,8 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup, bo
     : [];
   const visibleMorelLines = allVisibleMorelLines.slice(-10);
   const visibleMorelStartIndex = Math.max(0, allVisibleMorelLines.length - visibleMorelLines.length);
-  const warmupMinigameVisible = ["drawing", "selected", "countdown", "running", "paused", "exchange", "ready_round_two"].includes(audienceWarmup?.minigame?.status);
-  const warmupMinigameTimerVisible = ["countdown", "running", "paused", "exchange"].includes(audienceWarmup?.minigame?.status);
+  const warmupMinigameVisible = ["drawing", "selected", "countdown", "running", "paused"].includes(audienceWarmup?.minigame?.status);
+  const warmupMinigameTimerVisible = ["countdown", "running", "paused"].includes(audienceWarmup?.minigame?.status);
   const warmupMinigameSeconds = timerSeconds(audienceWarmup?.minigame?.timer, now);
   const warmupActionVisible = audienceWarmup?.actionTimer?.status === "running" && (
     audienceWarmup?.phase === "questions"
