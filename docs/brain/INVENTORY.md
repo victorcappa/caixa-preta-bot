@@ -8,6 +8,9 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 
 ## Package scripts
 
+- `npm run point-cloud:prepare` -> `node --no-warnings scripts/prepare-post-demo-point-cloud.js`
+- `npm run test:post-demo:point-cloud` -> `node --no-warnings scripts/post-demo-point-cloud-test.js`
+- `npm run test:post-demo:point-cloud:browser` -> `node --no-warnings scripts/post-demo-point-cloud-browser-test.js`
 - `npm run test:post-demo:cycle` -> `node --no-warnings scripts/post-demo-cycle-test.js`
 - `npm run test:post-demo:combined` -> `node --no-warnings scripts/post-demo-cycle-test.js --combined`
 - `npm run test:post-demo:cycle:live` -> `node --no-warnings --env-file-if-exists=.env.local scripts/post-demo-cycle-test.js --live`
@@ -153,6 +156,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `GET, POST /api/operator-public` -> `app/api/operator-public/route.js`
 - `POST /api/operator` -> `app/api/operator/route.js`
 - `POST /api/performance/interaction` -> `app/api/performance/interaction/route.js`
+- `GET /api/post-demo/point-cloud/[id]` -> `app/api/post-demo/point-cloud/[id]/route.js`
+- `POST /api/post-demo/point-cloud` -> `app/api/post-demo/point-cloud/route.js`
 - `GET, POST /api/post-demo` -> `app/api/post-demo/route.js`
 - `GET, POST /api/projection` -> `app/api/projection/route.js`
 - `GET, POST /api/queda-aviao` -> `app/api/queda-aviao/route.js`
@@ -204,6 +209,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/PostDemo.js`
 - `components/PostDemoController.js`
 - `components/PostDemoParameters.js`
+- `components/PostDemoPointCloud.js`
 - `components/PreparedSceneController.js`
 - `components/ProjectionMenu.js`
 - `components/ProjectionOperatorSurface.js`
@@ -286,6 +292,9 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `CAIXA_PRETA_OPERATOR_MOCK`
 - `CAIXA_PRETA_PDF_PYTHON`
 - `CAIXA_PRETA_PERFORMATIVE_RESEARCH`
+- `CAIXA_PRETA_POINT_CLOUD_CONVERTER`
+- `CAIXA_PRETA_POINT_CLOUD_MODEL_SOURCE`
+- `CAIXA_PRETA_POINT_CLOUD_TOOLCHAIN`
 - `CAIXA_PRETA_POST_DEMO_CYCLE_FIXTURE`
 - `CAIXA_PRETA_RELIABILITY_TESTS`
 - `CAIXA_PRETA_RESEARCH_BUDGET`
@@ -300,6 +309,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `CAIXA_PRETA_URL`
 - `CAIXA_PRETA_VOICE_GUIDE_PATH`
 - `CAIXA_PRETA_WEB_SEARCH`
+- `CLOUD_TEST_FAILURE`
+- `CLOUD_TEST_REAL_CONVERTER`
 - `INSTAGRAM_COMMENT_TYPE_DELAY_MS`
 - `INSTAGRAM_EMBEDDED`
 - `INSTAGRAM_ENABLED`
@@ -367,6 +378,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/play-unlock-browser-test.js`
 - `scripts/post-demo-browser-test.js`
 - `scripts/post-demo-cycle-test.js`
+- `scripts/post-demo-point-cloud-browser-test.js`
+- `scripts/post-demo-point-cloud-test.js`
 - `scripts/post-demo-test.js`
 - `scripts/public-composition-browser-test.js`
 - `scripts/public-realtime-browser-test.js`

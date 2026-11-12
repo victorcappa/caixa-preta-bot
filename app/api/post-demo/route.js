@@ -1,5 +1,4 @@
 import { showState } from "@/lib/showState";
-import { getRegisteredAudienceNames } from "@/lib/participants";
 import { normalizePostDemoConfig, POST_DEMO_SETTINGS_VERSION, POST_DEMO_RUNTIME_VERSION } from "@/lib/post-demo/settings";
 
 export const dynamic = "force-dynamic";
@@ -23,13 +22,13 @@ export async function POST(request) {
   try {
     if (body.action === "enter") {
       if (state.postDemo.pauseReason === "projection-left") actor.resume();
-      else actor.enter(getRegisteredAudienceNames());
+      else actor.enter();
     } else if (body.action === "ready") {
       if (state.postDemo.pauseReason === "projection-disconnected") actor.resume();
     } else if (body.action === "ack") actor.acknowledge(body.roundId);
     else if (body.action === "pause") actor.pause();
     else if (body.action === "resume") actor.resume();
-    else if (body.action === "restart") actor.restart(getRegisteredAudienceNames());
+    else if (body.action === "restart") actor.restart();
     else if (body.action === "config") {
       if (actor.settingsVersion !== POST_DEMO_SETTINGS_VERSION) return unavailable();
       actor.config(body.config && typeof body.config === "object" && !Array.isArray(body.config) ? body.config : { cardHoldMs: body.cardHoldMs });

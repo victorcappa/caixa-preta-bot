@@ -3,6 +3,8 @@ node_modules
 .next
 .next-dev
 .runtime/
+/assets/publico/*
+!/assets/publico/.gitkeep
 out
 dist
 .env

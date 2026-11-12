@@ -5,12 +5,15 @@ import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import ProjectionWindowClient from "./ProjectionWindowClient";
 import OperatorTypedReply from "./OperatorTypedReply";
 import PostDemoParameters from "./PostDemoParameters";
+import PostDemoPointCloud from "./PostDemoPointCloud";
 import { postDemoPresentation, POST_DEMO_CARD_LIMIT } from "@/lib/post-demo/settings";
 import styles from "./PostDemo.module.css";
 
 export default function PostDemo({ controller = false, panelCollapsed = false, panelReady = true, panelError = "", onTogglePanel }) {
   const [snapshot, setSnapshot] = useState(null), [details, setDetails] = useState(null), [error, setError] = useState("");
   const [busy, setBusy] = useState(false), [typedId, setTypedId] = useState(null);
+  const [cloudError, setCloudError] = useState("");
+  const [cloudRequest, setCloudRequest] = useState(false);
   const entered = useRef(null), session = useRef(null), textArea = useRef(null), pending = useRef(false);
   const state = snapshot?.postDemo, round = state?.rounds.at(-1);
   const presentation = state?.presentation || postDemoPresentation();
@@ -40,7 +43,7 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
         entered.current = session.current;
         void post("enter").catch(failure => setError(failure.message));
       }
-      if (controller && (!event || ["post-demo", "snapshot", "reset", "reliability:restored"].includes(event.type))) void refresh();
+      if (controller && (!event || ["post-demo", "post-demo:point-cloud", "snapshot", "reset", "reliability:restored"].includes(event.type))) void refresh();
     });
     if (controller) void refresh();
     return unsubscribe;
@@ -60,6 +63,16 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
     catch (failure) { setError(failure.message); }
     finally { pending.current = false; setBusy(false); }
   }
+  async function generatePointCloud() {
+    setCloudError(""); setCloudRequest(true);
+    try {
+      const response = await fetch("/api/post-demo/point-cloud", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId: session.current }) });
+      const result = await response.json(); if (!response.ok) throw Error(result.error); await refresh();
+    } catch (failure) { setCloudError(failure.message); }
+    finally { setCloudRequest(false); }
+  }
+  const cloud = details?.pointCloud, converting = cloud?.status === "generating";
+  const phases = { selecting: "Escolhendo a foto mais recente", image: "Lendo a foto", model: "Carregando o modelo local", depth: "Calculando profundidade", points: "Construindo os pontos", writing: "Preparando a projeção" };
   const message = round && { id: round.id, status: "complete", content: round.content };
   return <main className={styles.surface} data-controller={controller} data-collapsed={panelCollapsed} data-bot-font={presentation.displayFont}>
     <ProjectionWindowClient />
@@ -69,7 +82,7 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
       <span>{state?.totalRounds ? `FRAGMENTO ${state.totalRounds}/${POST_DEMO_CARD_LIMIT}` : "_"}</span>
     </header>
     {panelCollapsed && panelError ? <p role="alert">{panelError}</p> : null}
-    <section className={styles.stage} aria-label="Ilha futura da peça">
+    <section className={styles.stage} data-cloud={Boolean(state?.pointCloud)} aria-label="Ilha futura da peça">
       {round ? <>
         <figure className={styles.card} key={round.id}><img src={round.card.imageUrl} alt={round.card.name} /><figcaption>{round.card.number} · {round.card.name}</figcaption></figure>
         <div className={styles.voice} ref={textArea} role="log" aria-label="Fala da ilha futura">
@@ -79,8 +92,8 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
       </> : <p className={styles.cursor} aria-label="Aguardando a ilha">_</p>}
       {state?.status === "generating" ? <span className={styles.drawing}>A PRÓXIMA MARGEM<span>_</span></span> : null}
       {state?.status === "failed" && (!controller || panelCollapsed) ? <p className={styles.suspended}>A ilha ficou em suspenso.</p> : null}
+      {state?.pointCloud ? <PostDemoPointCloud reference={state.pointCloud} onError={setCloudError} /> : null}
     </section>
-    {state?.audienceNames?.length ? <footer className={styles.roster} aria-label="Habitantes possíveis da ilha"><small>HABITANTES POSSÍVEIS</small><div className={styles.names}>{state.audienceNames.map(name => <span key={name}>{name}</span>)}</div></footer> : null}
     {controller && !panelCollapsed ? <aside className={styles.control} id="post-demo-parameters">
       <p role="status">{state?.status === "completed" ? "PÓS-DEMO CONCLUÍDO · 22/22" : state?.status === "generating" ? "CRIANDO PRÓXIMA CARTA" : state?.active ? "SEQUÊNCIA AUTOMÁTICA" : "PAUSADO"}</p>
       <div className={styles.buttons}>
@@ -89,6 +102,14 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
         <a href="/pos-demo" target="_blank" rel="noreferrer">ABRIR PROJEÇÃO</a>
       </div>
       <p>Ajustes exclusivos desta sequência. Salvos automaticamente.</p>
+      <section aria-label="Nuvem de pontos da plateia" className={styles.cloudControls}>
+        <button type="button" disabled={cloudRequest || converting || !session.current} onClick={() => void generatePointCloud()}>Gerar point cloud</button>
+        {converting ? <><p role="status">{phases[cloud.phase] || "Convertendo a foto"} · {cloud.progress}%</p><progress max="100" value={cloud.progress} /></> : null}
+        {cloud?.sourceName ? <p>Foto selecionada: {cloud.sourceName}</p> : null}
+        {cloud?.status === "ready" ? <p role="status">Nuvem pronta · {cloud.current?.pointCount.toLocaleString("pt-BR")} pontos</p> : null}
+        {cloud?.error || cloudError ? <p role="alert">{cloudError || cloud.error}</p> : null}
+        <p>Arraste para girar; role para aproximar ou afastar; Shift + arrastar desloca a vista.</p>
+      </section>
       {round ? <div className={styles.buttons} aria-label="Avaliar fragmento">{[["perfect", "PERFEITO"], ["almost", "QUASE"], ["bad", "RUIM"]].map(([rating, label]) => <button key={rating} type="button" disabled={busy} aria-pressed={details?.rounds.find(item => item.id === round.id)?.rating === rating} onClick={() => void action("rate", { roundId: round.id, rating })}>{label}</button>)}</div> : null}
       {error ? <p role="alert">{error}</p> : null}
       {panelError ? <p role="alert">{panelError}</p> : null}

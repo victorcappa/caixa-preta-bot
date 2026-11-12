@@ -37,6 +37,6 @@ try {
   const parsed = validatePostDemoTurn(await generatePostDemoTurn({ state, context, signal: new AbortController().signal }), context);
   const output = path.join(fixture, "sample.json");
   fs.writeFileSync(output, JSON.stringify({ model: postDemo.config.model, ms: Date.now() - started, fictionalAudience: true, ...parsed }, null, 2));
-  assert(parsed.trace.sourcePages.length);
+  assert(parsed.trace.sourcePages.length); assert(!parsed.content.includes("Pessoa Aurora"));
   console.log(`POST DEMO LIVE PASS: ${parsed.card.name}; páginas ${parsed.trace.sourcePages.join(", ")}; ${Date.now() - started} ms.\nEvidência: ${output}`);
 } finally { process.chdir(repository); }

@@ -52,7 +52,9 @@ npm run lint
 
 `brain:sync` rewrites only the generated region of `docs/brain/INVENTORY.md`. `brain:check` performs existence, size, path-reference, generated-header, and obvious-secret checks; it is not an application test.
 
-Targeted logical and browser commands are listed in the generated inventory. Run the narrowest relevant logical test first. Browser tests generally require `npm run dev` already running on port 3000 and prove Chromium behavior only where their assertions reach. They do not prove Safari, physical audio, live OpenAI, Instagram, or deployment.
+Targeted checks: generated inventory. Check each script's server/fixture requirements. Browser assertions prove Chromium behavior, not Safari, physical audio, live APIs or deployment.
+
+Post-demo cloud: run `npm run point-cloud:prepare` before the show; private button, photos and offline tests: `docs/POST_DEMO_POINT_CLOUD.md`.
 
 `npm run test:audience-warmup:transition` checks the play-dead typewriter acknowledgement, full 20-second timer, closing acknowledgement and first question in manual and automatic modes. It uses a fake clock and temporary snapshot storage without touching the active show or calling a model. Requires Node 22.15+ or 24, like the other `registerHooks` tests.
 

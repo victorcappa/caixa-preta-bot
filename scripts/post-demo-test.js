@@ -4,7 +4,6 @@ import os from "node:os";
 import path from "node:path";
 import { registerHooks } from "node:module";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { createPostDemoState, createPostDemoController, restoredPostDemoState, postDemoSnapshot } from "../lib/postDemo.js";
 import { normalizePostDemoConfig, patchPostDemoConfig } from "../lib/post-demo/settings.js";
 
 const repository = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -23,6 +22,7 @@ registerHooks({ resolve(specifier, context, nextResolve) {
   return nextResolve(url || specifier, context);
 } });
 try {
+  const { createPostDemoState, createPostDemoController, restoredPostDemoState, postDemoSnapshot } = await import("../lib/postDemo.js");
   const defaults = normalizePostDemoConfig();
   assert.equal(defaults.cardHoldMs, 20000); assert.equal(defaults.typingIntervalMs, 100); assert.equal(defaults.typingPauseMs, 700);
   assert.equal(normalizePostDemoConfig({ cardHoldMs: 1000 }).cardHoldMs, 20000, "migrar o ritmo antigo para um padrão mais lento");
@@ -48,10 +48,10 @@ try {
     sceneZero: { notes: "PRIVATE_SENTINEL" }, tarot: { privateInstruction: "PRIVATE_SENTINEL", hallucination: { memories: [] } } },
     [{ id: 0, number: 0, name: "O Louco", imageUrl: "/card0" }, { id: 1, number: 1, name: "O Mago", imageUrl: "/card1" }]);
   assert(context.continuation.includes("página 12") && /Mcluhan/i.test(context.continuation));
-  assert.deepEqual(context.audience, ["Alice", "Bob", "Clara"]);
+  assert.equal(context.audience, undefined); assert.deepEqual(context.events, []); assert(!JSON.stringify(context).includes("Alice"));
   assert(!JSON.stringify(context).includes("PRIVATE_SENTINEL") && !JSON.stringify(context).includes("TEAM_SENTINEL"));
-  const response = { cardId: 0, text: "A mala azul poderia encontrar outra margem nesta ilha.", question: "Quem poderia devolver esse vestígio?", sourcePages: [5, 12], memoryIds: ["observation-known"], audienceNames: ["Alice"] };
-  for (const patch of [{ cardId: 99 }, { sourcePages: [99] }, { memoryIds: ["fabricated"] }, { audienceNames: ["TEAM_SENTINEL"] }, { question: "Sem pergunta" }]) assert.throws(() => validatePostDemoTurn({ ...response, ...patch }, context));
+  const response = { cardId: 0, text: "Uma máquina de ecos poderia criar outra margem para a obra.", question: "Quem poderia devolver esse vestígio?", sourcePages: [5, 12], memoryIds: [], audienceNames: [] };
+  for (const patch of [{ cardId: 99 }, { sourcePages: [99] }, { memoryIds: ["fabricated"] }, { audienceNames: ["TEAM_SENTINEL"] }, { text: "Alice habita a ilha." }, { question: "Sem pergunta" }]) assert.throws(() => validatePostDemoTurn({ ...response, ...patch }, context));
   actor.finish(first, validatePostDemoTurn(response, context));
   assert.equal(state.status, "presenting"); advance(60000); assert.equal(calls, 1, "tempo sozinho não pode pular uma fala ainda não exibida");
   assert.equal(actor.acknowledge("wrong"), false); assert.equal(actor.acknowledge(first.id), true); assert.equal(actor.acknowledge(first.id), false);
@@ -69,6 +69,8 @@ try {
   assert(!("config" in postDemoSnapshot(state)));
   assert.deepEqual(Object.keys(postDemoSnapshot(state).presentation).sort(), ["displayFont", "typingIntervalMs", "typingPauseMs"]);
   assert.deepEqual(postDemoSnapshot(state, true).config, state.config);
+  const legacy = { ...state, audienceNames: ["Alice"], rounds: [{ ...state.rounds[0], content: "Alice e Bob na ilha.", usedNames: ["Bob"] }] };
+  assert(!JSON.stringify(postDemoSnapshot(legacy)).includes("Alice")); assert(!JSON.stringify(postDemoSnapshot(legacy)).includes("Bob"));
   assert.equal(restoredPostDemoState(state).active, false); assert.equal(restoredPostDemoState(state).pauseReason, "recovery");
   await assert.rejects(() => postDemoContext({ postDemo: { ...state, usedCardIds: [0, 1] }, memories: [], conversation: [] }, context.eligible), /já foram apresentadas/);
   actor.pause();

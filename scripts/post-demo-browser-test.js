@@ -12,7 +12,7 @@ const output = await fs.mkdtemp(path.join(os.tmpdir(), "caixa-post-demo-browser-
 const fixture = path.join(output, "provider.json"), base = "http://127.0.0.1:3327";
 await fs.writeFile(path.join(root, "data/publico.json"), JSON.stringify([{ name: "publico", nomes: ["Alice", "Bob", "Clara"] }, { name: "equipe", nomes: ["TEAM_SENTINEL"] }]));
 await fs.writeFile(path.join(root, "data/training-examples.json"), "[]");
-const reply = cardId => ({ cardId, text: cardId === 0 ? "A mala azul que Alice mencionou poderia ser a primeira margem desta ilha. Os espelhos ainda não sabem quem devolver." : "Bob e Clara poderiam habitar uma oficina de máquinas e memórias. A continuação ainda procura a sua margem.", question: "Quem teria o direito de continuar existindo nessa cópia?", sourcePages: [3, 5, 12], memoryIds: [], audienceNames: cardId === 0 ? ["Alice"] : ["Bob", "Clara"] });
+const reply = cardId => ({ cardId, text: cardId === 0 ? "Uma máquina de ecos poderia construir outra margem para a peça. Os espelhos ainda não sabem que futuro devolver." : "A obra poderia abrir uma oficina de máquinas e memórias. A continuação ainda procura a sua margem.", question: "Quem teria o direito de continuar existindo nessa cópia?", sourcePages: [3, 5, 12], memoryIds: [], audienceNames: [] });
 await fs.writeFile(fixture, JSON.stringify({ principalText: JSON.stringify(reply(0)) }));
 let occupied = false;
 try { await fetch(base + "/api/health", { signal: AbortSignal.timeout(700) }); occupied = true; } catch {}
@@ -57,15 +57,15 @@ try {
   const request = JSON.parse(await fs.readFile(fixture + ".request.json", "utf8"));
   assert.equal(request.tools, undefined); assert.equal(request.model, "gpt-5.6-terra");
   const input = JSON.stringify(request.input);
-  for (const expected of ["Alice", "Bob", "Clara", "mala azul", "página 12", "Mcluhan", "SARCASMO: 23%", "Humor: 17%", "EXPRESSÃO DO PÓS-DEMO"]) assert(input.includes(expected), `acervo ausente: ${expected}`);
-  assert(!input.includes("TEAM_SENTINEL"));
+  for (const expected of ["página 12", "Mcluhan", "SARCASMO: 23%", "Humor: 17%", "EXPRESSÃO DO PÓS-DEMO"]) assert(input.includes(expected), `acervo ausente: ${expected}`);
+  assert(!input.includes("TEAM_SENTINEL")); for (const name of ["Alice", "Bob", "Clara", "mala azul"]) assert(!input.includes(name), `dado da plateia enviado ao modelo: ${name}`);
   assert.equal(await projection.getByRole("button").count(), 0);
   assert.equal(await projection.getByRole("textbox").count(), 0);
   assert.equal(await projection.getByRole("slider").count(), 0);
   assert.equal(await projection.getByRole("combobox").count(), 0);
   assert(!("config" in (await state()).postDemo));
   assert.deepEqual((await state()).postDemo.presentation, { typingIntervalMs: 40, typingPauseMs: 70, displayFont: "modern-dos-8x16" });
-  for (const name of ["Alice", "Bob", "Clara"]) assert.equal(await projection.getByLabel("Habitantes possíveis da ilha").getByText(name, { exact: true }).count(), 1);
+  assert.equal(await projection.getByLabel("Habitantes possíveis da ilha").count(), 0); assert(!("audienceNames" in (await state()).postDemo));
   const first = (await state()).postDemo.rounds[0];
   assert.equal(first.card.id, 0);
   assert(!JSON.stringify(first).includes("trace") && !JSON.stringify(first).includes("rating"));
@@ -122,7 +122,7 @@ try {
   assert(publicActions.every(action => ["ack", "ready"].includes(action)), "projeção não pode emitir comandos privados");
   assert.deepEqual(errors, []);
   await operator.close();
-  console.log(JSON.stringify({ ok: true, liveModel: false, output, checks: ["tab starts autonomous selection", "full continuation/audience/session/own parameters in provider input", "public cards/typing/names", "private independent timing/personality/model/font, no global mirroring either way", "automatic second card and no repetition", "private rating", "pause", "STOP ALL/reload", "new show stays idle and keeps speed", "public/private boundary"] }, null, 2));
+  console.log(JSON.stringify({ ok: true, liveModel: false, output, checks: ["tab starts autonomous selection", "future continuation/own parameters without audience/session details in provider input", "public cards/typing without names", "private independent timing/personality/model/font, no global mirroring either way", "automatic second card and no repetition", "private rating", "pause", "STOP ALL/reload", "new show stays idle and keeps speed", "public/private boundary"] }, null, 2));
 } catch (error) {
   await projection?.screenshot({ path: path.join(output, "failure-public.png") }).catch(() => {});
   await control?.screenshot({ path: path.join(output, "failure-control.png") }).catch(() => {});
