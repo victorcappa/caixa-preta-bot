@@ -105,15 +105,16 @@ try {
   await poll(async () => (await (await fetch(base + "/api/post-demo")).json()).postDemo.rounds.at(-1).rating === "perfect", "avaliação privada");
   const count = (await state()).postDemo.totalRounds;
   await new Promise(resolve => setTimeout(resolve, 1300)); assert.equal((await state()).postDemo.totalRounds, count);
-  // The handle stays on the right edge even after scrolling a long parameter panel.
+  // The compact handle stays at the top right even after scrolling the parameters.
   await control.setViewportSize({ width: 1280, height: 720 });
   await control.locator("#post-demo-parameters").evaluate(element => { element.scrollTop = element.scrollHeight; });
   const retract = control.getByRole("button", { name: "Recolher parâmetros", exact: true });
-  const handle = await retract.boundingBox(); assert(handle && handle.x > 800 && handle.y >= 0 && handle.y + handle.height <= 720);
+  const handle = await retract.boundingBox(); assert(handle && handle.x > 1200 && handle.y >= 60 && handle.y < 100 && handle.width <= 32 && handle.height <= 32);
   await retract.click();
   assert.equal(await control.locator("#post-demo-parameters").count(), 0); assert.equal(await control.getByRole("navigation").count(), 0);
   const expand = control.getByRole("button", { name: "Mostrar parâmetros", exact: true }), collapsedHandle = await expand.boundingBox();
-  assert.equal(Math.round(collapsedHandle.x + collapsedHandle.width), 1280);
+  assert.equal(Math.round(collapsedHandle.x + collapsedHandle.width), 1268);
+  assert.equal(Math.round(collapsedHandle.y), 12); assert(collapsedHandle.width <= 32 && collapsedHandle.height <= 32);
   await poll(async () => (await (await fetch(base + "/api/controller-settings?scope=post-demo-panel")).json()).settings.collapsed === true, "painel recolhido salvo");
   await control.reload(); await control.getByRole("button", { name: "Mostrar parâmetros", exact: true }).click();
   await control.locator("#post-demo-parameters").waitFor();
