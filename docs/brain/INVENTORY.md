@@ -8,6 +8,9 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 
 ## Package scripts
 
+- `npm run test:post-demo` -> `node --no-warnings scripts/post-demo-test.js`
+- `npm run test:post-demo:browser` -> `node --no-warnings scripts/post-demo-browser-test.js`
+- `npm run test:post-demo:live` -> `node --no-warnings --env-file-if-exists=.env.local scripts/post-demo-live.js --live`
 - `npm run memory:sync` -> `node --no-warnings scripts/show-memory-sync.js`
 - `npm run memory:audit` -> `node --no-warnings scripts/show-memory-audit.js`
 - `npm run memory:live` -> `node --no-warnings --env-file-if-exists=.env.local scripts/show-memory-live.js --live`
@@ -98,6 +101,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `/` -> `app/page.js`
 - `/piloto-videogame-controller` -> `app/piloto-videogame-controller/page.js`
 - `/piloto-videogame` -> `app/piloto-videogame/page.js`
+- `/pos-demo/controle` -> `app/pos-demo/controle/page.js`
+- `/pos-demo` -> `app/pos-demo/page.js`
 - `/queda-aviao-controller` -> `app/queda-aviao-controller/page.js`
 - `/queda-aviao/debug` -> `app/queda-aviao/debug/page.js`
 - `/queda-aviao` -> `app/queda-aviao/page.js`
@@ -143,6 +148,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `GET, POST /api/operator-public` -> `app/api/operator-public/route.js`
 - `POST /api/operator` -> `app/api/operator/route.js`
 - `POST /api/performance/interaction` -> `app/api/performance/interaction/route.js`
+- `GET, POST /api/post-demo` -> `app/api/post-demo/route.js`
 - `GET, POST /api/projection` -> `app/api/projection/route.js`
 - `GET, POST /api/queda-aviao` -> `app/api/queda-aviao/route.js`
 - `GET, POST /api/reliability` -> `app/api/reliability/route.js`
@@ -190,6 +196,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/OperatorPublicLauncher.js`
 - `components/OperatorTypedReply.js`
 - `components/PerformanceLayer.js`
+- `components/PostDemo.js`
+- `components/PostDemoSpeed.js`
 - `components/PreparedSceneController.js`
 - `components/ProjectionMenu.js`
 - `components/ProjectionOperatorSurface.js`
@@ -348,6 +356,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/participant-pool-test.js`
 - `scripts/performance-system-test.js`
 - `scripts/play-unlock-browser-test.js`
+- `scripts/post-demo-browser-test.js`
+- `scripts/post-demo-test.js`
 - `scripts/public-composition-browser-test.js`
 - `scripts/public-realtime-browser-test.js`
 - `scripts/research-director-test.js`

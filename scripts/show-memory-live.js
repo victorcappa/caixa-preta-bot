@@ -10,7 +10,7 @@ if (!process.argv.includes("--live")) throw new Error("Use --live para consultar
 if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY não configurada.");
 const repository = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const directory = fs.mkdtempSync(path.join(os.tmpdir(), "caixa-memory-live-"));
-for (const item of ["knowledge", "data", "Texto caixa preta.pdf", "assets/tarot/CAIXA_PRETA_REFERENCIAS_TARO.md", "assets/sampler-forca-g/manifest.json"]) {
+for (const item of ["knowledge", "data", "Texto caixa preta.pdf", "assets/dramaturgia/proximas-etapas-da-peca.pdf", "assets/tarot/CAIXA_PRETA_REFERENCIAS_TARO.md", "assets/sampler-forca-g/manifest.json"]) {
   fs.mkdirSync(path.dirname(path.join(directory, item)), { recursive: true });
   fs.cpSync(path.join(repository, item), path.join(directory, item), { recursive: true });
 }
@@ -31,7 +31,7 @@ try {
   const model = resolveOpenAIModel(process.env.OPENAI_MODEL);
   const cases = [
     { id: "atual-versus-rascunho", question: "Quero conferir o que você sabe: qual é a ordem NUMÉRICA atual das três malas e a ação em cada uma? A mala falsa do PDF ainda é a regra? Responda concretamente.", patterns: [/2[\s\S]*1[\s\S]*3/, /bexiga/i, /forca/i, /toca.discos/i] },
-    { id: "cenas-8-9", question: "No rascunho, o que se propõe para as cenas 8 e 9? Inclua os fones e o veículo de Elisa. Isso já é uma sequência consolidada?", patterns: [/fone/i, /bicicleta/i, /propost|rascunho|desenvolvimento|chute|consolidada/i] },
+    { id: "cenas-8-9", question: "Na continuação mais recente, o que se propõe para as cenas 8 e 9? Inclua o quarto e a referência musical do aviador. Isso prova que já foram encenadas?", patterns: [/espelh|Morel/i, /par[oó]dia|Nissin|aviador/i, /propost|continua|desenvolvimento|n[aã]o/i] },
     { id: "cenas-3-6", question: "Que aparelho registra a voz na cena 3, a quem ele se liga, e qual pintor se relaciona à acromatopsia na cena 6? Como corpo e arquivo se cruzam aí?", patterns: [/fon[oó]grafo/i, /Edison/i, /Jonathan/i] },
     { id: "cenas-1-2-4-5-7", question: "Dê uma frase concreta para cada cena: 1 aeroporto; 2 queda e corpo; 4 piloto e observadora; 5 mão; 7 caixas pretas e ensaio. Quero reconhecer a matéria específica de cada uma. Nomeie a observadora e o dispositivo usado por Elisa.", patterns: [/aeroporto|medalha|quati|colis[aã]o/i, /força G|G.LOC|redout/i, /ge[oó]grafa|gamer/i, /borracha|destac[aá]vel/i, /ensaio|rehearsal/i] },
     { id: "referencias", question: "Quais ligações concretas o arquivo da peça faz com A Invenção de Morel e com Janaina Leite? Não invente citações literais.", patterns: [/Morel/i, /Janaina|Janaína/i, /duplic|repet|ilha|proje/i, /real|document|autofic|testemunh/i] }

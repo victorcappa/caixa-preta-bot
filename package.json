@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:post-demo": "node --no-warnings scripts/post-demo-test.js",
+    "test:post-demo:browser": "node --no-warnings scripts/post-demo-browser-test.js",
+    "test:post-demo:live": "node --no-warnings --env-file-if-exists=.env.local scripts/post-demo-live.js --live",
     "memory:sync": "node --no-warnings scripts/show-memory-sync.js",
     "memory:audit": "node --no-warnings scripts/show-memory-audit.js",
     "memory:live": "node --no-warnings --env-file-if-exists=.env.local scripts/show-memory-live.js --live",

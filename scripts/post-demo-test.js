@@ -1,0 +1,77 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { registerHooks } from "node:module";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { createPostDemoState, createPostDemoController, restoredPostDemoState, postDemoSnapshot } from "../lib/postDemo.js";
+
+const repository = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const fixture = fs.mkdtempSync(path.join(os.tmpdir(), "caixa-post-demo-unit-"));
+for (const item of ["data", "knowledge", "Texto caixa preta.pdf"]) fs.cpSync(path.join(repository, item), path.join(fixture, item), { recursive: true });
+fs.symlinkSync(path.join(repository, "assets"), path.join(fixture, "assets"));
+fs.writeFileSync(path.join(fixture, "data/publico.json"), JSON.stringify([{ name: "publico", nomes: ["Alice", "Bob", "alice", "", "Clara"] }, { name: "equipe", nomes: ["TEAM_SENTINEL"] }]));
+fs.writeFileSync(path.join(fixture, "data/training-examples.json"), "[]");
+process.env.CAIXA_PRETA_SHOW_RUNTIME_DIR = path.join(fixture, "runtime");
+process.chdir(fixture);
+registerHooks({ resolve(specifier, context, nextResolve) {
+  let url;
+  if (specifier.startsWith("@/")) url = pathToFileURL(path.resolve(repository, specifier.slice(2))).href;
+  else if (specifier.startsWith(".")) url = new URL(specifier, context.parentURL).href;
+  if (url?.startsWith("file:") && !path.extname(fileURLToPath(url)) && fs.existsSync(`${fileURLToPath(url)}.js`)) return nextResolve(`${url}.js`, context);
+  return nextResolve(url || specifier, context);
+} });
+try {
+  const { getRegisteredAudienceNames } = await import("../lib/participants.js");
+  const { saveTrainingExample, listTrainingExamples } = await import("../lib/training.js");
+  const { postDemoContext, validatePostDemoTurn } = await import("../lib/post-demo/context.js");
+  assert.deepEqual(getRegisteredAudienceNames(), ["Alice", "Bob", "Clara"]);
+  let state = createPostDemoState(), time = 100000, calls = 0, clockId = 0;
+  const timers = new Map();
+  const actor = createPostDemoController({ get: () => state, set: next => { state = next; }, emit() {}, runTurn: async () => { calls++; },
+    saveExample: saveTrainingExample, now: () => time, schedule: (fn, delay) => { timers.set(++clockId, { fn, at: time + delay }); return clockId; }, unschedule: id => timers.delete(id) });
+  const advance = ms => { time += ms; for (const [id, timer] of [...timers]) if (timer.at <= time) { timers.delete(id); timer.fn(); } };
+  actor.enter(getRegisteredAudienceNames()); actor.enter([]);
+  assert.equal(calls, 1, "entrada duplicada não pode iniciar outra geração");
+  const first = actor.begin();
+  const context = await postDemoContext({ postDemo: state, memories: [{ id: "known", content: "Alice falou de uma mala azul." }], conversation: [],
+    sceneZero: { notes: "PRIVATE_SENTINEL" }, tarot: { privateInstruction: "PRIVATE_SENTINEL", hallucination: { memories: [] } } },
+    [{ id: 0, number: 0, name: "O Louco", imageUrl: "/card0" }, { id: 1, number: 1, name: "O Mago", imageUrl: "/card1" }]);
+  assert(context.continuation.includes("página 12") && /Mcluhan/i.test(context.continuation));
+  assert.deepEqual(context.audience, ["Alice", "Bob", "Clara"]);
+  assert(!JSON.stringify(context).includes("PRIVATE_SENTINEL") && !JSON.stringify(context).includes("TEAM_SENTINEL"));
+  const response = { cardId: 0, text: "A mala azul poderia encontrar outra margem nesta ilha.", question: "Quem poderia devolver esse vestígio?", sourcePages: [5, 12], memoryIds: ["observation-known"], audienceNames: ["Alice"] };
+  for (const patch of [{ cardId: 99 }, { sourcePages: [99] }, { memoryIds: ["fabricated"] }, { audienceNames: ["TEAM_SENTINEL"] }, { question: "Sem pergunta" }]) assert.throws(() => validatePostDemoTurn({ ...response, ...patch }, context));
+  actor.finish(first, validatePostDemoTurn(response, context));
+  assert.equal(state.status, "presenting"); advance(60000); assert.equal(calls, 1, "tempo sozinho não pode pular uma fala ainda não exibida");
+  assert.equal(actor.acknowledge("wrong"), false); assert.equal(actor.acknowledge(first.id), true); assert.equal(actor.acknowledge(first.id), false);
+  advance(2000); actor.config({ cardHoldMs: 1000 }); advance(0); assert.equal(calls, 2, "o ritmo ajustado deve descontar o tempo já decorrido");
+  const second = actor.begin(); actor.pause("stop-all");
+  assert(second.controller.signal.aborted); assert.equal(actor.finish(second, validatePostDemoTurn(response, context)), false);
+  advance(60000); assert.equal(calls, 2); actor.resume(); assert.equal(calls, 3);
+  const retry = actor.begin(); assert.notEqual(retry, second);
+  assert.equal(actor.fail(second, "late error"), false); assert.equal(actor.fail(retry, "falha real"), true);
+  assert.equal(state.status, "failed"); actor.resume();
+  const third = actor.begin(); actor.finish(third, { ...validatePostDemoTurn({ ...response, cardId: 1 }, context), trace: { secret: "PRIVATE_TRACE" } });
+  actor.rate(third.id, "perfect"); actor.rate(third.id, "bad");
+  assert.equal(listTrainingExamples().filter(example => example.source === "post-demo").length, 1);
+  assert(!JSON.stringify(postDemoSnapshot(state)).includes("rating") && !JSON.stringify(postDemoSnapshot(state)).includes("PRIVATE_TRACE"));
+  assert.equal(restoredPostDemoState(state).active, false); assert.equal(restoredPostDemoState(state).pauseReason, "recovery");
+  const next = await postDemoContext({ postDemo: { ...state, usedCardIds: [0, 1] }, memories: [], conversation: [] }, context.eligible);
+  assert.equal(next.cycleReset, true); assert(next.eligible.every(card => card.id !== state.rounds.at(-1).card.id));
+  actor.pause();
+  const { showState } = await import("../lib/showState.js");
+  showState.postDemo.config({ cardHoldMs: 4000 });
+  showState.postDemo.enter(["Alice"]); const active = showState.postDemo.begin(); showState.signalStopAll();
+  assert(active.controller.signal.aborted && !showState.snapshot().postDemo.active);
+  showState.postDemo.resume(); const emergency = showState.postDemo.begin(); showState.controlReliability("emergency-on");
+  assert(emergency.controller.signal.aborted); showState.controlReliability("emergency-off");
+  const saved = showState.privateSnapshot();
+  assert.equal(showState.restoreFromRecovery({ storeVersion: showState._storeVersion, sessionId: saved.reliability.sessionId, state: saved }).ok, true);
+  assert.equal(showState.snapshot().postDemo.active, false);
+  showState.startNewPresentation();
+  assert.equal(showState.snapshot().postDemo.startedAt, null); assert.equal(showState.snapshot().postDemo.config.cardHoldMs, 4000);
+  assert.equal(showState.snapshot().postDemo.rounds.length, 0);
+  const { flushSnapshotWrites } = await import("../lib/showSessionPersistence.js"); await flushSnapshotWrites();
+  console.log("POST DEMO PASS: entry/ack idempotency, automatic clock, live speed, pause/late jobs, source/card/name validation, full continuation, feedback/upsert, privacy, STOP ALL, emergency, recovery and preference-preserving reset (isolated)");
+} finally { process.chdir(repository); }

@@ -4,10 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { robotTypingDelayMs } from "@/lib/robot-sound/state";
 import styles from "./PublicOperator.module.css";
 
-export default function OperatorTypedReply({ message, settings, animate, onProgress }) {
+export default function OperatorTypedReply({ message, settings, animate, onProgress, onComplete, paused = false }) {
   const [text, setText] = useState(() => animate ? "" : message.content);
   const [stopped, setStopped] = useState(false);
   const progress = useRef({ text, lastAt: null });
+  const completed = useRef(null);
+  useEffect(() => { if (!paused) setStopped(false); }, [paused]);
 
   useEffect(() => {
     const stop = () => setStopped(true);
@@ -21,7 +23,7 @@ export default function OperatorTypedReply({ message, settings, animate, onProgr
       setText(message.content);
       return;
     }
-    if (stopped || message.status === "cancelled") return;
+    if (paused || stopped || message.status === "cancelled") return;
     const current = progress.current;
     // A failed return can replace the partial stream with its safe fallback.
     if (!message.content.startsWith(current.text)) {
@@ -46,10 +48,15 @@ export default function OperatorTypedReply({ message, settings, animate, onProgr
     };
     schedule();
     return () => window.clearTimeout(timer);
-  }, [message.content, message.status, settings, animate, stopped]);
+  }, [message.content, message.status, settings, animate, stopped, paused]);
 
   useEffect(() => { onProgress?.(); }, [text, onProgress]);
-  const typing = !stopped && message.status !== "cancelled"
+  useEffect(() => {
+    if (onComplete && !paused && !stopped && message.status === "complete" && text.length >= message.content.length && completed.current !== message.id) {
+      completed.current = message.id; onComplete(message.id);
+    }
+  }, [onComplete, paused, stopped, message.status, message.id, message.content, text]);
+  const typing = !paused && !stopped && message.status !== "cancelled"
     && (message.status === "streaming" || text.length < message.content.length);
   return <p data-typing={typing ? "true" : "false"}>{text}{typing ? <span className={styles.cursor} aria-hidden="true">_</span> : null}</p>;
 }

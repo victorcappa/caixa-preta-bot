@@ -12,6 +12,7 @@ O salvamento usa os valores reais de `showState`, sem substituir pelos padrões 
 | Composição pública | Posição/tamanho de cada módulo e cor dos textos públicos do Operator. |
 | Tarô | Configuração de leitura/autonomia, visual/Matrix, instrução privada, referências e temas, contexto contemporâneo, câmera escolhida e modo automático. |
 | Alucinação | Chaves gerais, limite de cartas, filtros, política de retirada, efeitos, intensidades, mistura facial, eventos da timeline, presets e memórias/entrevistas vinculadas. |
+| Pós-demo | Intervalo entre cartas; usa personalidade, modelo e digitação globais. Histórico, nomes da ilha, carta atual e execução pertencem apenas à sessão. |
 | Outros controles de estado | Parâmetros/preset/áudio do glitch e transição, intensidade dos shaders, volume do sampler, texto/subdivisão/ritmo/fade/modos da Queda Avião, orientação de personalidade e som do BIOS, opções de aquecimento e configuração de pesquisa. |
 | Cadastros existentes | Catálogo, fotos, fusões/aprovações, cues, notas e configurações individuais do sampler continuam em seus arquivos existentes. Não são substituídos por esta camada. |
 

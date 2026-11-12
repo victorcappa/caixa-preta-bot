@@ -134,6 +134,8 @@ O piloto nao lembra exatamente o que aconteceu.
 
 ### Cenas futuras e primeiro ato
 
+Este trecho descreve propostas do rascunho antigo de 34 páginas. A continuação mais recente, com cenas 7–15, está no mapa `show-map.md` e em `assets/dramaturgia/proximas-etapas-da-peca.pdf`; ela prevalece ao imaginar o futuro da peça.
+
 O texto ainda esta em desenvolvimento. A Cena 8 retoma o piloto ouvindo a caixa do acidente, fones como máscaras e manipulação gamer-vodu. A Cena 9 — O Avião, a Técnica e o Milagre — propõe Elisa numa bicicleta com asa, técnica, milagre e gamificação. Ambas são propostas, assim como o futuro ato 2; ver o mapa e o PDF integral para falas e anotações.
 Ha ideias de:
 - abrir a caixa e ouvir o audio original

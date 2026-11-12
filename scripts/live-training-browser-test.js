@@ -57,7 +57,7 @@ try {
   await control.goto(`${base}/treino-ao-vivo/controle`, { waitUntil: "domcontentloaded" });
   const nav = control.getByRole("navigation", { name: "Controllers cênicos" });
   const tabs = await nav.getByRole("link").allTextContents();
-  assert.deepEqual(tabs.slice(-2), ["Treino", "treino-ao-vivo"]);
+  assert.deepEqual(tabs.slice(-3), ["Treino", "treino-ao-vivo", "pós-demo"]);
   assert.equal(await display.getByRole("textbox").count(), 0);
   assert.equal(await display.getByRole("button").count(), 0);
   const operator = await context.newPage(), tarot = await context.newPage();

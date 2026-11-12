@@ -1,5 +1,7 @@
 # Verificação do acervo — 12/11/2026
 
+Registro da amostra anterior à inclusão do PDF de continuação. Os planos mais recentes para as cenas 7–15 estão em [POS_DEMO.md](POS_DEMO.md); o roteiro de teste atual acompanha essa atualização, em especial as cenas 8 e 9.
+
 Fonte: `Texto caixa preta.pdf`, SHA-256 `8dd9654f1bebf55469a1a04d054391afd49d6df909596d18f399023122db066e`, mais os textos atuais catalogados em `lib/showMemory.js`. Operação e manutenção: [TREINO_AO_VIVO.md](TREINO_AO_VIVO.md).
 
 ## Evidência local

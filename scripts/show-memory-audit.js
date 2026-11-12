@@ -14,12 +14,14 @@ const { showMemoryArchive, retrieveShowMemory, boundedMemoryDocuments, getShowKn
 const archive = await showMemoryArchive();
 const transcript = JSON.parse(fs.readFileSync("knowledge/sources/texto-caixa-preta.json", "utf8"));
 assert.equal(archive.coverage.pages, 34);
-assert.deepEqual(archive.coverage.scenes, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+assert.equal(archive.coverage.continuationPages, 12);
+assert.deepEqual(archive.coverage.scenes, Array.from({ length: 16 }, (_, index) => index));
 assert.deepEqual(archive.coverage.referenceSections.map(section => section.id), Array.from({ length: 59 }, (_, i) => `CP-${String(i + 1).padStart(2, "0")}`));
 assert.equal(archive.coverage.bibliography.length, 63);
 const normalized = value => value.replace(/\s+/g, "");
-for (const page of transcript.pages) {
-  const indexed = archive.index.chunks.filter(chunk => chunk.origin === transcript.source && chunk.page === page.number).map(chunk => chunk.text).join("");
+const continuation = JSON.parse(fs.readFileSync("knowledge/sources/proximas-etapas-da-peca.json", "utf8"));
+for (const page of [...transcript.pages.map(page => ({ ...page, source: transcript.source })), ...continuation.pages.map(page => ({ ...page, source: continuation.source }))]) {
+  const indexed = archive.index.chunks.filter(chunk => chunk.origin === page.source && chunk.page === page.number).map(chunk => chunk.text).join("");
   assert.equal(normalized(indexed), normalized(page.text), `texto completo da página ${page.number} deve estar indexado, inclusive anotações`);
 }
 const longText = "linha extensa ".repeat(5000);
@@ -75,7 +77,7 @@ assert(!filtered.selected.some(chunk => chunk.origin.startsWith("assets/tarot/")
 
 // Exercise invalidation and fail-closed behavior in a disposable copy, never the active show.
 const fixture = fs.mkdtempSync(path.join(os.tmpdir(), "caixa-memory-audit-"));
-for (const item of ["knowledge", "data", "Texto caixa preta.pdf", "assets/tarot/CAIXA_PRETA_REFERENCIAS_TARO.md", "assets/sampler-forca-g/manifest.json"]) {
+for (const item of ["knowledge", "data", "Texto caixa preta.pdf", "assets/dramaturgia/proximas-etapas-da-peca.pdf", "assets/tarot/CAIXA_PRETA_REFERENCIAS_TARO.md", "assets/sampler-forca-g/manifest.json"]) {
   fs.mkdirSync(path.dirname(path.join(fixture, item)), { recursive: true });
   fs.cpSync(path.join(repository, item), path.join(fixture, item), { recursive: true });
 }
@@ -97,4 +99,4 @@ try {
 } finally { process.chdir(repository); }
 const output = path.join(fixture, "coverage.json");
 fs.writeFileSync(output, JSON.stringify({ ...archive.coverage, retrievalChecks: checks, referencesTested: 59, validation: "local retrieval; no model calls" }, null, 2));
-console.log(`SHOW MEMORY PASS: 34 páginas integrais, 10 cenas, 59 seções, 63 fontes, ${archive.coverage.chunks} trechos; temas, processo, privacidade e cache/hash.\nRelatório: ${output}`);
+console.log(`SHOW MEMORY PASS: 34 + 12 páginas integrais, 16 cenas, 59 seções, 63 fontes, ${archive.coverage.chunks} trechos; temas, processo, privacidade e cache/hash.\nRelatório: ${output}`);
