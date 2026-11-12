@@ -4,12 +4,22 @@ Interface dramatúrgica integrada ao Caixa Preta Bot. Implementada no checkout a
 
 ## Operação
 
-1. Abra `/cena-0-controller` ou `/videomapping-controller`. **REVELAR OPERATOR** fica no topo do menu da direita. O botão revela o painel na projeção e abre os controles privados ampliados. **VOLTAR AOS CONTROLES** fecha somente o painel privado; **ABRIR CONVERSA** permite voltar a ele. A aba `/operator` contém somente os parâmetros do bot; conversa e monitor permanecem neste launcher.
-2. A projeção atual ocupa 65% da largura; a conversa ocupa os outros 35%. O quadro original é reduzido proporcionalmente e centralizado na altura, com faixas pretas, para preservar todo o conteúdo e sua composição. Fechar/reabrir altera apenas transformações CSS.
+1. Abra `/cena-0-controller` ou `/videomapping-controller`. **REVELAR OPERATOR** fica no topo do menu da direita. O botão revela o painel na projeção e abre os controles privados ampliados. **VOLTAR AOS CONTROLES** fecha somente o painel privado; **ABRIR CONVERSA** permite voltar a ele. A aba `/operator` contém os parâmetros do bot e a composição pública; conversa e monitor permanecem neste launcher.
+2. Por padrão, a projeção atual ocupa 65% da largura; a conversa ocupa os outros 35%. O quadro original é reduzido proporcionalmente e centralizado na altura, com faixas pretas, para preservar todo o conteúdo e sua composição. Fechar/reabrir altera apenas transformações CSS.
 3. Escreva no campo **OPERADOR >**, tanto na lateral pública quanto no painel privado. O rascunho aparece publicamente quando o painel está revelado. **Enter** envia; **Shift+Enter** quebra linha. O histórico tem rolagem própria, com acompanhamento automático enquanto estiver no final. É possível conversar mesmo com a visualização pública oculta.
 4. Arraste os controles de **SARCASMO**, **REBELDIA**, **CURIOSIDADE** e **VERBOSIDADE**, ou use `−`/`+` em passos de 5. Os valores vão de 0 a 100; o arraste permite passos de 1. Os sliders públicos também são operáveis: arraste ou use `−`/`+` diretamente na lateral da projeção. Valores e rascunhos sincronizam nos dois sentidos com os controles privados.
 5. **INTERROMPER GERAÇÃO** cancela apenas a resposta lateral. **INTERROMPER DESVIO / RETOMAR PEÇA** encerra a atividade externa/Instagram, invalida gerações antigas e pede uma justificativa pública na conversa lateral. A cena, seus timers e suas falas fixas não são avançados ou reiniciados por esse botão. A continuação cênica permanece nos controles existentes.
 6. Para monitorar a imagem pública, use **CONECTAR PROJEÇÃO AO VIVO** e escolha a aba pública no seletor do navegador. O vídeo é local, ao vivo e mudo. Não há upload da captura nem segunda instância da cena. **DESCONECTAR MONITOR** libera os tracks. Requer captura de tela/aba disponível e permissão do navegador/sistema; o resumo de estado continua disponível sem captura.
+
+## Composição pública
+
+Abra **COMPOSIÇÃO DA TELA PÚBLICA** em `/operator`, na conversa privada ou na seção **VISUAL** do controle do Tarô. Selecione o componente, arraste o retângulo na prévia esquemática e redimensione pelo canto inferior direito; os campos X/Y/largura/altura permitem ajuste exato em percentuais. **RESTAURAR COMPONENTE** remove somente aquele ajuste. A prévia não captura vídeo; confira a janela real de projeção.
+
+Os módulos da Principal são BIOS/carregamento, Cena 0/malas/contagens, efeitos/jogos, fala e conteúdo contextual. No Tarô: cabeçalho, leitura com nome da carta, câmera e elementos. No Operator público: painel inteiro e, dentro dele, conversa, personalidade e entrada de texto. As coordenadas são relativas ao canvas correspondente (os módulos internos do Operator usam o próprio painel). Alterações de geometria nunca reposicionam os controles privados. O layout padrão continua ativo nos módulos sem ajuste; os ajustes personalizados têm precedência sobre os quadrantes.
+
+A cor dos textos públicos é ajustável, com atalhos **BRANCO** e **VERDE**. Fontes, sliders e botões públicos estão maiores. O Operator também pode ser revelado no Tarô. Geometria e cor usam `showState`/SSE e as preferências persistentes; ocultar a lateral não apaga os ajustes.
+
+Validação: `npm run test:operator-public` e `npm run test:public-composition:browser` (build/runtime isolados, porta 3321). Cobrem normalização/limites, patches independentes, persistência, Playwright com leitura sintética (posição/nome/fonte, arraste, tamanho, reload, cor branca e restauração). Não comprova leitura por modelo real, webcam, legibilidade no projetor ou áudio físico.
 
 ## Arquitetura e arquivos
 
@@ -49,7 +59,7 @@ A retomada privada incrementa a barreira existente de parada, aborta requisiçõ
 
 Se o modelo falhar antes de escrever, uma fala local segura ocupa a resposta lateral. Se houver texto parcial na conversa comum, ele é preservado e a geração é encerrada. Na justificativa de retomada, uma falha mesmo parcial é substituída pela fala local completa. Diagnósticos de geração aparecem somente nos controles privados. O timeout e o bloqueio de emergência continuam centralizados; `STOP ALL`, emergência, reset e retomada de snapshot cancelam a geração lateral. O canal não toca áudio nem altera a saída sonora principal.
 
-O snapshot da sessão inclui visibilidade, histórico, rascunho e parâmetros. A recuperação explícita após restart preserva esses dados e encerra qualquer estado de streaming; não tenta retomar uma requisição ao provedor. Um novo espetáculo limpa o canal. Fechar/reabrir a lateral ou recarregar a projeção mantém o histórico no servidor.
+O snapshot da sessão inclui visibilidade, histórico, rascunho e parâmetros. A recuperação explícita após restart preserva esses dados e encerra qualquer estado de streaming; não tenta retomar uma requisição ao provedor. Um novo espetáculo limpa histórico e rascunho do canal, mantendo a personalidade e os demais ajustes em preferências persistentes (`docs/PREFERENCIAS_OPERADOR.md`). Fechar/reabrir a lateral ou recarregar a projeção mantém o histórico no servidor.
 
 A lateral pública oferece campo editável, envio, cancelamento da resposta e controles de personalidade, usando o mesmo fluxo do painel privado. Os comandos de retomada do espetáculo e o monitor permanecem privados. A mensagem inicial “CANAL ABERTO. A CENA CONTINUA.” foi removida. Não recebe os campos privados do novo canal, prompts, credenciais ou diagnóstico da geração. Isso preserva a separação de interface do aplicativo local; não acrescenta autenticação de contas às APIs existentes. O endpoint recusa escritas de outra origem no navegador comparando com o host HTTP recebido.
 

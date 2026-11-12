@@ -8,8 +8,22 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 
 ## Package scripts
 
+- `npm run test:modelo-3d` -> `node scripts/model-3d-test.cjs`
+- `npm run test:modelo-3d:local` -> `node scripts/model-3d-local-smoke.cjs`
+- `npm run test:modelo-3d:browser` -> `node scripts/model-3d-browser-test.cjs`
+- `npm run test:operator-preferences` -> `node --no-warnings scripts/operator-preferences-test.js`
+- `npm run test:operator-preferences:browser` -> `node --no-warnings scripts/operator-preferences-browser-test.js`
+- `npm run test:tarot` -> `node --no-warnings scripts/tarot-test.js`
+- `npm run test:tarot:references` -> `node --no-warnings scripts/tarot-references-test.js`
+- `npm run test:tarot:references:browser` -> `node --no-warnings scripts/tarot-references-browser-test.js`
+- `npm run test:tarot:references:live` -> `node --no-warnings --env-file-if-exists=.env.local scripts/tarot-references-browser-test.js --live`
+- `npm run test:tarot:experience` -> `node --no-warnings scripts/tarot-experience-test.js`
+- `npm run test:tarot:recovery:browser` -> `node --no-warnings scripts/tarot-analysis-recovery-browser-test.js`
+- `npm run test:tarot:catalog` -> `node --no-warnings scripts/tarot-catalog-test.js`
+- `npm run test:tarot:vision` -> `node --no-warnings scripts/tarot-vision-test.js`
+- `npm run test:tarot:browser` -> `node --no-warnings scripts/tarot-browser-test.js`
 - `npm run dev` -> `node scripts/require-port-3000.js && next dev --port 3000`
-- `npm run build` -> `next build`
+- `npm run build` -> `node scripts/require-port-3000.js && next build`
 - `npm run start` -> `node scripts/require-port-3000.js && next start --port 3000`
 - `npm run show:prepare` -> `npm run build`
 - `npm run show` -> `node scripts/show-launcher.js`
@@ -28,6 +42,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:openai:failures` -> `node --no-warnings scripts/openai-failure-audit.js`
 - `npm run test:participant-fallback` -> `node --no-warnings scripts/participant-fallback-test.js`
 - `npm run test:openai:live` -> `node --no-warnings scripts/openai-live-audit.js --live`
+- `npm run test:public-composition:browser` -> `node --no-warnings scripts/public-composition-browser-test.js`
 - `npm run test:operator-public` -> `node --no-warnings scripts/operator-public-test.js`
 - `npm run test:operator-public:browser` -> `node --no-warnings scripts/operator-public-browser-test.js`
 - `npm run test:operator-public:live` -> `node --no-warnings scripts/operator-public-live-test.js --live`
@@ -45,6 +60,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:robot-sound:browser` -> `node --no-warnings scripts/robot-sound-browser-test.js`
 - `npm run test:sound-control:browser` -> `node --no-warnings scripts/sound-control-browser-test.js`
 - `npm run test:audience-warmup` -> `node --no-warnings scripts/audience-warmup-test.js`
+- `npm run test:audience-warmup:transition` -> `node --no-warnings scripts/audience-warmup-transition-test.js`
 - `npm run test:audience-sound-check:browser` -> `node --no-warnings scripts/audience-sound-check-browser-test.js`
 - `npm run test:audience-microphone` -> `node --no-warnings scripts/audience-microphone-meter-test.js`
 - `npm run test:audience-microphone:background` -> `node --no-warnings scripts/audience-microphone-background-browser-test.js`
@@ -57,6 +73,10 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run brain:check` -> `node scripts/brain-check.js`
 - `npm run brain:summary` -> `node scripts/brain-summary.js`
 - `npm run generate:elderly-voice` -> `node scripts/generate-elderly-voice.js`
+- `npm run test:tarot:hallucination` -> `node --no-warnings scripts/tarot-hallucination-test.js`
+- `npm run test:tarot:hallucination:browser` -> `node --no-warnings scripts/tarot-hallucination-browser-test.js`
+- `npm run test:tarot:effects:browser` -> `node --no-warnings scripts/tarot-card-effects-browser-test.js`
+- `npm run test:tarot:hallucination:controls` -> `node --no-warnings scripts/tarot-hallucination-controls-browser-test.js`
 
 ## App pages
 
@@ -68,6 +88,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `/forca-g-shaders-controller` -> `app/forca-g-shaders-controller/page.js`
 - `/forca-g-shaders` -> `app/forca-g-shaders/page.js`
 - `/glitch-controller` -> `app/glitch-controller/page.js`
+- `/modelo-3d` -> `app/modelo-3d/page.js`
 - `/operator` -> `app/operator/page.js`
 - `/` -> `app/page.js`
 - `/piloto-videogame-controller` -> `app/piloto-videogame-controller/page.js`
@@ -83,6 +104,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `/tecnologia-floresta` -> `app/tecnologia-floresta/page.js`
 - `/transicao-psicodelica-controller` -> `app/transicao-psicodelica-controller/page.js`
 - `/transicao-psicodelica` -> `app/transicao-psicodelica/page.js`
+- `/treinamento/controle` -> `app/treinamento/controle/page.js`
+- `/treinamento` -> `app/treinamento/page.js`
 - `/treino` -> `app/treino/page.js`
 - `/videomapping-controller` -> `app/videomapping-controller/page.js`
 - `/videomapping` -> `app/videomapping/page.js`
@@ -106,6 +129,9 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `POST /api/instagram/panel` -> `app/api/instagram/panel/route.js`
 - `POST /api/instagram/password` -> `app/api/instagram/password/route.js`
 - `GET /api/instagram/stream` -> `app/api/instagram/stream/route.js`
+- `GET /api/modelo-3d/[id]/[asset]` -> `app/api/modelo-3d/[id]/[asset]/route.js`
+- `GET, POST /api/modelo-3d` -> `app/api/modelo-3d/route.js`
+- `GET, POST /api/operator-preferences` -> `app/api/operator-preferences/route.js`
 - `POST /api/operator-public` -> `app/api/operator-public/route.js`
 - `POST /api/operator` -> `app/api/operator/route.js`
 - `POST /api/performance/interaction` -> `app/api/performance/interaction/route.js`
@@ -117,6 +143,14 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `GET, POST /api/scene-zero` -> `app/api/scene-zero/route.js`
 - `GET, POST /api/show-session` -> `app/api/show-session/route.js`
 - `GET /api/state` -> `app/api/state/route.js`
+- `GET /api/tarot/back` -> `app/api/tarot/back/route.js`
+- `GET, POST /api/tarot/catalog` -> `app/api/tarot/catalog/route.js`
+- `GET /api/tarot/faces/[id]` -> `app/api/tarot/faces/[id]/route.js`
+- `GET, POST /api/tarot/faces` -> `app/api/tarot/faces/route.js`
+- `GET /api/tarot/faces/source` -> `app/api/tarot/faces/source/route.js`
+- `GET /api/tarot/reference/[id]` -> `app/api/tarot/reference/[id]/route.js`
+- `GET, POST /api/tarot/references` -> `app/api/tarot/references/route.js`
+- `GET, POST /api/tarot` -> `app/api/tarot/route.js`
 - `POST /api/training/chat` -> `app/api/training/chat/route.js`
 - `GET, POST /api/training/examples` -> `app/api/training/examples/route.js`
 - `POST /api/training/improve` -> `app/api/training/improve/route.js`
@@ -139,18 +173,23 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/ForcaGShadersController.js`
 - `components/GlitchOverlay.js`
 - `components/InstagramBrowserPanel.js`
+- `components/Model3DController.js`
 - `components/OperatorBotSettings.js`
 - `components/OperatorConsole.js`
 - `components/OperatorLivePreview.js`
+- `components/OperatorPreferencesStatus.js`
 - `components/OperatorPublicLauncher.js`
 - `components/OperatorTypedReply.js`
 - `components/PerformanceLayer.js`
 - `components/PreparedSceneController.js`
+- `components/ProjectionMenu.js`
 - `components/ProjectionOperatorSurface.js`
 - `components/ProjectionWindowClient.js`
+- `components/PublicCompositionControls.js`
 - `components/PublicErrorBoundary.js`
 - `components/PublicErrorProbe.js`
 - `components/PublicGlitchLayer.js`
+- `components/PublicModule.js`
 - `components/PublicOperatorControls.js`
 - `components/PublicOperatorLayout.js`
 - `components/PublicOperatorPanel.js`
@@ -162,6 +201,15 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/SceneZeroController.js`
 - `components/SceneZeroProjectionLayer.js`
 - `components/SoundControlPanel.js`
+- `components/tarot/TarotCameraFocus.js`
+- `components/tarot/TarotCatalogEditor.js`
+- `components/tarot/TarotControls.js`
+- `components/tarot/TarotEffects.js`
+- `components/tarot/TarotHallucinationControls.js`
+- `components/tarot/TarotMatrix.js`
+- `components/tarot/TarotReferenceControls.js`
+- `components/tarot/TarotTraining.js`
+- `components/tarot/useTarotCamera.js`
 - `components/Terminal.js`
 - `components/TrainingConsole.js`
 - `components/useCountdownSound.js`
@@ -183,6 +231,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/EditableCueController.js`
 - `components/ForcaGSamplerController.js`
 - `components/ForcaGShadersController.js`
+- `components/Model3DController.js`
 - `components/PreparedSceneController.js`
 - `components/SceneZeroController.js`
 - `lib/controllerSurfaces.js`
@@ -200,7 +249,14 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `BASE_URL`
 - `CAIXA_PRETA_AUDIT_OUTPUT`
 - `CAIXA_PRETA_BACKGROUND_MIC`
+- `CAIXA_PRETA_BLENDER_BIN`
+- `CAIXA_PRETA_FFMPEG_BIN`
+- `CAIXA_PRETA_FFPROBE_BIN`
+- `CAIXA_PRETA_IMAGINAR_ROOT`
 - `CAIXA_PRETA_INTERNET_VOICE`
+- `CAIXA_PRETA_MODEL_3D_DIR`
+- `CAIXA_PRETA_MODEL_3D_RENDERER`
+- `CAIXA_PRETA_NEXT_DIST_DIR`
 - `CAIXA_PRETA_OPENAI_AUDIT_MOCK`
 - `CAIXA_PRETA_OPERATOR_AUDIT_ROOT`
 - `CAIXA_PRETA_OPERATOR_MOCK`
@@ -208,7 +264,13 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `CAIXA_PRETA_RELIABILITY_TESTS`
 - `CAIXA_PRETA_RESEARCH_BUDGET`
 - `CAIXA_PRETA_RESEARCH_ENABLED`
+- `CAIXA_PRETA_SEGMENTATION_MODELS`
 - `CAIXA_PRETA_SHOW_RUNTIME_DIR`
+- `CAIXA_PRETA_TAROT_AUDIT_ROOT`
+- `CAIXA_PRETA_TAROT_FACE_DIR`
+- `CAIXA_PRETA_TAROT_MOCK`
+- `CAIXA_PRETA_TAROT_OUTPUT`
+- `CAIXA_PRETA_TAROT_TEST_URL`
 - `CAIXA_PRETA_URL`
 - `CAIXA_PRETA_VOICE_GUIDE_PATH`
 - `CAIXA_PRETA_WEB_SEARCH`
@@ -216,11 +278,21 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `INSTAGRAM_EMBEDDED`
 - `INSTAGRAM_ENABLED`
 - `INTERNET_VOICE_SCENARIO`
+- `MODEL3D_FIXTURE_CANCEL_FAIL`
+- `MODEL3D_FIXTURE_RENDER_FAIL`
+- `MODEL3D_FIXTURE_STARTUP_DENIED`
+- `MODEL3D_FIXTURE_UNCERTAIN`
 - `NODE_ENV`
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL`
 - `OPENAI_SHOW_TIMEOUT_MS`
 - `OPENAI_WEB_SEARCH_TOOL_TYPE`
+- `STUDIO_DATA_DIR`
+- `STUDIO_GENERATOR_WARMUP`
+- `STUDIO_QUALITY_ENGINE`
+- `STUDIO_SEGMENTATION_PYTHON`
+- `TAROT_CATALOG_REVIEW_OUTPUT`
+- `TAROT_VISION_ONLY_FLOOR`
 - `TZ`
 
 ## Workflows
@@ -247,6 +319,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/audience-warmup-agreements-browser-test.js`
 - `scripts/audience-warmup-browser-test.js`
 - `scripts/audience-warmup-test.js`
+- `scripts/audience-warmup-transition-test.js`
 - `scripts/baralho-morbido-test.js`
 - `scripts/forca-g-sampler-browser-test.js`
 - `scripts/forca-g-sampler-test.js`
@@ -254,12 +327,16 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/instagram-controller-test.js`
 - `scripts/internet-voice-test.js`
 - `scripts/manual-sound-check-browser-test.js`
+- `scripts/operator-preferences-browser-test.js`
+- `scripts/operator-preferences-test.js`
 - `scripts/operator-public-browser-test.js`
 - `scripts/operator-public-live-test.js`
 - `scripts/operator-public-test.js`
 - `scripts/participant-fallback-test.js`
+- `scripts/participant-pool-test.js`
 - `scripts/performance-system-test.js`
 - `scripts/play-unlock-browser-test.js`
+- `scripts/public-composition-browser-test.js`
 - `scripts/public-realtime-browser-test.js`
 - `scripts/research-director-test.js`
 - `scripts/robot-sound-browser-test.js`
@@ -269,12 +346,25 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/scene-one-audio-effects-browser-test.js`
 - `scripts/scene-one-sampler-browser-test.js`
 - `scripts/scene-two-d-audio-effects-browser-test.js`
+- `scripts/scene-zero-lighting-test.js`
 - `scripts/scene-zero-suitcase-regression-browser-test.js`
 - `scripts/scene-zero-suitcases-browser-test.js`
 - `scripts/scene-zero-test.js`
 - `scripts/show-reliability-test.js`
 - `scripts/sound-control-browser-test.js`
 - `scripts/suitcase-director-test.js`
+- `scripts/tarot-analysis-recovery-browser-test.js`
+- `scripts/tarot-browser-test.js`
+- `scripts/tarot-card-effects-browser-test.js`
+- `scripts/tarot-catalog-test.js`
+- `scripts/tarot-experience-test.js`
+- `scripts/tarot-hallucination-browser-test.js`
+- `scripts/tarot-hallucination-controls-browser-test.js`
+- `scripts/tarot-hallucination-test.js`
+- `scripts/tarot-references-browser-test.js`
+- `scripts/tarot-references-test.js`
+- `scripts/tarot-test.js`
+- `scripts/tarot-vision-test.js`
 - `scripts/verdade-ou-bolo-layout-browser-test.js`
 - `scripts/videomapping-browser-test.js`
 

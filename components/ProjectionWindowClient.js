@@ -47,6 +47,9 @@ export default function ProjectionWindowClient() {
   const navigatingRef = useRef(false);
 
   useEffect(() => {
+    // A separate calibration tab must not become the active projection window.
+    const initialParams = new URLSearchParams(window.location.search);
+    if (initialParams.has('menu') && !initialParams.has(PROJECTION_WINDOW_PARAM)) return undefined;
     let projectionWindowId = resolveProjectionWindowId();
 
     if (!projectionWindowId) {

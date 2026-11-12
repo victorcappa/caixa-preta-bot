@@ -1,5 +1,6 @@
 "use client";
 
+import { suitcaseLabel } from "@/lib/suitcaseLabels";
 import { useEffect, useRef, useState } from "react";
 import { PLAY_UNLOCK_CONFIG, PLAY_UNLOCK_STATES, playUnlockBootLines, playUnlockSequenceLines } from "@/data/scene-zero-unlock";
 import {
@@ -228,7 +229,7 @@ function PlayUnlockProjection({ unlock, now, pitchScale = 1, soundStyle = "robot
       <section className={styles.biosOverlay} aria-label="BIOS da Cena 0" aria-live="polite">
         <div className={styles.biosTerminal}>
           <div className={styles.biosLines}>
-            {lines.map((line, index) => <p key={`${index}-${line}`}>{line || "\u00a0"}</p>)}
+            {lines.slice(-18).map((line, index) => <p key={`${index}-${line}`}>{line || "\u00a0"}</p>)}
           </div>
           <UnlockProgressBar key="bios-progress" label="CARREGAMENTO DA BIOS" progress={unlock.bootProgress} />
           {unlock.bootPaused ? <p className={styles.biosPaused}>BIOS PAUSADA PELO OPERADOR</p> : null}
@@ -297,18 +298,8 @@ function AudienceWarmupMinigameProjection({ warmup, now }) {
   const drawIndex = Math.floor(drawElapsed / Math.max(70, 230 - Math.min(155, drawElapsed / 25))) % AUDIENCE_WARMUP_MINIGAMES.length;
   const drawName = AUDIENCE_WARMUP_MINIGAMES[drawIndex]?.name || "—";
   const seconds = timerSeconds(minigame.timer, now);
-  const timerVisible = ["countdown", "running", "paused", "exchange"].includes(minigame.status);
+  const timerVisible = ["countdown", "running", "paused"].includes(minigame.status);
   const selectedVisible = minigame.status === "selected";
-  const secondRoundReady = minigame.status === "ready_round_two";
-  const minigameTurnLabel = game?.id === "tapao"
-    ? minigame.timer?.phase === "round_two"
-      ? "TURNO 2"
-      : minigame.timer?.phase === "exchange"
-        ? "TROQUEM"
-        : minigame.timer?.phase === "countdown"
-          ? "COMEÇANDO"
-          : "TURNO 1"
-    : null;
 
   useCountdownSound(seconds, {
     active: Boolean(timerVisible && minigame.timer?.status === "running"),
@@ -324,7 +315,7 @@ function AudienceWarmupMinigameProjection({ warmup, now }) {
     if (minigame.status === "running") robotSoundEngine.gameStart();
   }, [minigame.selectedId, minigame.status, minigame.timer?.startedAt]);
 
-  if (!drawing && !selectedVisible && !timerVisible && !secondRoundReady) return null;
+  if (!drawing && !selectedVisible && !timerVisible) return null;
 
   return (
     <section className={styles.warmupMinigameOverlay} aria-label="Minigame do aquecimento" aria-live="assertive">
@@ -341,15 +332,9 @@ function AudienceWarmupMinigameProjection({ warmup, now }) {
           <span>JOGO SELECIONADO</span>
           <strong>{game?.name || "—"}</strong>
         </div>
-      ) : secondRoundReady ? (
-        <div className={styles.warmupGameSelected}>
-          <span>TAPÃO</span>
-          <strong>SEGUNDO TURNO</strong>
-          <small>AGUARDANDO OPERADOR</small>
-        </div>
       ) : (
         <div className={styles.warmupGameTimer} data-paused={minigame.status === "paused"}>
-          <header><span>{game?.name || "TESTE"}</span>{minigameTurnLabel ? <b>{minigameTurnLabel}</b> : null}</header>
+          <header><span>{game?.name || "TESTE"}</span></header>
         </div>
       )}
     </section>
@@ -531,8 +516,8 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup, bo
     : [];
   const visibleMorelLines = allVisibleMorelLines.slice(-10);
   const visibleMorelStartIndex = Math.max(0, allVisibleMorelLines.length - visibleMorelLines.length);
-  const warmupMinigameVisible = ["drawing", "selected", "countdown", "running", "paused", "exchange", "ready_round_two"].includes(audienceWarmup?.minigame?.status);
-  const warmupMinigameTimerVisible = ["countdown", "running", "paused", "exchange"].includes(audienceWarmup?.minigame?.status);
+  const warmupMinigameVisible = ["drawing", "selected", "countdown", "running", "paused"].includes(audienceWarmup?.minigame?.status);
+  const warmupMinigameTimerVisible = ["countdown", "running", "paused"].includes(audienceWarmup?.minigame?.status);
   const warmupMinigameSeconds = timerSeconds(audienceWarmup?.minigame?.timer, now);
   const warmupActionVisible = audienceWarmup?.actionTimer?.status === "running" && (
     audienceWarmup?.phase === "questions"
@@ -697,14 +682,14 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup, bo
         </div>
       ) : null}
       {showSuitcaseSelection ? (
-        <div className={styles.suitcaseCueOverlay} key={sceneZero.suitcaseGame.suitcaseSelectionSequence} aria-label={`Mala indicada: ${sceneZero.suitcaseGame.currentSuitcase}`} aria-live="assertive">
+        <div className={styles.suitcaseCueOverlay} key={sceneZero.suitcaseGame.suitcaseSelectionSequence} aria-label={`Mala indicada: ${suitcaseLabel(sceneZero.suitcaseGame.currentSuitcase)}`} aria-live="assertive">
           <span>{manualSuitcaseCue ? suitcaseCuePhase === "open" ? "ABRA A MALA" : "" : suitcaseCueFrame.phase === "reveal" ? "ABRA A MALA" : ""}</span>
-          <strong key={`${suitcaseCueFrame.phase}-${suitcaseCueFrame.number}`}>{suitcaseCueFrame.number}</strong>
+          <strong key={`${suitcaseCueFrame.phase}-${suitcaseCueFrame.number}`}>{suitcaseLabel(suitcaseCueFrame.number)}</strong>
         </div>
       ) : null}
       {showPhysicalChallenge ? (
-        <section className={`${styles.physicalChallengeOverlay} ${physicalUrgent ? styles.physicalChallengeUrgent : ""}`} aria-label="Desafio das bexigas da Mala 2" aria-live="assertive">
-          <header><span>MALA 2</span><b>BEXIGAS E CHAVE</b></header>
+        <section className={`${styles.physicalChallengeOverlay} ${physicalUrgent ? styles.physicalChallengeUrgent : ""}`} aria-label="Desafio das bexigas da Mala Centro" aria-live="assertive">
+          <header><span>MALA CENTRO</span><b>BEXIGAS E CHAVE</b></header>
           <div className={styles.physicalChallengeBody}>
             <div className={styles.physicalChallengeSteps}>
               <article data-active="true">

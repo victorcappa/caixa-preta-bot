@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import { createOperatorPublicState } from "@/lib/operatorPublic";
+import PublicCompositionControls from "./PublicCompositionControls";
 import PublicOperatorPanel from "./PublicOperatorPanel";
 import OperatorLivePreview from "./OperatorLivePreview";
 import styles from "./PublicOperator.module.css";
@@ -106,6 +107,7 @@ export default function PublicOperatorControls({ initialExpanded = false, onClos
         <button type="button" aria-pressed={channel.visible} onClick={() => patch({ visible: !channel.visible })}>{channel.visible ? "OCULTAR OPERATOR" : "REVELAR OPERATOR"}</button>
         <button type="button" onClick={() => void action("return")}>INTERROMPER DESVIO / RETOMAR PEÇA</button>
       </div>
+      <PublicCompositionControls />
       <div className={styles.privateGrid}>
         {panel}
         <OperatorLivePreview state={show} />

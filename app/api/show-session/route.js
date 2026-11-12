@@ -38,6 +38,14 @@ export async function POST(request) {
   const body = await request.json().catch(() => ({}));
   const action = `${body.action || ""}`;
 
+  if (action === "participant-selection-scope") {
+    if (!showState.setParticipantSelectionScope) {
+      return Response.json({ error: "SERVER_RESTART_REQUIRED" }, { status: 409 });
+    }
+    const result = showState.setParticipantSelectionScope(body.selectionScope);
+    return Response.json(result, { status: result.ok ? 200 : 409 });
+  }
+
   if (action === "new") {
     const result = showState.startNewPresentation();
     return Response.json(result);

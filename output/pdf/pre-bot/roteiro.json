@@ -1,0 +1,84 @@
+{
+  "title": "Pré-bot - roteiro de bolso",
+  "base": "Notas do ensaio 30/10",
+  "pages": [
+    {
+      "type": "map",
+      "tag": "VICTOR / COLA DE CENA",
+      "title": "PRÉ-BOT",
+      "subtitle": "Ações claras. Falas de apoio.\nUma página por momento.\nBase: ensaio 30/10.",
+      "rows": [
+        {"number": "01", "title": "A carta do dia", "detail": "Sua leitura, leitura do bot, apresentação.", "page": 2},
+        {"number": "02", "title": "O acaso", "detail": "Treinamento, lava lamps e jogo com o bot.", "page": 3},
+        {"number": "03", "title": "Destino e falha", "detail": "Angústia, Decálogo, Ricardo e Marcus.", "page": 4},
+        {"number": "04", "title": "Quem treina quem?", "detail": "Parcialidade, Deus e caixa preta.", "page": 5},
+        {"number": "05", "title": "Entrar no bot", "detail": "Personalidade e convite à plateia.", "page": 6}
+      ],
+      "reminders": ["FALAR DEVAGAR.", "PAUSAR E OLHAR A PLATEIA.", "OUVIR O BOT E REAGIR."],
+      "note": "Quatro tiragens sugeridas, com os arcanos escolhidos na hora. Use as falas como apoio para improvisar."
+    },
+    {
+      "tag": "CARTA 1 / ABERTURA",
+      "title": "A carta do dia",
+      "blocks": [
+        {"heading": "1. Sua leitura primeiro", "action": "Na mesa, tirar a carta do dia. Mostrar e fazer uma interpretação sua, breve.", "cue": "DEIXAR A IMAGEM CHEGAR À PLATEIA."},
+        {"heading": "2. Pedir a leitura do bot", "sayFirst": true, "say": "Agora eu vou pedir para o bot fazer a leitura dessa mesma carta. Em poucas palavras, bot.", "action": "Apresentar a carta à câmera. Esperar a resposta e reagir a um detalhe."},
+        {"heading": "3. Apresentar você e o bot", "say": "Eu sou o Victor, faço parte da equipe técnica e sou um treinador de bot. Um bot é um programa que conversa com a gente a partir de instruções e de um material que a gente oferece."}
+      ],
+      "bottom": "Próximo: por que usar o tarô para treinar?"
+    },
+    {
+      "tag": "CARTA 2 / ALEATORIEDADE",
+      "title": "Abrir espaço\npara o acaso",
+      "blocks": [
+        {"heading": "4. Mostrar o treinamento", "action": "Tirar outra carta. Mostrar um exemplo de treino anterior ligado à dramaturgia.", "say": "Eu jogo tarô e resolvi usar as cartas para treinar esse bot. A carta traz uma coisa que eu não escolhi antes."},
+        {"heading": "5. Contar as lava lamps", "say": "Tem uma empresa, a Cloudflare, que fotografa lâmpadas de lava. O desenho muda o tempo todo. Essas imagens, misturadas a outras fontes, ajudam a criar números imprevisíveis para proteger dados. Aqui, a carta é meu jeito de deixar o acaso entrar."},
+        {"heading": "6. Jogar com o bot", "action": "Pedir uma leitura curta e escolher algo para questionar.", "say": "Por que você interpretou assim? E se fosse o contrário?", "cue": "ESCUTAR. QUESTIONAR. REAGIR À RESPOSTA."}
+      ],
+      "bottom": "Próximo: controle, destino e o que escapa."
+    },
+    {
+      "tag": "CARTA 3 / DESTINO E FALHA",
+      "title": "O que escapa\nao controle",
+      "blocks": [
+        {"heading": "7. Trazer sua angústia", "action": "Tirar uma carta. Nomear uma angústia concreta da sua relação com a tecnologia.", "say": "Eu gosto de mexer nessas máquinas. Mas, quanto mais tento controlar, mais aparece uma coisa que eu não previa."},
+        {"heading": "8. Contar o Decálogo", "action": "Contar o causo que você já usa. Ligar determinismo e imprevisibilidade à falha do avião: uma máquina projetada para ser segura também pode falhar."},
+        {"heading": "9. Chamar as intervenções", "say": "Ricardo, nosso iluminador: o que é destino?\n\nMarcus, nosso diretor técnico: conta a fábula do Decálogo.", "cue": "DAR TEMPO ÀS RESPOSTAS. RETOMAR UMA IDEIA DELES."}
+      ],
+      "bottom": "Próximo: de quem é o olhar da máquina?"
+    },
+    {
+      "tag": "CARTA 4 / HUMANO E MÁQUINA",
+      "title": "Quem treina\nquem?",
+      "blocks": [
+        {"heading": "10. Questionar a imparcialidade", "action": "Tirar outra carta. Usar a leitura do bot para perguntar de onde vem aquele ponto de vista.", "say": "Essa interpretação é neutra? Ou tem alguém falando por trás da máquina?"},
+        {"heading": "11. Fazer a provocação", "say": "Às vezes parece que o ser humano está construindo Deus.", "cue": "PAUSA. DEIXAR A FRASE REPERCUTIR."},
+        {"heading": "12. Revelar o processo", "sayFirst": true, "say": "Passei meses trabalhando com esse bot a partir do material do processo e da dramaturgia da peça. Por isso penso nele como uma caixa preta: sei o que coloquei ali, mas não consigo antecipar tudo o que vai sair.", "action": "Ligar isso à sua própria curiosidade e angústia."}
+      ],
+      "bottom": "Próximo: tornar o treinamento concreto para a plateia."
+    },
+    {
+      "tag": "PASSAGEM / O BOT ENTRA EM JOGO",
+      "title": "Agora,\ncom vocês",
+      "blocks": [
+        {"heading": "13. Dizer o que vai acontecer", "say": "Concretamente, eu preciso treinar esse bot para interagir com vocês: perceber o que funciona e o que não funciona."},
+        {"heading": "Mostrar a personalidade", "action": "Mostrar o bot e a escala de personalidade. Alterar um parâmetro e comentar a resposta.", "say": "Por exemplo: eu mexo aqui e muda o jeito como ele responde.", "cue": "MOSTRAR, ESPERAR, COMENTAR."},
+        {"heading": "Frase de passagem", "say": "Desculpe qualquer coisa, a máquina está em treinamento."},
+        {"heading": "Seu trabalho continua", "action": "Orientar as pessoas com clareza. Durante os jogos, conversar pelo microfone sobre o treinamento e sobre o que acabou de acontecer."}
+      ],
+      "bottom": "A ordem dos jogos continua na página seguinte."
+    },
+    {
+      "tag": "APOIO / FORA DA FALA DO PRÉ-BOT",
+      "title": "Cola para\no ensaio",
+      "blocks": [
+        {"heading": "Antes de começar", "action": "Conferir o nome da carta acima da leitura, texto curto e grande no topo, enquadramento da câmera e áudio. Deixar o disco fácil de pegar e colocar no ponto certo."},
+        {"heading": "Ordem dos jogos", "items": ["CENTRO: bexigas.", "ESQUERDA: forca + disco.", "DIREITA: toca-discos."]},
+        {"heading": "Durante o bot", "action": "Orientar cada participante. Seguir falando sobre o treinamento durante os jogos. No Trolle: ajudar o Marcus e dançar."},
+        {"heading": "Ajustes técnicos do ensaio", "note": "Conferir BIOS e Operator legíveis, cor do texto, módulos reposicionados e barra de carregamento mais grossa. Fazer essas verificações antes da cena."}
+      ],
+      "source": {"label": "Fonte da história das lava lamps: Cloudflare", "url": "https://www.cloudflare.com/learning/ssl/lava-lamp-encryption/"},
+      "bottom": "Base: notas do ensaio 30/10."
+    }
+  ]
+}

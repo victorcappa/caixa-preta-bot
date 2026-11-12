@@ -1,0 +1,119 @@
+[
+  {
+    "cardId": 0,
+    "region": [
+      0.477,
+      0.356,
+      0.054,
+      0.061
+    ],
+    "yaw": -0.6,
+    "rotation": -18,
+    "version": "editorial-v1",
+    "cardVersion": "c62f5763484f8f12"
+  },
+  {
+    "cardId": 3,
+    "region": [
+      0.438,
+      0.397,
+      0.051,
+      0.052
+    ],
+    "yaw": 0.1,
+    "rotation": 8,
+    "version": "editorial-v1",
+    "cardVersion": "afad800d2900c32a"
+  },
+  {
+    "cardId": 4,
+    "region": [
+      0.443,
+      0.408,
+      0.064,
+      0.057
+    ],
+    "yaw": 0,
+    "rotation": 0,
+    "version": "editorial-v1",
+    "cardVersion": "d512f4ee9a4755f2"
+  },
+  {
+    "cardId": 5,
+    "region": [
+      0.438,
+      0.317,
+      0.054,
+      0.049
+    ],
+    "yaw": 0,
+    "rotation": 0,
+    "version": "editorial-v1",
+    "cardVersion": "95902faf67187045"
+  },
+  {
+    "cardId": 8,
+    "region": [
+      0.426,
+      0.222,
+      0.061,
+      0.049
+    ],
+    "yaw": 0,
+    "rotation": 0,
+    "version": "editorial-v1",
+    "cardVersion": "36d6896d84c09151"
+  },
+  {
+    "cardId": 12,
+    "region": [
+      0.507,
+      0.603,
+      0.061,
+      0.052
+    ],
+    "yaw": 0,
+    "rotation": 180,
+    "version": "editorial-v1",
+    "cardVersion": "feaf8ef9612bd1e9"
+  },
+  {
+    "cardId": 16,
+    "region": [
+      0.455,
+      0.638,
+      0.065,
+      0.052
+    ],
+    "yaw": 0,
+    "rotation": -45,
+    "version": "editorial-v1",
+    "cardVersion": "654332c768a37a8d"
+  },
+  {
+    "cardId": 17,
+    "region": [
+      0.448,
+      0.365,
+      0.055,
+      0.05
+    ],
+    "yaw": -0.3,
+    "rotation": -8,
+    "version": "editorial-v1",
+    "cardVersion": "68a7e97fb2092dec"
+  },
+  {
+    "cardId": 21,
+    "region": [
+      0.436,
+      0.339,
+      0.05,
+      0.048
+    ],
+    "yaw": -0.15,
+    "rotation": -5,
+    "version": "editorial-v1",
+    "cardVersion": "784dcc4fb4d7ab0d"
+  }
+]

@@ -236,13 +236,12 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
           ))}
         </div>
         <div className={styles.minigameTransport}>
-          <button disabled={busy || !["ready", "ready_round_two"].includes(minigame.status)} onClick={() => act("minigame-start")} type="button">{minigame.status === "ready_round_two" ? "INICIAR SEGUNDO TURNO" : "INICIAR"}</button>
+          <button disabled={busy || minigame.status !== "ready"} onClick={() => act("minigame-start")} type="button">INICIAR</button>
           <button disabled={busy || minigame.status !== "running"} onClick={() => act("minigame-pause")} type="button">PAUSAR</button>
           <button disabled={busy || minigame.status !== "paused"} onClick={() => act("minigame-resume")} type="button">CONTINUAR</button>
           <button disabled={busy || !minigame.selectedId || minigameLocked} onClick={() => act("minigame-restart")} type="button">REINICIAR</button>
           <button disabled={busy || !["running", "paused"].includes(minigame.status)} onClick={() => act("minigame-adjust-time", { deltaSeconds: 5 })} type="button">+5 SEGUNDOS</button>
           <button disabled={busy || !["running", "paused"].includes(minigame.status)} onClick={() => act("minigame-adjust-time", { deltaSeconds: -5 })} type="button">−5 SEGUNDOS</button>
-          {minigame.selectedId === "tapao" ? <button disabled={busy || minigame.round === 2 || !["running", "paused"].includes(minigame.status)} onClick={() => act("minigame-tapao-swap")} type="button">TROQUEM AGORA</button> : null}
           <button className={styles.endGame} disabled={busy || !minigame.selectedId || minigameLocked} onClick={() => act("minigame-end")} type="button">ENCERRAR</button>
           <button className={styles.skipGame} disabled={busy || !warming || !minigameReady || minigameLocked} onClick={() => act("minigame-skip")} type="button">PULAR MINIGAME</button>
         </div>
@@ -335,7 +334,6 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
         <button disabled={warmupDisabled || !sequence || !next} onClick={() => act("next")} type="button">PRÓXIMO</button>
         <button disabled={warmupDisabled || !warmup.actionTimer?.endsAt} onClick={() => act("add-time", { seconds: 5 })} type="button">+5s</button>
         <button className={styles.cancel} disabled={busy || !warmup.active} onClick={() => act("end-action")} type="button">ENCERRAR AÇÃO</button>
-        <button className={styles.finishQuestions} disabled={busy || !questionsReady} onClick={() => act("questions-complete")} type="button">ENCERRAR PERGUNTAS → MINI GAME</button>
       </div>
       {questionsReady ? <p className={styles.drawStatus} data-ready={hasCurrentResponse ? "true" : "false"} id="audience-warmup-draw-status">{drawStatus}</p> : null}
 
@@ -373,6 +371,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
       </div>
 
       <div className={styles.transport}>
+        <button className={styles.finishQuestions} disabled={busy || !questionsReady} onClick={() => act("questions-complete")} type="button">ENCERRAR AQUECIMENTO → SORTEIO DO MINI GAME</button>
         <button className={styles.cancel} disabled={busy || !warmup.active} onClick={() => act("cancel")} type="button">CANCELAR</button>
         <button className={styles.clear} disabled={busy} onClick={() => act("clear")} type="button">LIMPAR TELA</button>
       </div>

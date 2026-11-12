@@ -90,12 +90,11 @@ Advance by position, not history length: `[2, 1]` ends at Mala 1. Final instruct
 - Working response: run `lsof -nP -iTCP:3000 -sTCP:LISTEN`, inspect the PID/command, terminate only that confirmed listener, and verify the port again.
 - Prevent regression: keep `scripts/require-port-3000.js` in both `dev` and `start`; never kill Node processes broadly.
 
-## Dev and build must not share `.next` concurrently
+## Protect active Next output
 
-- Problem: the dev server can report missing or inconsistent manifests/chunks.
-- Cause: `next dev` and `next build` write different artifacts into the same `.next` directory.
-- Working response: stop the dev server before building. If stale generated chunks remain, remove only `.next` while no Next process is running, then restart.
-- Prevent regression: serialize browser checks/dev and production builds in local workflows.
+- Problem/cause: dev/build sharing `.next` can corrupt manifests/chunks and cause HTTP 500.
+- Working response: dev writes `.next-dev`; production uses `.next`. `build`/`show:prepare` refuse while port 3000 is occupied.
+- Prevent regression: build audits in isolated copies. Stop a server before replacing its output; verify its recovery snapshot before restarting.
 
 ## A long-lived singleton can preserve stale state during development
 

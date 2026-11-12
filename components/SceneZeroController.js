@@ -1,5 +1,6 @@
 "use client";
 
+import { suitcaseLabel } from "@/lib/suitcaseLabels";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import InstagramBrowserPanel from "./InstagramBrowserPanel";
 import AudienceWarmupController from "./AudienceWarmupController";
@@ -628,7 +629,7 @@ export default function SceneZeroController() {
               ? "minigame-resume"
             : Boolean(snapshot.audienceWarmup?.pendingAdvance) || snapshot.audienceWarmup?.phase === "questions"
               ? "primary-next"
-              : ["ready", "ready_round_two"].includes(snapshot.audienceWarmup?.minigame?.status)
+              : snapshot.audienceWarmup?.minigame?.status === "ready"
                 ? "minigame-start"
               : null;
       if (!action) return;
@@ -1263,16 +1264,16 @@ export default function SceneZeroController() {
           <div className={styles.manualSuitcaseDraws} aria-label="Sorteio manual de recuperação das malas">
             <strong>RECUPERAÇÃO MANUAL</strong>
             <span>Interrompe a etapa atual e inicia a roleta escolhida.</span>
-            <Button danger onClick={() => sceneAction("suitcase-manual-draw", { suitcase: 2 })} pending={pending}>SORTEAR MALA 2</Button>
-            <Button danger onClick={() => sceneAction("suitcase-manual-draw", { suitcase: 3 })} pending={pending}>SORTEAR MALA 3</Button>
-            <Button danger onClick={() => sceneAction("suitcase-manual-draw", { suitcase: 1 })} pending={pending}>SORTEAR MALA 1</Button>
+            <Button danger onClick={() => sceneAction("suitcase-manual-draw", { suitcase: 2 })} pending={pending}>SORTEAR MALA CENTRO</Button>
+            <Button danger onClick={() => sceneAction("suitcase-manual-draw", { suitcase: 3 })} pending={pending}>SORTEAR MALA ESQUERDA</Button>
+            <Button danger onClick={() => sceneAction("suitcase-manual-draw", { suitcase: 1 })} pending={pending}>SORTEAR MALA DIREITA</Button>
           </div>
         ) : null}
         <div className={styles.suitcaseOverview}>
           <span>{(suitcaseGame.status || "idle").toUpperCase()}</span>
-          <strong>MALA ATUAL: {suitcaseGame.currentSuitcase || "—"}</strong>
+          <strong>MALA ATUAL: {suitcaseLabel(suitcaseGame.currentSuitcase)}</strong>
           <span>PARTICIPANTE: {sceneZero.currentParticipant?.name || "—"}</span>
-          <span>ORDEM REALIZADA: {(suitcaseGame.openedSuitcases || []).join(" → ") || "—"}</span>
+          <span>ORDEM REALIZADA: {(suitcaseGame.openedSuitcases || []).map(suitcaseLabel).join(" → ") || "—"}</span>
           {suitcaseChoice.status === "briefing" ? <span>ROBÔ EXPLICANDO AS INSTRUÇÕES...</span> : null}
           {emergenceWaiting ? <span>LAPSO CONCLUÍDO · AGUARDANDO SETA →</span> : null}
           {suitcaseChoice.status === "briefing_ready" ? <span>ETAPA DA EXPLICAÇÃO CONCLUÍDA · AGUARDANDO SETA →</span> : null}
@@ -1297,10 +1298,10 @@ export default function SceneZeroController() {
         </div>
         <div className={styles.suitcaseGrid}>
           <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 2 ? styles.activeSuitcase : ""}`}>
-            <h3>MALA 2 / BEXIGAS E CHAVE</h3>
+            <h3>MALA CENTRO / BEXIGAS E CHAVE</h3>
             <Button onClick={() => setOpenSuitcaseControls((current) => current === 2 ? null : 2)} pressed={openSuitcaseControls === 2}>{openSuitcaseControls === 2 ? "COMPRIMIR" : "CONTROLES"}</Button>
             <div className={styles.suitcaseDetails} hidden={openSuitcaseControls !== 2}>
-              <Readout label="DESAFIO ATIVO" value={gincana.currentTask?.text || "AGUARDANDO MALA 2"} />
+              <Readout label="DESAFIO ATIVO" value={gincana.currentTask?.text || "AGUARDANDO MALA CENTRO"} />
               <Readout label="ALVO" value={gincana.currentTask?.targetLabel || "CHAVE"} />
               <div className={`${styles.timer} ${["complete", "failed"].includes(gincanaTimer.status) ? styles.timerComplete : ""}`}>{gincanaSeconds ?? "—"}</div>
               <strong className={styles.timerStatus}>{(gincanaTimer.status || "idle").toUpperCase()}</strong>
@@ -1373,7 +1374,7 @@ export default function SceneZeroController() {
           </section>
 
           <section className={`${styles.suitcaseCard} ${suitcaseGame.currentSuitcase === 1 ? styles.activeSuitcase : ""}`}>
-            <h3>MALA 1 / FIM DO TUTORIAL</h3>
+            <h3>MALA ESQUERDA / FIM DO TUTORIAL</h3>
             <Button onClick={() => setOpenSuitcaseControls((current) => current === 1 ? null : 1)} pressed={openSuitcaseControls === 1}>{openSuitcaseControls === 1 ? "COMPRIMIR" : "CONTROLES"}</Button>
             <div className={styles.suitcaseDetails} hidden={openSuitcaseControls !== 1}>
               <Readout label="SEQUÊNCIA AUTOMÁTICA" value="FIM DO TUTORIAL → GLITCH CRESCENTE → BIOS CORROMPIDA → BLACKOUT" />

@@ -14,13 +14,15 @@ Effect: writes dependencies under `node_modules/` and may access the package reg
 
 For live model calls, create `.env.local` with `OPENAI_API_KEY=<your-key>`. `OPENAI_MODEL` is optional. Never commit or paste values into the brain. `docs/brain/INVENTORY.md` lists environment variable names only.
 
+Bot models are `gpt-5.6-terra` (default) and `gpt-5.6-luna`. `lib/openaiModels.js` migrates retired mini/nano aliases, environment overrides and saved choices by tier. Responses requests previously using `minimal` now use supported `low` effort. Check migration/recovery with `npm run test:operator-preferences`. These replacements have higher per-token prices than the retired models. See the [official deprecations](https://developers.openai.com/api/docs/deprecations) and [model pricing](https://developers.openai.com/api/docs/pricing).
+
 ## Development and build
 
 ```bash
 npm run dev
 ```
 
-Effect: starts a local Next development server on port 3000 and writes `.next/`. It fails if that port is occupied.
+Effect: starts a local Next development server on port 3000 and writes `.next-dev/`. It fails if that port is occupied. Development output is separate from the production build in `.next/`.
 
 ```bash
 npm run lint
@@ -28,7 +30,7 @@ npm run build
 npm start
 ```
 
-`build` writes production artifacts to `.next/`; `start` serves them on port 3000. Stop `dev` before `build` or `start`.
+`build` writes production artifacts to `.next/`; `start` serves them on port 3000. `build` and `show:prepare` refuse to run while port 3000 is occupied, before touching the build. Preserve the current recovery snapshot and stop the identified server before rebuilding; never run `next build` directly in a checkout serving a presentation. Browser audits that need their own build must use an isolated source copy, as `scripts/operator-public-audit-utils.js` does.
 
 For the presentation, build before the room opens and use the production launcher:
 
@@ -52,6 +54,8 @@ npm run lint
 
 Targeted logical and browser commands are listed in the generated inventory. Run the narrowest relevant logical test first. Browser tests generally require `npm run dev` already running on port 3000 and prove Chromium behavior only where their assertions reach. They do not prove Safari, physical audio, live OpenAI, Instagram, or deployment.
 
+`npm run test:audience-warmup:transition` checks the play-dead typewriter acknowledgement, full 20-second timer, closing acknowledgement and first question in manual and automatic modes. It uses a fake clock and temporary snapshot storage without touching the active show or calling a model. Requires Node 22.15+ or 24, like the other `registerHooks` tests.
+
 ## Start a local presentation
 
 1. Before audience entry, run `npm run show:prepare`; then start the production runtime with `npm run show`.
@@ -63,6 +67,7 @@ Targeted logical and browser commands are listed in the generated inventory. Run
 7. Before audience entry, verify text, blackout/recovery, global volume, media playback, selected audio output, microphone level, and STOP ALL on the actual browser/hardware path.
 
 If the technical OP terminal reports an interrupted session, inspect scene, step, and snapshot time. Choose `RETOMAR APRESENTAÇÃO` to restore it paused and with transient media/external browser state stopped, or `INICIAR NOVA APRESENTAÇÃO` to discard that recovery path deliberately. Nothing restores automatically.
+Before restarting a live process, verify that its session ID/revision match the disk snapshot. A guarded older recovery is not a current backup. Gate shutdown on successful capture; separate shell lines can still execute after a failed assertion.
 
 `MODO EMERGÊNCIA` is available at the top of the technical OP terminal in Principal. Activating it cancels and blocks external requests, pauses automatic/timed activity, preserves snapshots, and keeps local/manual controls available. Deactivating it permits future external requests but deliberately leaves the show in manual control.
 
@@ -93,13 +98,15 @@ kill -TERM <confirmed-pid>
 
 Effect: terminates a local process. Repeat the `lsof` command; no listener means the port is free. Never use broad `pkill node`/`killall` for this repository.
 
-If generated Next artifacts are demonstrably stale, stop the server first and then remove only `.next/`. This deletes rebuildable cache/output and should not be done merely because it is documented here.
+If generated Next artifacts are demonstrably stale, stop the server first and then remove only the affected output directory (`.next-dev/` for development or `.next/` for production). These are rebuildable artifacts; do not clear them while their server is running.
 
 ## Persistence, health, and writes
 
+- Operator choices save atomically to `.runtime/show/operator-preferences.json` (or the configured runtime directory), independently of recovery. New presentations, Tarot reset and process restart keep current tuning; recovery also retains the latest choices. Scope, capture/activation and checks: `docs/PREFERENCIAS_OPERADOR.md`.
 - Recovery snapshots are written asynchronously and atomically to `.runtime/show/current.json`; checksum/schema/store-version failures are rejected. The live singleton remains authoritative.
 - `GET /api/health` reports `core` app/storage/emergency state separately from optional internet/OpenAI/request state. Optional failure does not make the core unhealthy.
 - `data/scene-notes.json`, `data/controller-cues.json`, and `data/forca-g-sampler-settings.json` are local persisted operator data and can be changed by their UIs.
+- Scene Zero and general game draws use only valid names from the `publico` group in `data/publico.json`. Only when that list is empty do they draw from `equipe`; session-memory names never enter the pool. The rule also applies after reset/recovery and to the legacy `all`/`audience-only` values retained by POST `/api/show-session` (`participant-selection-scope`). An in-progress draw keeps its prepared candidates. Check with `node --no-warnings scripts/participant-pool-test.js` and `npm run test:games`; both use isolated participant fixtures.
 - Controller uploads create and write beneath assets/controller-cues/ on first use.
 - Instagram uses a local browser profile under `.runtime/`; never inspect or publish it casually.
 
@@ -143,11 +150,17 @@ Brain maintenance never authorizes commit, push, merge, deploy, data deletion, i
 
 Use REVELAR OPERATOR at the top of Scene Zero’s right menu; ABRIR CONVERSA reopens private controls. `/operator` contains bot parameters. Capture the public tab with CONECTAR PROJEÇÃO AO VIVO for a muted live monitor. Operation, recovery, streaming, personality and acceptance limits: `OPERATOR_PUBLICO.md`.
 
+For projection calibration, open `/?menu` in a separate control tab and keep the actual projection window without `?menu`. The menu tab does not register as the active projection. Choose **PERFIL TECIDO** to try larger bold white text without glow, or **VISUAL ORIGINAL** to disable the profile. Adjust typeface, weight, general scale, line spacing and per-module text scale; select a public module to move/resize it numerically or in the schematic preview. **RESTAURAR COMPONENTE** clears its geometry and text scale. Changes sync to connected public windows and persist in operator preferences; a failed save offers retry. Alt+M toggles the menu and Esc closes it. These adjustments do not change the projector's physical resolution; check clipping and readability on the actual projector and fabric, particularly after enlarging long text. Other canvas-rendered graphics keep their own rendering settings.
+
+The fabric profile reserves more space for the Tarot reading and fits complete Tarot and bot text in their areas, reducing the configured font as far as 24 px when needed. Disable **Encaixar texto do bot e Tarô na área** to retain the chosen size and original overflow behavior. If 24 px is still too large, enlarge the affected module or shorten the text; check on the actual projection.
+
 `npm run test:operator-public` is local. `npm run test:operator-public:browser` builds an isolated temporary copy and uses port 3311 without resetting port 3000. `npm run test:operator-public:live` makes two real OpenAI calls on isolated port 3312 and sends character/context data; use only with explicit authorization.
 
 `npm run test:audience-microphone` checks meter RMS, silent output and timer cleanup. `npm run test:audience-microphone:background` builds an isolated copy on port 3313, runs the existing sound-check scenario, then tests a hidden Operator tab and an unfocused Operator window in native Chromium without focus emulation with synthetic audio and paint callbacks disabled. It does not use the physical mic or reset port 3000. Closing/discarding the capture tab, OS sleep or permission revocation still stops capture; physical-browser/hardware rehearsal remains required. See [MDN AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process) and [requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame).
 
 ## Bot parameters
+
+The adjacent **modelo-3D** tab (`/modelo-3d`) owns private image uploads, TRELLIS generation and local black-background turntable MP4s. Configuration, per-generation cost authorization, recovery, checks and the unresolved live-provider acceptance boundary: `docs/MODELO_3D.md`.
 
 `/operator` exposes only typing speed (5–60 characters/s), punctuation pause (0–2 s), minimum gap between lines (0–10 s), font, typing click frequency, the four personality sliders and model selection. Conversation, preview, games, projection controls and diagnostics stay out of this tab. The right-menu launcher still opens the public conversation.
 

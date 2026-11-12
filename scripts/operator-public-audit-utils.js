@@ -14,7 +14,7 @@ export async function prepareOperatorAudit() {
   for (const item of ["assets", "node_modules"]) await fs.symlink(path.join(root, item), path.join(directory, item));
   console.log(`Preparing isolated production audit: ${directory}`);
   const build = spawn(process.execPath, ["node_modules/next/dist/bin/next", "build"], {
-    cwd: directory, env: { ...process.env, OPENAI_API_KEY: "", NEXT_TELEMETRY_DISABLED: "1" }, stdio: ["ignore", "pipe", "pipe"]
+    cwd: directory, env: { ...process.env, OPENAI_API_KEY: "", NEXT_TELEMETRY_DISABLED: "1", CAIXA_PRETA_SHOW_RUNTIME_DIR: path.join(directory, ".runtime/build") }, stdio: ["ignore", "pipe", "pipe"]
   });
   let log = "";
   build.stdout.on("data", (chunk) => { log += chunk; });

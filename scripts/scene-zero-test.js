@@ -69,7 +69,7 @@ async function main() {
   assert.match(sceneZeroProjectionSource, /centered=\{participantSelection\.status === "countdown"\}/, "o timer do sorteio deve pedir a apresentação central");
   assert.match(sceneZeroProjectionStyles, /\.sceneZeroTimerCentered[\s\S]*top: 50%[\s\S]*left: 50%[\s\S]*translate\(-50%, -50%\)/, "o timer do sorteio deve ocupar o centro da projeção");
   assert.match(sceneZeroProjectionStyles, /\.sceneZeroTimerCentered[^}]*border: 0[^}]*background: transparent[^}]*box-shadow: none/, "o timer pré-sorteio não deve ter quadrado em volta");
-  assert.match(sceneZeroProjectionStyles, /\.sceneZeroTimerCentered strong \{ font-size: clamp\(190px, 38vw, 620px\)/, "o número pré-sorteio deve ficar maior");
+  assert.match(sceneZeroProjectionStyles, /\.sceneZeroTimerCentered strong \{[^}]*font-size:[^;]*clamp\(190px, 38vw, 620px\)/, "o número pré-sorteio deve manter a faixa ampliada mesmo com a escala de projeção");
   assert.match(sceneZeroProjectionStyles, /\.selectionOverlay[^}]*font-family: var\(--bot-font-family/, "a tela de seleção deve usar a mesma fonte configurada para o bot");
   assert.match(chatSource, /<SceneZeroProjectionLayer[\s\S]*botFont=\{robotSound\?\.displayFont \|\| ROBOT_DISPLAY_FONT_DEFAULT\}/, "a projeção da seleção deve receber a fonte ativa do bot");
   assert.match(sceneZeroProjectionSource, /className=\{styles\.selectionOverlay\}[\s\S]*data-bot-font=\{botFont\}/, "o overlay de seleção deve aplicar a fonte ativa do bot");
@@ -286,6 +286,7 @@ async function main() {
   assert.equal(suitcaseGame.clampGincanaDuration(30), 30);
   assert.equal(suitcaseGame.clampGincanaDuration(200), 120);
   assert.deepEqual(suitcaseGame.SCENE_ZERO_SUITCASE_ORDER, [2, 3, 1]);
+  assert.deepEqual(suitcaseGame.SCENE_ZERO_SUITCASE_ORDER.map(suitcaseGame.buildSuitcaseSelectionCue), ["Centro", "Esquerda", "Direita"], "a sequência pública deve ser Centro → Esquerda → Direita, preservando a ordem dos jogos");
   assert.equal(suitcaseGame.nextSceneZeroSuitcase(initial.suitcaseGame), 2);
   assert.equal(suitcaseGame.nextSceneZeroSuitcase({ currentSuitcase: 2 }), 3);
   assert.equal(suitcaseGame.nextSceneZeroSuitcase({ currentSuitcase: 3 }), 1);
@@ -314,13 +315,15 @@ async function main() {
   assert.equal(suitcaseGame.shouldShowSceneZeroSuitcaseCue({ ...forcaCue, cuePhase: "complete" }, cueNow + 10000), false);
   assert.equal(suitcaseGame.shouldShowSceneZeroSuitcaseCue({ ...forcaCue, cuePhase: "automatic" }, cueNow + 4999), true);
   assert.equal(suitcaseGame.shouldShowSceneZeroSuitcaseCue({ ...forcaCue, cuePhase: "automatic" }, cueNow + 5000), false);
-  assert.equal(suitcaseGame.buildSuitcaseSelectionCue(2), "2");
+  assert.equal(suitcaseGame.buildSuitcaseSelectionCue(2), "Centro");
+  assert.equal(suitcaseGame.buildSuitcaseSelectionCue(1), "Direita");
+  assert.equal(suitcaseGame.buildSuitcaseSelectionCue(3), "Esquerda");
   assert.equal(suitcaseGame.buildSuitcaseSelectionCue(4), "");
   assert.equal(suitcaseGame.SCENE_ZERO_SUITCASE_CUE_DURATION_MS, 5000);
   assert.deepEqual(suitcaseGame.sceneZeroSuitcaseBriefingSteps(2), [
     {
       id: "game-explanation",
-      text: "O jogo é simples: eu indico uma mala. Quando o número aparecer, vá até ela, abra a mala e espere minhas instruções antes de começar. Vou escolher uma mala agora."
+      text: "O jogo é simples: eu indico uma mala. Quando a posição aparecer, vá até ela, abra a mala e espere minhas instruções antes de começar. Vou escolher uma mala agora."
     },
     {
       id: "lighting-cue",
@@ -358,7 +361,7 @@ async function main() {
   assert.match(sceneZeroControllerSource, /\["challenge_result", "challenge_complete"\]\.includes\(suitcaseChoice\.status\)[\s\S]*suitcase-predraw-continue/, "o modo manual deve sempre conseguir seguir da vitória da forca para o sorteio");
   assert.match(sceneZeroControllerSource, /emergenceWaiting[\s\S]*suitcase-emergence-continue/, "o lapso entre malas deve ter avanço manual explícito");
   assert.match(sceneZeroControllerSource, /gincanaRetryWaiting[\s\S]*gincana-retry-start[\s\S]*hangmanRetryWaiting[\s\S]*hangman-retry-start/, "as duas repetições devem permanecer avançáveis no modo manual");
-  assert.match(sceneZeroControllerSource, /SORTEAR MALA 2[\s\S]*SORTEAR MALA 3[\s\S]*SORTEAR MALA 1/, "o modo manual deve expor um sorteio de recuperação para cada mala");
+  assert.match(sceneZeroControllerSource, /SORTEAR MALA CENTRO[\s\S]*SORTEAR MALA ESQUERDA[\s\S]*SORTEAR MALA DIREITA/, "o modo manual deve expor as posições na ordem Centro → Esquerda → Direita");
   assert.match(sceneZeroControllerSource, /suitcaseAdvanceToken[\s\S]*suitcaseAdvanceLockRef[\s\S]*runSuitcaseAdvance/, "a seta deve permanecer travada até o estado da etapa mudar");
   assert.match(sceneZeroRouteSource, /action === "suitcase-manual-draw"[\s\S]*manualSuitcaseDrawInFlight[\s\S]*activateSuitcase\(suitcaseNumber[\s\S]*force: true/, "o sorteio manual deve serializar a recuperação e forçar somente a mala escolhida");
   assert.match(showStateSource, /action === "suitcase-manual-recover"[\s\S]*clearSceneZeroGincanaTimer\(\)[\s\S]*clearSceneZeroHangmanTimer\(\)[\s\S]*openedSuitcases/, "a recuperação deve cancelar a etapa atual sem apagar as malas já realizadas");

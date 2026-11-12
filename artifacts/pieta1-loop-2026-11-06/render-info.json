@@ -1,0 +1,35 @@
+{
+  "source_path": "/Users/VictorCappa/Dev/Caixa Preta/pieta1.blend",
+  "source_sha256": "ae8e63f949233c503fa43a7456d22cdf4bfc4d1c95ed37e1522f022e6720c159",
+  "source_bytes": 138112364,
+  "source_mesh_faces": 950347,
+  "source_mesh_vertices": 2850526,
+  "geometry_simplification": false,
+  "source_file_modified": false,
+  "resolution": [
+    1920,
+    1080
+  ],
+  "fps": 30,
+  "frames": 600,
+  "duration_seconds": 20,
+  "rotation_degrees": 360,
+  "rotation_axis": "Vertical turntable (Y in glTF convention, Z in native Blender coordinates)",
+  "angular_velocity_degrees_per_second": 18,
+  "background": "#000000",
+  "audio": false,
+  "renderer": "Blender 4.2.0, EEVEE, 64 samples",
+  "validation_status": "passed",
+  "validation": {
+    "decoded_video_frames": 600,
+    "duration_seconds": 20.0,
+    "frame_rate": "30/1",
+    "audio_streams": 0,
+    "full_decode_errors": 0,
+    "start_vs_360_degree_endpoint_ssim": 0.999999,
+    "source_sha256_unchanged": true,
+    "visual_review": "Full-resolution first frame, source previews from four directions, and contact sheet decoded from final MP4 reviewed."
+  },
+  "output_sha256": "5a58ca0702218a68e9786d2888f30b0e6c4e17dc0005dc01f0d43377ecb20294",
+  "output_bytes": 10294871
+}

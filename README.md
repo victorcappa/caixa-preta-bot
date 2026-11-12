@@ -24,14 +24,14 @@ Crie ou edite o arquivo `.env.local` na raiz do projeto:
 
 ```bash
 OPENAI_API_KEY=sua_chave_aqui
-OPENAI_MODEL=gpt-5-mini
+OPENAI_MODEL=gpt-5.6-terra
 ```
 
 O arquivo `.env.local` esta no `.gitignore` e nao deve ser commitado.
 
-`OPENAI_MODEL` e opcional. O padrao do projeto e `gpt-5-mini`, escolhido para dar mais corpo, humor e personalidade nas respostas em apresentacao. Para testes locais de menor custo, voce pode trocar para `gpt-5-nano`.
-Durante a apresentacao, o operator tambem permite alternar entre `gpt-5-mini`
-e `gpt-5-nano` sem reiniciar o servidor.
+`OPENAI_MODEL` e opcional. O padrao do projeto e `gpt-5.6-terra`, escolhido para dar mais corpo, humor e personalidade nas respostas em apresentacao. Para testes locais de menor custo, voce pode trocar para `gpt-5.6-luna`.
+Durante a apresentacao, o operator tambem permite alternar entre `gpt-5.6-terra`
+e `gpt-5.6-luna` sem reiniciar o servidor.
 
 ## Rodar localmente
 
@@ -922,10 +922,10 @@ Pedir que a Caixa Preta diga algo na projecao:
 Trocar o modelo usado nas proximas respostas:
 
 ```text
-/model gpt-5-nano
+/model gpt-5.6-luna
 ```
 
-`/model gpt-5-mini` volta para o modelo mais encorpado. A mesma troca aparece
+`/model gpt-5.6-terra` volta para o modelo mais encorpado. A mesma troca aparece
 como seletor na barra superior do operator.
 
 Preparar uma solicitacao segura de projecao de celular:

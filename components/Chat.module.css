@@ -78,26 +78,26 @@
 }
 
 .chatPaneWithGame .machine {
-  font-size: clamp(1.6rem, 6cqw, 3.6rem);
-  line-height: 1.12;
+  font-size: calc((clamp(1.6rem, 6cqw, 3.6rem)) * var(--public-text-scale, 1));
+  line-height: var(--projection-leading, 1.12);
   letter-spacing: -0.025em;
 }
 
 .chatPaneWithGame .machineMedium {
-  font-size: clamp(1.45rem, 5.2cqw, 3.15rem);
+  font-size: calc((clamp(1.45rem, 5.2cqw, 3.15rem)) * var(--public-text-scale, 1));
 }
 
 .chatPaneWithGame .machineLong {
-  font-size: clamp(1.3rem, 4.4cqw, 2.65rem);
-  line-height: 1.18;
+  font-size: calc((clamp(1.3rem, 4.4cqw, 2.65rem)) * var(--public-text-scale, 1));
+  line-height: var(--projection-leading, 1.18);
 }
 
 .chatPaneWithGame .actionCue span {
-  font-size: clamp(1rem, 3.8cqw, 1.8rem);
+  font-size: calc((clamp(1rem, 3.8cqw, 1.8rem)) * var(--public-text-scale, 1));
 }
 
 .chatPaneWithGame .actionCue small {
-  font-size: clamp(0.65rem, 2cqw, 0.9rem);
+  font-size: calc((clamp(0.65rem, 2cqw, 0.9rem)) * var(--public-text-scale, 1));
 }
 
 .embeddedTerminal {
@@ -233,8 +233,8 @@
 }
 
 .warmupOutcome[data-result="success"] { color: #00ff66; }
-.warmupOutcome strong { font-size: clamp(1.4rem, 3vw, 3.4rem); }
-.warmupOutcome span { font-size: clamp(.78rem, 1.4vw, 1.3rem); }
+.warmupOutcome strong { font-size: calc((clamp(1.4rem, 3vw, 3.4rem)) * var(--public-text-scale, 1)); }
+.warmupOutcome span { font-size: calc((clamp(.78rem, 1.4vw, 1.3rem)) * var(--public-text-scale, 1)); }
 
 .warmupStartChoices {
   display: grid;
@@ -296,12 +296,12 @@
 }
 
 .machine {
-  color: var(--green);
+  color: var(--projection-ink, var(--green));
   font-family: var(--bot-font-family, "Modern DOS 8x16", "VT323", monospace);
-  font-size: clamp(2rem, 5.4vw, 6.8rem);
+  font-size: calc((clamp(2rem, 5.4vw, 6.8rem)) * var(--public-text-scale, 1));
   font-weight: 400;
   font-kerning: none;
-  line-height: 1.08;
+  line-height: var(--projection-leading, 1.08);
   letter-spacing: 0.005em;
   text-align: left;
   text-wrap: wrap;
@@ -314,12 +314,12 @@
 }
 
 .machineMedium {
-  font-size: clamp(1.9rem, 4.2vw, 5.2rem);
+  font-size: calc((clamp(1.9rem, 4.2vw, 5.2rem)) * var(--public-text-scale, 1));
 }
 
 .machineLong {
-  font-size: clamp(1.65rem, 3vw, 3.8rem);
-  line-height: 1.14;
+  font-size: calc((clamp(1.65rem, 3vw, 3.8rem)) * var(--public-text-scale, 1));
+  line-height: var(--projection-leading, 1.14);
 }
 
 .actionCue {
@@ -333,11 +333,11 @@
 }
 
 .actionCue span {
-  font-size: clamp(1.4rem, 2.2vw, 2.4rem);
+  font-size: calc((clamp(1.4rem, 2.2vw, 2.4rem)) * var(--public-text-scale, 1));
 }
 
 .actionCue small {
-  font-size: clamp(.7rem, 1vw, 1rem);
+  font-size: calc((clamp(.7rem, 1vw, 1rem)) * var(--public-text-scale, 1));
 }
 
 .actionTimer {
@@ -345,7 +345,7 @@
   padding: .16em .34em;
   border: 1px solid currentColor;
   color: var(--green);
-  font-size: clamp(1rem, 1.6vw, 1.8rem);
+  font-size: calc((clamp(1rem, 1.6vw, 1.8rem)) * var(--public-text-scale, 1));
   line-height: 1;
   text-align: center;
 }
@@ -404,7 +404,7 @@
 
 .operatorButton {
   top: 68px;
-  font-size: 0.78rem;
+  font-size: calc((0.78rem) * var(--public-text-scale, 1));
 }
 
 .manualButton:hover,
@@ -459,7 +459,7 @@
 }
 
 .manualHeader h2 {
-  font-size: 1.1rem;
+  font-size: calc((1.1rem) * var(--public-text-scale, 1));
 }
 
 .manualClose {
@@ -472,7 +472,7 @@
   gap: 18px;
   padding: 18px;
   color: var(--green-dim);
-  font-size: clamp(0.9rem, 1.4vw, 1rem);
+  font-size: calc((clamp(0.9rem, 1.4vw, 1rem)) * var(--public-text-scale, 1));
   line-height: 1.45;
 }
 
@@ -497,13 +497,13 @@
 
 .public {
   color: var(--green-dim);
-  font-size: clamp(0.85rem, 1.25vw, 1.2rem);
+  font-size: calc((clamp(0.85rem, 1.25vw, 1.2rem)) * var(--public-text-scale, 1));
 }
 
 .introCursor,
 .introDots {
   color: var(--green-dim);
-  font-size: clamp(0.95rem, 1.75vw, 1.75rem);
+  font-size: calc((clamp(0.95rem, 1.75vw, 1.75rem)) * var(--public-text-scale, 1));
   letter-spacing: 0;
 }
 
@@ -518,7 +518,7 @@
 
 .error {
   color: var(--danger);
-  font-size: clamp(0.85rem, 1.25vw, 1.2rem);
+  font-size: calc((clamp(0.85rem, 1.25vw, 1.2rem)) * var(--public-text-scale, 1));
 }
 
 .form {
@@ -545,7 +545,7 @@
 
 .status {
   color: var(--green-dim);
-  font-size: 0.78rem;
+  font-size: calc((0.78rem) * var(--public-text-scale, 1));
 }
 
 @keyframes introBlink {
@@ -629,7 +629,7 @@
   }
 
   .machine {
-    font-size: clamp(1.8rem, 9vw, 3.4rem);
+    font-size: calc((clamp(1.8rem, 9vw, 3.4rem)) * var(--public-text-scale, 1));
   }
 
   .status {
@@ -676,15 +676,15 @@
   }
 
   .chatPaneWithGame .machine {
-    font-size: clamp(1.35rem, 3.4cqw, 2.15rem);
+    font-size: calc((clamp(1.35rem, 3.4cqw, 2.15rem)) * var(--public-text-scale, 1));
   }
 
   .chatPaneWithGame .machineMedium {
-    font-size: clamp(1.25rem, 3cqw, 1.9rem);
+    font-size: calc((clamp(1.25rem, 3cqw, 1.9rem)) * var(--public-text-scale, 1));
   }
 
   .chatPaneWithGame .machineLong {
-    font-size: clamp(1.15rem, 2.6cqw, 1.65rem);
+    font-size: calc((clamp(1.15rem, 2.6cqw, 1.65rem)) * var(--public-text-scale, 1));
   }
 }
 
@@ -781,26 +781,26 @@
 }
 
 .chatPaneQuadrants .machine {
-  font-size: clamp(1.35rem, 7cqw, 3.9rem);
-  line-height: 1.1;
+  font-size: calc((clamp(1.35rem, 7cqw, 3.9rem)) * var(--public-text-scale, 1));
+  line-height: var(--projection-leading, 1.1);
 }
 
 .chatPaneQuadrants .machineMedium {
-  font-size: clamp(1.2rem, 5.7cqw, 3.2rem);
+  font-size: calc((clamp(1.2rem, 5.7cqw, 3.2rem)) * var(--public-text-scale, 1));
 }
 
 .chatPaneQuadrants .machineLong {
-  font-size: clamp(1.05rem, 4.5cqw, 2.5rem);
-  line-height: 1.16;
+  font-size: calc((clamp(1.05rem, 4.5cqw, 2.5rem)) * var(--public-text-scale, 1));
+  line-height: var(--projection-leading, 1.16);
 }
 
 .chatPaneQuadrants .actionCue span {
-  font-size: clamp(0.9rem, 3.2cqw, 1.45rem);
+  font-size: calc((clamp(0.9rem, 3.2cqw, 1.45rem)) * var(--public-text-scale, 1));
 }
 
 .chatPaneQuadrants .actionCue small,
 .chatPaneQuadrants .status {
-  font-size: clamp(0.55rem, 1.8cqw, 0.78rem);
+  font-size: calc((clamp(0.55rem, 1.8cqw, 0.78rem)) * var(--public-text-scale, 1));
 }
 
 .chatPaneQuadrants .publicInput {
@@ -816,3 +816,13 @@
   height: 100%;
   border-left: 0;
 }
+
+/* Custom composition overrides quadrant placement only for the edited module. */
+.chatPane [data-module-custom=true] { display: block; }
+.chatPane [data-public-module=main-status][data-module-custom=true] { z-index: 140; pointer-events: none; background: transparent; }
+.chatPane [data-public-module=main-scene][data-module-custom=true] { z-index: 110; pointer-events: none; background: transparent; }
+.chatPane [data-public-module=main-performance][data-module-custom=true] { z-index: 3; background: transparent; }
+.chatPane [data-public-module=main-context][data-module-custom=true] { z-index: 4; }
+.chatPane [data-public-module=main-speech][data-module-custom=true] { display: grid; padding: 0; }
+.chatPane [data-module-custom=true] .currentMessage { padding: 24px; }
+.chatPane [data-module-custom=true] > [class*=panel] { width: 100%; height: 100%; }

@@ -2,9 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { subscribePublicRealtime } from "@/lib/publicRealtime";
+import { DEFAULT_OPENAI_MODEL, OPENAI_MODEL_OPTIONS } from "@/lib/openaiModels";
+import PublicCompositionControls from "./PublicCompositionControls";
 import PublicOperatorControls from "./PublicOperatorControls";
 import RobotSoundControls from "./RobotSoundControls";
+import OperatorPreferencesStatus from "./OperatorPreferencesStatus";
 import Terminal from "./Terminal";
+import Link from "next/link";
 import styles from "./OperatorBotSettings.module.css";
 
 export default function OperatorBotSettings() {
@@ -31,15 +35,18 @@ export default function OperatorBotSettings() {
     } finally { setPending(false); }
   }
 
-  const models = state.context?.modelOptions || ["gpt-5-mini", "gpt-5-nano"];
+  const models = state.context?.modelOptions || OPENAI_MODEL_OPTIONS;
   return (
     <Terminal title="OPERATOR">
       <div className={styles.settings} aria-label="Parâmetros ajustáveis do bot">
+        <OperatorPreferencesStatus />
         <RobotSoundControls settings={state.robotSound} typingOnly />
         <PublicOperatorControls parametersOnly />
+        <PublicCompositionControls />
+        <section className={styles.model}><Link href="/treinamento/controle">TREINAMENTO · ABRIR CONTROLE DO TARÔ →</Link></section>
         <section className={styles.model} aria-label="Modelo do bot">
           <label htmlFor="bot-model">MODELO DO BOT</label>
-          <select id="bot-model" aria-label="Modelo GPT" value={state.model || "gpt-5-mini"}
+          <select id="bot-model" aria-label="Modelo GPT" value={state.model || DEFAULT_OPENAI_MODEL}
             disabled={pending || !state.model} onChange={(event) => void changeModel(event.target.value)}>
             {models.map((model) => <option key={model} value={model}>{model}</option>)}
           </select>

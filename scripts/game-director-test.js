@@ -1,9 +1,14 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 
-const publicoPath = path.join(__dirname, "..", "data", "publico.json");
-const originalPublico = fs.readFileSync(publicoPath, "utf8");
+const originalCwd = process.cwd();
+const directory = fs.mkdtempSync(path.join(os.tmpdir(), "caixa-game-director-"));
+const publicoPath = path.join(directory, "data", "publico.json");
+fs.mkdirSync(path.dirname(publicoPath));
+fs.symlinkSync(path.join(__dirname, "..", "assets"), path.join(directory, "assets"), "dir");
+process.chdir(directory);
 
 function baseState(patch = {}) {
   return {
@@ -64,20 +69,21 @@ async function main() {
     },
     {
       name: "publico",
-      nomes: ["Ana", "Carlos", "Beatriz"]
+      nomes: ["Ana", "Carlos", "Beatriz", "Diego"]
     }
   ], null, 2);
 
   fs.writeFileSync(publicoPath, `${withAudience}\n`);
   state = baseState({ game: director.createInitialGameState() });
   const audiencePool = participants.getParticipantPool(state.participants);
-  assert.equal(audiencePool.counts.audience, 3);
+  assert.equal(audiencePool.counts.audience, 4);
+  assert.equal(audiencePool.counts.team, 0);
 
   started = director.startGame(state, { requestedGame: "teams", source: "operator" });
   assert.equal(started.gameState.id, "team_battle");
   assert.equal(started.gameState.teams.length, 2);
   assert(started.gameState.participants.some((participant) => participant.source === "audience"));
-  assert(started.gameState.participants.some((participant) => participant.source === "team"));
+  assert(started.gameState.participants.every((participant) => participant.source === "audience"));
 
   const rankedGames = director.scoreGames(state).slice(0, 15).map((item) => item.game.id);
   assert(rankedGames.includes("hangman"));
@@ -419,5 +425,6 @@ main()
     process.exitCode = 1;
   })
   .finally(() => {
-    fs.writeFileSync(publicoPath, originalPublico);
+    process.chdir(originalCwd);
+    fs.rmSync(directory, { recursive: true, force: true });
   });

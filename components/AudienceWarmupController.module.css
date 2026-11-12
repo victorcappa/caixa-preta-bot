@@ -89,7 +89,8 @@
 .panel button.selected { border-color: var(--green); background: var(--green); color: #000; font-weight: 700; }
 .panel button.surprise { border-color: #d7ff41; color: #d7ff41; }
 .panel button.cancel { border-color: var(--danger); color: var(--danger); }
-.panel button.finishQuestions { grid-column: 1 / -1; border-color: #d7ff41; color: #d7ff41; font-weight: 900; }
+.panel button.finishQuestions { grid-column: 1 / -1; min-height: 68px; padding: 14px 18px; border: 2px solid #fff; background: #d7ff41; color: #101500; font-size: .92rem; font-weight: 900; line-height: 1.45; letter-spacing: .08em; box-shadow: 0 0 22px rgba(215,255,65,.24); }
+.panel button.finishQuestions:not(:disabled):hover, .panel button.finishQuestions:focus-visible { background: #e8ff8c; border-color: #d7ff41; outline: 3px solid rgba(215,255,65,.5); outline-offset: 2px; }
 .panel button.clear { color: #fff; }
 .manualField { display: grid; gap: 7px; }
 .manualField textarea { min-height: 82px; resize: vertical; padding: 10px; border: 1px solid var(--green-soft); background: #000; color: #fff; line-height: 1.35; }

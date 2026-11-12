@@ -10,6 +10,7 @@ import AudienceWarmupController from "./AudienceWarmupController";
 import Terminal from "./Terminal";
 import PublicOperatorControls from "./PublicOperatorControls";
 import { subscribePublicRealtime } from "@/lib/publicRealtime";
+import { DEFAULT_OPENAI_MODEL, OPENAI_MODEL_OPTIONS } from "@/lib/openaiModels";
 import styles from "./OperatorConsole.module.css";
 
 export default function OperatorConsole({ embedded = false, terminalClassName = "" } = {}) {
@@ -21,11 +22,11 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
     mode: "host",
     previousMode: null,
     modeStartedAt: null,
-    model: "gpt-5-mini",
+    model: DEFAULT_OPENAI_MODEL,
     variables: {},
     context: {
       knowledge: { loaded: false, count: 0 },
-      modelOptions: ["gpt-5-mini", "gpt-5-nano"],
+      modelOptions: OPENAI_MODEL_OPTIONS,
       promptVersion: 1
     }
   });
@@ -313,7 +314,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
   const participantHistory = Object.values(state.participants?.history || {})
     .sort((a, b) => (b.selectedCount || 0) - (a.selectedCount || 0))
     .slice(0, 4);
-  const modelOptions = state.context?.modelOptions || ["gpt-5-mini", "gpt-5-nano"];
+  const modelOptions = state.context?.modelOptions || OPENAI_MODEL_OPTIONS;
   const variableCount = Object.keys(state.variables || {}).length;
   const footer = (
     <form className={styles.form} onSubmit={submitCommand}>
@@ -609,7 +610,7 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
                 className={styles.modelSelect}
                 disabled={pending}
                 onChange={(event) => changeModel(event.target.value)}
-                value={state.model || "gpt-5-mini"}
+                value={state.model || DEFAULT_OPENAI_MODEL}
               >
                 {modelOptions.map((model) => (
                   <option key={model} value={model}>{model}</option>
@@ -657,9 +658,9 @@ export default function OperatorConsole({ embedded = false, terminalClassName = 
             </p>
             <div className={`${styles.controlGrid} ${styles.suitcaseControlGrid}`}>
               <button disabled={pending} onClick={() => sendOperatorCommand("/mala start", "MALA ERROR")} type="button">INICIAR JOGO DAS MALAS</button>
-              <button disabled={pending} onClick={() => sendOperatorCommand("/mala 1", "MALA ERROR")} type="button">MALA 1 / NOME</button>
-              <button disabled={pending} onClick={() => sendOperatorCommand("/mala 2", "MALA ERROR")} type="button">MALA 2 / INSTAGRAM</button>
-              <button disabled={pending} onClick={() => sendOperatorCommand("/mala 3", "MALA ERROR")} type="button">MALA 3 / MINI GAME</button>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala 1", "MALA ERROR")} type="button">MALA ESQUERDA / NOME</button>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala 2", "MALA ERROR")} type="button">MALA CENTRO / INSTAGRAM</button>
+              <button disabled={pending} onClick={() => sendOperatorCommand("/mala 3", "MALA ERROR")} type="button">MALA DIREITA / MINI GAME</button>
               <button disabled={pending} onClick={() => sendOperatorCommand("/mala next", "MALA ERROR")} type="button">PRÓXIMA PESSOA</button>
               <button disabled={pending} onClick={() => sendOperatorCommand("/mala win", "MALA ERROR")} type="button">FORÇAR VITÓRIA</button>
               <button disabled={pending} onClick={() => sendOperatorCommand("/mala lose", "MALA ERROR")} type="button">FORÇAR DERROTA</button>

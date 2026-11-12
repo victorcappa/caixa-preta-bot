@@ -56,8 +56,9 @@ async function main() {
   }
 
   const { buildInternetVoiceContext } = await import(path.join(root, "lib/internetVoice.js"));
+  const { resolveOpenAIModel } = await import(path.join(root, "lib/openaiModels.js"));
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const model = process.env.OPENAI_MODEL || "gpt-5-mini";
+  const model = resolveOpenAIModel(process.env.OPENAI_MODEL);
   const scenarioFilter = `${process.env.INTERNET_VOICE_SCENARIO || ""}`.trim().toLocaleLowerCase("pt-BR");
   const activeScenarios = scenarioFilter
     ? scenarios.filter(([label]) => label.toLocaleLowerCase("pt-BR").includes(scenarioFilter))
@@ -81,7 +82,7 @@ async function main() {
         { role: "user", content: `ACONTECIMENTO AGORA:\n${situation}` }
       ],
       max_output_tokens: 160,
-      reasoning: { effort: "minimal" }
+      reasoning: { effort: "low" }
     });
     const text = `${response.output_text || ""}`.trim();
     return { label, styled, text, metrics: qualityMetrics(text), style: voice.debug };

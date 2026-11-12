@@ -1,3 +1,5 @@
+import { normalizePublicComposition, patchPublicComposition } from "../lib/publicComposition.js";
+import { extractOperatorPreferences, applyOperatorPreferences } from "../lib/operatorPreferences.js";
 import assert from "node:assert/strict";
 import { createOperatorPublicState, normalizePersonality, operatorPublicSnapshot, operatorShowContext,
   personalityPrompt, relevantPersonalityChanges } from "../lib/operatorPublic.js";
@@ -49,3 +51,19 @@ const fresh = getInstagramController();
 assert.notEqual(fresh.controllerId, retired.controllerId);
 retireInstagramController();
 console.log("OPERATOR PUBLIC: normalization, public/private boundary, context, reaction cooldown and cancellation PASS");
+
+const composition = normalizePublicComposition({ textColor: "url(secret)", modules: {
+  "main-speech": { x: 95, y: -2, width: 80, height: Infinity },
+  "private-controls": { x: 0, y: 0, width: 100, height: 100 }
+} });
+assert.equal(composition.textColor,"#00ff66");
+assert.deepEqual(composition.modules["main-speech"],{x:90,y:0,width:10,height:100});
+assert.equal(composition.modules["private-controls"],undefined);
+const patched = patchPublicComposition(composition,{textColor:"#ffffff",modules:{"tarot-speech":{x:2,y:3,width:80,height:30}}});
+assert.deepEqual(patched.modules["main-speech"],composition.modules["main-speech"],"editing tarot preserves other modules");
+assert.equal(patchPublicComposition(patched,{modules:{"tarot-speech":null}}).modules["tarot-speech"],undefined);
+channel.composition=patched;
+assert.deepEqual(operatorPublicSnapshot(channel).composition,patched);
+const restored=applyOperatorPreferences({operatorPublic:createOperatorPublicState()},extractOperatorPreferences({operatorPublic:channel}));
+assert.deepEqual(restored.operatorPublic.composition,patched,"composition survives operator preferences roundtrip");
+console.log("PUBLIC COMPOSITION: bounded geometry, allowlisted modules, independent patches, reset, public snapshot and preferences PASS");

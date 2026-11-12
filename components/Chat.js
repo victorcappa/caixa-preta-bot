@@ -13,6 +13,9 @@ import { PUBLIC_TYPE_INTERVAL_MS } from "@/lib/messageTiming";
 import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
 import { ROBOT_DISPLAY_FONT_DEFAULT, robotTypingIntervalMs, robotTypingDelayMs, robotMessageGapMs } from "@/lib/robot-sound/state";
 import { subscribePublicRealtime } from "@/lib/publicRealtime";
+import { isMainProjectionMessage } from "@/lib/publicText";
+import { useProjectionTextFit } from "@/lib/useProjectionTextFit";
+import PublicModule from "./PublicModule";
 import { PUBLIC_LAYOUT_CHANGE_EVENT, PUBLIC_LAYOUTS } from "@/lib/projectionScreens";
 import {
   sceneZeroEmergenceCueForMessage,
@@ -52,6 +55,8 @@ function AudienceWarmupTimer({ endsAt }) {
 export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal }) {
   const [messages, setMessages] = useState([]);
   const [publicMessage, setPublicMessage] = useState(null);
+  const publicTextRef = useRef(null);
+  useProjectionTextFit(publicTextRef, publicMessage?.content || "", publicMessage?.id, 'bot');
   const [audienceWarmup, setAudienceWarmup] = useState(null);
   const [typedReplies, setTypedReplies] = useState({});
   const [input, setInput] = useState("");
@@ -152,6 +157,9 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
         return;
       }
 
+      const mainMessages = (payload.state.conversation || []).filter(isMainProjectionMessage);
+      const mainPublicMessage = isMainProjectionMessage(payload.state.publicMessage) ? payload.state.publicMessage : null;
+
       if (!initializedMessagesRef.current && payload.event?.type === "snapshot") {
         setPerformanceEvents(payload.state.performance?.events || []);
         setPerformanceActivities(payload.state.performance?.activities || []);
@@ -164,12 +172,12 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
         setDisplayBlackout(payload.state.displayBlackout || null);
         setSceneZero(payload.state.sceneZero || null);
         setAudienceWarmup(payload.state.audienceWarmup || null);
-        setPublicMessage(payload.state.publicMessage || null);
-        hydrateInitialMessages(payload.state.conversation || [], payload.state.publicMessage);
+        setPublicMessage(mainPublicMessage);
+        hydrateInitialMessages(mainMessages, mainPublicMessage);
         return;
       }
 
-      setMessages(payload.state.conversation || []);
+      setMessages(mainMessages);
       setPerformanceEvents(payload.state.performance?.events || []);
       setPerformanceActivities(payload.state.performance?.activities || []);
       setPhoneProjection(payload.state.performance?.phoneProjection || { status: "hidden" });
@@ -181,7 +189,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
       setDisplayBlackout(payload.state.displayBlackout || null);
       setSceneZero(payload.state.sceneZero || null);
       setAudienceWarmup(payload.state.audienceWarmup || null);
-      setPublicMessage(payload.state.publicMessage || null);
+      setPublicMessage(mainPublicMessage);
     }, (nextStatus) => setStatus(nextStatus === "connected" ? "CONNECTED" : "DISCONNECTED"));
   }, []);
 
@@ -815,6 +823,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
       <div
         className={`${styles.workspace} ${operatorOpen ? styles.workspaceWithOperator : ""} ${bootStandby ? styles.bootStandby : ""}`}
         data-public-layout={publicLayout}
+        data-projection-workspace
         ref={workspaceRef}
         style={layoutStyle}
       >
@@ -883,7 +892,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
                 </div>
                 <div>
                   <dt>/model modelo</dt>
-                  <dd>Alterna entre gpt-5-mini e gpt-5-nano.</dd>
+                  <dd>Alterna entre gpt-5.6-terra e gpt-5.6-luna.</dd>
                 </div>
                 <div>
                   <dt>/phone approve|hide</dt>
@@ -916,7 +925,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
         ref={chatPaneRef}
       >
         <DisplayBlackout blackout={displayBlackout} target="chatbot" />
-        <section className={`${styles.layoutRegion} ${styles.sceneZeroRegion}`} aria-label="Quadrante de status, BIOS e Cena 0">
+        <PublicModule as="section" id="main-status" className={`${styles.layoutRegion} ${styles.sceneZeroRegion}`} aria-label="Quadrante de status, BIOS e Cena 0">
           <div className={styles.quadrantCanvas}>
             <SceneZeroStatusProjection
               pitchScale={robotSound?.pitchScale}
@@ -924,8 +933,8 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
               soundStyle={robotSound?.soundStyle}
             />
           </div>
-        </section>
-        <section className={`${styles.layoutRegion} ${styles.sceneZeroAuxRegion}`} aria-label="Quadrante de contagens e conteúdos da Cena 0">
+        </PublicModule>
+        <PublicModule as="section" id="main-scene" className={`${styles.layoutRegion} ${styles.sceneZeroAuxRegion}`} aria-label="Quadrante de contagens e conteúdos da Cena 0">
           <div className={styles.quadrantCanvas}>
             <SceneZeroProjectionLayer
               audienceWarmup={audienceWarmup}
@@ -934,8 +943,8 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
               sceneZero={sceneZero}
             />
           </div>
-        </section>
-        <section className={`${styles.layoutRegion} ${styles.performanceRegion}`} aria-label="Quadrante de elementos visuais e conteúdos auxiliares">
+        </PublicModule>
+        <PublicModule as="section" id="main-performance" className={`${styles.layoutRegion} ${styles.performanceRegion}`} aria-label="Quadrante de elementos visuais e conteúdos auxiliares">
           <div className={styles.quadrantCanvas}>
             <PerformanceLayer
               activities={performanceActivities}
@@ -946,10 +955,10 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
               phoneProjection={phoneProjection}
             />
           </div>
-        </section>
+        </PublicModule>
 
-        <main className={styles.publicStage} aria-label="Fala atual da Caixa Preta" data-bot-font={robotSound?.displayFont || ROBOT_DISPLAY_FONT_DEFAULT}>
-          <div className={styles.currentMessage}>
+        <PublicModule as="main" id="main-speech" className={styles.publicStage} aria-label="Fala atual da Caixa Preta" data-bot-font={robotSound?.displayFont || ROBOT_DISPLAY_FONT_DEFAULT}>
+          <div className={styles.currentMessage} data-projection-text-area>
             {warmupSilentCursor ? (
               <p className={styles.machine} aria-label="Cursor de espera da Caixa Preta">
                 <span className={styles.replyCursor} aria-hidden="true">_</span>
@@ -972,7 +981,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
                     {!quadrantLayout ? <AudienceWarmupTimer endsAt={audienceWarmup.display.endsAt} /> : null}
                   </div>
                 ) : null}
-                <p className={`${styles.machine} ${publicMessage.content.length > 180 ? styles.machineLong : publicMessage.content.length > 95 ? styles.machineMedium : ""} ${selfErasingMessageId === publicMessage.id ? styles.machineErasing : ""}`}>
+                <p ref={publicTextRef} className={`${styles.machine} ${publicMessage.content.length > 180 ? styles.machineLong : publicMessage.content.length > 95 ? styles.machineMedium : ""} ${selfErasingMessageId === publicMessage.id ? styles.machineErasing : ""}`}>
                   {typedReplies[publicMessage.id] ?? ""}
                   {typedReplies[publicMessage.id] !== publicMessage.content || selfErasingMessageId === publicMessage.id ? (
                     <span className={`${styles.replyCursor} ${selfErasingMessageId === publicMessage.id ? styles.eraseCursor : ""}`} aria-hidden="true">_</span>
@@ -997,8 +1006,8 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
             <div ref={scrollRef} />
           </div>
           <footer className={styles.publicInput}>{publicInput}</footer>
-        </main>
-        <section className={`${styles.layoutRegion} ${styles.contextRegion}`} aria-label="Quadrante de conteúdos contextuais">
+        </PublicModule>
+        <PublicModule as="section" id="main-context" className={`${styles.layoutRegion} ${styles.contextRegion}`} aria-label="Quadrante de conteúdos contextuais">
           {visibleInstagramPanel ? (
             <>
             <div
@@ -1024,7 +1033,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
             />
             </>
           ) : null}
-        </section>
+        </PublicModule>
       </section>
 
       {operatorMounted && operatorOpen ? (

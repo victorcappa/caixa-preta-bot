@@ -19,9 +19,12 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 - LIVE reply pacing -> `components/OperatorTypedReply.js`, using private `robotSound` typing speed/punctuation pause; completed history is restored immediately.
 - Training conversation/feedback -> `components/TrainingConsole.js`, `app/api/training/`, and `lib/training.js`; visible composer sends by Enter or button and preserves the draft after errors.
 - Editable public conversation/sliders reuse `components/PublicOperatorControls.js` with `publicSurface`; private operational commands remain outside the projection.
-- Stable public 65/35 layout -> `app/layout.js` -> `components/ProjectionOperatorSurface.js` -> `components/PublicOperatorLayout.js`.
+- Projection calibration `/?menu` -> `components/ProjectionMenu.js`, `PublicCompositionControls.js`, `PublicModule.js`, `lib/publicComposition.js`; bot/Tarot text fitting -> `lib/useProjectionTextFit.js`; preferences sync via the operator API/SSE.
+- Default public 65/35 layout -> `app/layout.js` -> `components/ProjectionOperatorSurface.js` -> `components/PublicOperatorLayout.js`.
 
 - Bot parameters tab -> `app/operator/page.js`, `components/OperatorBotSettings.js`, `components/RobotSoundControls.js`, and `components/PublicOperatorControls.js` (`parametersOnly`); timing helpers in `lib/robot-sound/state.js`. Save acknowledgement/dirty-field merging lives in `RobotSoundControls`; `_refreshRobotSoundSettings` in `lib/showState.js` refreshes the live normalization after development reload. The technical console remains in the Principal OP drawer.
+- Image-to-3D / black turntable MP4 -> `app/modelo-3d/page.js`, `components/Model3DController.js`, `app/api/modelo-3d/`, `lib/model-3d/`, `scripts/model-3d-worker.cjs` and `model-3d-render.py`; admission -> `lib/model-3d/submissionGuard.cjs`; GPU video -> `lib/model-3d/browserRender.cjs` and `scripts/model-3d-browser-render.mjs`; operation/configuration/acceptance -> `docs/MODELO_3D.md`.
+- Persistent current operator/Tarot choices -> `lib/operatorPreferences.js`, `lib/showState.js`, `/api/operator-preferences`, `components/OperatorPreferencesStatus.js`; scope/activation -> `docs/PREFERENCIAS_OPERADOR.md`; checks -> `scripts/operator-preferences-*.js`.
 - Public text/layout/typing -> `components/Chat.js` and `components/Chat.module.css`.
 - Visual performance event -> `components/PerformanceLayer.js` -> `lib/performanceEvents.js`.
 - Chat request/model envelope -> `app/api/chat/route.js` -> `lib/openai.js`.
@@ -73,6 +76,20 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 - Blackout -> `lib/displayBlackout.js` -> `components/DisplayBlackout.js` -> public surfaces.
 - Instagram -> `lib/instagram/InstagramController.js`; embedded UI -> `components/InstagramBrowserPanel.js`; server endpoints -> `app/api/instagram/`.
 - External-navigation safety -> `lib/externalNavigationGuard.js` and calls in `lib/showState.js`.
+
+## Tarô / Treinamento
+
+- Public camera/annotations/speech and one-shot **INTERPRETAR** question -> `app/treinamento/page.js` -> `components/tarot/TarotTraining.js` / `useTarotCamera.js`.
+- Private operation/catalogue/anchors -> `app/treinamento/controle/page.js` -> `components/tarot/TarotControls.js` / `TarotCatalogEditor.js` (TARÔ navigation).
+- Faces/fusion preparation -> `components/tarot/TarotHallucinationControls.js`, `public/tarot-face.worker.js`, `lib/tarot/face-store.js`, `/api/tarot/faces/`; permanent templates -> `assets/tarot/face-templates.json`.
+- Hallucination clock, per-card random draw, filters/readiness, gates, manual priority/presets -> `lib/tarot/hallucination.js`, `controller.js`; shared live/preview renderer -> `components/tarot/TarotEffects.js`; usage/limits -> `docs/TAROT_ALUCINACAO.md`.
+- Session, cancellation and autonomy -> `lib/showState.js` -> `lib/tarot/controller.js`, `state.js`, `service.js`; existing SSE/conversation are reused.
+- Main speech isolation / pre-boot cursor -> `lib/publicText.js` (`isMainProjectionMessage`), `lib/showState.js` (`addMessage`), `components/Chat.js`; tarot stays in shared history, outside Principal typing/audio.
+- Cinematic focus/progressive reveal -> `components/tarot/TarotCameraFocus.js`, `TarotTraining.js`, `lib/tarot/geometry.js`; stable automatic analysis -> `recognition.js` / `useTarotCamera.js`; Matrix -> `TarotMatrix.js`.
+- Six readings / 22 backs / geometric choice / removal / reveal / closing -> `lib/tarot/floor.js`, `controller.js`, `app/api/tarot/back/`; real back reference -> `assets/tarot/carta-fundo.jpeg`.
+- Local image matching/flow -> `public/tarot-tracker.worker.js`, vendored OpenCV; catalogue -> `assets/tarot`, `lib/tarot/catalog.js`, `app/api/tarot/`.
+- Associative references / BM25 / cache / private previews -> `lib/knowledge-retrieval.js`, `lib/tarot/references.js`, `reference-settings.js`, `components/tarot/TarotReferenceControls.js`, `/api/tarot/references`; live context injection -> `service.js` / `lib/openai.js`; per-card editorial readings -> `assets/tarot/CAIXA_PRETA_REFERENCIAS_TARO.md` (CP-26–47), dated political/financial/algorithmic context (CP-48–59, checked 2026-10-16); usage/checks -> `docs/TAROT_REFERENCIAS.md`, `scripts/tarot-references-*.js`.
+- Research, costs, preparation, physical-validation limits -> `docs/TAROT_TREINAMENTO.md`, per-card review -> `docs/TAROT_CATALOGO_VISUAL.md`; checks -> `scripts/tarot-*-test.js`.
 
 ## Validation
 

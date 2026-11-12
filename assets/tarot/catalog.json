@@ -1,0 +1,4942 @@
+{
+  "0": {
+    "file": "0-louco.jpeg",
+    "description": "Uma figura coroada de folhas avança com os braços abertos, envolvida por ramos floridos. Um pequeno cão salta atrás dela à direita; montanhas azuladas e um astro parcialmente encoberto ocupam o fundo.",
+    "elements": [
+      {
+        "name": "Figura caminhando",
+        "description": "Pessoa descalça, de veste rasgada, com um braço erguido e outro estendido.",
+        "region": [
+          0.247,
+          0.329,
+          0.414,
+          0.432
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t00-figura",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t00-cao",
+          "t00-ramos"
+        ]
+      },
+      {
+        "name": "Rosto voltado à esquerda",
+        "description": "Perfil sob uma coroa de folhas.",
+        "region": [
+          0.465,
+          0.35,
+          0.078,
+          0.077
+        ],
+        "shape": "box",
+        "category": "rosto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t00-rosto",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Cão",
+        "description": "Animal pequeno com focinho voltado para a pessoa, à direita de suas pernas.",
+        "region": [
+          0.601,
+          0.595,
+          0.116,
+          0.14
+        ],
+        "shape": "box",
+        "category": "animal",
+        "points": null,
+        "uncertainty": "",
+        "id": "t00-cao",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t00-figura"
+        ]
+      },
+      {
+        "name": "Astro encoberto",
+        "description": "Disco cinza sobre uma forma amarela crescente, no alto à esquerda.",
+        "region": [
+          0.274,
+          0.288,
+          0.128,
+          0.083
+        ],
+        "shape": "circle",
+        "category": "símbolo",
+        "points": null,
+        "uncertainty": "A imagem permite ver os dois discos; não determina se representam lua ou eclipse.",
+        "id": "t00-astro",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t00-montanhas"
+        ]
+      },
+      {
+        "name": "Ramos floridos",
+        "description": "Ramos com numerosas flores atravessam o corpo e o primeiro plano.",
+        "region": [
+          0.218,
+          0.497,
+          0.435,
+          0.269
+        ],
+        "shape": "box",
+        "category": "planta",
+        "points": null,
+        "uncertainty": "",
+        "id": "t00-ramos",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t00-figura"
+        ]
+      },
+      {
+        "name": "Montanhas",
+        "description": "Picos azulados atrás da figura.",
+        "region": [
+          0.217,
+          0.392,
+          0.39,
+          0.203
+        ],
+        "shape": "box",
+        "category": "natureza",
+        "points": null,
+        "uncertainty": "",
+        "id": "t00-montanhas",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t00-astro"
+        ]
+      },
+      {
+        "name": "Borda rochosa",
+        "description": "Desnível irregular no terreno, no canto inferior esquerdo.",
+        "region": [
+          0.226,
+          0.701,
+          0.135,
+          0.092
+        ],
+        "shape": "polygon",
+        "category": "terreno",
+        "points": [
+          [
+            0.226,
+            0.702
+          ],
+          [
+            0.307,
+            0.742
+          ],
+          [
+            0.361,
+            0.779
+          ],
+          [
+            0.282,
+            0.791
+          ],
+          [
+            0.245,
+            0.75
+          ]
+        ],
+        "uncertainty": "",
+        "id": "t00-declive",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "O Louco / 0",
+        "description": "Nome em português e número no cabeçalho.",
+        "region": [
+          0.171,
+          0.116,
+          0.31,
+          0.037
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t00-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      }
+    ],
+    "relations": "O cão acompanha a figura pelo lado direito.\nOs ramos cruzam a trajetória do corpo.\nO astro está acima das montanhas e à esquerda da cabeça.",
+    "relationships": [
+      {
+        "fromId": "t00-cao",
+        "toId": "t00-figura",
+        "description": "O cão acompanha a figura pelo lado direito."
+      },
+      {
+        "fromId": "t00-ramos",
+        "toId": "t00-figura",
+        "description": "Os ramos cruzam a trajetória do corpo."
+      },
+      {
+        "fromId": "t00-astro",
+        "toId": "t00-montanhas",
+        "description": "O astro está acima das montanhas e à esquerda da cabeça."
+      }
+    ],
+    "concepts": [
+      "impulso",
+      "atenção incompleta",
+      "liberdade",
+      "risco"
+    ],
+    "symbolism": "impulso; atenção incompleta; liberdade; risco",
+    "associations": [
+      "A plateia entrando em uma experiência cujo percurso desconhece.",
+      "Autonomia de uma máquina que se move antes de compreender as consequências."
+    ],
+    "uncertainties": [
+      "Não há bastão ou bolsa evidentes nesta ilustração; não importar esses objetos de outros baralhos."
+    ],
+    "surface": [
+      [
+        0.130208,
+        0.096875
+      ],
+      [
+        0.791667,
+        0.09375
+      ],
+      [
+        0.841667,
+        0.940625
+      ],
+      [
+        0.075,
+        0.939063
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "c62f5763484f8f12",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  },
+  "1": {
+    "file": "1-mago.jpeg",
+    "description": "Uma pessoa barbada e encapuzada ocupa o centro entre duas figuras de aparência floral. Acima aparecem um bastão, uma taça, um laço em forma de infinito, um disco com flor e uma espada.",
+    "elements": [
+      {
+        "name": "Figura encapuzada",
+        "description": "Pessoa barbada de manto e capuz, segurando um pequeno objeto retangular.",
+        "region": [
+          0.356,
+          0.373,
+          0.22,
+          0.416
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t01-mago",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t01-espada",
+          "t01-esquerda"
+        ]
+      },
+      {
+        "name": "Figura floral à esquerda",
+        "description": "Figura com campânula sobre a cabeça, olhando para o centro.",
+        "region": [
+          0.213,
+          0.435,
+          0.207,
+          0.342
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t01-esquerda",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t01-mago"
+        ]
+      },
+      {
+        "name": "Figura floral à direita",
+        "description": "Figura com flores pendentes ao redor do rosto.",
+        "region": [
+          0.532,
+          0.403,
+          0.22,
+          0.367
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t01-direita",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Bastão",
+        "description": "Vara escura vertical no alto à esquerda.",
+        "region": [
+          0.31,
+          0.218,
+          0.045,
+          0.15
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t01-bastao",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Taça",
+        "description": "Recipiente com pé, acima do laço azul.",
+        "region": [
+          0.425,
+          0.218,
+          0.083,
+          0.054
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t01-taca",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Laço de infinito",
+        "description": "Linha azul formando um oito horizontal.",
+        "region": [
+          0.348,
+          0.264,
+          0.234,
+          0.043
+        ],
+        "shape": "box",
+        "category": "símbolo",
+        "points": null,
+        "uncertainty": "",
+        "id": "t01-infinito",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Disco floral",
+        "description": "Medalhão dourado com flor no centro.",
+        "region": [
+          0.423,
+          0.297,
+          0.086,
+          0.057
+        ],
+        "shape": "circle",
+        "category": "símbolo",
+        "points": null,
+        "uncertainty": "",
+        "id": "t01-disco",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Espada",
+        "description": "Lâmina vertical apontando para cima, no alto à direita.",
+        "region": [
+          0.612,
+          0.213,
+          0.056,
+          0.155
+        ],
+        "shape": "box",
+        "category": "arma",
+        "points": null,
+        "uncertainty": "",
+        "id": "t01-espada",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t01-mago"
+        ]
+      },
+      {
+        "name": "O Mago / I",
+        "description": "Nome e numeral no cabeçalho.",
+        "region": [
+          0.184,
+          0.094,
+          0.326,
+          0.044
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t01-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      }
+    ],
+    "relations": "Os quatro objetos e o laço estão acima dos personagens.\nAs figuras laterais inclinam o rosto em direção à pessoa encapuzada.",
+    "relationships": [
+      {
+        "fromId": "t01-espada",
+        "toId": "t01-mago",
+        "description": "Os quatro objetos e o laço estão acima dos personagens."
+      },
+      {
+        "fromId": "t01-esquerda",
+        "toId": "t01-mago",
+        "description": "As figuras laterais inclinam o rosto em direção à pessoa encapuzada."
+      }
+    ],
+    "concepts": [
+      "mediação",
+      "linguagem",
+      "instrumentos",
+      "aparência e ação"
+    ],
+    "symbolism": "mediação; linguagem; instrumentos; aparência e ação",
+    "associations": [
+      "A interface que apresenta instrumentos e faz parecer autônoma uma operação mediada.",
+      "O piloto e seus controles: possuir ferramentas não garante compreender o percurso."
+    ],
+    "uncertainties": [],
+    "surface": [
+      [
+        0.135417,
+        0.078125
+      ],
+      [
+        0.8125,
+        0.078125
+      ],
+      [
+        0.875,
+        0.960938
+      ],
+      [
+        0.0625,
+        0.945312
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "f913241ba3ba52ed",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  },
+  "2": {
+    "file": "2-sacerdotisa.jpeg",
+    "description": "Uma figura de veste folhosa abre os braços entre duas colunas, com grandes flores claras atrás de sua cabeça e mão direita. Um pergaminho escrito TORA paira no alto e uma lua crescente aparece sob seus pés.",
+    "elements": [
+      {
+        "name": "Figura de folhas",
+        "description": "Pessoa de braços abertos, envolvida por folhas longas.",
+        "region": [
+          0.27,
+          0.361,
+          0.456,
+          0.404
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t02-figura",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t02-coluna-esquerda",
+          "t02-pergaminho",
+          "t02-lua"
+        ]
+      },
+      {
+        "name": "Rosto entre pétalas",
+        "description": "Rosto em perfil sob a flor clara.",
+        "region": [
+          0.408,
+          0.369,
+          0.076,
+          0.058
+        ],
+        "shape": "box",
+        "category": "rosto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t02-rosto",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Coluna escura",
+        "description": "Coluna de capitel ornamental à esquerda.",
+        "region": [
+          0.25,
+          0.223,
+          0.164,
+          0.44
+        ],
+        "shape": "box",
+        "category": "arquitetura",
+        "points": null,
+        "uncertainty": "",
+        "id": "t02-coluna-esquerda",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t02-figura"
+        ]
+      },
+      {
+        "name": "Coluna clara",
+        "description": "Coluna amarela à direita.",
+        "region": [
+          0.579,
+          0.224,
+          0.144,
+          0.204
+        ],
+        "shape": "box",
+        "category": "arquitetura",
+        "points": null,
+        "uncertainty": "",
+        "id": "t02-coluna-direita",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Pergaminho TORA",
+        "description": "Rolo suspenso com a palavra TORA.",
+        "region": [
+          0.412,
+          0.251,
+          0.128,
+          0.076
+        ],
+        "shape": "box",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t02-pergaminho",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t02-figura"
+        ]
+      },
+      {
+        "name": "Flor clara",
+        "description": "Grande flor de cinco pétalas à direita da figura.",
+        "region": [
+          0.511,
+          0.42,
+          0.205,
+          0.133
+        ],
+        "shape": "box",
+        "category": "planta",
+        "points": null,
+        "uncertainty": "",
+        "id": "t02-flor",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Lua crescente",
+        "description": "Crescente amarelo junto aos pés.",
+        "region": [
+          0.338,
+          0.684,
+          0.18,
+          0.119
+        ],
+        "shape": "circle",
+        "category": "símbolo",
+        "points": null,
+        "uncertainty": "",
+        "id": "t02-lua",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t02-figura"
+        ]
+      },
+      {
+        "name": "A Sacerdotisa / II",
+        "description": "Título em português e numeral.",
+        "region": [
+          0.172,
+          0.115,
+          0.346,
+          0.041
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t02-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      }
+    ],
+    "relations": "A figura se situa entre as duas colunas.\nO pergaminho está acima da cabeça.\nA lua crescente está sob a veste folhosa.",
+    "relationships": [
+      {
+        "fromId": "t02-figura",
+        "toId": "t02-coluna-esquerda",
+        "description": "A figura se situa entre as duas colunas."
+      },
+      {
+        "fromId": "t02-pergaminho",
+        "toId": "t02-figura",
+        "description": "O pergaminho está acima da cabeça."
+      },
+      {
+        "fromId": "t02-lua",
+        "toId": "t02-figura",
+        "description": "A lua crescente está sob a veste folhosa."
+      }
+    ],
+    "concepts": [
+      "conhecimento",
+      "limiar",
+      "leitura",
+      "segredo"
+    ],
+    "symbolism": "conhecimento; limiar; leitura; segredo",
+    "associations": [
+      "O acesso desigual à memória de uma máquina.",
+      "A realidade aumentada como uma camada legível apenas para quem possui a chave."
+    ],
+    "uncertainties": [],
+    "surface": [
+      [
+        0.130208,
+        0.096875
+      ],
+      [
+        0.802083,
+        0.092969
+      ],
+      [
+        0.846875,
+        0.971094
+      ],
+      [
+        0.06875,
+        0.967969
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "c9f41c94cbd568d9",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  },
+  "3": {
+    "file": "3-imperatriz.jpeg",
+    "description": "Uma figura coroada está sentada entre flores, segurando uma haste e uma esfera. Duas figuras aladas ficam atrás dela e sustentam grandes leques de pétalas; folhagem densa preenche o fundo.",
+    "elements": [
+      {
+        "name": "Figura sentada",
+        "description": "Pessoa coroada de vestido claro e manto rosado.",
+        "region": [
+          0.305,
+          0.371,
+          0.454,
+          0.388
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t03-figura",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t03-alado-esquerdo",
+          "t03-esfera"
+        ]
+      },
+      {
+        "name": "Coroa e rosto",
+        "description": "Rosto frontal sob uma coroa ornamentada.",
+        "region": [
+          0.426,
+          0.369,
+          0.083,
+          0.088
+        ],
+        "shape": "box",
+        "category": "rosto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t03-coroa",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t03-leques"
+        ]
+      },
+      {
+        "name": "Esfera na mão",
+        "description": "Pequena esfera clara apoiada na mão à direita.",
+        "region": [
+          0.647,
+          0.502,
+          0.057,
+          0.045
+        ],
+        "shape": "circle",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t03-esfera",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t03-figura"
+        ]
+      },
+      {
+        "name": "Haste florida",
+        "description": "Haste sustentada pela mão esquerda, junto ao encosto.",
+        "region": [
+          0.301,
+          0.406,
+          0.072,
+          0.158
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t03-haste",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Figura alada à esquerda",
+        "description": "Figura em pé com grande asa e leque.",
+        "region": [
+          0.248,
+          0.245,
+          0.156,
+          0.347
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t03-alado-esquerdo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t03-figura"
+        ]
+      },
+      {
+        "name": "Figura alada à direita",
+        "description": "Figura em pé segurando uma haste de leque.",
+        "region": [
+          0.617,
+          0.244,
+          0.143,
+          0.401
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t03-alado-direito",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Leques de pétalas",
+        "description": "Dois leques grandes sobre a cabeça da figura sentada.",
+        "region": [
+          0.355,
+          0.233,
+          0.29,
+          0.173
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t03-leques",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t03-coroa"
+        ]
+      },
+      {
+        "name": "Flores do primeiro plano",
+        "description": "Numerosas flores baixas diante do manto.",
+        "region": [
+          0.226,
+          0.659,
+          0.358,
+          0.138
+        ],
+        "shape": "box",
+        "category": "planta",
+        "points": null,
+        "uncertainty": "",
+        "id": "t03-flores",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "A Imperatriz / III",
+        "description": "Nome e numeral no cabeçalho.",
+        "region": [
+          0.194,
+          0.082,
+          0.346,
+          0.042
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t03-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      }
+    ],
+    "relations": "As duas figuras aladas ladeiam a figura sentada.\nOs leques convergem para o centro da composição.\nA esfera repousa na mão direita da pessoa central.",
+    "relationships": [
+      {
+        "fromId": "t03-alado-esquerdo",
+        "toId": "t03-figura",
+        "description": "As duas figuras aladas ladeiam a figura sentada."
+      },
+      {
+        "fromId": "t03-leques",
+        "toId": "t03-coroa",
+        "description": "Os leques convergem para o centro da composição."
+      },
+      {
+        "fromId": "t03-esfera",
+        "toId": "t03-figura",
+        "description": "A esfera repousa na mão direita da pessoa central."
+      }
+    ],
+    "concepts": [
+      "cuidado",
+      "abundância",
+      "soberania",
+      "dependência"
+    ],
+    "symbolism": "cuidado; abundância; soberania; dependência",
+    "associations": [
+      "O poder sustentado por trabalho de bastidores.",
+      "Um sistema que parece autossuficiente enquanto outras presenças o mantêm."
+    ],
+    "uncertainties": [],
+    "surface": [
+      [
+        0.157292,
+        0.0625
+      ],
+      [
+        0.841667,
+        0.063281
+      ],
+      [
+        0.903125,
+        0.954688
+      ],
+      [
+        0.091667,
+        0.946875
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "afad800d2900c32a",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  },
+  "4": {
+    "file": "4-imperador.jpeg",
+    "description": "Um homem coroado e barbado está sentado num trono, com pernas cruzadas, cetro e esfera dourada. Duas figuras aladas atrás dele seguram leques; plantas cercam o assento.",
+    "elements": [
+      {
+        "name": "Homem no trono",
+        "description": "Figura barbada com coroa, manto debruado e botas escuras.",
+        "region": [
+          0.201,
+          0.373,
+          0.529,
+          0.47
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t04-imperador",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t04-alados"
+        ]
+      },
+      {
+        "name": "Rosto coroado",
+        "description": "Rosto frontal barbado abaixo da coroa.",
+        "region": [
+          0.424,
+          0.377,
+          0.105,
+          0.093
+        ],
+        "shape": "box",
+        "category": "rosto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t04-rosto",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Cetro",
+        "description": "Haste dourada na mão esquerda da figura central.",
+        "region": [
+          0.405,
+          0.488,
+          0.072,
+          0.128
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t04-cetro",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t04-esfera"
+        ]
+      },
+      {
+        "name": "Esfera dourada",
+        "description": "Globo amarelo na mão à direita.",
+        "region": [
+          0.581,
+          0.489,
+          0.089,
+          0.063
+        ],
+        "shape": "circle",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t04-esfera",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t04-cetro"
+        ]
+      },
+      {
+        "name": "Trono",
+        "description": "Encosto azul-esverdeado atrás dos ombros.",
+        "region": [
+          0.314,
+          0.443,
+          0.279,
+          0.126
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t04-trono",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t04-pernas"
+        ]
+      },
+      {
+        "name": "Figuras aladas e leques",
+        "description": "Duas figuras atrás do trono, com asas e leques de pétalas.",
+        "region": [
+          0.244,
+          0.22,
+          0.539,
+          0.31
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t04-alados",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t04-imperador"
+        ]
+      },
+      {
+        "name": "Pernas cruzadas",
+        "description": "Botas escuras cruzadas na parte inferior.",
+        "region": [
+          0.478,
+          0.679,
+          0.18,
+          0.14
+        ],
+        "shape": "box",
+        "category": "gesto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t04-pernas",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t04-trono"
+        ]
+      },
+      {
+        "name": "O Imperador / IV",
+        "description": "Título em português e numeral.",
+        "region": [
+          0.188,
+          0.112,
+          0.365,
+          0.042
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t04-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      }
+    ],
+    "relations": "O homem senta diante das duas figuras aladas.\nA esfera e o cetro estão em mãos opostas.\nAs pernas cruzam-se acima do degrau.",
+    "relationships": [
+      {
+        "fromId": "t04-imperador",
+        "toId": "t04-alados",
+        "description": "O homem senta diante das duas figuras aladas."
+      },
+      {
+        "fromId": "t04-esfera",
+        "toId": "t04-cetro",
+        "description": "A esfera e o cetro estão em mãos opostas."
+      },
+      {
+        "fromId": "t04-pernas",
+        "toId": "t04-trono",
+        "description": "As pernas cruzam-se acima do degrau."
+      }
+    ],
+    "concepts": [
+      "autoridade",
+      "ordem",
+      "controle",
+      "representação do poder"
+    ],
+    "symbolism": "autoridade; ordem; controle; representação do poder",
+    "associations": [
+      "O comando do piloto e a dependência de instrumentos.",
+      "Governança de sistemas automáticos e quem decide os limites de uma máquina."
+    ],
+    "uncertainties": [],
+    "surface": [
+      [
+        0.146875,
+        0.0875
+      ],
+      [
+        0.833333,
+        0.098437
+      ],
+      [
+        0.865625,
+        0.995313
+      ],
+      [
+        0.048958,
+        0.994531
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "d512f4ee9a4755f2",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  },
+  "5": {
+    "file": "5-sacerdote.jpeg",
+    "description": "Uma figura religiosa com mitra e báculo está diante de uma cortina entre colunas. Duas pessoas se ajoelham à sua frente; a mão aberta do religioso aponta para elas e uma espada atravessa o primeiro plano.",
+    "elements": [
+      {
+        "name": "Figura com mitra",
+        "description": "Pessoa barbada de veste clara com cruzes.",
+        "region": [
+          0.311,
+          0.279,
+          0.386,
+          0.433
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t05-sacerdote",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t05-ajoelhados",
+          "t05-colunas"
+        ]
+      },
+      {
+        "name": "Mitra e rosto",
+        "description": "Chapéu cerimonial sobre o rosto barbado.",
+        "region": [
+          0.412,
+          0.278,
+          0.105,
+          0.084
+        ],
+        "shape": "box",
+        "category": "rosto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t05-mitra",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Báculo",
+        "description": "Longa haste com voluta, à esquerda.",
+        "region": [
+          0.31,
+          0.253,
+          0.185,
+          0.322
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t05-baculo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Mão aberta",
+        "description": "Mão estendida à direita em direção aos ajoelhados.",
+        "region": [
+          0.588,
+          0.412,
+          0.073,
+          0.043
+        ],
+        "shape": "box",
+        "category": "gesto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t05-mao",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t05-ajoelhados"
+        ]
+      },
+      {
+        "name": "Duas figuras ajoelhadas",
+        "description": "Uma veste vermelha e outra escura, de costas para quem observa.",
+        "region": [
+          0.368,
+          0.47,
+          0.406,
+          0.305
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t05-ajoelhados",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t05-sacerdote",
+          "t05-mao"
+        ]
+      },
+      {
+        "name": "Espada no primeiro plano",
+        "description": "Espada inclinada junto às pernas das figuras.",
+        "region": [
+          0.438,
+          0.653,
+          0.266,
+          0.147
+        ],
+        "shape": "box",
+        "category": "arma",
+        "points": null,
+        "uncertainty": "",
+        "id": "t05-espada",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Colunas e cortina",
+        "description": "Dois pilares sustentam o enquadramento de uma cortina azulada.",
+        "region": [
+          0.244,
+          0.194,
+          0.483,
+          0.489
+        ],
+        "shape": "box",
+        "category": "arquitetura",
+        "points": null,
+        "uncertainty": "",
+        "id": "t05-colunas",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t05-sacerdote"
+        ]
+      },
+      {
+        "name": "O Sacerdote / V",
+        "description": "Título e numeral superior.",
+        "region": [
+          0.168,
+          0.078,
+          0.357,
+          0.049
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t05-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      }
+    ],
+    "relations": "As figuras ajoelhadas voltam-se para a figura com mitra.\nA mão aberta dirige-se a elas.\nA cortina fica atrás do sacerdote entre as colunas.",
+    "relationships": [
+      {
+        "fromId": "t05-ajoelhados",
+        "toId": "t05-sacerdote",
+        "description": "As figuras ajoelhadas voltam-se para a figura com mitra."
+      },
+      {
+        "fromId": "t05-mao",
+        "toId": "t05-ajoelhados",
+        "description": "A mão aberta dirige-se a elas."
+      },
+      {
+        "fromId": "t05-colunas",
+        "toId": "t05-sacerdote",
+        "description": "A cortina fica atrás do sacerdote entre as colunas."
+      }
+    ],
+    "concepts": [
+      "instituição",
+      "obediência",
+      "transmissão",
+      "legitimação"
+    ],
+    "symbolism": "instituição; obediência; transmissão; legitimação",
+    "associations": [
+      "O público aprendendo regras que não escolheu.",
+      "Uma inteligência cuja linguagem herda autoridades anteriores."
+    ],
+    "uncertainties": [],
+    "surface": [
+      [
+        0.129167,
+        0.065625
+      ],
+      [
+        0.810417,
+        0.058594
+      ],
+      [
+        0.870833,
+        0.945312
+      ],
+      [
+        0.077083,
+        0.947656
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "95902faf67187045",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  },
+  "6": {
+    "file": "6-enamorados.jpeg",
+    "description": "Uma pessoa central fica entre duas figuras de vestido que erguem pequenos objetos circulares. No alto, uma figura alada de braços abertos paira diante de um disco solar; flores cobrem o chão.",
+    "elements": [
+      {
+        "name": "Pessoa central",
+        "description": "Figura de roupa curta decorada, com as mãos estendidas aos lados.",
+        "region": [
+          0.394,
+          0.379,
+          0.213,
+          0.356
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t06-central",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t06-esquerda",
+          "t06-alado",
+          "t06-maos"
+        ]
+      },
+      {
+        "name": "Figura à esquerda",
+        "description": "Pessoa de vestido longo com um braço erguido.",
+        "region": [
+          0.24,
+          0.336,
+          0.216,
+          0.405
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t06-esquerda",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t06-central"
+        ]
+      },
+      {
+        "name": "Figura à direita",
+        "description": "Pessoa de vestido longo, com objeto circular na mão levantada.",
+        "region": [
+          0.59,
+          0.319,
+          0.154,
+          0.414
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t06-direita",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Figura alada superior",
+        "description": "Figura de roupa vermelha com braços e asas abertos.",
+        "region": [
+          0.24,
+          0.211,
+          0.509,
+          0.198
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t06-alado",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t06-central"
+        ]
+      },
+      {
+        "name": "Disco luminoso",
+        "description": "Parte de um disco amarelo atrás da cabeça alada.",
+        "region": [
+          0.38,
+          0.185,
+          0.198,
+          0.059
+        ],
+        "shape": "circle",
+        "category": "símbolo",
+        "points": null,
+        "uncertainty": "",
+        "id": "t06-disco",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Mãos em contato",
+        "description": "Mãos das figuras laterais se aproximam das mãos da pessoa central.",
+        "region": [
+          0.358,
+          0.451,
+          0.262,
+          0.05
+        ],
+        "shape": "box",
+        "category": "gesto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t06-maos",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t06-central"
+        ]
+      },
+      {
+        "name": "Flores no chão",
+        "description": "Pequenas flores dispersas entre os pés.",
+        "region": [
+          0.234,
+          0.726,
+          0.523,
+          0.058
+        ],
+        "shape": "box",
+        "category": "planta",
+        "points": null,
+        "uncertainty": "",
+        "id": "t06-flores",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Os Enamorados / VI",
+        "description": "Nome e numeral no alto.",
+        "region": [
+          0.171,
+          0.078,
+          0.37,
+          0.045
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t06-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      }
+    ],
+    "relations": "A pessoa central está entre as duas figuras laterais.\nA figura alada paira sobre o trio.\nAs mãos estabelecem ligações entre as três pessoas.",
+    "relationships": [
+      {
+        "fromId": "t06-central",
+        "toId": "t06-esquerda",
+        "description": "A pessoa central está entre as duas figuras laterais."
+      },
+      {
+        "fromId": "t06-alado",
+        "toId": "t06-central",
+        "description": "A figura alada paira sobre o trio."
+      },
+      {
+        "fromId": "t06-maos",
+        "toId": "t06-central",
+        "description": "As mãos estabelecem ligações entre as três pessoas."
+      }
+    ],
+    "concepts": [
+      "escolha",
+      "vínculo",
+      "desejo",
+      "ambivalência"
+    ],
+    "symbolism": "escolha; vínculo; desejo; ambivalência",
+    "associations": [
+      "Escolhas da plateia sob uma estrutura de opções previamente preparada.",
+      "Decisões humanas mediadas por sistemas que se apresentam como neutros."
+    ],
+    "uncertainties": [],
+    "surface": [
+      [
+        0.14375,
+        0.067187
+      ],
+      [
+        0.821875,
+        0.05625
+      ],
+      [
+        0.897917,
+        0.941406
+      ],
+      [
+        0.076042,
+        0.953125
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "84dbba7b5a11850c",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  },
+  "7": {
+    "file": "7-carro.jpeg",
+    "description": "Uma carruagem verde e ornamentada, vista de trás, transporta duas pessoas que erguem os braços. Animais de tração seguem à frente à esquerda; uma estrada sinuosa leva a um castelo sobre uma colina.",
+    "elements": [
+      {
+        "name": "Carruagem",
+        "description": "Carro de grandes curvas verdes e rodas visíveis.",
+        "region": [
+          0.346,
+          0.448,
+          0.464,
+          0.344
+        ],
+        "shape": "box",
+        "category": "veículo",
+        "points": null,
+        "uncertainty": "",
+        "id": "t07-carruagem",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t07-estrada",
+          "t07-viajantes"
+        ]
+      },
+      {
+        "name": "Duas pessoas no carro",
+        "description": "Uma pessoa ergue o chapéu; outra ergue o braço e olha para trás.",
+        "region": [
+          0.415,
+          0.289,
+          0.363,
+          0.209
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t07-viajantes",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t07-carruagem"
+        ]
+      },
+      {
+        "name": "Chapéu erguido",
+        "description": "Chapéu azul-esverdeado na mão levantada.",
+        "region": [
+          0.405,
+          0.31,
+          0.057,
+          0.065
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t07-chapeu",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Animais de tração",
+        "description": "Cabeças e corpos parcialmente visíveis à frente da carruagem.",
+        "region": [
+          0.259,
+          0.361,
+          0.22,
+          0.208
+        ],
+        "shape": "box",
+        "category": "animal",
+        "points": null,
+        "uncertainty": "Partes dos corpos estão encobertas; não inferir uma contagem precisa.",
+        "id": "t07-animais",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t07-castelo"
+        ]
+      },
+      {
+        "name": "Castelo",
+        "description": "Edifício com torres no alto da colina à esquerda.",
+        "region": [
+          0.288,
+          0.208,
+          0.161,
+          0.109
+        ],
+        "shape": "box",
+        "category": "arquitetura",
+        "points": null,
+        "uncertainty": "",
+        "id": "t07-castelo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t07-animais"
+        ]
+      },
+      {
+        "name": "Estrada sinuosa",
+        "description": "Caminho sobe da carruagem em direção ao castelo.",
+        "region": [
+          0.244,
+          0.291,
+          0.146,
+          0.117
+        ],
+        "shape": "polygon",
+        "category": "terreno",
+        "points": [
+          [
+            0.244,
+            0.354
+          ],
+          [
+            0.316,
+            0.317
+          ],
+          [
+            0.369,
+            0.297
+          ],
+          [
+            0.39,
+            0.302
+          ],
+          [
+            0.342,
+            0.328
+          ],
+          [
+            0.25,
+            0.408
+          ]
+        ],
+        "uncertainty": "",
+        "id": "t07-estrada",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t07-carruagem"
+        ]
+      },
+      {
+        "name": "Rodas e poeira",
+        "description": "Roda à direita, eixo e nuvem de poeira abaixo do carro.",
+        "region": [
+          0.363,
+          0.6,
+          0.415,
+          0.209
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t07-rodas",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "O Carro / VII",
+        "description": "Título e numeral no alto.",
+        "region": [
+          0.184,
+          0.078,
+          0.385,
+          0.043
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t07-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      }
+    ],
+    "relations": "A carruagem avança na estrada em direção à colina.\nOs passageiros erguem os braços acima do carro.\nO castelo está afastado, acima dos animais.",
+    "relationships": [
+      {
+        "fromId": "t07-carruagem",
+        "toId": "t07-estrada",
+        "description": "A carruagem avança na estrada em direção à colina."
+      },
+      {
+        "fromId": "t07-viajantes",
+        "toId": "t07-carruagem",
+        "description": "Os passageiros erguem os braços acima do carro."
+      },
+      {
+        "fromId": "t07-castelo",
+        "toId": "t07-animais",
+        "description": "O castelo está afastado, acima dos animais."
+      }
+    ],
+    "concepts": [
+      "direção",
+      "velocidade",
+      "controle compartilhado",
+      "destino"
+    ],
+    "symbolism": "direção; velocidade; controle compartilhado; destino",
+    "associations": [
+      "O piloto, os passageiros e a ilusão de dominar o trajeto.",
+      "Automação que transporta pessoas sem lhes mostrar todos os mecanismos."
+    ],
+    "uncertainties": [],
+    "surface": [
+      [
+        0.138542,
+        0.064062
+      ],
+      [
+        0.840625,
+        0.064062
+      ],
+      [
+        0.888542,
+        0.980469
+      ],
+      [
+        0.078125,
+        0.976562
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "f0bf9c0a2855ccd8",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  },
+  "8": {
+    "file": "8-justica.jpeg",
+    "description": "Uma figura coroada segura uma balança e apoia a outra mão no punho de uma espada vertical. A balança se situa sobre uma coluna; o manto claro se projeta à direita entre folhas.",
+    "elements": [
+      {
+        "name": "Figura coroada",
+        "description": "Pessoa de vestido vermelho e manto claro.",
+        "region": [
+          0.259,
+          0.202,
+          0.525,
+          0.541
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t08-figura",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t08-balanca",
+          "t08-espada"
+        ]
+      },
+      {
+        "name": "Balança",
+        "description": "Dois pratos suspensos pela mão levantada.",
+        "region": [
+          0.245,
+          0.288,
+          0.175,
+          0.101
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t08-balanca",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t08-figura",
+          "t08-coluna"
+        ]
+      },
+      {
+        "name": "Espada vertical",
+        "description": "Lâmina longa apontada para baixo, diante do vestido.",
+        "region": [
+          0.394,
+          0.412,
+          0.087,
+          0.311
+        ],
+        "shape": "box",
+        "category": "arma",
+        "points": null,
+        "uncertainty": "",
+        "id": "t08-espada",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t08-figura"
+        ]
+      },
+      {
+        "name": "Rosto frontal",
+        "description": "Olhar frontal sob a coroa.",
+        "region": [
+          0.411,
+          0.202,
+          0.089,
+          0.086
+        ],
+        "shape": "box",
+        "category": "rosto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t08-rosto",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Coluna baixa",
+        "description": "Pedestal sob a balança, à esquerda.",
+        "region": [
+          0.263,
+          0.402,
+          0.159,
+          0.322
+        ],
+        "shape": "box",
+        "category": "arquitetura",
+        "points": null,
+        "uncertainty": "",
+        "id": "t08-coluna",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t08-balanca"
+        ]
+      },
+      {
+        "name": "Manto ao vento",
+        "description": "Tecido claro ondula para a direita.",
+        "region": [
+          0.51,
+          0.31,
+          0.277,
+          0.425
+        ],
+        "shape": "box",
+        "category": "tecido",
+        "points": null,
+        "uncertainty": "",
+        "id": "t08-manto",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Folhagem lateral",
+        "description": "Ramos e folhas sob o manto e ao lado da espada.",
+        "region": [
+          0.611,
+          0.481,
+          0.168,
+          0.203
+        ],
+        "shape": "box",
+        "category": "planta",
+        "points": null,
+        "uncertainty": "",
+        "id": "t08-folhas",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "A Justiça / VIII",
+        "description": "Título e numeral no cabeçalho.",
+        "region": [
+          0.18,
+          0.072,
+          0.381,
+          0.041
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t08-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      }
+    ],
+    "relations": "A balança é sustentada pela mão esquerda na imagem.\nA espada separa verticalmente o vestido.\nA coluna está abaixo da balança.",
+    "relationships": [
+      {
+        "fromId": "t08-balanca",
+        "toId": "t08-figura",
+        "description": "A balança é sustentada pela mão esquerda na imagem."
+      },
+      {
+        "fromId": "t08-espada",
+        "toId": "t08-figura",
+        "description": "A espada separa verticalmente o vestido."
+      },
+      {
+        "fromId": "t08-coluna",
+        "toId": "t08-balanca",
+        "description": "A coluna está abaixo da balança."
+      }
+    ],
+    "concepts": [
+      "medida",
+      "julgamento",
+      "equilíbrio",
+      "poder de classificação"
+    ],
+    "symbolism": "medida; julgamento; equilíbrio; poder de classificação",
+    "associations": [
+      "Algoritmos que classificam pessoas sob aparência de equilíbrio.",
+      "A autoridade do operador para julgar respostas e a participação do público."
+    ],
+    "uncertainties": [],
+    "surface": [
+      [
+        0.134375,
+        0.051562
+      ],
+      [
+        0.810417,
+        0.053125
+      ],
+      [
+        0.847917,
+        0.919531
+      ],
+      [
+        0.059375,
+        0.914844
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "36d6896d84c09151",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  },
+  "9": {
+    "file": "9-eremita.jpeg",
+    "description": "Um homem ajoelhado junta as mãos e olha para uma lua crescente diante de rochas. Há um crânio à esquerda, um livro aberto no chão, um cajado à direita e uma tocha acesa no alto.",
+    "elements": [
+      {
+        "name": "Homem ajoelhado",
+        "description": "Pessoa barbada de manto escuro, com rosto erguido.",
+        "region": [
+          0.263,
+          0.268,
+          0.516,
+          0.447
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t09-eremita",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t09-lua"
+        ]
+      },
+      {
+        "name": "Mãos unidas",
+        "description": "Duas mãos juntas diante do peito.",
+        "region": [
+          0.266,
+          0.338,
+          0.061,
+          0.054
+        ],
+        "shape": "box",
+        "category": "gesto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t09-maos",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t09-livro"
+        ]
+      },
+      {
+        "name": "Lua crescente",
+        "description": "Crescente claro no alto à esquerda.",
+        "region": [
+          0.243,
+          0.212,
+          0.097,
+          0.074
+        ],
+        "shape": "circle",
+        "category": "símbolo",
+        "points": null,
+        "uncertainty": "",
+        "id": "t09-lua",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t09-eremita"
+        ]
+      },
+      {
+        "name": "Crânio",
+        "description": "Crânio humano no chão, à esquerda da figura.",
+        "region": [
+          0.222,
+          0.523,
+          0.108,
+          0.052
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t09-cranio",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t09-tocha"
+        ]
+      },
+      {
+        "name": "Livro aberto",
+        "description": "Livro com páginas abertas no primeiro plano.",
+        "region": [
+          0.36,
+          0.602,
+          0.215,
+          0.104
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t09-livro",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t09-maos"
+        ]
+      },
+      {
+        "name": "Cajado",
+        "description": "Longa vara inclinada à direita.",
+        "region": [
+          0.637,
+          0.317,
+          0.108,
+          0.259
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t09-cajado",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Tocha acesa",
+        "description": "Chama e haste no alto à direita.",
+        "region": [
+          0.614,
+          0.138,
+          0.12,
+          0.165
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t09-tocha",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t09-cranio"
+        ]
+      },
+      {
+        "name": "Parede rochosa",
+        "description": "Arco irregular de pedra atrás da figura.",
+        "region": [
+          0.243,
+          0.149,
+          0.411,
+          0.374
+        ],
+        "shape": "box",
+        "category": "natureza",
+        "points": null,
+        "uncertainty": "",
+        "id": "t09-rocha",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "O Eremita / IX",
+        "description": "Nome e numeral no alto.",
+        "region": [
+          0.177,
+          0.032,
+          0.368,
+          0.043
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t09-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      }
+    ],
+    "relations": "O homem olha em direção à lua.\nO livro fica abaixo das mãos unidas.\nCrânio e tocha ocupam lados opostos da composição.",
+    "relationships": [
+      {
+        "fromId": "t09-eremita",
+        "toId": "t09-lua",
+        "description": "O homem olha em direção à lua."
+      },
+      {
+        "fromId": "t09-livro",
+        "toId": "t09-maos",
+        "description": "O livro fica abaixo das mãos unidas."
+      },
+      {
+        "fromId": "t09-cranio",
+        "toId": "t09-tocha",
+        "description": "Crânio e tocha ocupam lados opostos da composição."
+      }
+    ],
+    "concepts": [
+      "recolhimento",
+      "finitude",
+      "aprendizado",
+      "memória"
+    ],
+    "symbolism": "recolhimento; finitude; aprendizado; memória",
+    "associations": [
+      "Uma máquina isolada com registros de pessoas ausentes.",
+      "A ilha como lugar de recolhimento e confrontação com a memória."
+    ],
+    "uncertainties": [],
+    "surface": [
+      [
+        0.13125,
+        0.010937
+      ],
+      [
+        0.8125,
+        0.00625
+      ],
+      [
+        0.879167,
+        0.889062
+      ],
+      [
+        0.075,
+        0.892969
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "6084b70fc42a1b84",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  },
+  "10": {
+    "file": "10-roda-da-fortuna.jpeg",
+    "description": "Uma figura sentada segura uma pequena coroa vegetal diante de uma criança alada . Acima, caules e flores formam uma roda com raios e campânulas pendentes.",
+    "elements": [
+      {
+        "name": "Roda vegetal",
+        "description": "Grande círculo de caules com raios e flores em forma de sino.",
+        "region": [
+          0.227,
+          0.294,
+          0.49,
+          0.378
+        ],
+        "shape": "circle",
+        "category": "planta",
+        "points": null,
+        "uncertainty": "",
+        "id": "t10-roda",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t10-centro"
+        ]
+      },
+      {
+        "name": "Centro da roda",
+        "description": "Nó circular onde convergem os caules.",
+        "region": [
+          0.436,
+          0.441,
+          0.069,
+          0.05
+        ],
+        "shape": "circle",
+        "category": "símbolo",
+        "points": null,
+        "uncertainty": "",
+        "id": "t10-centro",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t10-roda"
+        ]
+      },
+      {
+        "name": "Figura sentada",
+        "description": "Pessoa de veste clara voltada para a criança.",
+        "region": [
+          0.253,
+          0.49,
+          0.333,
+          0.383
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t10-figura",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t10-crianca"
+        ]
+      },
+      {
+        "name": "Criança alada",
+        "description": "Pequena figura nua com asas ao lado do assento.",
+        "region": [
+          0.48,
+          0.626,
+          0.175,
+          0.244
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t10-crianca",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t10-figura",
+          "t10-coroa"
+        ]
+      },
+      {
+        "name": "Coroa de folhas",
+        "description": "Guirlanda pequena sustentada entre as mãos e a criança.",
+        "region": [
+          0.403,
+          0.559,
+          0.134,
+          0.082
+        ],
+        "shape": "circle",
+        "category": "planta",
+        "points": null,
+        "uncertainty": "",
+        "id": "t10-coroa",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t10-crianca"
+        ]
+      },
+      {
+        "name": "Assento vermelho",
+        "description": "Cadeira de encosto vermelho à esquerda.",
+        "region": [
+          0.24,
+          0.682,
+          0.151,
+          0.19
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t10-assento",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "A Roda da Fortuna / X",
+        "description": "Nome e numeral no cabeçalho.",
+        "region": [
+          0.171,
+          0.155,
+          0.366,
+          0.046
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t10-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      }
+    ],
+    "relations": "Os caules convergem no centro da roda.\nA criança se volta à figura sentada.\nA coroa vegetal é mostrada entre os dois personagens.",
+    "relationships": [
+      {
+        "fromId": "t10-roda",
+        "toId": "t10-centro",
+        "description": "Os caules convergem no centro da roda."
+      },
+      {
+        "fromId": "t10-crianca",
+        "toId": "t10-figura",
+        "description": "A criança se volta à figura sentada."
+      },
+      {
+        "fromId": "t10-coroa",
+        "toId": "t10-crianca",
+        "description": "A coroa vegetal é mostrada entre os dois personagens."
+      }
+    ],
+    "concepts": [
+      "ciclo",
+      "contingência",
+      "repetição",
+      "oportunidade"
+    ],
+    "symbolism": "ciclo; contingência; repetição; oportunidade",
+    "associations": [
+      "O sorteio teatral e as condições ocultas do acaso.",
+      "Automações que repetem ciclos e os apresentam como escolhas novas."
+    ],
+    "uncertainties": [
+      "Não há roda mecânica, esfinge ou animais nos raios desta ilustração.",
+      "O objeto junto à criança não foi identificado com segurança e não recebeu âncora própria."
+    ],
+    "surface": [
+      [
+        0.134375,
+        0.1375
+      ],
+      [
+        0.810417,
+        0.132812
+      ],
+      [
+        0.844792,
+        0.994531
+      ],
+      [
+        0.066667,
+        0.99375
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "e45f0d857c9c4a81",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  },
+  "11": {
+    "file": "11-forca.jpeg",
+    "description": "Uma pessoa de armadura pisa sobre um dragão à beira de uma escarpa. Empunha uma espada baixa e um escudo oval que reflete a cabeça do animal; árvores frutíferas ocupam o alto à esquerda.",
+    "elements": [
+      {
+        "name": "Pessoa de armadura",
+        "description": "Figura de capacete, placas metálicas e botas.",
+        "region": [
+          0.256,
+          0.247,
+          0.272,
+          0.495
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t11-guerreiro",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t11-dragao",
+          "t11-escarpa"
+        ]
+      },
+      {
+        "name": "Escudo oval",
+        "description": "Escudo brilhante com a imagem de uma cabeça de dragão.",
+        "region": [
+          0.482,
+          0.287,
+          0.145,
+          0.197
+        ],
+        "shape": "circle",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t11-escudo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t11-cabeca"
+        ]
+      },
+      {
+        "name": "Dragão",
+        "description": "Animal de escamas, patas e crista que atravessa a parte inferior.",
+        "region": [
+          0.211,
+          0.427,
+          0.55,
+          0.342
+        ],
+        "shape": "box",
+        "category": "animal",
+        "points": null,
+        "uncertainty": "",
+        "id": "t11-dragao",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t11-guerreiro"
+        ]
+      },
+      {
+        "name": "Cabeça do dragão",
+        "description": "Cabeça de boca aberta e chifres à direita.",
+        "region": [
+          0.619,
+          0.438,
+          0.142,
+          0.163
+        ],
+        "shape": "box",
+        "category": "animal",
+        "points": null,
+        "uncertainty": "",
+        "id": "t11-cabeca",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t11-escudo"
+        ]
+      },
+      {
+        "name": "Espada baixa",
+        "description": "Lâmina inclinada na mão à esquerda.",
+        "region": [
+          0.214,
+          0.487,
+          0.096,
+          0.085
+        ],
+        "shape": "box",
+        "category": "arma",
+        "points": null,
+        "uncertainty": "",
+        "id": "t11-espada",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Árvore com frutos",
+        "description": "Folhagem com frutos alaranjados sobre o capacete.",
+        "region": [
+          0.237,
+          0.221,
+          0.37,
+          0.129
+        ],
+        "shape": "box",
+        "category": "planta",
+        "points": null,
+        "uncertainty": "",
+        "id": "t11-arvore",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Escarpa rochosa",
+        "description": "A face do terreno cai verticalmente à direita.",
+        "region": [
+          0.613,
+          0.468,
+          0.146,
+          0.317
+        ],
+        "shape": "polygon",
+        "category": "terreno",
+        "points": [
+          [
+            0.661,
+            0.47
+          ],
+          [
+            0.756,
+            0.49
+          ],
+          [
+            0.755,
+            0.783
+          ],
+          [
+            0.619,
+            0.783
+          ],
+          [
+            0.659,
+            0.683
+          ]
+        ],
+        "uncertainty": "",
+        "id": "t11-escarpa",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t11-guerreiro"
+        ]
+      },
+      {
+        "name": "A Força / XI",
+        "description": "Nome e numeral no cabeçalho.",
+        "region": [
+          0.172,
+          0.112,
+          0.337,
+          0.043
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t11-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      }
+    ],
+    "relations": "Um pé da pessoa de armadura se apoia sobre o dragão.\nO escudo está diante da cabeça do animal e contém sua imagem.\nA cena se passa na borda de uma escarpa.",
+    "relationships": [
+      {
+        "fromId": "t11-guerreiro",
+        "toId": "t11-dragao",
+        "description": "Um pé da pessoa de armadura se apoia sobre o dragão."
+      },
+      {
+        "fromId": "t11-escudo",
+        "toId": "t11-cabeca",
+        "description": "O escudo está diante da cabeça do animal e contém sua imagem."
+      },
+      {
+        "fromId": "t11-guerreiro",
+        "toId": "t11-escarpa",
+        "description": "A cena se passa na borda de uma escarpa."
+      }
+    ],
+    "concepts": [
+      "força",
+      "confronto",
+      "reflexo",
+      "domínio e fragilidade"
+    ],
+    "symbolism": "força; confronto; reflexo; domínio e fragilidade",
+    "associations": [
+      "A tecnologia que enfrenta uma ameaça reproduzindo sua imagem.",
+      "O controle sobre um sistema que continua vivo e potencialmente instável."
+    ],
+    "uncertainties": [
+      "A criatura é um dragão; não substituir por um leão."
+    ],
+    "surface": [
+      [
+        0.133333,
+        0.097656
+      ],
+      [
+        0.784375,
+        0.099219
+      ],
+      [
+        0.844792,
+        0.932031
+      ],
+      [
+        0.08125,
+        0.935156
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "6e6762a6fea155e2",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  },
+  "12": {
+    "file": "12-enforcado.jpeg",
+    "description": "Uma pessoa está suspensa de cabeça para baixo por cordas numa árvore. Uma perna sobe quase vertical, a outra se dobra; os braços se abrem perto do chão, diante de um disco amarelo e de uma construção distante.",
+    "elements": [
+      {
+        "name": "Pessoa invertida",
+        "description": "Figura de roupa vermelha e azul, de braços abertos.",
+        "region": [
+          0.317,
+          0.269,
+          0.402,
+          0.467
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t12-suspenso",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t12-rosto",
+          "t12-flores"
+        ]
+      },
+      {
+        "name": "Rosto invertido",
+        "description": "Cabeça abaixo do tronco, próxima às raízes.",
+        "region": [
+          0.488,
+          0.571,
+          0.102,
+          0.09
+        ],
+        "shape": "box",
+        "category": "rosto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t12-rosto",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t12-suspenso"
+        ]
+      },
+      {
+        "name": "Cordas",
+        "description": "Cordas ligam os pés e o ramo ao tronco da árvore.",
+        "region": [
+          0.438,
+          0.222,
+          0.31,
+          0.216
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t12-cordas",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t12-arvore"
+        ]
+      },
+      {
+        "name": "Árvore retorcida",
+        "description": "Tronco e ramos à direita do corpo.",
+        "region": [
+          0.482,
+          0.199,
+          0.295,
+          0.49
+        ],
+        "shape": "box",
+        "category": "planta",
+        "points": null,
+        "uncertainty": "",
+        "id": "t12-arvore",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t12-cordas"
+        ]
+      },
+      {
+        "name": "Disco amarelo",
+        "description": "Grande disco atrás da perna esquerda na imagem.",
+        "region": [
+          0.307,
+          0.298,
+          0.204,
+          0.134
+        ],
+        "shape": "circle",
+        "category": "símbolo",
+        "points": null,
+        "uncertainty": "",
+        "id": "t12-disco",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Construção distante",
+        "description": "Muro e torre clara à esquerda.",
+        "region": [
+          0.258,
+          0.449,
+          0.194,
+          0.191
+        ],
+        "shape": "box",
+        "category": "arquitetura",
+        "points": null,
+        "uncertainty": "",
+        "id": "t12-construcao",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Flores junto ao chão",
+        "description": "Pequenas flores sob os braços abertos.",
+        "region": [
+          0.434,
+          0.719,
+          0.128,
+          0.06
+        ],
+        "shape": "box",
+        "category": "planta",
+        "points": null,
+        "uncertainty": "",
+        "id": "t12-flores",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t12-suspenso"
+        ]
+      },
+      {
+        "name": "O Enforcado / XII",
+        "description": "Nome e numeral no alto.",
+        "region": [
+          0.189,
+          0.081,
+          0.376,
+          0.045
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t12-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      }
+    ],
+    "relations": "A árvore sustenta as cordas.\nA cabeça está abaixo das pernas, invertendo a orientação habitual.\nAs mãos ficam próximas ao chão e às flores.",
+    "relationships": [
+      {
+        "fromId": "t12-arvore",
+        "toId": "t12-cordas",
+        "description": "A árvore sustenta as cordas."
+      },
+      {
+        "fromId": "t12-rosto",
+        "toId": "t12-suspenso",
+        "description": "A cabeça está abaixo das pernas, invertendo a orientação habitual."
+      },
+      {
+        "fromId": "t12-flores",
+        "toId": "t12-suspenso",
+        "description": "As mãos ficam próximas ao chão e às flores."
+      }
+    ],
+    "concepts": [
+      "suspensão",
+      "inversão",
+      "dependência",
+      "mudança de perspectiva"
+    ],
+    "symbolism": "suspensão; inversão; dependência; mudança de perspectiva",
+    "associations": [
+      "Pessoas presas a uma estrutura que altera sua percepção.",
+      "A experiência de perder orientação depois de um acidente."
+    ],
+    "uncertainties": [
+      "A imagem mostra suspensão pelos pés; não afirmar execução pelo pescoço."
+    ],
+    "surface": [
+      [
+        0.172917,
+        0.069531
+      ],
+      [
+        0.852083,
+        0.0625
+      ],
+      [
+        0.910417,
+        0.934375
+      ],
+      [
+        0.104167,
+        0.938281
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "feaf8ef9612bd1e9",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  },
+  "13": {
+    "file": "13-morte.jpeg",
+    "description": "Uma pessoa de roupa estampada dança ou se equilibra diante de uma figura coberta por um manto, sem rosto visível. A figura encoberta segura uma ampulheta; uma foice atravessa a cena, e um baú aberto com moedas e uma coroa estão no chão.",
+    "elements": [
+      {
+        "name": "Figura em movimento",
+        "description": "Pessoa de barba, gorro e roupa estampada, com uma perna erguida.",
+        "region": [
+          0.241,
+          0.278,
+          0.472,
+          0.469
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t13-dancarino",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t13-encoberto"
+        ]
+      },
+      {
+        "name": "Figura encoberta",
+        "description": "Figura alta de manto cinza cujo rosto não aparece.",
+        "region": [
+          0.255,
+          0.235,
+          0.475,
+          0.482
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t13-encoberto",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t13-dancarino"
+        ]
+      },
+      {
+        "name": "Ampulheta",
+        "description": "Pequeno instrumento de vidro sustentado no alto à esquerda.",
+        "region": [
+          0.266,
+          0.247,
+          0.058,
+          0.071
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t13-ampulheta",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t13-foice"
+        ]
+      },
+      {
+        "name": "Foice",
+        "description": "Lâmina curva acima do braço e longa haste inclinada à direita.",
+        "region": [
+          0.41,
+          0.352,
+          0.31,
+          0.418
+        ],
+        "shape": "box",
+        "category": "ferramenta",
+        "points": null,
+        "uncertainty": "",
+        "id": "t13-foice",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t13-ampulheta"
+        ]
+      },
+      {
+        "name": "Baú aberto",
+        "description": "Baú com tampa levantada no canto inferior esquerdo.",
+        "region": [
+          0.248,
+          0.693,
+          0.235,
+          0.124
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t13-bau",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t13-coroa"
+        ]
+      },
+      {
+        "name": "Moedas espalhadas",
+        "description": "Pequenas moedas junto ao baú.",
+        "region": [
+          0.444,
+          0.782,
+          0.099,
+          0.035
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t13-moedas",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Coroa no chão",
+        "description": "Coroa dourada separada da cabeça de qualquer figura.",
+        "region": [
+          0.598,
+          0.756,
+          0.103,
+          0.039
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t13-coroa",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t13-bau"
+        ]
+      },
+      {
+        "name": "Lua junto ao horizonte",
+        "description": "Pequeno crescente sobre uma mancha azulada no fundo.",
+        "region": [
+          0.607,
+          0.613,
+          0.043,
+          0.056
+        ],
+        "shape": "circle",
+        "category": "natureza",
+        "points": null,
+        "uncertainty": "",
+        "id": "t13-crescente",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "A Morte / XIII",
+        "description": "Título e numeral no alto.",
+        "region": [
+          0.156,
+          0.045,
+          0.404,
+          0.045
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t13-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      }
+    ],
+    "relations": "A figura em movimento está diante da presença encoberta.\nA ampulheta é levantada à esquerda; a foice atravessa o lado direito.\nBaú, moedas e coroa permanecem no chão.",
+    "relationships": [
+      {
+        "fromId": "t13-dancarino",
+        "toId": "t13-encoberto",
+        "description": "A figura em movimento está diante da presença encoberta."
+      },
+      {
+        "fromId": "t13-ampulheta",
+        "toId": "t13-foice",
+        "description": "A ampulheta é levantada à esquerda; a foice atravessa o lado direito."
+      },
+      {
+        "fromId": "t13-bau",
+        "toId": "t13-coroa",
+        "description": "Baú, moedas e coroa permanecem no chão."
+      }
+    ],
+    "concepts": [
+      "finitude",
+      "tempo",
+      "despossessão",
+      "persistência do movimento"
+    ],
+    "symbolism": "finitude; tempo; despossessão; persistência do movimento",
+    "associations": [
+      "A memória que sobrevive ao corpo e aos títulos de autoridade.",
+      "A possibilidade de uma máquina continuar operando depois do desaparecimento de quem a conduzia."
+    ],
+    "uncertainties": [
+      "Não há esqueleto nem cavalo nesta fotografia. O rosto da figura encoberta não é visível."
+    ],
+    "surface": [
+      [
+        0.119792,
+        0.025781
+      ],
+      [
+        0.827083,
+        0.025
+      ],
+      [
+        0.871875,
+        0.98125
+      ],
+      [
+        0.065625,
+        0.985156
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "a73091395375551b",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  },
+  "14": {
+    "file": "14-temperanca.jpeg",
+    "description": "Uma figura alada transfere um fio de líquido de um jarro alto para uma taça junto ao peito. Uma auréola radiada contorna a cabeça; flores crescem à esquerda dos pés e um manto rosado cai à direita.",
+    "elements": [
+      {
+        "name": "Figura alada",
+        "description": "Pessoa de longa veste clara, com grandes asas abertas.",
+        "region": [
+          0.241,
+          0.28,
+          0.471,
+          0.465
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t14-figura",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Jarro elevado",
+        "description": "Recipiente inclinado acima da cabeça.",
+        "region": [
+          0.32,
+          0.275,
+          0.102,
+          0.049
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t14-jarro",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t14-taca"
+        ]
+      },
+      {
+        "name": "Fio de líquido",
+        "description": "Linha vertical entre o jarro e a taça.",
+        "region": [
+          0.402,
+          0.299,
+          0.014,
+          0.145
+        ],
+        "shape": "box",
+        "category": "ação",
+        "points": null,
+        "uncertainty": "",
+        "id": "t14-liquido",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t14-taca"
+        ]
+      },
+      {
+        "name": "Taça receptora",
+        "description": "Pequena taça sustentada junto ao peito.",
+        "region": [
+          0.376,
+          0.439,
+          0.061,
+          0.036
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t14-taca",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t14-jarro",
+          "t14-liquido"
+        ]
+      },
+      {
+        "name": "Asas abertas",
+        "description": "Duas asas compridas ao redor do corpo.",
+        "region": [
+          0.238,
+          0.337,
+          0.475,
+          0.259
+        ],
+        "shape": "box",
+        "category": "símbolo",
+        "points": null,
+        "uncertainty": "",
+        "id": "t14-asas",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t14-flores"
+        ]
+      },
+      {
+        "name": "Auréola",
+        "description": "Forma amarela radiada atrás da cabeça.",
+        "region": [
+          0.382,
+          0.325,
+          0.132,
+          0.078
+        ],
+        "shape": "circle",
+        "category": "símbolo",
+        "points": null,
+        "uncertainty": "",
+        "id": "t14-aureola",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Flores à esquerda",
+        "description": "Planta de flores claras ao lado dos pés.",
+        "region": [
+          0.209,
+          0.573,
+          0.223,
+          0.233
+        ],
+        "shape": "box",
+        "category": "planta",
+        "points": null,
+        "uncertainty": "",
+        "id": "t14-flores",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t14-asas"
+        ]
+      },
+      {
+        "name": "A Temperança / XIV",
+        "description": "Nome e numeral superior.",
+        "region": [
+          0.185,
+          0.163,
+          0.358,
+          0.043
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t14-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      }
+    ],
+    "relations": "O jarro está acima da taça.\nO líquido liga os dois recipientes.\nAs asas envolvem a figura sem tocar as flores inferiores.",
+    "relationships": [
+      {
+        "fromId": "t14-jarro",
+        "toId": "t14-taca",
+        "description": "O jarro está acima da taça."
+      },
+      {
+        "fromId": "t14-liquido",
+        "toId": "t14-taca",
+        "description": "O líquido liga os dois recipientes."
+      },
+      {
+        "fromId": "t14-asas",
+        "toId": "t14-flores",
+        "description": "As asas envolvem a figura sem tocar as flores inferiores."
+      }
+    ],
+    "concepts": [
+      "mediação",
+      "transferência",
+      "proporção",
+      "cuidado"
+    ],
+    "symbolism": "mediação; transferência; proporção; cuidado",
+    "associations": [
+      "A passagem entre memória humana e armazenamento artificial.",
+      "A dosagem de controle e liberdade durante uma experiência com a plateia."
+    ],
+    "uncertainties": [],
+    "surface": [
+      [
+        0.14375,
+        0.150781
+      ],
+      [
+        0.775,
+        0.15
+      ],
+      [
+        0.828125,
+        0.946875
+      ],
+      [
+        0.064583,
+        0.945312
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "6eaa62144ecf94d1",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  },
+  "15": {
+    "file": "15-diabo.jpeg",
+    "description": "Uma figura grotesca de roupa pontuda monta um grande gato preto em um salão de piso quadriculado. Chamas sobem do chão; a figura carrega uma espada e ergue uma haste com uma forma escura pendente, diante de colunas e de um sol baixo.",
+    "elements": [
+      {
+        "name": "Cavaleiro grotesco",
+        "description": "Figura de rosto deformado e gola amarela, montada sobre o gato.",
+        "region": [
+          0.3,
+          0.292,
+          0.388,
+          0.287
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t15-cavaleiro",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t15-gato"
+        ]
+      },
+      {
+        "name": "Rosto grotesco",
+        "description": "Rosto de orelhas pontudas e boca aberta.",
+        "region": [
+          0.475,
+          0.31,
+          0.079,
+          0.074
+        ],
+        "shape": "box",
+        "category": "rosto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t15-rosto",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t15-pendente"
+        ]
+      },
+      {
+        "name": "Gato preto",
+        "description": "Grande felino de olhos claros e boca aberta, em salto.",
+        "region": [
+          0.227,
+          0.373,
+          0.51,
+          0.272
+        ],
+        "shape": "box",
+        "category": "animal",
+        "points": null,
+        "uncertainty": "",
+        "id": "t15-gato",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t15-cavaleiro"
+        ]
+      },
+      {
+        "name": "Espada",
+        "description": "Lâmina inclinada à esquerda do cavaleiro.",
+        "region": [
+          0.28,
+          0.32,
+          0.162,
+          0.209
+        ],
+        "shape": "box",
+        "category": "arma",
+        "points": null,
+        "uncertainty": "",
+        "id": "t15-espada",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Forma pendente escura",
+        "description": "Objeto escuro alongado suspenso na haste à direita.",
+        "region": [
+          0.608,
+          0.249,
+          0.12,
+          0.286
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "Pode sugerir uma ave ou estandarte; a fotografia não permite identificação inequívoca.",
+        "id": "t15-pendente",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t15-rosto"
+        ]
+      },
+      {
+        "name": "Chamas no piso",
+        "description": "Línguas de fogo em diversos pontos do chão.",
+        "region": [
+          0.229,
+          0.569,
+          0.528,
+          0.189
+        ],
+        "shape": "box",
+        "category": "natureza",
+        "points": null,
+        "uncertainty": "",
+        "id": "t15-chamas",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t15-piso"
+        ]
+      },
+      {
+        "name": "Piso quadriculado",
+        "description": "Quadrados alternados em perspectiva sob o gato.",
+        "region": [
+          0.229,
+          0.523,
+          0.528,
+          0.262
+        ],
+        "shape": "box",
+        "category": "arquitetura",
+        "points": null,
+        "uncertainty": "",
+        "id": "t15-piso",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t15-chamas"
+        ]
+      },
+      {
+        "name": "Sol baixo",
+        "description": "Disco alaranjado parcialmente encoberto entre as colunas.",
+        "region": [
+          0.357,
+          0.252,
+          0.103,
+          0.07
+        ],
+        "shape": "circle",
+        "category": "natureza",
+        "points": null,
+        "uncertainty": "",
+        "id": "t15-sol",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "O Diabo / XV",
+        "description": "Nome e numeral no alto.",
+        "region": [
+          0.193,
+          0.112,
+          0.348,
+          0.043
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t15-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      }
+    ],
+    "relations": "O cavaleiro está montado no gato.\nAs chamas aparecem no piso por onde o animal passa.\nA forma pendente se encontra à direita do rosto, acima da pata.",
+    "relationships": [
+      {
+        "fromId": "t15-cavaleiro",
+        "toId": "t15-gato",
+        "description": "O cavaleiro está montado no gato."
+      },
+      {
+        "fromId": "t15-chamas",
+        "toId": "t15-piso",
+        "description": "As chamas aparecem no piso por onde o animal passa."
+      },
+      {
+        "fromId": "t15-pendente",
+        "toId": "t15-rosto",
+        "description": "A forma pendente se encontra à direita do rosto, acima da pata."
+      }
+    ],
+    "concepts": [
+      "sedução",
+      "descontrole",
+      "espetáculo",
+      "dominação"
+    ],
+    "symbolism": "sedução; descontrole; espetáculo; dominação",
+    "associations": [
+      "Interfaces sedutoras que disfarçam relações de controle.",
+      "Automação que acelera dentro de um ambiente já em combustão."
+    ],
+    "uncertainties": [
+      "Não importar correntes e casal acorrentado de outra iconografia."
+    ],
+    "surface": [
+      [
+        0.164583,
+        0.099219
+      ],
+      [
+        0.805208,
+        0.095312
+      ],
+      [
+        0.870833,
+        0.932813
+      ],
+      [
+        0.09375,
+        0.936719
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "5e64c988048de27e",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  },
+  "16": {
+    "file": "16-torre.jpeg",
+    "description": "Uma pessoa de roupa vermelha e manto claro cai de cabeça para baixo entre grandes massas de alvenaria quebrada. Cabelos e tecidos acompanham a queda; pequenos fragmentos se soltam das paredes.",
+    "elements": [
+      {
+        "name": "Pessoa em queda",
+        "description": "Figura invertida com botas para cima e braços abertos.",
+        "region": [
+          0.269,
+          0.311,
+          0.371,
+          0.462
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t16-queda",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t16-torre",
+          "t16-fragmentos"
+        ]
+      },
+      {
+        "name": "Rosto durante a queda",
+        "description": "Rosto voltado para baixo sob cabelo escuro.",
+        "region": [
+          0.44,
+          0.62,
+          0.098,
+          0.08
+        ],
+        "shape": "box",
+        "category": "rosto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t16-rosto",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Alvenaria quebrada",
+        "description": "Grandes partes de uma construção se abrem ao redor da figura.",
+        "region": [
+          0.249,
+          0.241,
+          0.554,
+          0.489
+        ],
+        "shape": "box",
+        "category": "arquitetura",
+        "points": null,
+        "uncertainty": "",
+        "id": "t16-torre",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t16-queda"
+        ]
+      },
+      {
+        "name": "Fragmentos soltos",
+        "description": "Pequenos pedaços claros se desprendem da parede direita.",
+        "region": [
+          0.668,
+          0.376,
+          0.07,
+          0.117
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t16-fragmentos",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t16-queda"
+        ]
+      },
+      {
+        "name": "Manto arrastado",
+        "description": "Tecido claro e amarelo se projeta atrás da cabeça.",
+        "region": [
+          0.23,
+          0.596,
+          0.296,
+          0.177
+        ],
+        "shape": "box",
+        "category": "tecido",
+        "points": null,
+        "uncertainty": "",
+        "id": "t16-manto",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t16-botas"
+        ]
+      },
+      {
+        "name": "Botas elevadas",
+        "description": "Pernas e botas apontam para o alto.",
+        "region": [
+          0.37,
+          0.309,
+          0.198,
+          0.171
+        ],
+        "shape": "box",
+        "category": "gesto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t16-botas",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t16-manto"
+        ]
+      },
+      {
+        "name": "A Torre / XVI",
+        "description": "Nome e numeral superior.",
+        "region": [
+          0.186,
+          0.122,
+          0.369,
+          0.044
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t16-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      }
+    ],
+    "relations": "A pessoa cai entre partes da construção.\nO manto se estende na direção oposta às pernas.\nFragmentos se soltam junto ao corpo.",
+    "relationships": [
+      {
+        "fromId": "t16-queda",
+        "toId": "t16-torre",
+        "description": "A pessoa cai entre partes da construção."
+      },
+      {
+        "fromId": "t16-manto",
+        "toId": "t16-botas",
+        "description": "O manto se estende na direção oposta às pernas."
+      },
+      {
+        "fromId": "t16-fragmentos",
+        "toId": "t16-queda",
+        "description": "Fragmentos se soltam junto ao corpo."
+      }
+    ],
+    "concepts": [
+      "colapso",
+      "queda",
+      "perda de estrutura",
+      "ruptura"
+    ],
+    "symbolism": "colapso; queda; perda de estrutura; ruptura",
+    "associations": [
+      "O acidente e a perda súbita de orientação.",
+      "Sistemas aparentemente estáveis que revelam sua fragilidade estrutural."
+    ],
+    "uncertainties": [
+      "Não há raio claramente visível nesta ilustração; não o acrescentar."
+    ],
+    "surface": [
+      [
+        0.155208,
+        0.080469
+      ],
+      [
+        0.835417,
+        0.084375
+      ],
+      [
+        0.872917,
+        0.992969
+      ],
+      [
+        0.075,
+        0.988281
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "654332c768a37a8d",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  },
+  "17": {
+    "file": "17-estrela.jpeg",
+    "description": "Uma figura alada está em pé sob um céu repleto de estrelas. Uma mão repousa numa bacia com água e a outra segura uma longa haste com bandeira; um grande disco claro fica atrás de suas asas.",
+    "elements": [
+      {
+        "name": "Figura alada",
+        "description": "Pessoa de vestido claro, com uma mão baixa e outra erguida.",
+        "region": [
+          0.277,
+          0.305,
+          0.416,
+          0.491
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t17-figura",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t17-haste"
+        ]
+      },
+      {
+        "name": "Rosto voltado à esquerda",
+        "description": "Rosto de expressão serena entre os cabelos e as asas.",
+        "region": [
+          0.433,
+          0.35,
+          0.083,
+          0.074
+        ],
+        "shape": "box",
+        "category": "rosto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t17-rosto",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Estrelas",
+        "description": "Numerosas estrelas de tamanhos variados no céu azul.",
+        "region": [
+          0.222,
+          0.219,
+          0.53,
+          0.292
+        ],
+        "shape": "box",
+        "category": "natureza",
+        "points": null,
+        "uncertainty": "",
+        "id": "t17-estrelas",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t17-asas"
+        ]
+      },
+      {
+        "name": "Bacia com água",
+        "description": "Recipiente largo sobre um pedestal à esquerda.",
+        "region": [
+          0.223,
+          0.512,
+          0.206,
+          0.15
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t17-bacia",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t17-mao"
+        ]
+      },
+      {
+        "name": "Haste com bandeira",
+        "description": "Longa haste junto à mão erguida, com tecido pendente.",
+        "region": [
+          0.62,
+          0.269,
+          0.131,
+          0.526
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t17-haste",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t17-figura"
+        ]
+      },
+      {
+        "name": "Asas e disco claro",
+        "description": "Asas rosadas diante de um disco luminoso.",
+        "region": [
+          0.413,
+          0.292,
+          0.269,
+          0.199
+        ],
+        "shape": "box",
+        "category": "símbolo",
+        "points": null,
+        "uncertainty": "",
+        "id": "t17-asas",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t17-estrelas"
+        ]
+      },
+      {
+        "name": "Mão sobre a água",
+        "description": "Mão estendida sobre a borda da bacia.",
+        "region": [
+          0.28,
+          0.524,
+          0.077,
+          0.031
+        ],
+        "shape": "box",
+        "category": "gesto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t17-mao",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t17-bacia"
+        ]
+      },
+      {
+        "name": "A Estrela / XVII",
+        "description": "Nome e numeral no alto.",
+        "region": [
+          0.176,
+          0.099,
+          0.395,
+          0.044
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t17-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      }
+    ],
+    "relations": "A mão baixa toca ou se apoia na bacia.\nA outra mão segura a haste vertical.\nAs estrelas se distribuem atrás da figura alada.",
+    "relationships": [
+      {
+        "fromId": "t17-mao",
+        "toId": "t17-bacia",
+        "description": "A mão baixa toca ou se apoia na bacia."
+      },
+      {
+        "fromId": "t17-haste",
+        "toId": "t17-figura",
+        "description": "A outra mão segura a haste vertical."
+      },
+      {
+        "fromId": "t17-estrelas",
+        "toId": "t17-asas",
+        "description": "As estrelas se distribuem atrás da figura alada."
+      }
+    ],
+    "concepts": [
+      "orientação",
+      "esperança",
+      "distância",
+      "continuidade"
+    ],
+    "symbolism": "orientação; esperança; distância; continuidade",
+    "associations": [
+      "Sinais usados para se orientar numa ilha ou num sistema desconhecido.",
+      "A busca de referências quando a percepção já não oferece certezas."
+    ],
+    "uncertainties": [
+      "Não há dois jarros sendo derramados no solo; a figura está de pé."
+    ],
+    "surface": [
+      [
+        0.125,
+        0.085156
+      ],
+      [
+        0.801042,
+        0.083594
+      ],
+      [
+        0.852083,
+        0.964844
+      ],
+      [
+        0.060417,
+        0.9625
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "68a7e97fb2092dec",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  },
+  "18": {
+    "file": "18-lua.jpeg",
+    "description": "Uma figura de vestido claro, de rosto erguido, alcança flores amarelas de uma planta alta. Uma lua com perfil ocupa o alto à direita; dois canídeos estão junto a torres, e um crustáceo aparece perto da água no primeiro plano.",
+    "elements": [
+      {
+        "name": "Figura que alcança flores",
+        "description": "Pessoa de vestido claro e braços erguidos junto à planta.",
+        "region": [
+          0.375,
+          0.369,
+          0.335,
+          0.435
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t18-figura",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t18-flores"
+        ]
+      },
+      {
+        "name": "Lua com perfil",
+        "description": "Disco azul e amarelo com rosto de perfil.",
+        "region": [
+          0.617,
+          0.316,
+          0.092,
+          0.06
+        ],
+        "shape": "circle",
+        "category": "símbolo",
+        "points": null,
+        "uncertainty": "",
+        "id": "t18-lua",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Flores amarelas",
+        "description": "Flores grandes em caules altos à esquerda do rosto.",
+        "region": [
+          0.272,
+          0.312,
+          0.284,
+          0.147
+        ],
+        "shape": "box",
+        "category": "planta",
+        "points": null,
+        "uncertainty": "",
+        "id": "t18-flores",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t18-figura"
+        ]
+      },
+      {
+        "name": "Canídeo à esquerda",
+        "description": "Animal avermelhado junto às folhas e à torre esquerda.",
+        "region": [
+          0.23,
+          0.629,
+          0.18,
+          0.143
+        ],
+        "shape": "box",
+        "category": "animal",
+        "points": null,
+        "uncertainty": "",
+        "id": "t18-canideo-esquerdo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Canídeo à direita",
+        "description": "Animal claro sentado, com focinho erguido.",
+        "region": [
+          0.634,
+          0.605,
+          0.105,
+          0.132
+        ],
+        "shape": "box",
+        "category": "animal",
+        "points": null,
+        "uncertainty": "",
+        "id": "t18-canideo-direito",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t18-torres"
+        ]
+      },
+      {
+        "name": "Duas torres",
+        "description": "Construções de tamanhos e cores diferentes em lados opostos.",
+        "region": [
+          0.246,
+          0.534,
+          0.493,
+          0.143
+        ],
+        "shape": "box",
+        "category": "arquitetura",
+        "points": null,
+        "uncertainty": "",
+        "id": "t18-torres",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t18-canideo-direito"
+        ]
+      },
+      {
+        "name": "Crustáceo",
+        "description": "Animal vermelho com pinças no canto inferior esquerdo.",
+        "region": [
+          0.28,
+          0.781,
+          0.177,
+          0.073
+        ],
+        "shape": "box",
+        "category": "animal",
+        "points": null,
+        "uncertainty": "",
+        "id": "t18-crustaceo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t18-agua"
+        ]
+      },
+      {
+        "name": "Água no primeiro plano",
+        "description": "Pequena faixa de água junto ao crustáceo.",
+        "region": [
+          0.246,
+          0.795,
+          0.229,
+          0.061
+        ],
+        "shape": "box",
+        "category": "natureza",
+        "points": null,
+        "uncertainty": "",
+        "id": "t18-agua",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t18-crustaceo"
+        ]
+      },
+      {
+        "name": "A Lua / XVIII",
+        "description": "Título e numeral superior.",
+        "region": [
+          0.204,
+          0.158,
+          0.423,
+          0.039
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t18-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      }
+    ],
+    "relations": "A figura alcança as flores e olha para cima.\nOs canídeos ficam entre as torres e a figura.\nO crustáceo está junto à água, abaixo de todos os outros personagens.",
+    "relationships": [
+      {
+        "fromId": "t18-figura",
+        "toId": "t18-flores",
+        "description": "A figura alcança as flores e olha para cima."
+      },
+      {
+        "fromId": "t18-canideo-direito",
+        "toId": "t18-torres",
+        "description": "Os canídeos ficam entre as torres e a figura."
+      },
+      {
+        "fromId": "t18-crustaceo",
+        "toId": "t18-agua",
+        "description": "O crustáceo está junto à água, abaixo de todos os outros personagens."
+      }
+    ],
+    "concepts": [
+      "percepção",
+      "ambiguidade",
+      "imaginação",
+      "sinais incompletos"
+    ],
+    "symbolism": "percepção; ambiguidade; imaginação; sinais incompletos",
+    "associations": [
+      "Alucinação, imagens sintéticas e confiança no que se vê.",
+      "Acromatopsia e os limites do mundo percebido."
+    ],
+    "uncertainties": [
+      "Não distinguir cão e lobo com certeza apenas pela estilização; usar canídeos."
+    ],
+    "surface": [
+      [
+        0.154167,
+        0.138281
+      ],
+      [
+        0.815625,
+        0.1375
+      ],
+      [
+        0.875,
+        0.998437
+      ],
+      [
+        0.0875,
+        0.996094
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "8fb311380c17070a",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  },
+  "19": {
+    "file": "19-sol.jpeg",
+    "description": "Duas pessoas se voltam uma para a outra sob um grande sol de raios ondulados. Cada uma ergue pequenos objetos arredondados; uma coluna baixa com chama separa as figuras, cercadas por flores e plantas.",
+    "elements": [
+      {
+        "name": "Sol",
+        "description": "Grande disco amarelo com raios retos e ondulados.",
+        "region": [
+          0.447,
+          0.353,
+          0.147,
+          0.105
+        ],
+        "shape": "circle",
+        "category": "natureza",
+        "points": null,
+        "uncertainty": "",
+        "id": "t19-sol",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t19-objeto-central"
+        ]
+      },
+      {
+        "name": "Raios solares",
+        "description": "Raios flamejantes irradiam pelo alto da composição.",
+        "region": [
+          0.288,
+          0.216,
+          0.519,
+          0.171
+        ],
+        "shape": "box",
+        "category": "símbolo",
+        "points": null,
+        "uncertainty": "",
+        "id": "t19-raios",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Figura à esquerda",
+        "description": "Pessoa de roupa vermelha, olhando para a figura oposta.",
+        "region": [
+          0.277,
+          0.354,
+          0.281,
+          0.393
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t19-esquerda",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t19-coluna"
+        ]
+      },
+      {
+        "name": "Figura à direita",
+        "description": "Pessoa de vestido claro, com a mão estendida ao centro.",
+        "region": [
+          0.555,
+          0.356,
+          0.263,
+          0.401
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t19-direita",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Coluna com chama",
+        "description": "Pedestal central com uma pequena chama no topo.",
+        "region": [
+          0.486,
+          0.463,
+          0.107,
+          0.241
+        ],
+        "shape": "box",
+        "category": "arquitetura",
+        "points": null,
+        "uncertainty": "",
+        "id": "t19-coluna",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t19-esquerda",
+          "t19-flores"
+        ]
+      },
+      {
+        "name": "Jardim florido",
+        "description": "Flores e folhas em torno dos pés e do pedestal.",
+        "region": [
+          0.273,
+          0.582,
+          0.539,
+          0.213
+        ],
+        "shape": "box",
+        "category": "planta",
+        "points": null,
+        "uncertainty": "",
+        "id": "t19-flores",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t19-coluna"
+        ]
+      },
+      {
+        "name": "O Sol / XIX",
+        "description": "Título e numeral no alto.",
+        "region": [
+          0.234,
+          0.098,
+          0.384,
+          0.045
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t19-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "id": "t19-objeto-esquerdo",
+        "name": "Objeto erguido à esquerda",
+        "description": "Pequeno objeto arredondado sustentado pela mão.",
+        "category": "objeto",
+        "region": [
+          0.303,
+          0.37,
+          0.035,
+          0.028
+        ],
+        "shape": "circle",
+        "points": null,
+        "validated": true,
+        "origin": "editorial",
+        "uncertainty": "Conteúdo e material não identificáveis com certeza.",
+        "relations": []
+      },
+      {
+        "id": "t19-objeto-direito",
+        "name": "Objeto erguido à direita",
+        "description": "Pequeno objeto arredondado sustentado pela mão.",
+        "category": "objeto",
+        "region": [
+          0.714,
+          0.375,
+          0.029,
+          0.028
+        ],
+        "shape": "circle",
+        "points": null,
+        "validated": true,
+        "origin": "editorial",
+        "uncertainty": "Conteúdo e material não identificáveis com certeza.",
+        "relations": []
+      },
+      {
+        "id": "t19-objeto-central",
+        "name": "Objeto entre as mãos",
+        "description": "Pequeno objeto arredondado sustentado pela mão.",
+        "category": "objeto",
+        "region": [
+          0.51,
+          0.42,
+          0.033,
+          0.039
+        ],
+        "shape": "circle",
+        "points": null,
+        "validated": true,
+        "origin": "editorial",
+        "uncertainty": "Conteúdo e material não identificáveis com certeza.",
+        "relations": [
+          "t19-sol"
+        ]
+      }
+    ],
+    "relations": "As duas figuras se voltam para a coluna central.\nO sol está acima das mãos que convergem.\nA vegetação cresce em torno da base do pedestal.",
+    "relationships": [
+      {
+        "fromId": "t19-esquerda",
+        "toId": "t19-coluna",
+        "description": "As duas figuras se voltam para a coluna central."
+      },
+      {
+        "fromId": "t19-sol",
+        "toId": "t19-objeto-central",
+        "description": "O sol está acima das mãos que convergem."
+      },
+      {
+        "fromId": "t19-flores",
+        "toId": "t19-coluna",
+        "description": "A vegetação cresce em torno da base do pedestal."
+      }
+    ],
+    "concepts": [
+      "visibilidade",
+      "encontro",
+      "energia",
+      "exposição"
+    ],
+    "symbolism": "visibilidade; encontro; energia; exposição",
+    "associations": [
+      "O que a iluminação da cena revela e o que ainda deixa oculto.",
+      "A plateia tornando-se visível a um sistema que a observa."
+    ],
+    "uncertainties": [],
+    "surface": [
+      [
+        0.1875,
+        0.083594
+      ],
+      [
+        0.8625,
+        0.092969
+      ],
+      [
+        0.910417,
+        0.964063
+      ],
+      [
+        0.096875,
+        0.960938
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "00bda88b93da0352",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  },
+  "20": {
+    "file": "20-julgamento.jpeg",
+    "description": "Quatro figuras aladas sopram longas trombetas sob nuvens e feixes de luz. Vestes e fitas se entrelaçam, e flores e ondas de tecido ocupam a parte inferior; não aparecem túmulos nem corpos saindo da terra.",
+    "elements": [
+      {
+        "name": "Quatro figuras aladas",
+        "description": "Figuras de perfil reunidas com asas e vestes longas.",
+        "region": [
+          0.207,
+          0.322,
+          0.555,
+          0.35
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t20-anjos",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t20-trombetas",
+          "t20-nuvens"
+        ]
+      },
+      {
+        "name": "Trombetas",
+        "description": "Longos instrumentos curvos soprados pelas figuras.",
+        "region": [
+          0.218,
+          0.319,
+          0.55,
+          0.166
+        ],
+        "shape": "box",
+        "category": "instrumento",
+        "points": null,
+        "uncertainty": "",
+        "id": "t20-trombetas",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t20-anjos",
+          "t20-asas"
+        ]
+      },
+      {
+        "name": "Asas sobrepostas",
+        "description": "Penas das asas se sobrepõem atrás dos ombros.",
+        "region": [
+          0.233,
+          0.345,
+          0.53,
+          0.13
+        ],
+        "shape": "box",
+        "category": "símbolo",
+        "points": null,
+        "uncertainty": "",
+        "id": "t20-asas",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t20-trombetas"
+        ]
+      },
+      {
+        "name": "Nuvens e feixes",
+        "description": "Nuvens recortadas e linhas de luz acima dos músicos.",
+        "region": [
+          0.226,
+          0.174,
+          0.534,
+          0.156
+        ],
+        "shape": "box",
+        "category": "natureza",
+        "points": null,
+        "uncertainty": "",
+        "id": "t20-nuvens",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t20-anjos"
+        ]
+      },
+      {
+        "name": "Vestes ondulantes",
+        "description": "Tecidos claros e rosados curvam-se em direção ao chão.",
+        "region": [
+          0.32,
+          0.466,
+          0.448,
+          0.305
+        ],
+        "shape": "box",
+        "category": "tecido",
+        "points": null,
+        "uncertainty": "",
+        "id": "t20-tecidos",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Flores inferiores",
+        "description": "Flores pequenas no chão e em ramos à direita.",
+        "region": [
+          0.21,
+          0.643,
+          0.553,
+          0.134
+        ],
+        "shape": "box",
+        "category": "planta",
+        "points": null,
+        "uncertainty": "",
+        "id": "t20-flores",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "O Julgamento / XX",
+        "description": "Nome e numeral no cabeçalho.",
+        "region": [
+          0.178,
+          0.058,
+          0.38,
+          0.043
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t20-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      }
+    ],
+    "relations": "As quatro figuras sopram os instrumentos na mesma direção geral.\nAs asas se sobrepõem atrás das trombetas.\nNuvens e luz ocupam o espaço acima das cabeças.",
+    "relationships": [
+      {
+        "fromId": "t20-anjos",
+        "toId": "t20-trombetas",
+        "description": "As quatro figuras sopram os instrumentos na mesma direção geral."
+      },
+      {
+        "fromId": "t20-asas",
+        "toId": "t20-trombetas",
+        "description": "As asas se sobrepõem atrás das trombetas."
+      },
+      {
+        "fromId": "t20-nuvens",
+        "toId": "t20-anjos",
+        "description": "Nuvens e luz ocupam o espaço acima das cabeças."
+      }
+    ],
+    "concepts": [
+      "chamado",
+      "escuta",
+      "convocação",
+      "ressonância"
+    ],
+    "symbolism": "chamado; escuta; convocação; ressonância",
+    "associations": [
+      "O som que solicita atenção e transforma indivíduos em plateia.",
+      "Uma máquina que convoca respostas antes de decidir como classificá-las."
+    ],
+    "uncertainties": [
+      "Não importar ressurreição e sepulturas de outra edição do tarô."
+    ],
+    "surface": [
+      [
+        0.13125,
+        0.041406
+      ],
+      [
+        0.810417,
+        0.046875
+      ],
+      [
+        0.851042,
+        0.930469
+      ],
+      [
+        0.053125,
+        0.929688
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "e748ddea3004ef55",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  },
+  "21": {
+    "file": "21-mundo.jpeg",
+    "description": "Uma figura dança diante de uma grande esfera, entre plantas e flores. Quatro cabeças surgem em nuvens nos cantos da ilustração: humana, ave de rapina, bovina e leão; longas correntes ou hastes floridas sobem à direita.",
+    "elements": [
+      {
+        "name": "Figura dançando",
+        "description": "Pessoa de vestido claro com os braços erguidos junto à cabeça.",
+        "region": [
+          0.342,
+          0.319,
+          0.28,
+          0.306
+        ],
+        "shape": "box",
+        "category": "personagem",
+        "points": null,
+        "uncertainty": "",
+        "id": "t21-figura",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t21-esfera"
+        ]
+      },
+      {
+        "name": "Esfera de fundo",
+        "description": "Grande forma circular com manchas rosadas atrás da pessoa.",
+        "region": [
+          0.248,
+          0.314,
+          0.432,
+          0.287
+        ],
+        "shape": "circle",
+        "category": "símbolo",
+        "points": null,
+        "uncertainty": "",
+        "id": "t21-esfera",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t21-figura",
+          "t21-flores"
+        ]
+      },
+      {
+        "name": "Cabeça humana",
+        "description": "Rosto humano entre nuvens, no canto superior esquerdo.",
+        "region": [
+          0.258,
+          0.194,
+          0.127,
+          0.115
+        ],
+        "shape": "box",
+        "category": "rosto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t21-humano",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Cabeça de ave",
+        "description": "Cabeça de ave de rapina no canto superior direito.",
+        "region": [
+          0.526,
+          0.2,
+          0.184,
+          0.102
+        ],
+        "shape": "box",
+        "category": "animal",
+        "points": null,
+        "uncertainty": "",
+        "id": "t21-ave",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t21-leao"
+        ]
+      },
+      {
+        "name": "Cabeça bovina",
+        "description": "Cabeça com chifres no canto inferior esquerdo.",
+        "region": [
+          0.235,
+          0.66,
+          0.161,
+          0.113
+        ],
+        "shape": "box",
+        "category": "animal",
+        "points": null,
+        "uncertainty": "",
+        "id": "t21-bovino",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "Cabeça de leão",
+        "description": "Rosto de leão com juba, no canto inferior direito.",
+        "region": [
+          0.573,
+          0.645,
+          0.166,
+          0.136
+        ],
+        "shape": "box",
+        "category": "animal",
+        "points": null,
+        "uncertainty": "",
+        "id": "t21-leao",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t21-ave"
+        ]
+      },
+      {
+        "name": "Flores e ramos",
+        "description": "Plantas e flores crescem diante da esfera.",
+        "region": [
+          0.255,
+          0.475,
+          0.484,
+          0.2
+        ],
+        "shape": "box",
+        "category": "planta",
+        "points": null,
+        "uncertainty": "",
+        "id": "t21-flores",
+        "validated": true,
+        "origin": "editorial",
+        "relations": [
+          "t21-esfera"
+        ]
+      },
+      {
+        "name": "Hastes floridas verticais",
+        "description": "Elementos vegetais e elos alongados à direita da esfera.",
+        "region": [
+          0.642,
+          0.286,
+          0.133,
+          0.365
+        ],
+        "shape": "box",
+        "category": "objeto",
+        "points": null,
+        "uncertainty": "Alguns elos podem ser vegetais ou correntes estilizadas; manter descrição formal.",
+        "id": "t21-haste",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      },
+      {
+        "name": "O Mundo / XXI",
+        "description": "Título e numeral no alto.",
+        "region": [
+          0.176,
+          0.058,
+          0.399,
+          0.044
+        ],
+        "shape": "underline",
+        "category": "texto",
+        "points": null,
+        "uncertainty": "",
+        "id": "t21-titulo",
+        "validated": true,
+        "origin": "editorial",
+        "relations": []
+      }
+    ],
+    "relations": "A figura fica diante da esfera.\nAs quatro cabeças enquadram a composição nos cantos.\nA vegetação atravessa o limite entre o corpo e a esfera.",
+    "relationships": [
+      {
+        "fromId": "t21-figura",
+        "toId": "t21-esfera",
+        "description": "A figura fica diante da esfera."
+      },
+      {
+        "fromId": "t21-ave",
+        "toId": "t21-leao",
+        "description": "As quatro cabeças enquadram a composição nos cantos."
+      },
+      {
+        "fromId": "t21-flores",
+        "toId": "t21-esfera",
+        "description": "A vegetação atravessa o limite entre o corpo e a esfera."
+      }
+    ],
+    "concepts": [
+      "totalidade",
+      "interdependência",
+      "representação",
+      "circuito"
+    ],
+    "symbolism": "totalidade; interdependência; representação; circuito",
+    "associations": [
+      "A ilha como mundo delimitado e a realidade aumentada como camada que o expande.",
+      "Uma consciência que só conhece o mundo por enquadramentos e sinais."
+    ],
+    "uncertainties": [],
+    "surface": [
+      [
+        0.130208,
+        0.038281
+      ],
+      [
+        0.811458,
+        0.038281
+      ],
+      [
+        0.861458,
+        0.942187
+      ],
+      [
+        0.063542,
+        0.946094
+      ]
+    ],
+    "review": {
+      "method": "Inspeção individual da fotografia fornecida e conferência de sobreposições em coordenadas normalizadas.",
+      "referenceVersion": "784dcc4fb4d7ab0d",
+      "reviewedAt": "2026-10-15",
+      "reviewer": "Codex - inspeção visual editorial",
+      "verification": "Fotografia individual e duas passagens de sobreposição; regiões corrigidas após inspeção. Validação editorial da referência, não ensaio físico."
+    }
+  }
+}

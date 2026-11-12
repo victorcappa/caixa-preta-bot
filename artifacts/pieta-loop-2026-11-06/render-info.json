@@ -1,0 +1,36 @@
+{
+  "source_url": "https://imaginarbrasil.blob.core.windows.net/artefatos3d/pieta.glb",
+  "source_sha256": "740c9ea52cc7666bf55d3115c916d9ed0c2f7675937341fa9fc7c1503f1f05a4",
+  "resolution": [
+    1920,
+    1080
+  ],
+  "fps": 30,
+  "frames": 600,
+  "duration_seconds": 20,
+  "rotation_degrees": 360,
+  "rotation_axis": "Y in original glTF coordinates (Z after Blender import)",
+  "angular_velocity_degrees_per_second": 18,
+  "background": "#000000",
+  "audio": false,
+  "first_frame_angle_degrees": 90,
+  "loop_sampling": "600 unique samples: 90 + 360 * i / 600 degrees for i=0..599; 450 degree endpoint excluded",
+  "renderer": "Blender 4.2.0, EEVEE, 64 samples",
+  "codec": "H.264 / yuv420p / CRF 16",
+  "validation_status": "passed",
+  "validation": {
+    "decoded_video_frames": 600,
+    "duration_seconds": 20.0,
+    "frame_rate": "30/1",
+    "resolution": [
+      1920,
+      1080
+    ],
+    "audio_streams": 0,
+    "full_decode_errors": 0,
+    "start_vs_exact_360_degree_endpoint_ssim": 0.999998,
+    "visual_review": "Inspected front, sides, back, full-resolution first frame, and contact sheet from encoded MP4. Entire sculpture remains inside frame."
+  },
+  "output_sha256": "c2b9209c36765a33766992d56380ee6a12aa20c08305ce1b71b30bab8f9f0380",
+  "output_bytes": 10639293
+}

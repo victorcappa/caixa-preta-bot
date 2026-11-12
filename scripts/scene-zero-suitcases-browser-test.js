@@ -128,10 +128,10 @@ try {
   await waitForState(context.request, (value) => value.audienceWarmup.phase === "complete", 20000);
   const restoreManualResponse = await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "set-manual-mode", manualMode: true } });
   assert.equal(restoreManualResponse.ok(), true);
-  const manualSuitcaseTwo = controller.getByRole("button", { name: "SORTEAR MALA 2", exact: true });
+  const manualSuitcaseTwo = controller.getByRole("button", { name: "SORTEAR MALA CENTRO", exact: true });
   await manualSuitcaseTwo.waitFor();
-  await controller.getByRole("button", { name: "SORTEAR MALA 3", exact: true }).waitFor();
-  await controller.getByRole("button", { name: "SORTEAR MALA 1", exact: true }).waitFor();
+  await controller.getByRole("button", { name: "SORTEAR MALA ESQUERDA", exact: true }).waitFor();
+  await controller.getByRole("button", { name: "SORTEAR MALA DIREITA", exact: true }).waitFor();
   await manualSuitcaseTwo.click();
   let state = await waitForState(context.request, (value) => (
     value.sceneZero.suitcaseGame.currentSuitcase === 2
@@ -142,7 +142,7 @@ try {
   assert.equal(result.sceneZero.suitcaseGame.gincana.currentTask.id, "bexigas-chave");
   assert.doesNotMatch(result.sceneZero.suitcaseGame.gincana.currentTask.text, /PLATEIA/);
   await waitForState(context.request, (value) => value.sceneZero.suitcaseGame.cuePhase === "selected");
-  const suitcaseCue = projection.getByLabel("Mala indicada: 2");
+  const suitcaseCue = projection.getByLabel("Mala indicada: Centro");
   await suitcaseCue.waitFor();
   assert.equal(await suitcaseCue.getByText("ABRA A MALA").count(), 0, "a mala escolhida deve aguardar a seta antes da ordem de abrir");
   const openSuitcaseButton = controller.getByRole("button", { name: "SEGUIR → ABRA A MALA" });
