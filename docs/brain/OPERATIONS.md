@@ -151,7 +151,7 @@ Brain maintenance never authorizes commit, push, merge, deploy, data deletion, i
 
 ## Operator Público
 
-Use REVELAR OPERATOR at the top of Scene Zero’s right menu; ABRIR CONVERSA reopens private controls. `/operator` contains bot parameters. Capture the public tab with CONECTAR PROJEÇÃO AO VIVO for a muted live monitor. Operation, recovery, streaming, personality and acceptance limits: `OPERATOR_PUBLICO.md`.
+Scene Zero’s REVELAR OPERATOR opens public conversation; ABRIR CONVERSA opens private controls. `/operator` has parameters. CONECTAR PROJEÇÃO AO VIVO gives a muted monitor. Operation: `OPERATOR_PUBLICO.md`. Live training: `docs/TREINO_AO_VIVO.md`.
 
 For projection calibration, open `/?menu` in a separate control tab and keep the actual projection window without `?menu`. The menu tab does not register as the active projection. Choose **PERFIL TECIDO** to try larger bold white text without glow, or **VISUAL ORIGINAL** to disable the profile. Adjust typeface, weight, general scale, line spacing and per-module text scale; select a public module to move/resize it numerically or in the schematic preview. **RESTAURAR COMPONENTE** clears its geometry and text scale. Changes sync to connected public windows and persist in operator preferences; a failed save offers retry. Alt+M toggles the menu and Esc closes it. These adjustments do not change the projector's physical resolution; check clipping and readability on the actual projector and fabric, particularly after enlarging long text. Other canvas-rendered graphics keep their own rendering settings.
 

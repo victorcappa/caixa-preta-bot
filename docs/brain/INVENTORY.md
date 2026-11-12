@@ -8,6 +8,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 
 ## Package scripts
 
+- `npm run test:live-training` -> `node --no-warnings scripts/live-training-test.js`
+- `npm run test:live-training:browser` -> `node --no-warnings scripts/live-training-browser-test.js`
 - `npm run test:modelo-3d` -> `node scripts/model-3d-test.cjs`
 - `npm run test:modelo-3d:local` -> `node scripts/model-3d-local-smoke.cjs`
 - `npm run test:modelo-3d:browser` -> `node scripts/model-3d-browser-test.cjs`
@@ -106,6 +108,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `/transicao-psicodelica` -> `app/transicao-psicodelica/page.js`
 - `/treinamento/controle` -> `app/treinamento/controle/page.js`
 - `/treinamento` -> `app/treinamento/page.js`
+- `/treino-ao-vivo/controle` -> `app/treino-ao-vivo/controle/page.js`
+- `/treino-ao-vivo` -> `app/treino-ao-vivo/page.js`
 - `/treino` -> `app/treino/page.js`
 - `/videomapping-controller` -> `app/videomapping-controller/page.js`
 - `/videomapping` -> `app/videomapping/page.js`
@@ -129,6 +133,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `POST /api/instagram/panel` -> `app/api/instagram/panel/route.js`
 - `POST /api/instagram/password` -> `app/api/instagram/password/route.js`
 - `GET /api/instagram/stream` -> `app/api/instagram/stream/route.js`
+- `GET, POST /api/live-training` -> `app/api/live-training/route.js`
 - `GET /api/modelo-3d/[id]/[asset]` -> `app/api/modelo-3d/[id]/[asset]/route.js`
 - `GET, POST /api/modelo-3d` -> `app/api/modelo-3d/route.js`
 - `GET, POST /api/operator-preferences` -> `app/api/operator-preferences/route.js`
@@ -173,6 +178,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/ForcaGShadersController.js`
 - `components/GlitchOverlay.js`
 - `components/InstagramBrowserPanel.js`
+- `components/LiveTraining.js`
 - `components/Model3DController.js`
 - `components/OperatorBotSettings.js`
 - `components/OperatorConsole.js`
@@ -326,6 +332,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/game-director-test.js`
 - `scripts/instagram-controller-test.js`
 - `scripts/internet-voice-test.js`
+- `scripts/live-training-browser-test.js`
+- `scripts/live-training-test.js`
 - `scripts/manual-sound-check-browser-test.js`
 - `scripts/operator-preferences-browser-test.js`
 - `scripts/operator-preferences-test.js`

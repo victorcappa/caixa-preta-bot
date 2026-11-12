@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:live-training": "node --no-warnings scripts/live-training-test.js",
+    "test:live-training:browser": "node --no-warnings scripts/live-training-browser-test.js",
     "test:modelo-3d": "node scripts/model-3d-test.cjs",
     "test:modelo-3d:local": "node scripts/model-3d-local-smoke.cjs",
     "test:modelo-3d:browser": "node scripts/model-3d-browser-test.cjs",
