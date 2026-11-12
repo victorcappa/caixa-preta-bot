@@ -6,6 +6,8 @@ import { normalizePointCloudSettings } from "@/lib/post-demo/pointCloudSettings"
 import { samplePointCloudMotion } from "@/lib/post-demo/pointCloudMotion";
 import styles from "./PostDemo.module.css";
 
+const VIEWPORT_BLEED = .18;
+
 export default function PostDemoPointCloud({ reference, view, onError }) {
   const host = useRef(null), reportError = useRef(onError), live = useRef(null);
   reportError.current = onError;
@@ -57,6 +59,7 @@ export default function PostDemoPointCloud({ reference, view, onError }) {
         geometry.computeBoundingSphere(); geometry.boundingSphere.radius += largestSide * .008;
         material = new THREE.ShaderMaterial({ vertexColors: true, uniforms: {
           pointSize: { value: 1.2 }, fitDistance: { value: 2 }, uTime: { value: 0 },
+          uSourceMin: { value: new THREE.Vector2(minimum.x, minimum.y) }, uSourceSpan: { value: new THREE.Vector2(Math.max(size.x, .000001), Math.max(size.y, .000001)) },
           uPulsePhaseOffset: { value: 0 }, uMotionPhaseOffset: { value: 0 },
           uPulsePeriod: { value: initial.pulsePeriodSeconds }, uPulseIntensity: { value: initial.pulseIntensity },
           uPulseSize: { value: initial.pulseSize }, uHighlightIntensity: { value: initial.highlightIntensity },
@@ -64,13 +67,18 @@ export default function PostDemoPointCloud({ reference, view, onError }) {
           uRowPhaseSpread: { value: initial.rowPhaseSpread }, uBrightness: { value: initial.brightness }, uRevealOpacity: { value: 0 }
         }, vertexShader: pointCloudVertexShader, fragmentShader: pointCloudFragmentShader });
         const points = new THREE.Points(geometry, material); scene.add(points);
-        controls = new orbit.OrbitControls(camera, canvas); controls.enableDamping = true; controls.dampingFactor = .1;
+        // Keep gestures inside the saved frame; the soft visual spill must not cover nearby text controls.
+        controls = new orbit.OrbitControls(camera, element); controls.enableDamping = true; controls.dampingFactor = .1;
         controls.minDistance = .055; controls.maxDistance = 30; controls.rotateSpeed = .45; controls.panSpeed = .65; controls.zoomSpeed = .7;
         controls.screenSpacePanning = true; controls.listenToKeyEvents(canvas);
         let fitDistance = 2, basePointSize = 1.2, interacting = false, introCancelled = false, lastManual = -Infinity;
         const resize = () => {
           const rect = element.getBoundingClientRect(), width = Math.max(1, rect.width), height = Math.max(1, rect.height);
-          renderer.setSize(width, height, false); camera.aspect = width / height; camera.updateProjectionMatrix();
+          const bleedX = width * VIEWPORT_BLEED, bleedY = height * VIEWPORT_BLEED;
+          renderer.setSize(width + bleedX * 2, height + bleedY * 2);
+          canvas.style.left = `${-bleedX}px`; canvas.style.top = `${-bleedY}px`;
+          // Extend the frustum rather than scaling the original central view.
+          camera.setViewOffset(width, height, -bleedX, -bleedY, width + bleedX * 2, height + bleedY * 2);
           fitDistance = Math.max(size.y, size.x / camera.aspect) / (2 * Math.tan(Math.PI / 8)) * 1.15 + size.z * .45;
           basePointSize = Math.max(.9, Math.min(2.1, height / 500)) * renderer.getPixelRatio();
         };
