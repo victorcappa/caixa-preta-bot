@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { decodePointCloud } from "@/lib/post-demo/pointCloudFormat";
+import { POINT_CLOUD_ANIMATION as animation, pointCloudVertexShader, pointCloudFragmentShader } from "@/lib/post-demo/pointCloudAnimation";
 import styles from "./PostDemo.module.css";
 
 const FRAMING_SCALE = .8;
@@ -26,9 +27,6 @@ export default function PostDemoPointCloud({ reference, onError }) {
         canvas.tabIndex = 0; canvas.setAttribute("aria-label", "Nuvem de pontos 3D da plateia");
         canvas.dataset.pointCount = String(cloud.count); element.appendChild(canvas);
         const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(45, 1, .01, 60);
-        // Do the fixed color correction once, rather than three pow() calls per point per frame.
-        const gamma = Uint8Array.from({ length: 256 }, (_, value) => Math.round(Math.pow(value / 255, .72) * 255));
-        for (let index = 0; index < cloud.colors.length; index++) cloud.colors[index] = gamma[cloud.colors[index]];
         // Randomized draw order reveals sparse points without drawing/discarding the entire cloud.
         // Keep attributes contiguous so full-density frames retain sequential memory access.
         let seed = 0x6d2b79f5;
@@ -43,12 +41,25 @@ export default function PostDemoPointCloud({ reference, onError }) {
         geometry = new THREE.BufferGeometry(); geometry.setAttribute("position", new THREE.BufferAttribute(cloud.positions, 3));
         geometry.setAttribute("color", new THREE.BufferAttribute(cloud.colors, 3, true)); geometry.computeBoundingBox();
         const size = geometry.boundingBox.getSize(new THREE.Vector3());
-        material = new THREE.ShaderMaterial({ vertexColors: true, uniforms: { pointSize: { value: 1.2 }, fitDistance: { value: 2 } },
-          vertexShader: `varying vec3 rgb; uniform float pointSize; uniform float fitDistance;
-            void main(){vec4 p=modelViewMatrix*vec4(position,1.0);gl_Position=projectionMatrix*p;
-            gl_PointSize=clamp(pointSize*fitDistance/max(-p.z,0.02),1.0,6.0);rgb=color;}`,
-          fragmentShader: `varying vec3 rgb; void main(){vec2 delta=gl_PointCoord-vec2(0.5);float r=dot(delta,delta);if(r>0.25)discard;
-            gl_FragColor=vec4(rgb*(1.0-0.55*smoothstep(0.09,0.26,r)),1.0);}` });
+        const largestSide = Math.max(size.x, size.y, size.z, .000001), localAmplitude = largestSide * animation.localAmplitude;
+        const life = new Float32Array(cloud.count * 4), minimum = geometry.boundingBox.min;
+        for (let index = 0; index < cloud.count; index++) {
+          const offset = index * 3, x = (cloud.positions[offset] - minimum.x) / Math.max(size.x, .000001);
+          const y = (cloud.positions[offset + 1] - minimum.y) / Math.max(size.y, .000001);
+          const z = (cloud.positions[offset + 2] - minimum.z) / Math.max(size.z, .000001);
+          seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5;
+          const random = (seed >>> 0) / 4294967296;
+          const luminance = (cloud.colors[offset] * .2126 + cloud.colors[offset + 1] * .7152 + cloud.colors[offset + 2] * .0722) / 255;
+          life.set([x * 18 + y * 13 + z * 9 + random * .6, y * .8 + (1 - z) * .2, random, .45 + .55 * (1 - luminance)], index * 4);
+        }
+        geometry.setAttribute("aLife", new THREE.BufferAttribute(life, 4));
+        geometry.computeBoundingSphere(); geometry.boundingSphere.radius += localAmplitude;
+        material = new THREE.ShaderMaterial({ vertexColors: true, uniforms: {
+          pointSize: { value: 1.2 }, fitDistance: { value: 2 }, uTime: { value: 0 },
+          uPulsePeriod: { value: animation.pulsePeriodSeconds }, uPulseIntensity: { value: animation.pulseIntensity },
+          uPulseSize: { value: animation.pulseSize }, uHighlightIntensity: { value: animation.highlightIntensity },
+          uLocalAmplitude: { value: localAmplitude }, uMotionSpeed: { value: animation.motionSpeed }, uRowPhaseSpread: { value: animation.rowPhaseSpread }
+        }, vertexShader: pointCloudVertexShader, fragmentShader: pointCloudFragmentShader });
         const points = new THREE.Points(geometry, material); scene.add(points);
         controls = new orbit.OrbitControls(camera, canvas); controls.enableDamping = true; controls.dampingFactor = .1;
         controls.minDistance = .055; controls.maxDistance = 30; controls.rotateSpeed = .45; controls.panSpeed = .65; controls.zoomSpeed = .7;
@@ -71,6 +82,7 @@ export default function PostDemoPointCloud({ reference, onError }) {
         const draw = now => {
           if (disposed) return;
           const elapsed = (now - start) / 1000, dt = Math.min(.05, (now - previous) / 1000); previous = now;
+          material.uniforms.uTime.value = elapsed;
           const quiet = (now - lastManual) / 1000, blend = interacting ? 0 : Math.max(0, Math.min(1, (quiet - 1.8) / 2));
           if (!introCancelled && elapsed < 12) {
             const phase = elapsed / 12, ease = phase * phase * (3 - 2 * phase);
@@ -83,7 +95,7 @@ export default function PostDemoPointCloud({ reference, onError }) {
             camera.position.copy(controls.target).addScaledVector(direction, target);
           }
           if (introCancelled || elapsed >= 12) geometry.setDrawRange(0, cloud.count);
-          if (blend > 0) { points.rotation.y += (Math.sin(elapsed / 3.5) * .14 - points.rotation.y) * (1 - Math.exp(-dt * blend * 2)); }
+          if (blend > 0) { points.rotation.y += (Math.sin(elapsed * Math.PI * 2 / animation.rotationPeriodSeconds) * animation.rotationAmplitude - points.rotation.y) * (1 - Math.exp(-dt * blend * 2)); }
           controls.update();
           if (introCancelled && (interacting || quiet < 1.8)) baseDistance = camera.position.distanceTo(controls.target);
           renderer.render(scene, camera); frames++;

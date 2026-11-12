@@ -6,8 +6,10 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { prepareOperatorAudit } from "./operator-public-audit-utils.js";
+import { installPointCloudAnimationProbe, auditPointCloudAnimation } from "./post-demo-point-cloud-animation-audit.js";
 
 const repository = process.cwd(), root = await prepareOperatorAudit(), base = "http://127.0.0.1:3331";
+const auditBreathing = process.argv.includes("--animation");
 assert.notEqual(root, repository);
 const output = await fs.mkdtemp(path.join(os.tmpdir(), "caixa-point-cloud-browser-")), runtime = path.join(output, "runtime"), provider = path.join(output, "provider.json");
 // A failure switch belongs only to this isolated worker; the real converter/model are never modified.
@@ -37,7 +39,7 @@ const server = spawn(process.execPath, ["--import", fileURLToPath(new URL("./pos
     CAIXA_PRETA_SHOW_RUNTIME_DIR: runtime, CAIXA_PRETA_POINT_CLOUD_TOOLCHAIN: path.join(repository, ".runtime/point-cloud/toolchain"),
     CAIXA_PRETA_POINT_CLOUD_CONVERTER: converter, CLOUD_TEST_FAILURE: failConversion, CLOUD_TEST_REAL_CONVERTER: path.join(repository, ".runtime/point-cloud/toolchain/convert") }, stdio: ["ignore", "pipe", "pipe"]
 });
-let log = "", browser, control, projection;
+let log = "", browser, control, projection, animationEvidence;
 server.stdout.on("data", data => { log += data; }); server.stderr.on("data", data => { log += data; });
 const errors = [], metrics = [], checks = [];
 async function get(route) { const r = await fetch(base + route); assert(r.ok, route); return r.json(); }
@@ -51,6 +53,7 @@ try {
   await post("/api/post-demo", { action: "config", sessionId, config: { typingIntervalMs: 20, typingPauseMs: 0, cardHoldMs: 1000 } });
   browser = await chromium.launch({ channel: "chromium", headless: true, chromiumSandbox: true, ignoreDefaultArgs: ["--enable-unsafe-swiftshader"] });
   const context = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
+  if (auditBreathing) await installPointCloudAnimationProbe(context);
   projection = await context.newPage(); control = await context.newPage();
   for (const page of [projection, control]) page.on("pageerror", error => errors.push(error.message));
   const publicRequests = []; let projectionNavigations = 0;
@@ -107,6 +110,10 @@ try {
   console.log(`ANIMATION ${framesPerSecond.join(" / ")} fps médios (projeção / controle).`);
   assert.equal(projectionNavigations, navigationsBeforeCloud, "A nuvem deve aparecer sem recarregar a projeção.");
   assert((await details()).totalRounds > roundsBeforeCloud, "As cartas devem continuar durante a geração/animação da nuvem.");
+  if (auditBreathing) {
+    animationEvidence = await auditPointCloudAnimation({ projection, control, output });
+    checks.push("shader: dois ciclos completos de frente e no giro, onda entre fileiras, relógio contínuo no controle manual e zero reenvios dos vértices");
+  }
   await projection.screenshot({ path: path.join(output, "revealed.png") });
   const rect = await canvas().boundingBox(), x = rect.x + rect.width / 2, y = rect.y + rect.height / 2;
   const oldCamera = await canvas().getAttribute("data-camera");
@@ -166,8 +173,8 @@ try {
   assert.equal((await fetch(base + currentCloud.url)).status, 404); await post("/api/post-demo/point-cloud", { sessionId }, 409);
   checks.push("painel retrátil preserva nuvem à direita; RESET reinicia cartas e revelação sem reconverter foto nem alterar ajustes; seleção por mtime em cada clique; PNG/JPEG; foto original bloqueada inclusive alias/range; falha do processo, foto ilegível e pasta vazia preservam nuvem anterior; sessão nova rejeita resultado/URL antigos");
   assert.deepEqual(errors, []);
-  await fs.writeFile(path.join(output, "report.json"), JSON.stringify({ ok: true, liveDepthModel: true, liveLanguageModel: false, metrics, framesPerSecond, graphicsRenderer, checks, output }, null, 2));
-  console.log(JSON.stringify({ ok: true, metrics, framesPerSecond, graphicsRenderer, checks, output }, null, 2));
+  await fs.writeFile(path.join(output, "report.json"), JSON.stringify({ ok: true, liveDepthModel: true, liveLanguageModel: false, shaderAnimation: Boolean(animationEvidence), metrics, framesPerSecond, graphicsRenderer, checks, output }, null, 2));
+  console.log(JSON.stringify({ ok: true, shaderAnimation: Boolean(animationEvidence), metrics, framesPerSecond, graphicsRenderer, checks, output }, null, 2));
 } catch (error) {
   await projection?.screenshot({ path: path.join(output, "failure-public.png") }).catch(() => {}); await control?.screenshot({ path: path.join(output, "failure-control.png") }).catch(() => {});
   console.log("Evidence:", output); throw error;
