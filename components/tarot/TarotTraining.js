@@ -7,6 +7,7 @@ import {tarotCommand} from "@/lib/tarot/client";
 import {activeElementIds,projectPoint,regionPoints,visibleElementIds} from "@/lib/tarot/geometry";
 import {center,nearby,readingCards,readingSignature} from "@/lib/tarot/floor";
 import {DEFAULT_TAROT_VISUAL} from "@/lib/tarot/state";
+import {useProjectionTextFit} from "@/lib/useProjectionTextFit";
 import PublicModule from "@/components/PublicModule";
 import ProjectionWindowClient from "@/components/ProjectionWindowClient";
 import useTarotCamera from "./useTarotCamera";
@@ -38,6 +39,7 @@ export default function TarotTraining(){
   const videoRef=useRef(null),digitalImageRef=useRef(null),textRef=useRef(null),stateRef=useRef(state),cursorRef=useRef(cursor);stateRef.current=state;cursorRef.current=cursor;
   const tarot=state.tarot,response=tarot?.response,card=tarot?.currentCard,cards=tarot?readingCards(tarot):[],sessionId=state.reliability?.sessionId;
   const camera=useTarotCamera({sessionId,tarot,videoRef}),visual={...DEFAULT_TAROT_VISUAL,...tarot?.visual};
+  useProjectionTextFit(textRef, response?.text || "", visual.textSize);
   const interpretation=tarot?.interpretation;
   async function interpretationCommand(action,data={}){
     setCommandPending(true);setQuestionError("");

@@ -14,6 +14,7 @@ import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
 import { ROBOT_DISPLAY_FONT_DEFAULT, robotTypingIntervalMs, robotTypingDelayMs, robotMessageGapMs } from "@/lib/robot-sound/state";
 import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import { isMainProjectionMessage } from "@/lib/publicText";
+import { useProjectionTextFit } from "@/lib/useProjectionTextFit";
 import PublicModule from "./PublicModule";
 import { PUBLIC_LAYOUT_CHANGE_EVENT, PUBLIC_LAYOUTS } from "@/lib/projectionScreens";
 import {
@@ -54,6 +55,8 @@ function AudienceWarmupTimer({ endsAt }) {
 export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal }) {
   const [messages, setMessages] = useState([]);
   const [publicMessage, setPublicMessage] = useState(null);
+  const publicTextRef = useRef(null);
+  useProjectionTextFit(publicTextRef, publicMessage?.content || "", publicMessage?.id, 'bot');
   const [audienceWarmup, setAudienceWarmup] = useState(null);
   const [typedReplies, setTypedReplies] = useState({});
   const [input, setInput] = useState("");
@@ -955,7 +958,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
         </PublicModule>
 
         <PublicModule as="main" id="main-speech" className={styles.publicStage} aria-label="Fala atual da Caixa Preta" data-bot-font={robotSound?.displayFont || ROBOT_DISPLAY_FONT_DEFAULT}>
-          <div className={styles.currentMessage}>
+          <div className={styles.currentMessage} data-projection-text-area>
             {warmupSilentCursor ? (
               <p className={styles.machine} aria-label="Cursor de espera da Caixa Preta">
                 <span className={styles.replyCursor} aria-hidden="true">_</span>
@@ -978,7 +981,7 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
                     {!quadrantLayout ? <AudienceWarmupTimer endsAt={audienceWarmup.display.endsAt} /> : null}
                   </div>
                 ) : null}
-                <p className={`${styles.machine} ${publicMessage.content.length > 180 ? styles.machineLong : publicMessage.content.length > 95 ? styles.machineMedium : ""} ${selfErasingMessageId === publicMessage.id ? styles.machineErasing : ""}`}>
+                <p ref={publicTextRef} className={`${styles.machine} ${publicMessage.content.length > 180 ? styles.machineLong : publicMessage.content.length > 95 ? styles.machineMedium : ""} ${selfErasingMessageId === publicMessage.id ? styles.machineErasing : ""}`}>
                   {typedReplies[publicMessage.id] ?? ""}
                   {typedReplies[publicMessage.id] !== publicMessage.content || selfErasingMessageId === publicMessage.id ? (
                     <span className={`${styles.replyCursor} ${selfErasingMessageId === publicMessage.id ? styles.eraseCursor : ""}`} aria-hidden="true">_</span>

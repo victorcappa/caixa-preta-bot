@@ -39,11 +39,12 @@ const checks=[];
  await post('/api/tarot',{sessionId,action:'config',config:{autoAnalyze:false}});
  await post('/api/tarot',{sessionId,action:'select',cardId:0});
  const tarot=await context.newPage();
+ let fixtureText='Uma figura atravessa o limite.\n\nO passo transforma a dúvida em movimento.\n\nQuem escolhe a direção?';
  // Synthetic narrative only: no live model or camera request is required for layout QA.
  await tarot.route('**/api/events?*',route=>route.abort());
  await tarot.route('**/api/state*',async route=>{
   const response=await route.fetch();const state=await response.json();
-  if(state.tarot)state.tarot.response={id:'layout-fixture',text:'Uma figura atravessa o limite.\n\nO passo transforma a dúvida em movimento.\n\nQuem escolhe a direção?',status:'complete',origin:'catalog',presentedChars:150,elements:[],segments:[]};
+  if(state.tarot)state.tarot.response={id:'layout-fixture',text:fixtureText,status:'complete',origin:'catalog',presentedChars:fixtureText.length,elements:[],segments:[]};
   await route.fulfill({response,json:state});
  });
  await tarot.goto(base+'/treinamento');
@@ -88,6 +89,7 @@ const checks=[];
  const color=await display.locator('[data-public-module="operator-personality"] label').first().evaluate(e=>getComputedStyle(e).color);assert.equal(color,'rgb(255, 255, 255)');
  await display.waitForFunction(()=>Math.abs(document.querySelector('[data-public-module="operator-rail"]').getBoundingClientRect().x-1248)<2);
  await operator.getByRole('button',{name:'PERFIL TECIDO'}).click();
+ await operator.getByLabel('Encaixar texto do bot e Tarô na área').uncheck();
  await operator.getByText('Composição sincronizada.',{exact:true}).waitFor();
  await display.waitForFunction(()=>document.querySelector('[data-projection-readability]')?.dataset.projectionReadability==='true');
  await tarot.waitForFunction(()=>document.querySelector('[data-projection-readability]')?.dataset.projectionReadability==='true');
@@ -115,6 +117,63 @@ const checks=[];
  await tarot.waitForFunction(()=>document.querySelector('[data-public-module="tarot-speech"]').dataset.moduleCustom==='false');
  await tarot.waitForFunction(()=>Math.abs(parseFloat(getComputedStyle(document.querySelector('[data-public-module="tarot-speech"] [class*="speechText"]')).fontSize)-55.2)<.1);
  checks.push('Per-module reset restores default layout');
+
+ fixtureText='A carta aparece diante de você e pede atenção ao caminho que está começando. Ainda não há garantias, mas existe uma escolha possível. O que parece um tropeço pode revelar uma saída. Olhe para as pessoas ao redor e perceba quem oferece apoio. Respire antes de agir. Seu próximo passo não precisa ser perfeito, apenas consciente e aberto ao inesperado.';
+ await operator.getByLabel('Encaixar texto do bot e Tarô na área').check();
+ await operator.getByText('Composição sincronizada.',{exact:true}).waitFor();
+ await tarot.reload();
+ for(const width of [1920,1280]) {
+  await tarot.setViewportSize({width,height:width===1920?1080:720});
+  try {
+   await tarot.waitForFunction(()=>{const e=document.querySelector('[data-public-module="tarot-speech"] [class*="speechText"]');return e?.dataset.textFit==='fits' && e.scrollHeight<=e.clientHeight && e.scrollTop===0;});
+  } catch (error) {
+   const details=await tarot.locator('[data-public-module="tarot-speech"] [class*="speechText"]').evaluate(e=>({viewport:innerWidth,fit:e.dataset.textFit,font:getComputedStyle(e).fontSize,client:e.clientHeight,scroll:e.scrollHeight,top:e.scrollTop,root:e.closest('[data-projection-readability]')?.dataset.projectionFit}));
+   throw new Error(`Long reading did not fit: ${JSON.stringify(details)}`,{cause:error});
+  }
+  const result=await speech.locator('[class*="speechText"]').evaluate(e=>({size:parseFloat(getComputedStyle(e).fontSize),text:e.textContent}));
+  assert(result.size>=24 && result.size<=55.2 && result.text===fixtureText,JSON.stringify(result));
+ }
+ const bot=await context.newPage();
+ let botSource='fixture';
+ await bot.route('**/api/events?*',route=>route.abort());
+ await bot.route('**/api/state*',async route=>{
+  const response=await route.fetch(), value=await response.json();
+  if(value.sceneZero){
+   value.sceneZero.unlock.status='TEST';
+   const message={id:'bot-fit-fixture',role:'assistant',content:fixtureText,source:botSource,timestamp:new Date().toISOString()};
+   value.conversation=[message];value.publicMessage=message;
+  }
+  await route.fulfill({response,json:value});
+ });
+ await bot.goto(base+'/');
+ for(const width of [1920,1280]) {
+  await bot.setViewportSize({width,height:width===1920?1080:720});
+  await bot.waitForFunction(()=>{
+   const e=document.querySelector('[data-public-module="main-speech"] [class*=machine]'),area=e?.closest('[data-projection-text-area]');
+   if(!e||!area||e.dataset.textFit!=='fits')return false;
+   const text=e.getBoundingClientRect(),bounds=area.getBoundingClientRect(),frame=getComputedStyle(e.parentElement);
+   const rail=document.querySelector('[data-public-module="operator-rail"]')?.getBoundingClientRect();
+   return text.top>=bounds.top-1 && text.bottom<=bounds.bottom+1 && Number(frame.opacity)>.99 && frame.filter==='blur(0px)' && rail && Math.abs(rail.x-innerWidth*.65)<2;
+  });
+  assert.equal(await bot.locator('[data-public-module="main-speech"] [class*=machine]').innerText(),fixtureText);
+ }
+ await bot.screenshot({path:path.join(output,'bot-long-speech.png')});
+ botSource='fixture:failure';
+ await bot.reload();
+ await bot.waitForFunction(()=>{
+  const e=document.querySelector('[data-public-module="main-speech"] [class*=machine]'), frame=e?.parentElement, area=e?.closest('[data-projection-text-area]');
+  if(!e||!area||e.dataset.textFit!=='fits'||frame?.dataset.warmupEffect!=='failure')return false;
+  const text=frame.getBoundingClientRect(),bounds=area.getBoundingClientRect();
+  return text.top>=bounds.top-1 && text.bottom<=bounds.bottom+1;
+ });
+ await bot.close();
+ checks.push('A complete 60-word bot line remains inside its area at both resolutions and with a warmup result');
+ await operator.getByLabel('Encaixar texto do bot e Tarô na área').uncheck();
+ await tarot.waitForFunction(()=>{const e=document.querySelector('[data-public-module="tarot-speech"] [class*="speechText"]');return e && Math.abs(parseFloat(getComputedStyle(e).fontSize)-55.2)<.1 && e.scrollHeight>e.clientHeight;});
+ await operator.getByLabel('Encaixar texto do bot e Tarô na área').check();
+ await tarot.waitForFunction(()=>{const e=document.querySelector('[data-public-module="tarot-speech"] [class*="speechText"]');return e?.dataset.textFit==='fits' && e.scrollHeight<=e.clientHeight;});
+ await tarot.screenshot({path:path.join(output,'tarot-long-reading.png')});
+ checks.push('A complete 60-word Tarot reading fits at 1920x1080 and 1280x720 with the public Operator visible');
 
  await operator.getByRole('button',{name:'VISUAL ORIGINAL'}).click();
  await display.waitForFunction(()=>document.querySelector('[data-projection-readability]')?.dataset.projectionReadability==='false');

@@ -19,7 +19,7 @@ export default function PublicOperatorLayout({ children }) {
   const r = composition.readability;
   return (
     <div className={styles.layout} data-operator-visible={visible} data-projection-readability={r.enabled} data-projection-font={r.font} data-projection-reflow={pathname === '/' || pathname === '/treinamento'}
-      data-projection-no-glow={r.enabled && r.noGlow} style={{
+      data-projection-no-glow={r.enabled && r.noGlow} data-projection-fit={r.enabled && r.fitText} style={{
         '--projection-font': r.font === 'sans' ? 'Arial, Helvetica, sans-serif' : '"Courier New", monospace',
         '--projection-weight': r.weight,
         ...(r.enabled ? { '--projection-ink': composition.textColor, '--projection-leading': r.lineHeight } : {})

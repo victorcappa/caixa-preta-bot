@@ -104,3 +104,8 @@
 .speech[data-question-mode=true] { grid-template-rows: auto auto minmax(0,1fr); }
 @media(max-width:800px) { .screen { grid-template-columns: minmax(0,7fr) minmax(150px,3fr); grid-template-rows: 48px minmax(200px,40fr) minmax(0,50fr); } .speechText { font-size: calc((min(var(--tarot-text-size,48px),36px)) * var(--public-text-scale, 1)); } }
 @media(max-width:540px) { .screen { grid-template-columns: 1fr; grid-template-rows: 44px minmax(190px,38fr) minmax(0,42fr) 100px; } .vision { grid-column: 1; } .elements { grid-column: 1; grid-row: 4; } .speechText { font-size: calc((min(var(--tarot-text-size,48px),30px)) * var(--public-text-scale, 1)); } }
+
+/* In the fabric profile, reserve more of the screen for the reading. */
+@media (min-width: 801px) {
+  :global([data-projection-fit="true"]) .screen { grid-template-rows: 54px minmax(0, 3fr) minmax(140px, 2fr); }
+}

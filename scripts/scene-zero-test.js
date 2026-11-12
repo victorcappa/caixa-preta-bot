@@ -69,7 +69,7 @@ async function main() {
   assert.match(sceneZeroProjectionSource, /centered=\{participantSelection\.status === "countdown"\}/, "o timer do sorteio deve pedir a apresentação central");
   assert.match(sceneZeroProjectionStyles, /\.sceneZeroTimerCentered[\s\S]*top: 50%[\s\S]*left: 50%[\s\S]*translate\(-50%, -50%\)/, "o timer do sorteio deve ocupar o centro da projeção");
   assert.match(sceneZeroProjectionStyles, /\.sceneZeroTimerCentered[^}]*border: 0[^}]*background: transparent[^}]*box-shadow: none/, "o timer pré-sorteio não deve ter quadrado em volta");
-  assert.match(sceneZeroProjectionStyles, /\.sceneZeroTimerCentered strong \{ font-size: clamp\(190px, 38vw, 620px\)/, "o número pré-sorteio deve ficar maior");
+  assert.match(sceneZeroProjectionStyles, /\.sceneZeroTimerCentered strong \{[^}]*font-size:[^;]*clamp\(190px, 38vw, 620px\)/, "o número pré-sorteio deve manter a faixa ampliada mesmo com a escala de projeção");
   assert.match(sceneZeroProjectionStyles, /\.selectionOverlay[^}]*font-family: var\(--bot-font-family/, "a tela de seleção deve usar a mesma fonte configurada para o bot");
   assert.match(chatSource, /<SceneZeroProjectionLayer[\s\S]*botFont=\{robotSound\?\.displayFont \|\| ROBOT_DISPLAY_FONT_DEFAULT\}/, "a projeção da seleção deve receber a fonte ativa do bot");
   assert.match(sceneZeroProjectionSource, /className=\{styles\.selectionOverlay\}[\s\S]*data-bot-font=\{botFont\}/, "o overlay de seleção deve aplicar a fonte ativa do bot");

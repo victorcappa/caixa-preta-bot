@@ -93,7 +93,9 @@ export default function PublicCompositionControls({ initiallyOpen = false }) {
       <label>Tamanho geral (%)<input aria-label="Tamanho geral do texto" type="number" min="75" max="150" step="5" value={Math.round(readability.scale * 100)} disabled={!readability.enabled} onChange={event => { if (event.target.value) patch({ readability: { scale: Number(event.target.value) / 100 } }); }} /></label>
       <label>Entrelinha<input aria-label="Entrelinha" type="number" min="1" max="1.6" step="0.05" value={readability.lineHeight} disabled={!readability.enabled} onChange={event => { if (event.target.value) patch({ readability: { lineHeight: Number(event.target.value) } }); }} /></label>
       <label><input type="checkbox" checked={readability.noGlow} disabled={!readability.enabled} onChange={event => patch({ readability: { noGlow: event.target.checked } })} />Remover halo dos textos</label>
+      <label><input type="checkbox" checked={readability.fitText} disabled={!readability.enabled} onChange={event => patch({ readability: { fitText: event.target.checked } })} />Encaixar texto do bot e Tarô na área</label>
     </fieldset>
+    <p>O encaixe pode reduzir a fonte do bot e do Tarô até 24 px para mostrar o texto completo. Se ainda não couber, amplie o componente ou reduza o texto.</p>
     <p>Selecione um componente e arraste o retângulo; use o canto inferior para redimensionar. X, Y, largura e altura são percentuais da área pública correspondente. Os controles privados permanecem no lugar.</p>
     <div className={styles.fields}>
       <label>Cor do texto (bot e Tarô com leitura ativa)<input aria-label="Cor do texto público" type="color" value={composition.textColor} onChange={event => patch({ textColor: event.target.value })} /></label>
