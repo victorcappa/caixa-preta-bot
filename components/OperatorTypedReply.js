@@ -4,11 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { robotTypingDelayMs } from "@/lib/robot-sound/state";
 import styles from "./PublicOperator.module.css";
 
-export default function OperatorTypedReply({ message, settings, animate, onProgress, onComplete, paused = false }) {
+export default function OperatorTypedReply({ message, settings, animate, onProgress, onComplete, onCharacter, paused = false }) {
   const [text, setText] = useState(() => animate ? "" : message.content);
   const [stopped, setStopped] = useState(false);
   const progress = useRef({ text, lastAt: null });
   const completed = useRef(null);
+  const characterCallback = useRef(onCharacter);
+  characterCallback.current = onCharacter;
   useEffect(() => { if (!paused) setStopped(false); }, [paused]);
 
   useEffect(() => {
@@ -43,12 +45,13 @@ export default function OperatorTypedReply({ message, settings, animate, onProgr
         current.text = message.content.slice(0, nextLength);
         current.lastAt = performance.now();
         setText(current.text);
+        characterCallback.current?.(String.fromCodePoint(codePoint), { messageId: message.id, index: nextLength });
         schedule();
       }, remaining);
     };
     schedule();
     return () => window.clearTimeout(timer);
-  }, [message.content, message.status, settings, animate, stopped, paused]);
+  }, [message.id, message.content, message.status, settings, animate, stopped, paused]);
 
   useEffect(() => { onProgress?.(); }, [text, onProgress]);
   useEffect(() => {

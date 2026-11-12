@@ -8,6 +8,7 @@ import { chromium } from "playwright";
 import { prepareOperatorAudit } from "./operator-public-audit-utils.js";
 import { auditPostDemoLayout } from "./post-demo-layout-browser-audit.js";
 import { auditPostDemoOpening, holdPostDemoOpening, isolateEmptyPostDemoPhotos } from "./post-demo-opening-browser-audit.js";
+import { createPostDemoAudioAudit, installPostDemoAudioProbe } from "./post-demo-audio-browser-audit.js";
 
 const root = await prepareOperatorAudit();
 await isolateEmptyPostDemoPhotos(root);
@@ -24,7 +25,7 @@ const server = spawn(process.execPath, ["--import", fileURLToPath(new URL("./ope
   cwd: root, env: { ...process.env, OPENAI_API_KEY: "audit-only", OPENAI_BASE_URL: "https://api.openai.com/v1", CAIXA_PRETA_OPERATOR_MOCK: fixture,
     CAIXA_PRETA_SHOW_RUNTIME_DIR: path.join(output, "runtime") }, stdio: ["ignore", "pipe", "pipe"]
 });
-let log = "", browser, projection, control, layoutEvidence, layoutRestore, openingGate, openingEvidence;
+let log = "", browser, projection, control, layoutEvidence, layoutRestore, openingGate, openingEvidence, audioAudit;
 server.stdout.on("data", chunk => { log += chunk; }); server.stderr.on("data", chunk => { log += chunk; });
 const state = async () => (await fetch(base + "/api/state")).json();
 async function post(route, body) {
@@ -43,13 +44,16 @@ try {
   await poll(async () => { try { return (await fetch(base + "/api/health?skipOptional=1")).ok; } catch { return false; } }, "ready");
   await post("/api/show-session", { action: "new" });
   await post("/api/operator", { command: "/memory Alice mencionou uma mala azul." });
-  await post("/api/robot-sound", { settings: { typingIntervalMs: 5, typingPauseMs: 0, messageGapMs: 0 } });
+  await post("/api/robot-sound", { settings: { enabled: true, typingFrequency: 1, soundStyle: "system95", typingIntervalMs: 5, typingPauseMs: 0, messageGapMs: 0 } });
+  await post("/api/global-volume", { volume: 1 });
   await post("/api/operator-public", { action: "patch", personality: { sarcasm: 92 }, profile: { humor: 88 } });
   await post("/api/operator", { command: "/model gpt-5.6-luna" });
   await command("config", { config: { cardHoldMs: 10000, typingIntervalMs: 40, typingPauseMs: 70, personality: { sarcasm: 23 }, profile: { humor: 17 }, model: "gpt-5.6-terra" } });
   browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
+  await installPostDemoAudioProbe(context);
   projection = await context.newPage(); control = await context.newPage();
+  audioAudit = createPostDemoAudioAudit({ context, projection, control, base, output });
   openingGate = await holdPostDemoOpening([projection, control]);
   const errors = [], publicActions = [];
   for (const page of [projection, control]) page.on("pageerror", error => errors.push(error.message));
@@ -59,17 +63,22 @@ try {
   await poll(async () => Boolean((await (await fetch(base + "/api/post-demo")).json()).postDemo.autoCloudStartedAt), "tentativa automática de nuvem na entrada");
   const automaticCloudAt = (await (await fetch(base + "/api/post-demo")).json()).postDemo.autoCloudStartedAt;
   assert(automaticCloudAt, "A entrada deve registrar uma única tentativa automática de nuvem por sessão.");
+  await audioAudit.startOpening(openingGate);
   openingEvidence = await auditPostDemoOpening({ projection, control, gate: openingGate, base,
     sessionId: (await state()).reliability.sessionId, providerCallsFile: fixture + ".request.json", output, checkReload: true,
+    afterTypingBeforeReload: () => audioAudit.finishOpening(),
     beforeAck: async () => {
       await poll(async () => (await (await fetch(base + "/api/post-demo")).json()).postDemo.pointCloud.status === "failed", "pasta vazia reporta erro privado sem travar a abertura");
       await poll(async () => await control.getByText("Nenhuma foto JPG, JPEG ou PNG em assets/publico/.", { exact: true }).count() === 1, "erro da foto visível apenas no controle");
       assert.equal(await projection.getByText("Nenhuma foto JPG, JPEG ou PNG em assets/publico/.", { exact: true }).count(), 0);
       await command("enter");
       assert.equal((await (await fetch(base + "/api/post-demo")).json()).postDemo.autoCloudStartedAt, automaticCloudAt);
+      await audioAudit.prepareCard();
     } });
   openingGate = null;
+  await audioAudit.firstCard();
   await command("pause");
+  await audioAudit.quiet("first-card-pause-is-quiet");
   const request = JSON.parse(await fs.readFile(fixture + ".request.json", "utf8"));
   assert.equal(request.tools, undefined); assert.equal(request.model, "gpt-5.6-terra");
   const input = JSON.stringify(request.input);
@@ -138,14 +147,17 @@ try {
   await control.setViewportSize({ width: 1600, height: 1000 });
   await command("resume");
   await projection.waitForFunction(() => document.querySelector('[aria-label="Fala da ilha futura"] p')?.getAttribute("data-typing") === "false");
+  await audioAudit.quiet("card-completed-is-quiet");
   await projection.waitForFunction(() => [...document.images].every(image => image.complete && image.naturalWidth));
   await projection.screenshot({ path: path.join(output, "public-island.png") });
   await control.screenshot({ path: path.join(output, "private-island.png") });
   await post("/api/operator", { command: "/stopall" });
+  await audioAudit.quiet("stopall-is-quiet");
   const stoppedAt = (await state()).postDemo.totalRounds;
   await projection.reload(); await control.reload();
   await new Promise(resolve => setTimeout(resolve, 1400));
   assert.equal((await state()).postDemo.active, false); assert.equal((await state()).postDemo.totalRounds, stoppedAt);
+  await audioAudit.quiet("paused-reload-is-quiet");
   layoutEvidence = await auditPostDemoLayout({ projection, control, output, base, sessionId: (await state()).reliability.sessionId });
   const beforeReset = await state(), configBeforeReset = await privateConfig();
   await fs.writeFile(fixture, JSON.stringify({ principalText: JSON.stringify(reply(0)) }));
@@ -175,11 +187,14 @@ try {
   assert.deepEqual((await privateConfig()).layout, layoutEvidence.savedLayout, "A nova sessão perdeu a composição criada com as alças.");
   assert.deepEqual(reset.layout, layoutEvidence.savedLayout, "A nova sessão não publicou a composição salva.");
   await command("config", { config: { layout: layoutRestore } }); layoutRestore = null;
+  await audioAudit.privateOnly();
+  await audioAudit.save();
   assert(publicActions.every(action => ["ack", "opening-ack", "ready"].includes(action)), "projeção não pode emitir comandos privados");
   assert.deepEqual(errors, []);
   await operator.close();
-  console.log(JSON.stringify({ ok: true, liveModel: false, openingAudit: openingEvidence.ok, layoutAudit: layoutEvidence.ok, output, checks: ["opening typed before first card/model call; repeated opening ACK is idempotent", "automatic cloud failure stays private and does not block opening/cards; entry/reload/reset deduplicate the session attempt", "future continuation/own parameters without audience/session details in provider input", "public cards/typing without names", "private independent timing/personality/model/font, no global mirroring either way", "automatic second card and no repetition", "private rating", "pause", "right-edge handle works after scrolling and reload without advancing", "STOP ALL/reload", "card/text drag/resize, failed save retry, public synchronization, navigation/reload/new-session persistence", "RESET repeats opening then cards without changing settings/session/manual mode", "new show stays idle and keeps speed/layout", "public/private boundary"] }, null, 2));
+  console.log(JSON.stringify({ ok: true, liveModel: false, openingAudit: openingEvidence.ok, audioAudit: audioAudit.report.ok, layoutAudit: layoutEvidence.ok, output, checks: ["opening typed before first card/model call; repeated opening ACK is idempotent", "real Web Audio typing on opening/card; elected source across public/private windows; collapsed private-only output; mute, volume25%, pause/completion/STOPALL", "automatic cloud failure stays private and does not block opening/cards; entry/reload/reset deduplicate the session attempt", "future continuation/own parameters without audience/session details in provider input", "public cards/typing without names", "private independent timing/personality/model/font, no global mirroring either way", "automatic second card and no repetition", "private rating", "pause", "right-edge handle works after scrolling and reload without advancing", "STOP ALL/reload", "card/text drag/resize, failed save retry, public synchronization, navigation/reload/new-session persistence", "RESET repeats opening then cards without changing settings/session/manual mode", "new show stays idle and keeps speed/layout", "public/private boundary"] }, null, 2));
 } catch (error) {
+  await audioAudit?.save(error);
   await projection?.screenshot({ path: path.join(output, "failure-public.png") }).catch(() => {});
   await control?.screenshot({ path: path.join(output, "failure-control.png") }).catch(() => {});
   console.log("Evidence:", output); throw error;

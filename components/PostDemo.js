@@ -9,6 +9,7 @@ import PostDemoCardImage from "./PostDemoCardImage";
 import PostDemoLayoutFrame from "./PostDemoLayoutFrame";
 import { resolvePostDemoLayout } from "@/lib/post-demo/layout";
 import { usePostDemoLayout } from "@/lib/post-demo/usePostDemoLayout";
+import { usePostDemoAudio } from "@/lib/post-demo/usePostDemoAudio";
 import { postDemoPresentation, POST_DEMO_CARD_LIMIT } from "@/lib/post-demo/settings";
 import styles from "./PostDemo.module.css";
 
@@ -20,6 +21,7 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
   const [cardSurfaces, setCardSurfaces] = useState({});
   const entered = useRef(null), session = useRef(null), textArea = useRef(null), pending = useRef(false);
   const state = snapshot?.postDemo, round = state?.rounds.at(-1), opening = !round ? state?.opening : null;
+  const audio = usePostDemoAudio(snapshot, controller);
   const layout = usePostDemoLayout(state?.layout, snapshot?.reliability.sessionId, controller);
   const rectangles = resolvePostDemoLayout(layout.value, { hasCloud: Boolean(state?.pointCloud) });
   const editableLayout = controller && !panelCollapsed && Boolean(details?.config);
@@ -112,8 +114,8 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
       {message ? <PostDemoLayoutFrame key="text" id="text" label="texto" rect={rectangles.text} editable={editableLayout} epoch={snapshot?.reliability.sessionId}
         onChange={(id, rect) => layout.change({ [id]: rect })} onCommit={() => void layout.flush()}>
         <div className={styles.voice} ref={textArea} role="log" aria-label="Fala da ilha futura">
-          <OperatorTypedReply key={message.id} message={message} settings={presentation} animate={round ? state.status !== "completed" : !opening.presentedAt}
-            paused={!state.active} onProgress={scroll} onComplete={display ? typed : undefined} />
+          <OperatorTypedReply key={message.id} message={message} settings={presentation} animate={round ? state.status !== "completed" && !round.presentedAt : !opening.presentedAt}
+            paused={!state.active} onProgress={scroll} onComplete={display ? typed : undefined} onCharacter={audio.onCharacter} />
         </div>
       </PostDemoLayoutFrame> : null}
       {state?.pointCloud ? <PostDemoLayoutFrame key="cloud" id="cloud" label="modelo 3D" rect={rectangles.cloud} editable={editableLayout} epoch={snapshot?.reliability.sessionId}
@@ -131,6 +133,7 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
         <button type="button" disabled={busy || !state || state.status === "completed"} onClick={() => void action(!state.startedAt ? "enter" : state.active ? "pause" : "resume")}>{state?.status === "completed" ? "CONCLUÍDO" : !state?.startedAt ? "INICIAR PÓS-DEMO" : state.active ? "PAUSAR" : "RETOMAR"}</button>
         <button type="button" disabled={busy || !state} title="Recomeçar as cartas e a revelação da nuvem, mantendo os ajustes e a foto." onClick={() => void action("restart")}>RESET</button>
         <a href="/pos-demo" target="_blank" rel="noreferrer">ABRIR PROJEÇÃO</a>
+        {audio.needsUnlock ? <button type="button" onClick={() => void audio.unlock()}>ATIVAR ÁUDIO</button> : null}
       </div>
       <p>Ajustes exclusivos desta sequência. Salvos automaticamente.</p>
       <section aria-label="Nuvem de pontos da plateia" className={styles.cloudControls}>

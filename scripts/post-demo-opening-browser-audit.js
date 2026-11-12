@@ -17,11 +17,11 @@ export async function isolateEmptyPostDemoPhotos(root) {
 // Install before entering the tab. Hold the real browser's completed-typing ACK
 // while assertions inspect the opening gate; release it without synthesizing UI.
 export async function holdPostDemoOpening(pages) {
-  const records = [], handlers = new Map(); let released = false;
+  const records = [], handlers = new Map(), active = new Set(); let released = false, disposal;
   async function addPage(page) {
-    const handler = async route => {
+    const handle = async route => {
       const request = route.request(), body = request.method() === "POST" ? request.postDataJSON() : null;
-      if (body?.action !== "opening-ack") return route.continue();
+      if (released || body?.action !== "opening-ack") return route.continue();
       const element = page.getByLabel("Fala da ilha futura", { exact: true });
       const record = { openingId: body.openingId, content: await element.innerText(),
         typing: await element.locator("p").getAttribute("data-typing"), url: page.url() };
@@ -29,15 +29,26 @@ export async function holdPostDemoOpening(pages) {
       if (!released) await wait;
       return route.continue().catch(error => { if (!page.isClosed()) throw error; });
     };
+    const handler = route => {
+      const work = handle(route); active.add(work);
+      work.then(() => active.delete(work), () => active.delete(work)); return work;
+    };
     handlers.set(page, handler); await page.route("**/api/post-demo", handler);
   }
   for (const page of pages) await addPage(page);
   const release = () => { released = true; for (const record of records) record.release(); };
-  return { records, addPage, release, dispose: async () => { release(); for (const [page, handler] of handlers) if (!page.isClosed()) await page.unroute("**/api/post-demo", handler); } };
+  return { records, addPage, release, dispose: () => disposal ||= (async () => {
+    release();
+    // unroute automatically continues a pending server route. Drain our own
+    // continuations first so it cannot race a second route.continue() on that ACK.
+    while (active.size) await Promise.all([...active]);
+    for (const [page, handler] of handlers) if (!page.isClosed()) await page.unroute("**/api/post-demo", handler);
+    handlers.clear();
+  })() };
 }
 
 export async function auditPostDemoOpening({ projection, control, gate, base, sessionId, providerCallsFile, output,
-  checkReload = false, beforeAck, expectNoPriorCalls = true, reportName = "opening-report.json" }) {
+  checkReload = false, beforeAck, afterTypingBeforeReload, expectNoPriorCalls = true, reportName = "opening-report.json" }) {
   const url = new URL(base);
   assert(["localhost", "127.0.0.1"].includes(url.hostname) && url.port && url.port !== "3000", "A abertura exige servidor de teste isolado.");
   const report = { ok: false, checks: [] };
@@ -76,6 +87,7 @@ export async function auditPostDemoOpening({ projection, control, gate, base, se
     }
     assert.equal((await details()).totalRounds, 0); assert.equal((await details()).opening.presentedAt, null);
     assert.deepEqual(await providerMarker(), baselineCalls, "O modelo foi chamado enquanto o ACK de abertura estava retido.");
+    if (afterTypingBeforeReload) await afterTypingBeforeReload({ opening, report });
     if (checkReload) {
       await control.reload(); await control.locator("#post-demo-parameters").waitFor();
       assert.equal((await details()).opening.id, opening.id); assert.equal((await details()).totalRounds, 0);

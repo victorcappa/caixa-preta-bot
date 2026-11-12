@@ -16,6 +16,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:post-demo:point-cloud:motion` -> `node --no-warnings scripts/post-demo-point-cloud-motion-test.js`
 - `npm run test:post-demo:layout` -> `node --no-warnings scripts/post-demo-layout-test.js`
 - `npm run test:post-demo:opening` -> `node --no-warnings scripts/post-demo-opening-test.js`
+- `npm run test:post-demo:audio-source` -> `node --no-warnings scripts/post-demo-audio-source-test.js`
 - `npm run test:post-demo:layout:browser` -> `node --no-warnings scripts/post-demo-point-cloud-browser-test.js --layout`
 - `npm run test:post-demo:cycle` -> `node --no-warnings scripts/post-demo-cycle-test.js`
 - `npm run test:post-demo:combined` -> `node --no-warnings scripts/post-demo-cycle-test.js --combined`
@@ -386,6 +387,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/participant-pool-test.js`
 - `scripts/performance-system-test.js`
 - `scripts/play-unlock-browser-test.js`
+- `scripts/post-demo-audio-source-test.js`
 - `scripts/post-demo-browser-test.js`
 - `scripts/post-demo-cycle-test.js`
 - `scripts/post-demo-layout-test.js`
