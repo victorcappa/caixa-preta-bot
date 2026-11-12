@@ -6,6 +6,7 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { prepareOperatorAudit } from "./operator-public-audit-utils.js";
+import { auditPostDemoLayout } from "./post-demo-layout-browser-audit.js";
 
 const root = await prepareOperatorAudit();
 const output = await fs.mkdtemp(path.join(os.tmpdir(), "caixa-post-demo-browser-"));
@@ -21,7 +22,7 @@ const server = spawn(process.execPath, ["--import", fileURLToPath(new URL("./ope
   cwd: root, env: { ...process.env, OPENAI_API_KEY: "audit-only", OPENAI_BASE_URL: "https://api.openai.com/v1", CAIXA_PRETA_OPERATOR_MOCK: fixture,
     CAIXA_PRETA_SHOW_RUNTIME_DIR: path.join(output, "runtime") }, stdio: ["ignore", "pipe", "pipe"]
 });
-let log = "", browser, projection, control;
+let log = "", browser, projection, control, layoutEvidence, layoutRestore;
 server.stdout.on("data", chunk => { log += chunk; }); server.stderr.on("data", chunk => { log += chunk; });
 const state = async () => (await fetch(base + "/api/state")).json();
 async function post(route, body) {
@@ -130,6 +131,7 @@ try {
   await projection.reload(); await control.reload();
   await new Promise(resolve => setTimeout(resolve, 1400));
   assert.equal((await state()).postDemo.active, false); assert.equal((await state()).postDemo.totalRounds, stoppedAt);
+  layoutEvidence = await auditPostDemoLayout({ projection, control, output, base, sessionId: (await state()).reliability.sessionId });
   const beforeReset = await state(), configBeforeReset = await privateConfig();
   await fs.writeFile(fixture, JSON.stringify({ principalText: JSON.stringify(reply(0)) }));
   await control.getByRole("button", { name: "RESET", exact: true }).click();
@@ -139,19 +141,27 @@ try {
   assert.equal(afterReset.audienceWarmup.manualMode, beforeReset.audienceWarmup.manualMode);
   assert.deepEqual(await privateConfig(), configBeforeReset); assert.equal(afterReset.postDemo.rounds[0].card.id, 0);
   assert.notEqual(afterReset.postDemo.rounds[0].id, beforeReset.postDemo.rounds[0].id);
+  // Reuse the rectangles created with real handles to prove they outlive the show.
+  // The helper restored its input so the existing RESET checks retain their baseline.
+  layoutRestore = layoutEvidence.originalLayout;
+  await command("config", { config: { layout: layoutEvidence.savedLayout } });
   await post("/api/show-session", { action: "new" });
   await new Promise(resolve => setTimeout(resolve, 500));
   const reset = (await state()).postDemo;
   assert.equal(reset.startedAt, null); assert.equal(reset.rounds.length, 0); assert.equal((await privateConfig()).cardHoldMs, 1000); assert.equal((await privateConfig()).personality.sarcasm, 34);
+  assert.deepEqual((await privateConfig()).layout, layoutEvidence.savedLayout, "A nova sessão perdeu a composição criada com as alças.");
+  assert.deepEqual(reset.layout, layoutEvidence.savedLayout, "A nova sessão não publicou a composição salva.");
+  await command("config", { config: { layout: layoutRestore } }); layoutRestore = null;
   assert(publicActions.every(action => ["ack", "ready"].includes(action)), "projeção não pode emitir comandos privados");
   assert.deepEqual(errors, []);
   await operator.close();
-  console.log(JSON.stringify({ ok: true, liveModel: false, output, checks: ["tab starts autonomous selection", "future continuation/own parameters without audience/session details in provider input", "public cards/typing without names", "private independent timing/personality/model/font, no global mirroring either way", "automatic second card and no repetition", "private rating", "pause", "right-edge handle works after scrolling and reload without advancing", "STOP ALL/reload", "RESET restarts cards without changing settings/session/manual mode", "new show stays idle and keeps speed", "public/private boundary"] }, null, 2));
+  console.log(JSON.stringify({ ok: true, liveModel: false, layoutAudit: layoutEvidence.ok, output, checks: ["tab starts autonomous selection", "future continuation/own parameters without audience/session details in provider input", "public cards/typing without names", "private independent timing/personality/model/font, no global mirroring either way", "automatic second card and no repetition", "private rating", "pause", "right-edge handle works after scrolling and reload without advancing", "STOP ALL/reload", "card/text drag/resize, failed save retry, public synchronization, navigation/reload/new-session persistence", "RESET restarts cards without changing settings/session/manual mode", "new show stays idle and keeps speed/layout", "public/private boundary"] }, null, 2));
 } catch (error) {
   await projection?.screenshot({ path: path.join(output, "failure-public.png") }).catch(() => {});
   await control?.screenshot({ path: path.join(output, "failure-control.png") }).catch(() => {});
   console.log("Evidence:", output); throw error;
 } finally {
+  if (layoutRestore && server.exitCode === null) await command("config", { config: { layout: layoutRestore } });
   await browser?.close();
   if (server.exitCode === null) { server.kill("SIGTERM"); await new Promise(resolve => server.once("exit", resolve)); }
   await fs.writeFile(path.join(output, "server.log"), log);

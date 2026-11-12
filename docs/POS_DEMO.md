@@ -8,6 +8,14 @@ O público vê a carta e a fala com digitação animada, voltadas ao **futuro da
 
 As cartas aparecem recortadas pelo contorno cadastrado no catálogo, com cantos suavizados, sem o fundo branco da fotografia nem moldura externa. O tamanho de exibição foi reduzido em 15% nas duas telas. O recorte é visual: preserva as referências originais usadas pelo reconhecimento do Tarô.
 
+## Composição da tela
+
+Com o painel aberto em `/pos-demo/controle`, cada módulo — **carta**, **texto** e **modelo 3D** — mostra uma alça no topo para mover e outra no canto inferior direito para redimensionar. É possível focar essas alças e usar as setas do teclado; **Shift + seta** aplica um passo cinco vezes maior. A navegação dentro da nuvem continua pelo próprio modelo, sem disputar o gesto com as alças. A projeção `/pos-demo` e o controle com o painel recolhido mostram a composição limpa, sem alças.
+
+Posição e tamanho são percentuais da área cênica. Cada módulo pode substituir sua posição automática de forma independente; os demais continuam usando a composição responsiva, que se adapta à presença ou ausência da nuvem. Os ajustes ficam em `postDemo.config.layout`, são salvos nas preferências locais e sincronizados entre as telas pelos eventos existentes do pós-demo. Reabrir a tela ou começar outra sessão mantém a composição escolhida.
+
+**Restaurar composição** remove essas substituições e volta à distribuição automática. O botão não reinicia cartas, não reconverte a foto, não altera a câmera nem interfere no modo manual ou nos demais parâmetros. Mover, redimensionar e abrir/recolher o painel preservam os módulos montados: a digitação, o relógio do shader e a navegação 3D continuam do ponto atual.
+
 ## Material e memória
 
 O PDF fornecido foi preservado em `assets/dramaturgia/proximas-etapas-da-peca.pdf`; as 12 páginas integrais estão extraídas em `knowledge/sources/proximas-etapas-da-peca.json`. Seus planos para as cenas 7–15 prevalecem sobre as propostas antigas do rascunho para imaginar a continuação. `memory:sync` atualiza as duas extrações; `memory:audit` verifica integralidade e hashes de ambos os PDFs.
@@ -18,7 +26,7 @@ Uma única chamada textual à API configurada escolhe a carta e gera a fala/perg
 
 ## Ritmo e operação
 
-Todos os ajustes ficam exclusivamente no painel privado **pós-demo** (`/pos-demo/controle`): tempo por letra (20–200 ms, padrão 100 ms), pausa na pontuação (0–2000 ms, padrão 700 ms), intervalo entre cartas (1–120 segundos, padrão 20 segundos), modelo, fonte e onze parâmetros de personalidade/expressão. São independentes em ambas as direções dos ajustes do bot, Operator, Tarô e treino ao vivo. A projeção recebe apenas o ritmo/fonte necessários para renderizar; não mostra controles nem o perfil privado. Configurações antigas com intervalo abaixo de 20 segundos migram para esse padrão mais lento, sem copiar parâmetros globais. Ajustes novos explícitos preservam o valor escolhido.
+Todos os ajustes ficam exclusivamente no painel privado **pós-demo** (`/pos-demo/controle`): tempo por letra (20–200 ms, padrão 100 ms), pausa na pontuação (0–2000 ms, padrão 700 ms), intervalo entre cartas (1–120 segundos, padrão 20 segundos), modelo, fonte e onze parâmetros de personalidade/expressão. São independentes em ambas as direções dos ajustes do bot, Operator, Tarô e treino ao vivo. A projeção recebe os dados de apresentação necessários: ritmo/fonte, composição e configuração visual da nuvem; não mostra controles nem o perfil privado. Configurações antigas com intervalo abaixo de 20 segundos migram para esse padrão mais lento, sem copiar parâmetros globais. Ajustes novos explícitos preservam o valor escolhido.
 
 O intervalo entre cartas começa apenas após a projeção confirmar que terminou de digitar a fala e a pergunta. Alterar o intervalo durante a espera considera o tempo já transcorrido. Todos os ajustes próprios persistem entre apresentações e reinícios, sem restaurar execução automaticamente.
 
@@ -32,9 +40,12 @@ Um processo do servidor iniciado antes desta função precisa de uma reinicializ
 
 ## Verificação
 
+Em 12/11/2026, as alças passaram nas duas auditorias de navegador isoladas: carta/texto e carta/texto/modelo 3D. Foram validados arraste e resize reais, setas, erro 503 com retry sem perder o gesto, sincronização proporcional por SSE, ausência de alças na projeção/painel recolhido, troca de aba, reload e composição preservada na sessão seguinte. A nuvem manteve canvas/contexto WebGL, relógio do shader, navegação manual e buffers originais durante o resize. Evidências temporárias: [carta/texto](/var/folders/zh/ffx555rn6wb0374j4z23s3jr0000gn/T/caixa-post-demo-browser-zqe87A/layout-report.json) e [três módulos](/var/folders/zh/ffx555rn6wb0374j4z23s3jr0000gn/T/caixa-point-cloud-browser-DZUsCA/layout-report.json). Unitários de composição, pós-demo, preferências em processo novo, lint e brain check também passaram. Não houve chamada ao modelo textual nem validação em projetor físico.
+
 - `npm run test:post-demo`: relógio falso e fixtures; seleção/ACK idempotentes, ritmo, fonte/carta/nome válidos, acervo integral, isolamento, avaliações, cancelamento, emergência, recuperação e reset.
 - `npm run test:post-demo:browser`: build e servidor isolados na porta 3327, baralho real local e provedor simulado. Verifica início automático, segunda carta sem comando, digitação/ACK, ausência de nomes/registros da plateia no pedido e rodapé, parâmetros próprios, isolamento em ambas as direções de personalidade/modelo/fonte/ritmo, controles ausentes na projeção e no Operator, persistência após reload, avaliações privadas, pausa/STOP ALL/reload e apresentação nova sem autoexecução. Não toca a porta 3000 nem envia dados externamente.
 - `npm run test:post-demo:point-cloud` e `npm run test:post-demo:point-cloud:browser`: seleção por data, conversão, sessão e navegação 3D; detalhes e evidências em [POST_DEMO_POINT_CLOUD.md](POST_DEMO_POINT_CLOUD.md).
+- `npm run test:post-demo:layout`: padrões com/sem nuvem, retângulos válidos, substituições por módulo, mesclagem parcial e restauração da composição. `npm run test:post-demo:layout:browser` executa a auditoria dedicada das alças no navegador isolado.
 - `npm run test:post-demo:cycle`: 22 cartas em navegador real e servidor isolado na porta 3329, provedor simulado, confirmação somente depois da digitação, pausas, falha na oitava carta/retomada e encerramento sem 23ª geração.
 - `npm run test:post-demo:combined`: as 22 cartas usando somente `/pos-demo/controle`, com o menu recolhido; testa reabrir/recolher durante a sequência, layout sem controles/título, preferência após reload e último fragmento visível.
 - `npm run test:post-demo:cycle:live`: mesma sequência limitada a 22 cartas pela API configurada, em servidor isolado na porta 3330. Cadastros/observações fictícios ficam na fixture, fora do pedido. O cliente confirma cada fala por ACK; a animação é coberta pelo navegador. Envia o acervo já autorizado, sem tocar a sessão da porta 3000. `--resume=/caminho/da/fixture` retoma somente uma fixture anterior, preservando cartas validadas e consultando apenas as restantes.

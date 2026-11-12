@@ -2,20 +2,27 @@
 .header { display:flex; align-items:baseline; justify-content:space-between; gap:20px; padding:24px 4vw; border-bottom:1px solid #174a2b; }
 .header h1 { font:inherit; font-size:clamp(20px,2.5vw,38px); margin:0; letter-spacing:.12em; }
 .header span { color:#8abb9b; font-size:14px; }
-.stage { display:grid; grid-template-columns:minmax(180px,28%) minmax(0,1fr); align-items:center; gap:4vw; padding:28px 5vw; min-height:0; position:relative; }
+.stage { padding:28px 5vw; min-height:0; min-width:0; position:relative; }
+.layoutCanvas { position:relative; width:100%; height:100%; min-height:0; }
+.layoutFrame { position:absolute; min-width:0; min-height:0; }
+.layoutFrame[data-editable="true"] { outline:1px dashed #237541; }
+.moveHandle,.resizeHandle { position:absolute; z-index:5; color:var(--ink); border:1px solid #237541; border-radius:3px; background:#06160c; padding:3px 6px; font:inherit; font-size:11px; line-height:1.2; touch-action:none; user-select:none; }
+.moveHandle { top:0; left:0; cursor:grab; }
+.moveHandle:active { cursor:grabbing; }
+.resizeHandle { right:0; bottom:0; width:24px; height:24px; padding:0; cursor:nwse-resize; font-size:18px; }
+.moveHandle:hover,.resizeHandle:hover,.moveHandle:focus-visible,.resizeHandle:focus-visible { outline:2px solid var(--ink); outline-offset:1px; background:#124a28; }
 .card { margin:0; min-height:0; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; animation:reveal .65s ease-out; }
 .card img { display:block; max-width:85%; max-height:calc((100% - 42px) * .85); width:auto; height:auto; object-fit:contain; border:0; }
 .cardMask { position:absolute; width:0; height:0; overflow:hidden; }
 .card figcaption { font-size:clamp(14px,1.5vw,23px); text-align:center; padding:14px 0 0; }
-.voice { align-self:stretch; overflow-y:auto; display:flex; align-items:safe center; min-height:0; scrollbar-color:#174a2b #000; }
+.voice { width:100%; height:100%; overflow-y:auto; display:flex; align-items:safe center; min-height:0; scrollbar-color:#174a2b #000; }
 .voice p { font:inherit; font-size:clamp(23px,2.45vw,44px); line-height:1.33; white-space:pre-wrap; overflow-wrap:anywhere; margin:0; padding:12px 0; }
-.cursor { font-size:40px; grid-column:1/-1; text-align:center; animation:blink 1s steps(1) infinite; }
+.cursor { position:absolute; inset:0; display:grid; place-items:center; margin:0; font-size:40px; text-align:center; animation:blink 1s steps(1) infinite; pointer-events:none; }
 .drawing { position:absolute; bottom:4px; right:4vw; color:#8abb9b; font-size:12px; }
 .drawing span { animation:blink 1s steps(1) infinite; }
-.suspended { color:#9cac9f; grid-column:1/-1; }
-.stage[data-cloud="true"] { grid-template-columns:minmax(160px,28%) minmax(0,1fr) minmax(220px,28%); gap:2vw; }
+.suspended { position:absolute; bottom:20px; left:5vw; margin:0; color:#9cac9f; }
 .stage[data-cloud="true"] .voice p { font-size:clamp(21px,1.8vw,34px); }
-.pointCloud { grid-column:3; grid-row:1; align-self:start; height:72svh; max-height:100%; min-height:220px; width:100%; min-width:0; overflow:hidden; }
+.pointCloud { height:100%; min-height:0; width:100%; min-width:0; overflow:hidden; }
 .pointCloud canvas { display:block; width:100%; height:100%; touch-action:none; cursor:grab; }
 .pointCloud canvas:active { cursor:grabbing; }
 .cloudControls { padding:16px 0; border-bottom:1px solid #174a2b; }

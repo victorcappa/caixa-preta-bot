@@ -8,10 +8,12 @@ import { chromium } from "playwright";
 import { prepareOperatorAudit } from "./operator-public-audit-utils.js";
 import { installPointCloudAnimationProbe, auditPointCloudAnimation } from "./post-demo-point-cloud-animation-audit.js";
 import { auditPointCloudControls } from "./post-demo-point-cloud-controls-audit.js";
+import { auditPostDemoLayout } from "./post-demo-layout-browser-audit.js";
 
 const repository = process.cwd(), root = await prepareOperatorAudit(), base = "http://127.0.0.1:3331";
 const auditBreathing = process.argv.includes("--animation");
 const auditControls = process.argv.includes("--controls");
+const auditLayout = process.argv.includes("--layout");
 assert.notEqual(root, repository);
 const output = await fs.mkdtemp(path.join(os.tmpdir(), "caixa-point-cloud-browser-")), runtime = path.join(output, "runtime"), provider = path.join(output, "provider.json");
 // A failure switch belongs only to this isolated worker; the real converter/model are never modified.
@@ -55,7 +57,7 @@ try {
   await post("/api/post-demo", { action: "config", sessionId, config: { typingIntervalMs: 20, typingPauseMs: 0, cardHoldMs: 1000 } });
   browser = await chromium.launch({ channel: "chromium", headless: true, chromiumSandbox: true, ignoreDefaultArgs: ["--enable-unsafe-swiftshader"] });
   const context = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
-  if (auditBreathing || auditControls) await installPointCloudAnimationProbe(context);
+  if (auditBreathing || auditControls || auditLayout) await installPointCloudAnimationProbe(context);
   projection = await context.newPage(); control = await context.newPage();
   for (const page of [projection, control]) page.on("pageerror", error => errors.push(error.message));
   const publicRequests = []; let projectionNavigations = 0;
@@ -129,6 +131,10 @@ try {
     "entrada original concluída nas janelas antes da navegação manual", (originalCloudSettings.startDarkSeconds + originalCloudSettings.revealSeconds + 10) * 1000);
     checks.push("shader: dois ciclos completos de frente e no giro, onda entre fileiras, relógio contínuo no controle manual e zero reenvios dos vértices");
   }
+  if (auditLayout) {
+    await auditPostDemoLayout({ projection, control, output, base, sessionId, modules: ["card", "text", "cloud"] });
+    checks.push("alças privadas de carta/texto/modelo 3D, save/retry, layout proporcional por SSE, reload/abas, resize sem recriar canvas ou parar shader/OrbitControls");
+  }
   await projection.screenshot({ path: path.join(output, "revealed.png") });
   const rect = await canvas().boundingBox(), x = rect.x + rect.width / 2, y = rect.y + rect.height / 2;
   const oldCamera = await canvas().getAttribute("data-camera");
@@ -188,8 +194,8 @@ try {
   assert.equal((await fetch(base + currentCloud.url)).status, 404); await post("/api/post-demo/point-cloud", { sessionId }, 409);
   checks.push("painel retrátil preserva nuvem à direita; RESET reinicia cartas e revelação sem reconverter foto nem alterar ajustes; seleção por mtime em cada clique; PNG/JPEG; foto original bloqueada inclusive alias/range; falha do processo, foto ilegível e pasta vazia preservam nuvem anterior; sessão nova rejeita resultado/URL antigos");
   assert.deepEqual(errors, []);
-  await fs.writeFile(path.join(output, "report.json"), JSON.stringify({ ok: true, liveDepthModel: true, liveLanguageModel: false, controlsAudit: auditControls, shaderAnimation: Boolean(animationEvidence), metrics, framesPerSecond, graphicsRenderer, checks, output }, null, 2));
-  console.log(JSON.stringify({ ok: true, controlsAudit: auditControls, shaderAnimation: Boolean(animationEvidence), metrics, framesPerSecond, graphicsRenderer, checks, output }, null, 2));
+  await fs.writeFile(path.join(output, "report.json"), JSON.stringify({ ok: true, liveDepthModel: true, liveLanguageModel: false, controlsAudit: auditControls, layoutAudit: auditLayout, shaderAnimation: Boolean(animationEvidence), metrics, framesPerSecond, graphicsRenderer, checks, output }, null, 2));
+  console.log(JSON.stringify({ ok: true, controlsAudit: auditControls, layoutAudit: auditLayout, shaderAnimation: Boolean(animationEvidence), metrics, framesPerSecond, graphicsRenderer, checks, output }, null, 2));
 } catch (error) {
   await projection?.screenshot({ path: path.join(output, "failure-public.png") }).catch(() => {}); await control?.screenshot({ path: path.join(output, "failure-control.png") }).catch(() => {});
   console.log("Evidence:", output); throw error;

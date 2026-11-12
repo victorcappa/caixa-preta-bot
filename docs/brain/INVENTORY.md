@@ -14,6 +14,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:post-demo:point-cloud:animation` -> `node --no-warnings scripts/post-demo-point-cloud-browser-test.js --animation`
 - `npm run test:post-demo:point-cloud:controls` -> `node --no-warnings scripts/post-demo-point-cloud-browser-test.js --controls --animation`
 - `npm run test:post-demo:point-cloud:motion` -> `node --no-warnings scripts/post-demo-point-cloud-motion-test.js`
+- `npm run test:post-demo:layout` -> `node --no-warnings scripts/post-demo-layout-test.js`
+- `npm run test:post-demo:layout:browser` -> `node --no-warnings scripts/post-demo-point-cloud-browser-test.js --layout`
 - `npm run test:post-demo:cycle` -> `node --no-warnings scripts/post-demo-cycle-test.js`
 - `npm run test:post-demo:combined` -> `node --no-warnings scripts/post-demo-cycle-test.js --combined`
 - `npm run test:post-demo:cycle:live` -> `node --no-warnings --env-file-if-exists=.env.local scripts/post-demo-cycle-test.js --live`
@@ -212,6 +214,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/PostDemo.js`
 - `components/PostDemoCardImage.js`
 - `components/PostDemoController.js`
+- `components/PostDemoLayoutFrame.js`
 - `components/PostDemoParameters.js`
 - `components/PostDemoPointCloud.js`
 - `components/PostDemoPointCloudControls.js`
@@ -383,6 +386,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/play-unlock-browser-test.js`
 - `scripts/post-demo-browser-test.js`
 - `scripts/post-demo-cycle-test.js`
+- `scripts/post-demo-layout-test.js`
 - `scripts/post-demo-point-cloud-browser-test.js`
 - `scripts/post-demo-point-cloud-motion-test.js`
 - `scripts/post-demo-point-cloud-test.js`

@@ -68,6 +68,13 @@ try {
   assert.equal(postDemoSnapshot(state).cloudPresentation.settings.endDistance, .65);
   assert.equal(state.status, "presenting"); advance(60000); assert.equal(calls, 1, "tempo sozinho não pode pular uma fala ainda não exibida");
   assert.equal(actor.acknowledge("wrong"), false); assert.equal(actor.acknowledge(first.id), true); assert.equal(actor.acknowledge(first.id), false);
+  const beforeLayout = structuredClone({ nextAt: state.nextAt, rounds: state.rounds, view: state.pointCloudView });
+  actor.config({ layout: { text: { x: 32, y: 10, width: 50, height: 70 } } });
+  actor.config({ layout: { card: { x: 2, y: 15, width: 25, height: 70 }, text: { x: 34 } } });
+  assert.deepEqual(state.config.layout.text, { x: 34, y: 10, width: 50, height: 70 });
+  assert.deepEqual(postDemoSnapshot(state).layout, state.config.layout);
+  assert.deepEqual({ nextAt: state.nextAt, rounds: state.rounds, view: state.pointCloudView }, beforeLayout);
+  assert.equal(state.status, "waiting"); assert.equal(calls, 1, "ajustar composição não avança nem reinicia a fala ou o passeio");
   advance(2000); actor.config({ cardHoldMs: 1000 }); advance(0); assert.equal(calls, 2, "o ritmo ajustado deve descontar o tempo já decorrido");
   const second = actor.begin(); actor.pause("stop-all");
   assert(second.controller.signal.aborted); assert.equal(actor.finish(second, validatePostDemoTurn(response, context)), false);
@@ -106,6 +113,9 @@ try {
   actor.replayCloud();
   assert.deepEqual({ rounds: state.rounds, count: state.totalRounds, config: state.config, status: state.status }, beforeReplay);
   assert(state.pointCloudView.startedAt); assert.equal(calls, 22);
+  actor.config({ layout: { text: { x: 20, y: 10, width: 60, height: 80 } } });
+  assert.equal(state.status, "completed"); assert.equal(calls, 22);
+  actor.config({ layout: null }); assert.deepEqual(state.config.layout, { card: null, text: null, cloud: null });
   const savedConfig = structuredClone(state.config), savedCloud = { ...state.pointCloud, current: { id: "cloud-reset-fixture" } }, previousStartedAt = state.startedAt;
   state.pointCloud = savedCloud; advance(1); actor.restart();
   assert.equal(state.totalRounds, 0); assert.deepEqual(state.rounds, []); assert.deepEqual(state.usedCardIds, []);

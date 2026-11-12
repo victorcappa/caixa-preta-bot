@@ -12,7 +12,7 @@ O salvamento usa os valores reais de `showState`, sem substituir pelos padrões 
 | Composição pública | Posição/tamanho de cada módulo e cor dos textos públicos do Operator. |
 | Tarô | Configuração de leitura/autonomia, visual/Matrix, instrução privada, referências e temas, contexto contemporâneo, câmera escolhida e modo automático. |
 | Alucinação | Chaves gerais, limite de cartas, filtros, política de retirada, efeitos, intensidades, mistura facial, eventos da timeline, presets e memórias/entrevistas vinculadas. |
-| Pós-demo | Digitação, pausas, intervalo entre cartas, modelo, fonte e onze parâmetros próprios; preset da nuvem, tempos/distâncias de entrada, passeio/giro, retomada após gesto manual e todos os ajustes de shader/pontos. São ajustados somente no controle pós-demo, sem espelhamento com o bot/Tarô. Histórico, carta atual, referência à nuvem e execução do passeio pertencem apenas à sessão. |
+| Pós-demo | Digitação, pausas, intervalo entre cartas, modelo, fonte e onze parâmetros próprios; posição/tamanho dos módulos carta, texto e modelo 3D; preset da nuvem, tempos/distâncias de entrada, passeio/giro, retomada após gesto manual e todos os ajustes de shader/pontos. São ajustados somente no controle pós-demo, sem espelhamento com o bot/Tarô. Histórico, carta atual, referência à nuvem e execução do passeio pertencem apenas à sessão. |
 | Outros controles de estado | Parâmetros/preset/áudio do glitch e transição, intensidade dos shaders, volume do sampler, texto/subdivisão/ritmo/fade/modos da Queda Avião, orientação de personalidade e som do BIOS, opções de aquecimento, duração de cada minigame, filtro de participantes e configuração de pesquisa. |
 | Opções dos formulários | Estado recolhido/aberto do painel pós-demo; qualidade e remoção de fundo do modelo 3D; arquivo/loop do vídeo de glitch; arquivo/loop/transição no controller da Cena Zero; carta e modo da busca de referências. |
 | Cadastros existentes | Catálogo, fotos, fusões/aprovações, cues, notas e configurações individuais do sampler continuam em seus arquivos existentes. Botões, atalhos, texto, cor, arquivo, duração, volume e loop dos samplers editáveis agora são salvos automaticamente, sem depender de SALVAR AGORA. Pedais e volume/loop por item do Força G também persistem. Não são substituídos por esta camada. |
@@ -22,6 +22,8 @@ O mesmo conjunto é mantido em **REINICIAR TREINAMENTO**, **INICIAR NOVA APRESEN
 Nos canais compartilhados, os valores existentes não são migrados para padrões: os quatro controles principais continuam em `operatorPublic.personality` e os sete de expressão em `tarot.profile`, consumidos pelos canais principais, Operator, Tarô e treino ao vivo. O pós-demo usa `postDemo.config`, independente desse conjunto. As três telas reutilizam o mesmo painel e endpoint de parâmetros. A leitura privada não inclui notas, instruções nem histórico; o perfil não foi acrescentado à projeção pública. **RESTAURAR PERFIL** coloca os sete ajustes de expressão em 50 nas três telas compartilhadas. No pós-demo, esse botão restaura apenas seu perfil próprio.
 
 O painel privado da nuvem salva os valores em `postDemo.config.pointCloud`, dentro do mesmo arquivo de preferências. Isso inclui a escolha entre sete presets, movimento automático, tempos no escuro/revelação/passeio, distâncias inicial/final, amplitudes, giro, espera após navegação manual, respiração, luz, realces, oscilação, defasagem, tamanho dos pontos e brilho. O padrão é **Revelar e passear**: 2 segundos de zoom-in no escuro, 18 segundos de revelação com afastamento e depois passeio contínuo de 48 segundos por ciclo. Valores já escolhidos prevalecem nas sessões seguintes.
+
+A composição do pós-demo fica em `postDemo.config.layout`, no mesmo salvamento automático. Os retângulos são percentuais da área cênica, com substituições independentes para carta, texto e modelo 3D; os módulos sem substituição seguem os padrões responsivos com ou sem nuvem. As alças de mover e redimensionar aparecem somente em `/pos-demo/controle` com o painel aberto e aceitam setas do teclado, com passo cinco vezes maior ao segurar Shift. A projeção e o painel recolhido mostram apenas o resultado. A sincronização usa o estado e os eventos existentes do pós-demo. **Restaurar composição** limpa apenas essas substituições, sem mudar cartas, foto, câmera, modo manual ou outros parâmetros. Alterar a composição e abrir/recolher o painel mantêm a digitação e o canvas 3D montados.
 
 Os controles da nuvem só aparecem em `/pos-demo/controle`; a projeção recebe a referência `{id, url}` e, em `cloudPresentation`, apenas os ajustes de renderização e o token/data do passeio. Alterar sliders aplica-se ao vivo sem recriar canvas/geometria. Período do pulso e velocidade da oscilação conservam a fase durante a mudança. **Reiniciar passeio** (`cloud-replay`) e selecionar outro preset reiniciam somente a câmera, mantendo cartas, foto convertida e parâmetros. **RESET** reinicia cartas e passeio, preservando esses ajustes. São ações de execução, distintas das preferências salvas. Escopo e operação: [POST_DEMO_POINT_CLOUD.md](POST_DEMO_POINT_CLOUD.md).
 
@@ -41,12 +43,16 @@ Um processo aberto antes de existir a integração precisa de uma reinicializaç
 
 ## Verificação
 
+Em 12/11/2026, a composição passou nos unitários de retângulos/patch/reset, nas preferências de nova sessão/processo e nos navegadores isolados com dois e três módulos. Foram validados gestos, retry após falha de gravação, sincronização, reload e persistência entre apresentações. O resize da nuvem preservou canvas, shader e OrbitControls. Evidências atuais: [POS_DEMO.md](POS_DEMO.md). Os relatórios históricos dos demais canais abaixo não substituem esses testes de composição.
+
 ```bash
 npm run test:controller-settings
 npm run test:operator-preferences
 npm run test:operator-preferences:browser
 npm run test:post-demo:point-cloud:motion
 npm run test:post-demo:point-cloud:controls
+npm run test:post-demo:layout
+npm run test:post-demo:layout:browser
 ```
 
 O primeiro verifica gravação exata, exclusão de execução/história, arquivos privados/atômicos, erros de gravação/corrupção, reset do Tarô, nova apresentação, recuperação de snapshot antigo e leitura por outro processo Node. O teste de navegador usa build/servidor isolados na porta 3319, altera valores pelas APIs reais, confere o aviso na interface e para/reabre esse servidor para confirmar a carga automática. Agora também verifica edição automática de nome/duração/volume dos cues sem clicar em salvar, envio pendente ao navegar, opções em navegador novo e persistência depois de reiniciar o processo isolado. A geração 3D é interceptada e não é executada. Não faz chamadas ao modelo nem opera a porta 3000.

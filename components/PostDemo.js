@@ -6,6 +6,9 @@ import OperatorTypedReply from "./OperatorTypedReply";
 import PostDemoParameters from "./PostDemoParameters";
 import PostDemoPointCloud from "./PostDemoPointCloud";
 import PostDemoCardImage from "./PostDemoCardImage";
+import PostDemoLayoutFrame from "./PostDemoLayoutFrame";
+import { resolvePostDemoLayout } from "@/lib/post-demo/layout";
+import { usePostDemoLayout } from "@/lib/post-demo/usePostDemoLayout";
 import { postDemoPresentation, POST_DEMO_CARD_LIMIT } from "@/lib/post-demo/settings";
 import styles from "./PostDemo.module.css";
 
@@ -17,6 +20,9 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
   const [cardSurfaces, setCardSurfaces] = useState({});
   const entered = useRef(null), session = useRef(null), textArea = useRef(null), pending = useRef(false);
   const state = snapshot?.postDemo, round = state?.rounds.at(-1);
+  const layout = usePostDemoLayout(state?.layout, snapshot?.reliability.sessionId, controller);
+  const rectangles = resolvePostDemoLayout(layout.value, { hasCloud: Boolean(state?.pointCloud) });
+  const editableLayout = controller && !panelCollapsed && Boolean(details?.config);
   const presentation = state?.presentation || postDemoPresentation();
   const dedicatedProjection = Object.values(snapshot?.projection?.windows || {}).some(window => window.connected && window.currentPath?.split("?")[0] === "/pos-demo");
   const display = !controller || !dedicatedProjection;
@@ -92,16 +98,26 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
     </header>
     {panelCollapsed && panelError ? <p role="alert">{panelError}</p> : null}
     <section className={styles.stage} data-cloud={Boolean(state?.pointCloud)} aria-label="Ilha futura da peça">
-      {round ? <>
+      <div className={styles.layoutCanvas} data-post-demo-layout-canvas>
+      {round ? <PostDemoLayoutFrame key="card" id="card" label="carta" rect={rectangles.card} editable={editableLayout} epoch={snapshot?.reliability.sessionId}
+        onChange={(id, rect) => layout.change({ [id]: rect })} onCommit={() => void layout.flush()}>
         <figure className={styles.card} key={round.id}><PostDemoCardImage card={round.card} surface={round.card.surface || cardSurfaces[round.card.id]} /><figcaption>{round.card.number} · {round.card.name}</figcaption></figure>
+      </PostDemoLayoutFrame> : null}
+      {round ? <PostDemoLayoutFrame key="text" id="text" label="texto" rect={rectangles.text} editable={editableLayout} epoch={snapshot?.reliability.sessionId}
+        onChange={(id, rect) => layout.change({ [id]: rect })} onCommit={() => void layout.flush()}>
         <div className={styles.voice} ref={textArea} role="log" aria-label="Fala da ilha futura">
           <OperatorTypedReply key={round.id} message={message} settings={presentation} animate={state.status !== "completed"}
             paused={!state.active} onProgress={scroll} onComplete={display ? typed : undefined} />
         </div>
-      </> : <p className={styles.cursor} aria-label="Aguardando a ilha">_</p>}
+      </PostDemoLayoutFrame> : null}
+      {state?.pointCloud ? <PostDemoLayoutFrame key="cloud" id="cloud" label="modelo 3D" rect={rectangles.cloud} editable={editableLayout} epoch={snapshot?.reliability.sessionId}
+        onChange={(id, rect) => layout.change({ [id]: rect })} onCommit={() => void layout.flush()}>
+        <PostDemoPointCloud key={state.startedAt || "idle"} reference={state.pointCloud} view={state.cloudPresentation} onError={setCloudError} />
+      </PostDemoLayoutFrame> : null}
+      {!round ? <p className={styles.cursor} aria-label="Aguardando a ilha">_</p> : null}
+      </div>
       {state?.status === "generating" ? <span className={styles.drawing}>A PRÓXIMA MARGEM<span>_</span></span> : null}
       {state?.status === "failed" && (!controller || panelCollapsed) ? <p className={styles.suspended}>A ilha ficou em suspenso.</p> : null}
-      {state?.pointCloud ? <PostDemoPointCloud key={state.startedAt || "idle"} reference={state.pointCloud} view={state.cloudPresentation} onError={setCloudError} /> : null}
     </section>
     {controller && !panelCollapsed ? <aside className={styles.control} id="post-demo-parameters">
       <p role="status">{state?.status === "completed" ? "PÓS-DEMO CONCLUÍDO · 22/22" : state?.status === "generating" ? "CRIANDO PRÓXIMA CARTA" : state?.active ? "SEQUÊNCIA AUTOMÁTICA" : "PAUSADO"}</p>
@@ -122,6 +138,12 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
       {round ? <div className={styles.buttons} aria-label="Avaliar fragmento">{[["perfect", "PERFEITO"], ["almost", "QUASE"], ["bad", "RUIM"]].map(([rating, label]) => <button key={rating} type="button" disabled={busy} aria-pressed={details?.rounds.find(item => item.id === round.id)?.rating === rating} onClick={() => void action("rate", { roundId: round.id, rating })}>{label}</button>)}</div> : null}
       {error ? <p role="alert">{error}</p> : null}
       {panelError ? <p role="alert">{panelError}</p> : null}
+      <section aria-label="Composição do pós-demo">
+        <h3>COMPOSIÇÃO</h3>
+        <p>Arraste a alça de cada parte para mover. Use o canto ↘ para aumentar ou diminuir. As setas ajustam com precisão; Shift aumenta o passo. Posições e tamanhos ficam salvos.</p>
+        <button type="button" disabled={!details?.config} onClick={layout.reset}>Restaurar composição</button>
+        {layout.error ? <p role="alert">{layout.error} <button type="button" onClick={() => void layout.flush()}>TENTAR NOVAMENTE</button></p> : null}
+      </section>
       <PostDemoParameters key={snapshot?.reliability.sessionId} config={details?.config} sessionId={snapshot?.reliability.sessionId}
         onReplayCloud={() => action("cloud-replay")} replayDisabled={busy || !state?.pointCloud} />
     </aside> : null}

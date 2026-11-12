@@ -73,7 +73,7 @@ showState.controlTarot('camera',{automatic:false,deviceId:'test-camera'});
 showState.controlTarot('hallucination',{patch:{randomEnabled:true,randomChance:37,afterCards:4,requireFusion:true,effects:{fusion:{mix:73},wave:{enabled:false}}}});
 showState.controlTarot('hallucination-memory',{memories:[{id:'interview',title:'Entrevista',text:'Memória editorial de teste.',personIds:['face-a']}]});
 showState.controlTarot('hallucination-preset',{operation:'save',name:'Preferência teste'});
-showState.postDemo.config({typingIntervalMs:145,typingPauseMs:950,cardHoldMs:33000,displayFont:'vt323',model:'gpt-5.6-terra',personality:{sarcasm:21,verbosity:67},profile:{humor:31,poetry:48},pointCloud:{preset:'rows',endDistance:.65,pulseIntensity:.27,startDarkSeconds:3}});
+showState.postDemo.config({typingIntervalMs:145,typingPauseMs:950,cardHoldMs:33000,displayFont:'vt323',model:'gpt-5.6-terra',personality:{sarcasm:21,verbosity:67},profile:{humor:31,poetry:48},pointCloud:{preset:'rows',endDistance:.65,pulseIntensity:.27,startDarkSeconds:3},layout:{card:{x:2,y:12,width:25,height:70},text:{x:29,y:18,width:38,height:60},cloud:{x:70,y:5,width:29,height:90}}});
 showState.setParticipantSelectionScope('audience-only');
 showState.controlAudienceWarmup('set-interval',{intervalMs:9400});
 showState.controlAudienceWarmup('set-manual-mode',{manualMode:false});

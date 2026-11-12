@@ -80,7 +80,7 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 
 ## Tarô / Treinamento
 
-- Post-demo -> `components/PostDemo.js`, `lib/postDemo.js`, `/api/post-demo`; screens `/pos-demo/controle`, `/pos-demo`. Cloud UI -> `components/PostDemoPointCloudControls.js`; renderer -> `components/PostDemoPointCloud.js`; settings/paths -> `lib/post-demo/pointCloudSettings.js`, `lib/post-demo/pointCloudMotion.js`; shader/engine -> `lib/post-demo/`. Setup/tests: `docs/POST_DEMO_POINT_CLOUD.md`; cards: `docs/POS_DEMO.md`.
+- Post-demo -> `components/PostDemo.js`, `lib/postDemo.js`, `/api/post-demo`; screens `/pos-demo/controle`, `/pos-demo`. Layout -> `components/PostDemoLayoutFrame.js`, `lib/post-demo/layout.js`; cloud -> `components/PostDemoPointCloud.js`, `PostDemoPointCloudControls.js`, `lib/post-demo/`. Guides/tests: `docs/POST_DEMO_POINT_CLOUD.md`, `docs/POS_DEMO.md`.
 
 - Public camera/annotations/speech and one-shot **INTERPRETAR** question -> `app/treinamento/page.js` -> `components/tarot/TarotTraining.js` / `useTarotCamera.js`.
 - Private operation/catalogue/anchors -> `app/treinamento/controle/page.js` -> `components/tarot/TarotControls.js` / `TarotCatalogEditor.js` (TARÔ navigation).
