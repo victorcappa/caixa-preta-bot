@@ -11,7 +11,8 @@ const vectorDistance = (a, b) => Math.hypot(...a.map((value, index) => value - b
 export async function auditPointCloudControls({ projection, control, output, base, sessionId }) {
   const url = new URL(base);
   assert(["127.0.0.1", "localhost"].includes(url.hostname) && url.port !== "3000", "A auditoria dos controles exige servidor isolado.");
-  const report = { ok: false, physicalProjector: false, presets: {}, checks: [], failures: [] };
+  const report = { ok: false, physicalProjector: false, presets: {}, checks: [], failures: [],
+    motionMeasurement: "requestAnimationFrame reads of renderer DOM metrics published about every 180 ms; continuity checks do not resolve each GPU frame" };
   const check = (condition, message) => { if (!condition) report.failures.push(message); };
   async function get(route) { const response = await fetch(base + route); assert(response.ok, route); return response.json(); }
   async function command(action, data = {}) {
@@ -37,7 +38,8 @@ export async function auditPointCloudControls({ projection, control, output, bas
         if (!element.isConnected) { reject(Error("O canvas foi substituído ao ajustar os controles.")); return; }
         samples.push({ at: performance.now(), camera: element.dataset.camera, pan: element.dataset.pan,
           yaw: Number(element.dataset.yaw), distance: Number(element.dataset.distance), phase: element.dataset.phase,
-          preset: element.dataset.preset, time: element.__pointCloudAnimationProbe?.uniforms.uTime });
+          preset: element.dataset.preset, time: element.__pointCloudAnimationProbe?.uniforms.uTime,
+          motionElapsed: Number(element.dataset.motionElapsed), distanceRatio: Number(element.dataset.distanceRatio), fitDistance: Number(element.dataset.fitDistance) });
         if (performance.now() - start >= duration * 1000) resolve(samples); else requestAnimationFrame(frame);
       }
       requestAnimationFrame(frame);
@@ -57,6 +59,20 @@ export async function auditPointCloudControls({ projection, control, output, bas
   }
   async function selectPreset(id) { await preset().selectOption(id); await waitPreset(id); }
   async function shaderUniforms() { return canvas().evaluate(element => ({ ...element.__pointCloudAnimationProbe?.uniforms })); }
+  async function gpuResources() {
+    return canvas().evaluate(element => ({ time: element.__pointCloudAnimationProbe?.uniforms.uTime,
+      uploads: element.__pointCloudAnimationProbe?.arrayBufferUploads, subUpdates: element.__pointCloudAnimationProbe?.arrayBufferSubUpdates,
+      sameCanvas: element === window.__pointCloudControlsCanvas, sameContext: element.getContext("webgl2") === window.__pointCloudControlsContext }));
+  }
+  function metrics(samples) {
+    return samples.filter((sample, index) => !index || sample.motionElapsed !== samples[index - 1].motionElapsed);
+  }
+  async function waitSettings(expected) {
+    await poll(async () => {
+      const privateSettings = (await details()).config.pointCloud, publicSettings = (await publicState()).postDemo.cloudPresentation.settings;
+      return Object.entries(expected).every(([key, value]) => privateSettings[key] === value && publicSettings[key] === value);
+    }, "ajustes visuais privados/públicos sincronizados");
+  }
   async function pixels() {
     return canvas().evaluate(element => new Promise(resolve => requestAnimationFrame(() => {
       const gl = element.getContext("webgl2"), bytes = new Uint8Array(element.width * element.height * 4);
@@ -77,7 +93,7 @@ export async function auditPointCloudControls({ projection, control, output, bas
     report.originalSettings = original;
     check(original.preset === "reveal-tour", "O passeio com entrada no escuro não é o preset padrão.");
     check(original.startDarkSeconds > 0 && original.revealSeconds > 0, "A entrada padrão deve reservar escuridão e revelação gradual.");
-    await canvas().evaluate(element => { window.__pointCloudControlsCanvas = element; });
+    await canvas().evaluate(element => { window.__pointCloudControlsCanvas = element; window.__pointCloudControlsContext = element.getContext("webgl2"); });
     const originalRef = before.postDemo.pointCloud;
     check(await projection.getByRole("combobox").count() === 0 && await projection.getByRole("slider").count() === 0 && await projection.getByRole("checkbox").count() === 0,
       "A projeção exibiu controles privados da nuvem.");
@@ -113,6 +129,93 @@ export async function auditPointCloudControls({ projection, control, output, bas
       } else check(result.cameraTravel > .005 || result.targetTravel > .005, `${id}: o preset não percorreu o espaço.`);
     }
     report.checks.push("seis movimentos distintos: giro, panorâmico, fileiras, travessia, distância e câmera parada");
+
+    // A complete turn is a monotonic, unwrapped angle, not a reset at 2π.
+    const rotation = control.getByRole("slider", { name: "Amplitude do giro da nuvem", exact: true });
+    check(Number(await rotation.getAttribute("max")) === 360, "O controle de giro não permite 360°.");
+    await setField("Amplitude do giro", 360); await waitSettings({ rotationDegrees: 360, rotationPeriodSeconds: 6 });
+    check(await rotation.inputValue() === "360", "O controle não aceitou 360°.");
+    const resourcesBeforeMotion = await gpuResources();
+    await selectPreset("rotate");
+    // Observe after the initial ramp and damping, then at least one full six-second turn.
+    await sample(4.2);
+    const turnFrames = await sample(6.5), turnSamples = metrics(turnFrames), firstTurn = turnSamples[0], lastTurn = turnSamples.at(-1);
+    const angularSteps = turnSamples.slice(1).map((value, index) => ({ delta: value.yaw - turnSamples[index].yaw,
+      seconds: value.motionElapsed - turnSamples[index].motionElapsed }));
+    const turnTravel = lastTurn.yaw - firstTurn.yaw;
+    check(turnTravel > Math.PI * 2, "O giro 360° não percorreu uma volta completa na janela observada.");
+    check(turnSamples.some(value => value.yaw - firstTurn.yaw >= Math.PI), "O giro não atravessou 180° relativos.");
+    check(angularSteps.every(step => step.delta >= -.005), "O giro 360° inverteu o sentido ou voltou a zero.");
+    check(angularSteps.every(step => step.delta <= Math.max(.65, step.seconds * Math.PI * 2 / 6 * 2.5)), "O giro 360° apresentou descontinuidade entre as métricas observadas.");
+    check(turnFrames.at(-1).time - turnFrames[0].time > 6.3, "O shader parou durante o giro completo.");
+    report.fullTurn = { configuredDegrees: 360, periodSeconds: 6, observedRadians: turnTravel,
+      observedDegrees: turnTravel * 180 / Math.PI, maxObservedStepRadians: Math.max(...angularSteps.map(step => step.delta)), samples: turnSamples };
+    report.checks.push("slider 360° salvo nas configurações privada/pública; giro contínuo atravessa 180° e 360° sem reinício observável nas métricas de 180 ms");
+
+    // Accelerate the authored default journey without changing its geometry or references.
+    await setField("Amplitude do giro", 8); await setField("Tempo no escuro", 0); await setField("Tempo de revelação", 2);
+    await setField("Distância inicial", .08); await setField("Distância final / zoom-out", .8);
+    await setField("Amplitude do passeio", 0); await setField("Espera após navegação manual", .5);
+    await waitSettings({ rotationDegrees: 8, startDarkSeconds: 0, revealSeconds: 2, startDistance: .08,
+      endDistance: .8, tourSeconds: 8, travelAmplitude: 0, resumeDelaySeconds: .5 });
+    await selectPreset("reveal-tour");
+    await poll(async () => await canvas().getAttribute("data-phase") === "automatic" &&
+      Number(await canvas().getAttribute("data-reveal-opacity")) > .999, "revelação curta completa antes de medir o passeio", 7000);
+    const journeyFrames = await sample(18), journeySamples = metrics(journeyFrames), ratios = journeySamples.map(value => value.distanceRatio);
+    const nearLimit = .08 + (.8 - .08) * .15, farLimit = .8 - (.8 - .08) * .15, visits = [];
+    for (const value of journeySamples) {
+      const zone = value.distanceRatio <= nearLimit ? "near" : value.distanceRatio >= farLimit ? "far" : null;
+      if (zone && visits.at(-1)?.zone !== zone) visits.push({ zone, elapsed: value.motionElapsed, ratio: value.distanceRatio });
+    }
+    check(ratios.every(value => Number.isFinite(value) && value >= .08 - .015 && value <= .8 + .015), "O passeio padrão saiu dos limites de distância inicial/final.");
+    check(visits.filter(value => value.zone === "near").length >= 2 && visits.filter(value => value.zone === "far").length >= 2,
+      "O passeio padrão não repetiu aproximação e afastamento por dois ciclos.");
+    check(journeyFrames.at(-1).time - journeyFrames[0].time > 17.8, "O shader parou durante os ciclos de aproximação/afastamento.");
+    report.defaultJourney = { preset: "reveal-tour", tourSeconds: 8, configuredNear: .08, configuredFar: .8,
+      observedNear: Math.min(...ratios), observedFar: Math.max(...ratios), visits, samples: journeySamples };
+
+    // Zoom manually all the way in while the path is approaching the audience.
+    // Resume must clamp positive distance instead of crossing through its focus.
+    let previousApproach = null;
+    await poll(async () => {
+      const current = metrics(await sample(.02)).at(-1), previous = previousApproach;
+      previousApproach = current;
+      return previous && current.motionElapsed !== previous.motionElapsed && current.distanceRatio > .65 && current.distanceRatio < previous.distanceRatio - .001;
+    }, "afastamento alto em aproximação antes do zoom manual", 11000);
+    const manualBounds = await canvas().boundingBox(), manualX = manualBounds.x + manualBounds.width / 2, manualY = manualBounds.y + manualBounds.height / 2;
+    await projection.mouse.move(manualX, manualY); await projection.mouse.down();
+    await projection.mouse.move(manualX + 35, manualY + 15, { steps: 10 }); await projection.mouse.up();
+    await projection.mouse.wheel(0, -20000);
+    await poll(async () => await canvas().getAttribute("data-phase") === "manual" && Number(await canvas().getAttribute("data-distance")) <= .056,
+      "navegação manual chega ao limite mínimo de aproximação");
+    const manualAnchor = metrics(await sample(.02)).at(-1), direction = parseVector(manualAnchor.camera).map((value, index) => value - parseVector(manualAnchor.pan)[index]);
+    const length = Math.hypot(...direction), unit = direction.map(value => value / length);
+    const resumeFrames = await sample(9), resumeSamples = metrics(resumeFrames);
+    const dots = resumeSamples.map(value => {
+      const target = parseVector(value.pan), relative = parseVector(value.camera).map((coordinate, index) => coordinate - target[index]);
+      return relative.reduce((sum, coordinate, index) => sum + coordinate * unit[index], 0) / Math.hypot(...relative);
+    });
+    check(resumeSamples.every(value => value.distance >= .054 && value.distanceRatio > 0), "A retomada atravessou o limite mínimo ou chegou a distância não positiva.");
+    check(dots.every(value => Number.isFinite(value) && value > .9), "A retomada automática atravessou/inverteu a direção da câmera em relação ao foco manual.");
+    check(resumeSamples.at(-1).phase === "automatic" && Math.max(...resumeSamples.map(value => value.distance)) > manualAnchor.distance * 1.1,
+      "O passeio não retomou um afastamento relativo de ao menos 10% após o zoom manual mínimo.");
+    check(resumeFrames.at(-1).time - manualAnchor.time > 8.8, "O shader parou na navegação/retomada do passeio padrão.");
+    report.defaultJourney.manualResume = { anchor: manualAnchor, minimumDirectionDot: Math.min(...dots),
+      distanceMeasurement: "Manual zoom is preserved proportionally; resumed retreat is measured against the manual anchor distance, not the authored global distance ratio",
+      maximumRelativeRetreat: Math.max(...resumeSamples.map(value => value.distance)) / manualAnchor.distance, samples: resumeSamples };
+    const resourcesAfterMotion = await gpuResources();
+    check(resourcesAfterMotion.sameCanvas && resourcesAfterMotion.sameContext, "Giro/passeio recriaram o canvas/contexto WebGL.");
+    check(resourcesAfterMotion.uploads === resourcesBeforeMotion.uploads && resourcesAfterMotion.subUpdates === resourcesBeforeMotion.subUpdates,
+      "Giro/passeio reenviaram os vértices originais à GPU.");
+    assert.deepEqual((await publicState()).postDemo.pointCloud, originalRef);
+    report.motionGpu = { before: resourcesBeforeMotion, after: resourcesAfterMotion };
+    report.checks.push("passeio padrão repete aproximação/afastamento entre limites; zoom manual mínimo retoma distância positiva sem inversão; shader/canvas/contexto/buffers preservados");
+
+    // Keep the existing still-camera shader check frontal, then retain 360° for reload.
+    await setField("Distância final / zoom-out", .9); await setField("Amplitude do passeio", .2);
+    await setField("Espera após navegação manual", original.resumeDelaySeconds);
+    await selectPreset("rotate"); await sample(1.8); await selectPreset("still");
+    await setField("Amplitude do giro", 360); await waitSettings({ rotationDegrees: 360, endDistance: .9, travelAmplitude: .2 });
     const stillA = await pixels(); await sample(1.1); const stillB = await pixels();
     check(stillA.hash !== stillB.hash && stillB.time > stillA.time + .9, "A respiração parou quando a câmera ficou parada.");
 
@@ -141,7 +244,8 @@ export async function auditPointCloudControls({ projection, control, output, bas
     // Reload the control only: the public canvas, presentation and current cloud must survive.
     const saved = (await details()).config.pointCloud;
     await control.reload({ waitUntil: "domcontentloaded" });
-    await poll(async () => await preset().inputValue() === saved.preset && await control.getByRole("slider", { name: "Intensidade da luz da nuvem", exact: true }).inputValue() === `${saved.pulseIntensity}`, "ajustes após reload");
+    await poll(async () => await preset().inputValue() === saved.preset && await control.getByRole("slider", { name: "Intensidade da luz da nuvem", exact: true }).inputValue() === `${saved.pulseIntensity}` &&
+      await rotation.inputValue() === "360", "ajustes e giro 360° após reload");
     assert.deepEqual((await details()).config.pointCloud, saved);
     check((await publicState()).postDemo.totalRounds === before.postDemo.totalRounds, "Recarregar o painel avançou as cartas pausadas.");
     await control.screenshot({ path: path.join(output, "point-cloud-private-controls.png") });

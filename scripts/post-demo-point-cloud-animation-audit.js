@@ -139,7 +139,8 @@ export async function auditPointCloudAnimation({ projection, control, output }) 
   await canvas.waitFor();
   await projection.waitForFunction(label => {
     const element = document.querySelector(`canvas[aria-label="${label}"]`);
-    return element?.dataset.phase === "automatic" && Math.abs(Number(element.dataset.yaw)) < .018;
+    const yaw = Number(element?.dataset.yaw);
+    return element?.dataset.phase === "automatic" && Math.abs(Math.atan2(Math.sin(yaw), Math.cos(yaw))) < .018;
   }, CLOUD_LABEL, { timeout: 20000 });
   await canvas.evaluate(element => { window.__auditedPointCloudCanvas = element; });
   const rectangle = await canvas.boundingBox(), x = rectangle.x + rectangle.width / 2, y = rectangle.y + rectangle.height / 2;

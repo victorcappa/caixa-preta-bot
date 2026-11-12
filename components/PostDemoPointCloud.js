@@ -79,10 +79,10 @@ export default function PostDemoPointCloud({ reference, view, onError }) {
         controls.update();
         const start = performance.now(), startedWall = performance.timeOrigin + start;
         let previous = start, frames = 0, lastMetrics = 0, playbackToken = null, firstPose = true, manualAnchor = null;
-        let wasMotionEnabled = initial.motionEnabled, opacity = 0, visibleFraction = 0;
+        let wasMotionEnabled = initial.motionEnabled, opacity = 0, visibleFraction = 0, introShift = null;
         controls.addEventListener("start", () => { interacting = true; introCancelled = true; lastManual = performance.now(); canvas.focus({ preventScroll: true }); });
         controls.addEventListener("end", () => { interacting = false; lastManual = performance.now(); });
-        const desiredCamera = new THREE.Vector3(), desiredTarget = new THREE.Vector3();
+        const desiredCamera = new THREE.Vector3(), desiredTarget = new THREE.Vector3(), manualDirection = new THREE.Vector3(), manualParallax = new THREE.Vector3();
         const dampUniform = (name, value, alpha) => {
           const difference = value - material.uniforms[name].value;
           material.uniforms[name].value = Math.abs(difference) < 1e-7 ? value : material.uniforms[name].value + difference * alpha;
@@ -94,18 +94,22 @@ export default function PostDemoPointCloud({ reference, view, onError }) {
           const { settings, playback } = live.current, wallNow = performance.timeOrigin + now;
           const token = playback?.token || reference.id;
           if (token !== playbackToken) {
-            playbackToken = token; introCancelled = interacting; lastManual = interacting ? now : -Infinity; manualAnchor = null;
+            playbackToken = token; introCancelled = interacting; introShift = null; lastManual = interacting ? now : -Infinity; manualAnchor = null;
             canvas.dataset.ready = "false"; delete canvas.dataset.firstFrameAt;
             if (settings.preset === "reveal-tour") { opacity = 0; visibleFraction = 0; }
           }
           const epoch = Date.parse(playback?.startedAt), motionTime = Math.max(0, (wallNow - (Number.isFinite(epoch) ? epoch : startedWall)) / 1000);
-          const pose = samplePointCloudMotion(introCancelled && settings.preset === "reveal-tour" ? { ...settings, preset: "tour" } : settings, motionTime);
+          if (introCancelled && settings.preset === "reveal-tour" && introShift === null) {
+            introShift = Math.max(0, settings.startDarkSeconds + settings.revealSeconds - motionTime);
+          }
+          const pose = samplePointCloudMotion(settings, motionTime + (introShift || 0));
           const quiet = (now - lastManual) / 1000, manual = interacting || quiet < settings.resumeDelaySeconds;
           const alpha = 1 - Math.exp(-dt * 4), enabled = settings.shaderEnabled ? 1 : 0;
           material.uniforms.uPulsePhaseOffset.value += elapsed * Math.PI * 2 * (1 / material.uniforms.uPulsePeriod.value - 1 / settings.pulsePeriodSeconds);
           material.uniforms.uMotionPhaseOffset.value += elapsed * (material.uniforms.uMotionSpeed.value - settings.motionSpeed);
           material.uniforms.uPulsePeriod.value = settings.pulsePeriodSeconds;
           material.uniforms.uMotionSpeed.value = settings.motionSpeed;
+          controls.minDistance = Math.min(.055, fitDistance * Math.min(settings.startDistance, settings.endDistance) * .5);
           dampUniform("fitDistance", fitDistance * settings.endDistance, alpha);
           dampUniform("pointSize", basePointSize * settings.pointSize, alpha);
           dampUniform("uPulseIntensity", settings.pulseIntensity * enabled, alpha);
@@ -120,11 +124,18 @@ export default function PostDemoPointCloud({ reference, view, onError }) {
           let desiredYaw = pose.yaw;
           if (!settings.motionEnabled || wasMotionEnabled !== settings.motionEnabled) introCancelled = true;
           if (manualAnchor) {
-            const direction = manualAnchor.camera.clone().sub(manualAnchor.target).normalize();
-            desiredCamera.copy(manualAnchor.camera).addScaledVector(direction, (pose.camera[2] - manualAnchor.pose.camera[2]) * fitDistance);
-            desiredCamera.x += (pose.camera[0] - manualAnchor.pose.camera[0]) * largestSide;
-            desiredCamera.y += (pose.camera[1] - manualAnchor.pose.camera[1]) * largestSide;
+            const anchorDistance = manualAnchor.camera.distanceTo(manualAnchor.target);
+            manualDirection.copy(manualAnchor.camera).sub(manualAnchor.target).normalize();
+            const distance = Math.max(controls.minDistance, Math.min(controls.maxDistance,
+              anchorDistance * pose.camera[2] / Math.max(.000001, manualAnchor.pose.camera[2])));
             desiredTarget.copy(manualAnchor.target).add(new THREE.Vector3(...pose.target).sub(new THREE.Vector3(...manualAnchor.pose.target)).multiplyScalar(largestSide));
+            desiredCamera.copy(desiredTarget).addScaledVector(manualDirection, distance);
+            // Keep the automatic parallax perpendicular to the operator's viewing direction.
+            // A close manual zoom must never let the next automatic approach cross its target.
+            manualParallax.set(pose.camera[0] - manualAnchor.pose.camera[0] - pose.target[0] + manualAnchor.pose.target[0],
+              pose.camera[1] - manualAnchor.pose.camera[1] - pose.target[1] + manualAnchor.pose.target[1], 0).multiplyScalar(largestSide);
+            manualParallax.addScaledVector(manualDirection, -manualParallax.dot(manualDirection)).clampLength(0, distance * .35);
+            desiredCamera.add(manualParallax);
             desiredYaw = manualAnchor.yaw + pose.yaw - manualAnchor.pose.yaw;
           }
           if (firstPose) {
@@ -133,7 +144,8 @@ export default function PostDemoPointCloud({ reference, view, onError }) {
           } else if (!manual && settings.motionEnabled && settings.preset !== "still") {
             const resumeBlend = Number.isFinite(lastManual) ? Math.max(0, Math.min(1, (quiet - settings.resumeDelaySeconds) / 2)) : 1;
             camera.position.lerp(desiredCamera, alpha * resumeBlend); controls.target.lerp(desiredTarget, alpha * resumeBlend);
-            points.rotation.y += (desiredYaw - points.rotation.y) * alpha * resumeBlend;
+            const yawDelta = Math.atan2(Math.sin(desiredYaw - points.rotation.y), Math.cos(desiredYaw - points.rotation.y));
+            points.rotation.y += yawDelta * alpha * resumeBlend;
           }
           controls.update();
           if (manual || !settings.motionEnabled || wasMotionEnabled !== settings.motionEnabled) {
@@ -150,6 +162,7 @@ export default function PostDemoPointCloud({ reference, view, onError }) {
           if (now - lastMetrics > 180 || frames === 1) {
             lastMetrics = now; canvas.dataset.frames = String(frames); canvas.dataset.yaw = points.rotation.y.toFixed(4);
             canvas.dataset.distance = camera.position.distanceTo(controls.target).toFixed(4); canvas.dataset.pan = controls.target.toArray().map(value => value.toFixed(3)).join(",");
+            canvas.dataset.distanceRatio = (camera.position.distanceTo(controls.target) / fitDistance).toFixed(5); canvas.dataset.fitDistance = fitDistance.toFixed(5);
             canvas.dataset.camera = camera.position.toArray().map(value => value.toFixed(3)).join(",");
             canvas.dataset.phase = manual ? "manual" : show || pose.phase === "still" ? "automatic" : pose.phase;
             canvas.dataset.preset = settings.preset; canvas.dataset.playbackToken = playbackToken;

@@ -18,7 +18,7 @@ Entrar em `/pos-demo/controle` inicia automaticamente uma tentativa de conversã
 
 Use a alça na borda direita para abrir/recolher os parâmetros. **Gerar point cloud** continua disponível para atualizar a foto ou tentar novamente após uma falha; o botão fica desabilitado enquanto o processo calcula profundidade e pontos. Cartas, digitação e intervalos continuam em paralelo. Outra geração bem-sucedida substitui a nuvem; pasta vazia, foto ilegível ou falha do conversor mantêm a nuvem anterior da mesma apresentação. **Reiniciar passeio** volta ao início do movimento selecionado, mantendo cartas, foto convertida e ajustes. **RESET** repete a abertura, as cartas e o passeio, reutilizando os dados 3D e preservando os ajustes; não dispara outra conversão automática da mesma sessão. STOP ALL, emergência e troca/recuperação de sessão cancelam trabalhos pendentes. Uma tentativa interrompida não reinicia sozinha: use o botão privado quando quiser convertê-la novamente.
 
-As duas rotas compartilham `PostDemo`. Na composição automática, a nuvem ocupa **28% à direita** e **86% da altura da área cênica útil**, ao lado da fala. Com o painel aberto, suas alças permitem mover e redimensionar esse container; o ajuste é salvo e compartilhado com a projeção, como os de carta e texto. **Restaurar composição** recupera a distribuição automática; ver [POS_DEMO.md](POS_DEMO.md). O padrão **Revelar e passear** faz zoom-in durante **2 segundos no escuro**, revela os pontos com afastamento gradual durante **18 segundos** e então inicia um passeio contínuo de **48 segundos por ciclo**. A entrada escura começa depois que os dados estão prontos; o tempo até o primeiro quadro visível inclui essa escolha cênica. A distância final padrão é **0,8×** o enquadramento de referência, conservando a nuvem próxima e grande. Os pontos mantêm sua aparência fina quando a câmera se aproxima.
+As duas rotas compartilham `PostDemo`. Na composição automática, a nuvem ocupa **28% à direita** e **86% da altura da área cênica útil**, ao lado da fala. Com o painel aberto, suas alças permitem mover e redimensionar esse container; o ajuste é salvo e compartilhado com a projeção, como os de carta e texto. **Restaurar composição** recupera a distribuição automática; ver [POS_DEMO.md](POS_DEMO.md). O padrão **Revelar e passear** faz zoom-in durante **2 segundos no escuro**, revela os pontos com afastamento gradual durante **18 segundos** e então inicia um passeio contínuo de **48 segundos por ciclo**. Nesse passeio, o zoom alterna suavemente entre a **Distância final** (0,8×) e a **Distância inicial** (0,05×): aproxima durante 24 segundos e afasta nos 24 seguintes, repetindo sem outro escuro ou nova revelação. A entrada escura começa depois que os dados estão prontos; o tempo até o primeiro quadro visível inclui essa escolha cênica. Os pontos mantêm sua aparência fina quando a câmera se aproxima.
 
 ### Presets e controles privados
 
@@ -26,8 +26,8 @@ O painel **NUVEM 3D** tem seletor de preset, chaves de movimento automático e r
 
 | Preset | Movimento |
 | --- | --- |
-| **Revelar e passear** — padrão | Zoom-in no escuro, revelação com zoom-out gradual e passeio panorâmico. |
-| Passeio panorâmico | Desloca câmera e foco pelo espaço, com variações pequenas de ângulo e profundidade. |
+| **Revelar e passear** — padrão | Zoom-in no escuro, revelação com zoom-out gradual e passeio com aproximação/afastamento contínuos entre as duas distâncias escolhidas. |
+| Passeio panorâmico | Desloca câmera e foco pelo espaço, com giro e variação de profundidade. |
 | Entre as fileiras | Percorre a plateia verticalmente, aproximando e afastando a câmera. |
 | Travessia lateral | Passeia de um lado ao outro da plateia. |
 | Só rotacionar | Mantém a câmera no centro e gira a nuvem lateralmente, sem passeio ou zoom automático. |
@@ -45,10 +45,12 @@ Selecionar outro preset reinicia somente o passeio selecionado. **Reiniciar pass
 | Duração do passeio | 48 s |
 | Amplitude do passeio | 14% do maior lado da nuvem |
 | Duração do giro | 22 s |
-| Amplitude do giro | Até 8° para cada lado; menor nos passeios |
+| Amplitude do giro | 8° para cada lado; controle de 0° a 360° |
 | Espera após navegação manual | 2 s |
 
-Distâncias menores aproximam a câmera; tempos maiores tornam o movimento mais lento. O período do giro é independente da duração do caminho nos passeios panorâmico, lateral e pelas fileiras. Os campos continuam editáveis quando o movimento ou o shader estão desligados, permitindo preparar o próximo estado.
+Distâncias menores aproximam a câmera; tempos maiores tornam o movimento mais lento. No padrão **Revelar e passear**, a **Amplitude do passeio** controla os deslocamentos lateral e vertical; zerá-la mantém o zoom entre as distâncias inicial e final. **Duração do passeio** define o ciclo completo de aproximação e afastamento, independentemente da duração do giro. Os outros presets mantêm seus caminhos próprios.
+
+**Amplitude do giro** corresponde ao ângulo real escolhido em todos os presets com giro, inclusive na etapa de passeio de **Revelar e passear**. Valores abaixo de 360° oscilam entre os dois lados (por exemplo, 8° significa −8° a +8°). **360° exatos** fazem voltas completas contínuas, sem inverter o sentido a cada ciclo. **Duração do giro** controla o período da oscilação ou de cada volta completa, separado da duração do passeio; o padrão continua 8° em 22 segundos. Os campos continuam editáveis quando o movimento ou o shader estão desligados, permitindo preparar o próximo estado.
 
 A malha usa até **1024 amostras no maior lado**, preservando a proporção da foto e sem ampliar imagens menores. Em fotos grandes, isso produz cerca de **4× mais pontos** que a malha anterior de 512, até **1.048.576 pontos** em imagens quadradas. O diâmetro base dos pontos passou a **60% do anterior**, com limite físico de **1–6 pixels** no canvas, para uma nuvem mais densa e pontos menores.
 
@@ -85,6 +87,8 @@ Nuvens já existentes mantêm sua quantidade de pontos: clique novamente em **Ge
 - Shift + arrastar ou botão direito: deslocamento.
 - Depois da espera configurada (padrão 2 segundos), o movimento automático volta gradualmente a partir do enquadramento manual. Desligar **Movimento automático da nuvem** conserva a vista escolhida. O relógio e a respiração do shader continuam durante giro, zoom e deslocamento manuais.
 
+A retomada conserva a direção e o foco da navegação manual, ajustando a distância por uma proporção positiva e mantendo a paralaxe perpendicular a essa direção. Assim, a aproximação automática não atravessa o alvo quando o operador deixou a câmera perto da nuvem. Alterar giro ou zoom mantém o mesmo canvas e os pontos originais.
+
 Não há textura fotográfica nem plano 2D: são pontos XYZ com RGB, renderizados por Three.js/WebGL. A profundidade é uma estimativa monocular relativa; não é um escaneamento volumétrico calibrado nem reconstrói o verso das pessoas. A oscilação pequena conserva a legibilidade da foto de origem. A navegação manual é local a cada janela; a referência à nuvem é compartilhada por estado/SSE.
 
 ## Dados e sessão
@@ -116,6 +120,8 @@ A primeira medição usa `entryToFirstFrameMs`, desde `postDemo.startedAt` até 
 O comando `test:post-demo:point-cloud:animation` acrescenta pelo menos **dois ciclos completos em vista frontal e dois durante o giro**, observando o `uTime` real enviado ao WebGL. Exercita giro, zoom e deslocamento manuais com o relógio ativo; verifica defasagem entre faixas, pixels no pico/vale, canvas persistente e **zero uploads `ARRAY_BUFFER`/`bufferSubData` durante os ciclos**. Salva `animation-report.json` e PNGs de pico/vale para inspeção de rostos, fileiras e contornos. As métricas não substituem a leitura visual na projeção física.
 
 `test:post-demo:point-cloud:controls` combina a auditoria de animação com os controles privados: presets, sincronização com a projeção, ajustes ao vivo, reinício independente do passeio e persistência. `test:post-demo:point-cloud:motion` verifica matematicamente os caminhos e sua continuidade nas transições e limites de ciclo, sem navegador ou modelo.
+
+Em 12/11/2026, o giro e o novo passeio passaram na auditoria completa em Chromium isolado: o controle de **360°** persistiu e produziu **384,9° observados em cerca de 6,5 segundos**, sem reinício angular. O passeio acelerado de 8 segundos repetiu aproximação/afastamento por 18 segundos; com limites 0,08×/0,8×, a câmera suavizada alcançou **0,0868×/0,7929×**. Após zoom manual até o mínimo, retomou afastamento relativo positivo sem atravessar o foco. As métricas de câmera são amostradas a cada 180 ms; não constituem captura de continuidade por quadro. Canvas/contexto, buffers originais e relógio do shader foram preservados; também passaram dois ciclos de pulso por vista, 10,26 segundos de frente e 10,26 no giro. Metal Apple M4 Pro: **120/121 fps** nas duas janelas. Unitários de movimento e preferências (incluindo 360° em processo novo), lint e brain check passaram. Core ML local real, provedor textual simulado e **sem projetor físico**. Evidências temporárias: [controles e passeio](/var/folders/zh/ffx555rn6wb0374j4z23s3jr0000gn/T/caixa-point-cloud-browser-zzD9MW/point-cloud-controls-report.json), [animação](/var/folders/zh/ffx555rn6wb0374j4z23s3jr0000gn/T/caixa-point-cloud-browser-zzD9MW/animation-report.json) e [relatório completo](/var/folders/zh/ffx555rn6wb0374j4z23s3jr0000gn/T/caixa-point-cloud-browser-zzD9MW/report.json). Os resultados abaixo são históricos, anteriores a essas mudanças.
 
 Em 12/11/2026, a geração automática passou no navegador com Core ML local e provedor textual simulado: a nuvem apareceu antes da primeira carta, sem clique, em **4.254 ms desde a entrada**; conversão de **971 ms** e **588.800 pontos**. Reload, segunda janela, entrada repetida e RESET mantiveram uma única execução do conversor e a mesma referência da sessão. A atualização manual selecionou o PNG cuja data foi alterada, com **3.712 ms do clique ao primeiro quadro**, conversão de **406 ms** e **589.824 pontos**. As janelas mediram **120/121 fps** com Metal Apple M4 Pro. A auditoria de composição preservou canvas/contexto, buffers, shader e OrbitControls no resize; erros e troca de sessão também passaram. Evidência temporária: [relatório](/var/folders/zh/ffx555rn6wb0374j4z23s3jr0000gn/T/caixa-point-cloud-browser-pO1dms/report.json). Essa rodada usou `--layout`, sem repetir a auditoria completa de dois ciclos do shader nem o ensaio em projetor físico.
 

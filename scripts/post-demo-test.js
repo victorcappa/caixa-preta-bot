@@ -39,8 +39,9 @@ try {
   const { normalizePointCloudSettings } = await import("../lib/post-demo/pointCloudSettings.js");
   const cloudDefaults = normalizePointCloudSettings();
   assert.equal(cloudDefaults.preset, "reveal-tour"); assert.equal(cloudDefaults.startDarkSeconds, 2); assert.equal(cloudDefaults.revealSeconds, 18);
-  const boundedCloud = normalizePointCloudSettings({ preset: "unknown", endDistance: 99, localAmplitude: -1, pulseIntensity: "invalid", privatePath: "PRIVATE" });
+  const boundedCloud = normalizePointCloudSettings({ preset: "unknown", endDistance: 99, localAmplitude: -1, rotationDegrees: 999, pulseIntensity: "invalid", privatePath: "PRIVATE" });
   assert.equal(boundedCloud.preset, "reveal-tour"); assert.equal(boundedCloud.endDistance, 1.8); assert.equal(boundedCloud.localAmplitude, 0); assert.equal(boundedCloud.pulseIntensity, .18);
+  assert.equal(boundedCloud.rotationDegrees, 360);
   assert(!("privatePath" in boundedCloud));
   assert.deepEqual(getRegisteredAudienceNames(), ["Alice", "Bob", "Clara"]);
   let state = createPostDemoState(), time = 100000, calls = 0, clockId = 0, cloudStarts = 0, cloudFailure = false;

@@ -62,7 +62,8 @@ for (const { id } of POINT_CLOUD_PRESETS) {
   const entry = id === "reveal-tour" ? end : 0;
   for (const time of [0, 5, 12, 36, 72]) {
     const stationary = sample(entry + time, { preset: id, travelAmplitude: 0 });
-    assert(stationary.camera.every((value, axis) => Math.abs(value - [0, 0, defaults.endDistance][axis]) < 1e-12), `${id}: amplitude zero também deve parar o zoom`);
+    assert(stationary.camera.slice(0, 2).every(value => Math.abs(value) < 1e-12), `${id}: amplitude zero deve parar o deslocamento XY`);
+    if (id !== "reveal-tour") assert.equal(stationary.camera[2], defaults.endDistance, `${id}: amplitude zero também deve parar o zoom`);
     assert(stationary.target.every(value => Math.abs(value) < 1e-12), `${id}: amplitude zero deve parar o foco espacial`);
   }
   for (let step = 0; step <= 100; step++) {
@@ -73,4 +74,50 @@ for (const { id } of POINT_CLOUD_PRESETS) {
 }
 for (const time of [0, 3, 10, 100]) assert(values(samplePointCloudMotion({ preset: "rows", endDistance: -100, travelAmplitude: Infinity, tourSeconds: 0 }, time)).every(Number.isFinite));
 
-console.log("POINT CLOUD MOTION PASS: dark zoom-in, gradual reveal, spatial tours, rotation-only/static modes, bounded coordinates and continuous transitions/loops");
+// The default keeps travelling between the configured distances, even with XY travel disabled.
+for (const patch of [{}, { startDistance: .12, endDistance: 1.2, tourSeconds: 20, revealSeconds: 7, startDarkSeconds: 1 },
+  { startDistance: -3, endDistance: 90, tourSeconds: 0 }]) {
+  const settings = normalizePointCloudSettings({ ...defaults, ...patch, travelAmplitude: 0 });
+  const entry = settings.startDarkSeconds + settings.revealSeconds, period = settings.tourSeconds;
+  for (const [time, distance] of [[0, settings.endDistance], [period / 2, settings.startDistance], [period, settings.endDistance], [period * 1.5, settings.startDistance]]) {
+    const pose = samplePointCloudMotion(settings, entry + time);
+    assert(Math.abs(pose.camera[2] - distance) < 1e-12, "o passeio padrão deve alcançar os limites configurados sem depender da amplitude XY");
+    assert.equal(pose.opacity, 1); assert.equal(pose.reveal, 1); assert.equal(pose.target[2], 0);
+  }
+}
+
+const rotationPresets = ["rotate", "tour", "rows", "lateral", "reveal-tour"];
+for (const preset of rotationPresets) {
+  const settings = normalizePointCloudSettings({ ...defaults, preset, rotationDegrees: 360, rotationPeriodSeconds: 12 });
+  assert.equal(settings.rotationDegrees, 360, "o schema deve aceitar voltas completas");
+  const entry = preset === "reveal-tour" ? end : 0, period = settings.rotationPeriodSeconds;
+  for (const turns of [.5, 1, 2]) {
+    const pose = samplePointCloudMotion(settings, entry + turns * period);
+    assert(Math.abs(pose.yaw - turns * Math.PI * 2) < 1e-10, `${preset}: deve completar ${turns} volta(s) reais`);
+  }
+  let previous = -Infinity;
+  for (let time = 0; time <= period * 2; time += .25) {
+    const yaw = samplePointCloudMotion(settings, entry + time).yaw;
+    assert(yaw >= previous, `${preset}: o giro completo não deve inverter ou voltar a zero no wrap`); previous = yaw;
+  }
+  for (const boundary of [period, period * 2]) {
+    const before = samplePointCloudMotion(settings, entry + boundary - 1e-5), after = samplePointCloudMotion(settings, entry + boundary + 1e-5);
+    assert(Math.abs(after.yaw - before.yaw) < 1e-3, `${preset}: sem salto angular ao cruzar uma volta`);
+  }
+  for (const degrees of [0, 8, 90, 180, 359.5]) for (const time of [0, 3, 8, 25, 49]) {
+    const yaw = samplePointCloudMotion({ ...settings, rotationDegrees: degrees }, entry + time).yaw;
+    assert(Math.abs(yaw) <= degrees * Math.PI / 180 + 1e-10, `${preset}: oscilações parciais respeitam o ângulo real`);
+  }
+}
+
+// Position and velocity remain continuous when the reveal hands over to the cyclic tour.
+for (const boundary of [end, end + defaults.tourSeconds, end + defaults.tourSeconds * 2]) {
+  const delta = 1e-4, before = values(sample(boundary - delta)), center = values(sample(boundary)), after = values(sample(boundary + delta));
+  assert(close(sample(boundary - delta), sample(boundary + delta), 1e-4));
+  for (let axis = 0; axis < center.length; axis++) {
+    const leftVelocity = (center[axis] - before[axis]) / delta, rightVelocity = (after[axis] - center[axis]) / delta;
+    assert(Math.abs(leftVelocity - rightVelocity) < .001, "sem salto de velocidade após a entrada ou nos loops");
+  }
+}
+
+console.log("POINT CLOUD MOTION PASS: dark reveal, recurring near/far tour, literal angles/full continuous turns, bounded coordinates and continuous transitions/loops");

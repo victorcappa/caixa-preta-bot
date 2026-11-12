@@ -34,7 +34,7 @@ export default function PostDemoPointCloudControls({ value, onChange, onFlush, o
     </label>
     {[["motion", "Câmera e passeio"], ["shader", "Shader e pontos"]].map(([group, label]) => <details key={group} open>
       <summary style={{ cursor: "pointer", marginTop: 18 }}>{label}</summary>
-      {group === "motion" ? <p>Distâncias menores aproximam a câmera; tempos maiores deixam o movimento mais lento.</p> : null}
+      {group === "motion" ? <p>Distâncias menores aproximam a câmera; tempos maiores deixam o movimento mais lento. Em 360°, o giro faz voltas completas contínuas. No passeio padrão, as distâncias inicial e final definem a aproximação e o afastamento de cada ciclo.</p> : null}
       {POINT_CLOUD_FIELDS.filter(field => field.group === group).map(field => <div key={field.id}>
         <label htmlFor={`post-demo-cloud-${field.id}`}>{field.label} <output htmlFor={`post-demo-cloud-${field.id}`}>{displayValue(field, settings[field.id])}</output></label>
         <input id={`post-demo-cloud-${field.id}`} type="range" aria-label={`${field.label} da nuvem`} aria-valuetext={displayValue(field, settings[field.id])}
