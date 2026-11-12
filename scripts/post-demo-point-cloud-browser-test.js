@@ -49,7 +49,8 @@ try {
   await poll(async () => { try { return (await fetch(base + "/api/health?skipOptional=1")).ok; } catch { return false; } }, "servidor");
   await post("/api/show-session", { action: "new" }); const sessionId = (await state()).reliability.sessionId;
   await post("/api/post-demo", { action: "config", sessionId, config: { typingIntervalMs: 20, typingPauseMs: 0, cardHoldMs: 1000 } });
-  browser = await chromium.launch({ headless: true }); const context = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
+  browser = await chromium.launch({ channel: "chromium", headless: true, chromiumSandbox: true, ignoreDefaultArgs: ["--enable-unsafe-swiftshader"] });
+  const context = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
   projection = await context.newPage(); control = await context.newPage();
   for (const page of [projection, control]) page.on("pageerror", error => errors.push(error.message));
   const publicRequests = []; let projectionNavigations = 0;
@@ -66,7 +67,7 @@ try {
     await control.getByRole("button", { name: "Gerar point cloud", exact: true }).click();
     assert(await control.getByRole("button", { name: "Gerar point cloud", exact: true }).isDisabled());
     await poll(async () => { const s = await details(); if (s.pointCloud.status === "failed") throw Error(s.pointCloud.error); return s.pointCloud.status === "ready" && s.pointCloud.current.id !== previous; }, "conversão Core ML");
-    const ready = await details(); assert.equal(ready.pointCloud.sourceName, expectedName); assert(ready.pointCloud.current.pointCount > 10000);
+    const ready = await details(); assert.equal(ready.pointCloud.sourceName, expectedName); assert(ready.pointCloud.current.pointCount >= 147456 * 3.9, "a nova malha deve ter cerca de 4x os pontos da fixture anterior");
     await poll(async () => { const c = canvas(); return await c.count() && await c.getAttribute("data-ready") === "true" && (await state()).postDemo.pointCloud?.id === ready.pointCloud.current.id; }, "primeiro quadro na projeção");
     // Wait for the newly referenced canvas, rather than accidentally measuring the previous cloud.
     await poll(async () => Number(await canvas().getAttribute("data-first-frame-at")) > clickedAt, "primeiro quadro da nova nuvem");
@@ -90,11 +91,20 @@ try {
   await poll(async () => Number(await canvas().getAttribute("data-distance")) > firstDistance * 3, "revelação da plateia a partir dos pontos", 20000);
   const firstYaw = await canvas().getAttribute("data-yaw");
   await poll(async () => Math.abs(Number(await canvas().getAttribute("data-yaw")) - Number(firstYaw)) > .005, "rotação lateral automática", 6000);
-  const colored = await canvas().evaluate(element => {
+  const colored = await canvas().evaluate(element => new Promise(resolve => requestAnimationFrame(() => {
     const gl = element.getContext("webgl2"), bytes = new Uint8Array(element.width * element.height * 4); gl.readPixels(0, 0, element.width, element.height, gl.RGBA, gl.UNSIGNED_BYTE, bytes);
-    let count = 0; for (let i = 0; i < bytes.length; i += 4) if (bytes[i] + bytes[i + 1] + bytes[i + 2] > 35) count++; return count;
-  }); assert(colored > 100);
+    let count = 0; for (let i = 0; i < bytes.length; i += 4) if (bytes[i] + bytes[i + 1] + bytes[i + 2] > 35) count++; resolve(count);
+  }))); assert(colored > 100);
   await poll(async () => await canvas().getAttribute("data-phase") === "automatic", "revelação completa", 20000);
+  const frameSample = page => page.getByLabel("Nuvem de pontos 3D da plateia", { exact: true }).evaluate(element => ({ frames: Number(element.dataset.frames), at: performance.now() }));
+  const beforeFrames = await Promise.all([projection, control].map(frameSample));
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  const afterFrames = await Promise.all([projection, control].map(frameSample));
+  const framesPerSecond = afterFrames.map((sample, index) => Math.round((sample.frames - beforeFrames[index].frames) * 1000 / (sample.at - beforeFrames[index].at)));
+  const graphicsRenderer = await canvas().evaluate(element => { const gl = element.getContext("webgl2"), extension = gl.getExtension("WEBGL_debug_renderer_info"); return extension ? gl.getParameter(extension.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); });
+  console.log(`GRAPHICS ${graphicsRenderer}`);
+  assert(framesPerSecond.every(rate => rate >= 20), `Animação lenta em uma das janelas: ${framesPerSecond.join(" / ")} fps`);
+  console.log(`ANIMATION ${framesPerSecond.join(" / ")} fps médios (projeção / controle).`);
   assert.equal(projectionNavigations, navigationsBeforeCloud, "A nuvem deve aparecer sem recarregar a projeção.");
   assert((await details()).totalRounds > roundsBeforeCloud, "As cartas devem continuar durante a geração/animação da nuvem.");
   await projection.screenshot({ path: path.join(output, "revealed.png") });
@@ -156,8 +166,8 @@ try {
   assert.equal((await fetch(base + currentCloud.url)).status, 404); await post("/api/post-demo/point-cloud", { sessionId }, 409);
   checks.push("painel retrátil preserva nuvem à direita; RESET reinicia cartas e revelação sem reconverter foto nem alterar ajustes; seleção por mtime em cada clique; PNG/JPEG; foto original bloqueada inclusive alias/range; falha do processo, foto ilegível e pasta vazia preservam nuvem anterior; sessão nova rejeita resultado/URL antigos");
   assert.deepEqual(errors, []);
-  await fs.writeFile(path.join(output, "report.json"), JSON.stringify({ ok: true, liveDepthModel: true, liveLanguageModel: false, metrics, checks, output }, null, 2));
-  console.log(JSON.stringify({ ok: true, metrics, checks, output }, null, 2));
+  await fs.writeFile(path.join(output, "report.json"), JSON.stringify({ ok: true, liveDepthModel: true, liveLanguageModel: false, metrics, framesPerSecond, graphicsRenderer, checks, output }, null, 2));
+  console.log(JSON.stringify({ ok: true, metrics, framesPerSecond, graphicsRenderer, checks, output }, null, 2));
 } catch (error) {
   await projection?.screenshot({ path: path.join(output, "failure-public.png") }).catch(() => {}); await control?.screenshot({ path: path.join(output, "failure-control.png") }).catch(() => {});
   console.log("Evidence:", output); throw error;

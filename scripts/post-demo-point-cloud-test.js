@@ -40,5 +40,10 @@ try {
   assert.equal(post.pointCloud.current.sessionId, "session-c");
   assert(events.every(event => JSON.stringify(event) === '{"type":"post-demo:point-cloud"}'));
   assert.throws(() => decodePointCloud(new ArrayBuffer(16)));
+  const denseCount = 1024 * 1024, denseBytes = new ArrayBuffer(16 + denseCount * 15), denseView = new DataView(denseBytes);
+  denseView.setUint32(0, 0x43505043, false); denseView.setUint32(4, 1, true); denseView.setUint32(8, denseCount, true); denseView.setUint32(12, 15, true);
+  for (let index = 0; index < denseCount; index++) denseView.setFloat32(16 + index * 15 + 8, 1, true);
+  assert.equal(decodePointCloud(denseBytes).count, denseCount, "aceitar a malha 1024² completa, acima do limite antigo");
+  denseView.setUint32(8, denseCount + 1, true); assert.throws(() => decodePointCloud(denseBytes), /POINT_CLOUD_INVALID/);
   console.log("POINT CLOUD UNIT PASS: latest mtime on every click, empty folder, independent background job, busy guard, failure keeps previous, reference-only public state and stale-session rejection");
 } finally { process.chdir(root); }

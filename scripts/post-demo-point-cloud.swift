@@ -76,7 +76,7 @@ func run() throws {
     guard let map = prediction.featureValue(for: "depth")?.imageBufferValue else { throw CloudError.invalidDepth }
     let depth = try depthValues(map)
     progress(70, "points")
-    let scale = min(1, 512.0 / Double(max(image.width, image.height)))
+    let scale = min(1, 1024.0 / Double(max(image.width, image.height)))
     let width = max(1, Int((Double(image.width) * scale).rounded())), height = max(1, Int((Double(image.height) * scale).rounded()))
     let rgb = try pixels(image, width, height), focal = Float(max(width, height)) * 0.95
     var data = Data("CPPC".utf8)
