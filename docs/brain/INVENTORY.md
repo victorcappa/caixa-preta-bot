@@ -333,6 +333,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/operator-public-live-test.js`
 - `scripts/operator-public-test.js`
 - `scripts/participant-fallback-test.js`
+- `scripts/participant-pool-test.js`
 - `scripts/performance-system-test.js`
 - `scripts/play-unlock-browser-test.js`
 - `scripts/public-composition-browser-test.js`
@@ -345,6 +346,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/scene-one-audio-effects-browser-test.js`
 - `scripts/scene-one-sampler-browser-test.js`
 - `scripts/scene-two-d-audio-effects-browser-test.js`
+- `scripts/scene-zero-lighting-test.js`
 - `scripts/scene-zero-suitcase-regression-browser-test.js`
 - `scripts/scene-zero-suitcases-browser-test.js`
 - `scripts/scene-zero-test.js`
