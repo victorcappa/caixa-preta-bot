@@ -22,7 +22,7 @@ Bot models are `gpt-5.6-terra` (default) and `gpt-5.6-luna`. `lib/openaiModels.j
 npm run dev
 ```
 
-Effect: starts a local Next development server on port 3000 and writes `.next/`. It fails if that port is occupied.
+Effect: starts a local Next development server on port 3000 and writes `.next-dev/`. It fails if that port is occupied. Development output is separate from the production build in `.next/`.
 
 ```bash
 npm run lint
@@ -30,7 +30,7 @@ npm run build
 npm start
 ```
 
-`build` writes production artifacts to `.next/`; `start` serves them on port 3000. Stop `dev` before `build` or `start`.
+`build` writes production artifacts to `.next/`; `start` serves them on port 3000. `build` and `show:prepare` refuse to run while port 3000 is occupied, before touching the build. Preserve the current recovery snapshot and stop the identified server before rebuilding; never run `next build` directly in a checkout serving a presentation. Browser audits that need their own build must use an isolated source copy, as `scripts/operator-public-audit-utils.js` does.
 
 For the presentation, build before the room opens and use the production launcher:
 
@@ -53,6 +53,8 @@ npm run lint
 `brain:sync` rewrites only the generated region of `docs/brain/INVENTORY.md`. `brain:check` performs existence, size, path-reference, generated-header, and obvious-secret checks; it is not an application test.
 
 Targeted logical and browser commands are listed in the generated inventory. Run the narrowest relevant logical test first. Browser tests generally require `npm run dev` already running on port 3000 and prove Chromium behavior only where their assertions reach. They do not prove Safari, physical audio, live OpenAI, Instagram, or deployment.
+
+`npm run test:audience-warmup:transition` checks the play-dead typewriter acknowledgement, full 20-second timer, closing acknowledgement and first question in manual and automatic modes. It uses a fake clock and temporary snapshot storage without touching the active show or calling a model. Requires Node 22.15+ or 24, like the other `registerHooks` tests.
 
 ## Start a local presentation
 
@@ -96,7 +98,7 @@ kill -TERM <confirmed-pid>
 
 Effect: terminates a local process. Repeat the `lsof` command; no listener means the port is free. Never use broad `pkill node`/`killall` for this repository.
 
-If generated Next artifacts are demonstrably stale, stop the server first and then remove only `.next/`. This deletes rebuildable cache/output and should not be done merely because it is documented here.
+If generated Next artifacts are demonstrably stale, stop the server first and then remove only the affected output directory (`.next-dev/` for development or `.next/` for production). These are rebuildable artifacts; do not clear them while their server is running.
 
 ## Persistence, health, and writes
 

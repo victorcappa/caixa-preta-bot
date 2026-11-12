@@ -23,7 +23,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:tarot:vision` -> `node --no-warnings scripts/tarot-vision-test.js`
 - `npm run test:tarot:browser` -> `node --no-warnings scripts/tarot-browser-test.js`
 - `npm run dev` -> `node scripts/require-port-3000.js && next dev --port 3000`
-- `npm run build` -> `next build`
+- `npm run build` -> `node scripts/require-port-3000.js && next build`
 - `npm run start` -> `node scripts/require-port-3000.js && next start --port 3000`
 - `npm run show:prepare` -> `npm run build`
 - `npm run show` -> `node scripts/show-launcher.js`
@@ -60,6 +60,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:robot-sound:browser` -> `node --no-warnings scripts/robot-sound-browser-test.js`
 - `npm run test:sound-control:browser` -> `node --no-warnings scripts/sound-control-browser-test.js`
 - `npm run test:audience-warmup` -> `node --no-warnings scripts/audience-warmup-test.js`
+- `npm run test:audience-warmup:transition` -> `node --no-warnings scripts/audience-warmup-transition-test.js`
 - `npm run test:audience-sound-check:browser` -> `node --no-warnings scripts/audience-sound-check-browser-test.js`
 - `npm run test:audience-microphone` -> `node --no-warnings scripts/audience-microphone-meter-test.js`
 - `npm run test:audience-microphone:background` -> `node --no-warnings scripts/audience-microphone-background-browser-test.js`
@@ -318,6 +319,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/audience-warmup-agreements-browser-test.js`
 - `scripts/audience-warmup-browser-test.js`
 - `scripts/audience-warmup-test.js`
+- `scripts/audience-warmup-transition-test.js`
 - `scripts/baralho-morbido-test.js`
 - `scripts/forca-g-sampler-browser-test.js`
 - `scripts/forca-g-sampler-test.js`

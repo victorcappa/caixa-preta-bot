@@ -8,6 +8,7 @@ const END = "<!-- GENERATED:END -->";
 const SKIP_DIRECTORIES = new Set([
   ".git",
   ".next",
+  ".next-dev",
   ".runtime",
   ".venv-pdf",
   "bot-old",
