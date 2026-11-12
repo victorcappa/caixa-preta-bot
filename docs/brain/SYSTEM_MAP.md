@@ -5,7 +5,7 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 ## Core runtime
 
 - Show state or reset -> `lib/showState.js` -> relevant reducer/director -> owning API route.
-- Public realtime drift -> `lib/publicRealtime.js` -> `app/api/events/route.js` -> `app/api/state/route.js`.
+- Multiwindow realtime/drift -> `lib/publicRealtime.js` -> `public/public-realtime-worker.js` -> `app/api/events/route.js` / `app/api/state/route.js`. Shared SSE; bounded polling fallback, no tab leader.
 - Projection window registration/navigation -> `components/ProjectionWindowClient.js` -> `app/api/projection/route.js` -> `lib/projectionScreens.js`.
 - Public/private screen registry -> `lib/projectionScreens.js` and `lib/controllerSurfaces.js`.
 - Global stop -> `app/api/operator/route.js` (`stopAllRoutines`) -> `lib/stopAllSignal.js` -> media consumers.

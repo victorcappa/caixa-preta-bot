@@ -130,9 +130,9 @@ Audit checks (never run against a live show):
 - `npm run test:openai:live` makes one real generation on a dedicated server with the configured key; resets the temporary session and checks operator context. It has a real provider cost and must never target the active show.
 - `npm run test:instagram:readonly` uses a disposable copy of the local browser profile, permits GET/HEAD and named GraphQL Queries, blocks writes and login, and reports only status/counts. It requires network access and never validates posting.
 - `npm run test:scene-zero:e2e` requires a dedicated local server, resets its session and follows BOOT → synthetic sound check → agreements → questions → minigame → participant → malas → final blackout. It also checks scoped routes and audio asset ranges; Baralho/videos are excluded. It does not prove physical microphone/audio or the entire later dramaturgy.
-- `npm run test:public-realtime:browser` checks projection/controller convergence with normal SSE and with public SSE blocked.
+- `test:public-realtime:browser`: isolated build/runtime; SSE, polling, offline/reload and multiple bot/control windows. `test:public-realtime:multiwindow`: HTTP/1.1 fixture, closed/frozen windows, free command sockets. No live state/model calls.
 
-Audit artifacts default to `artifacts/bot-audit-2026-10-14`; reusable audit scripts accept `CAIXA_PRETA_AUDIT_OUTPUT`. Results and remaining acceptance limits are in `BOT_TEST_REPORT.md`. Asynchronous browser predicates must use `scripts/browser-test-utils.js`, not async `waitForFunction`.
+Audit artifacts: `artifacts/bot-audit-2026-10-14`, override `CAIXA_PRETA_AUDIT_OUTPUT`. Limits: `BOT_TEST_REPORT.md`. Async browser predicates require `scripts/browser-test-utils.js`, never async `waitForFunction`.
 
 These checks were validated with the reliability layer now versioned in this checkout, including its launcher, health and recovery files. The dated audit evidence is versioned under `artifacts/`; runtime snapshots and browser profiles remain local.
 

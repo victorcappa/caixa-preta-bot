@@ -103,12 +103,11 @@ Advance by position, not history length: `[2, 3]` ends at Mala 3. Final instruct
 - Working response: restart the server; when the persisted in-process shape intentionally changes, update `STORE_VERSION` and verify reset behavior.
 - Prevent regression: do not infer current runtime state from source inspection alone after hot reload.
 
-## SSE needs revision reconciliation
+## Multiwindow SSE and reconciliation
 
-- Problem: a public screen can miss an update during connection loss or the initial subscription window.
-- Cause: delivery timing between listener registration, initial snapshot, and a transient EventSource interruption.
-- Working response: subscribe before the initial snapshot server-side; share one public EventSource and probe the lightweight revision endpoint, fetching a full snapshot only when behind.
-- Prevent regression: preserve revision ordering in `lib/publicRealtime.js` and run `scripts/public-realtime-browser-test.js` after sync changes.
+- Problem: six per-window HTTP/1.1 streams exhaust browser sockets; later windows/commands stall. Reproduced in Chromium.
+- Response: one SharedWorker stream across public/controllers, no tab leader; finite polling if unavailable. Bound requests, reconcile revision, refresh on return; subscribe before snapshot server-side.
+- Guard: `test:public-realtime:multiwindow` checks nine windows, closed/frozen tabs and fallback; `test:public-realtime:browser` owns an isolated build/runtime. Physical monitor changes remain unverified.
 
 ## Projection navigation requires a registered live window
 

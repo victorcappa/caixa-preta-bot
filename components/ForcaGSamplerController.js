@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import ForcaGShaderControls from "./ForcaGShaderControls";
 import SceneAudioEffectsControls from "./SceneAudioEffectsControls";
 import styles from "./ForcaGSamplerController.module.css";
@@ -92,15 +93,12 @@ export default function ForcaGSamplerController() {
 
   useEffect(() => {
     void loadConfig();
-    const events = new EventSource("/api/events?client=forca-g-sampler-controller");
-    events.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
+    return subscribePublicRealtime((payload) => {
       const next = payload.state?.forcaGSampler || payload.forcaGSampler;
       if (next) setSampler(next);
       const nextShaders = payload.state?.forcaGShaders || payload.forcaGShaders;
       if (nextShaders) setShaders(nextShaders);
-    };
-    return () => events.close();
+    });
   }, []);
 
   async function send(action, payload = {}, busyId = "") {

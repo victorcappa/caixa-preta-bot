@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ROBOT_SOUND_DEFAULTS } from "@/lib/robot-sound/state";
+import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import RobotSoundControls from "./RobotSoundControls";
 import styles from "./SoundControlPanel.module.css";
 
@@ -16,19 +17,9 @@ export default function SoundControlPanel() {
       .then((data) => setSettings(data.robotSound || ROBOT_SOUND_DEFAULTS))
       .catch(() => setConnection("OFFLINE"));
 
-    const events = new EventSource("/api/events?client=sound-control");
-    events.onopen = () => setConnection("CONNECTED");
-    events.onerror = () => setConnection("DISCONNECTED");
-    events.onmessage = (event) => {
-      try {
-        const payload = JSON.parse(event.data);
-        if (payload.state?.robotSound) setSettings(payload.state.robotSound);
-      } catch {
-        setConnection("DISCONNECTED");
-      }
-    };
-
-    return () => events.close();
+    return subscribePublicRealtime((payload) => {
+      if (payload.state?.robotSound) setSettings(payload.state.robotSound);
+    }, (status) => setConnection(status === "connected" ? "CONNECTED" : "DISCONNECTED"));
   }, []);
 
   return (

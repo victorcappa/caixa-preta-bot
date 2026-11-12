@@ -73,6 +73,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:instagram:readonly` -> `node --no-warnings --env-file-if-exists=.env.local scripts/instagram-readonly-audit.js --live`
 - `npm run test:scene-zero:e2e` -> `node --no-warnings scripts/full-show-audit.js`
 - `npm run test:public-realtime:browser` -> `node --no-warnings scripts/public-realtime-browser-test.js`
+- `npm run test:public-realtime:multiwindow` -> `node --no-warnings scripts/public-realtime-multiwindow-browser-test.js`
 - `npm run test:scene-zero` -> `node --no-warnings scripts/scene-zero-test.js`
 - `npm run test:scene-zero:suitcases:browser` -> `node --no-warnings scripts/scene-zero-suitcases-browser-test.js`
 - `npm run test:scene-one-sampler` -> `node --no-warnings scripts/scene-one-sampler-browser-test.js`
@@ -402,6 +403,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/post-demo-test.js`
 - `scripts/public-composition-browser-test.js`
 - `scripts/public-realtime-browser-test.js`
+- `scripts/public-realtime-multiwindow-browser-test.js`
 - `scripts/research-director-test.js`
 - `scripts/robot-sound-browser-test.js`
 - `scripts/robot-sound-hot-refresh-test.js`

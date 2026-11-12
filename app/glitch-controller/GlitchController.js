@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useControllerSettings } from "@/lib/useControllerSettings";
 import { createSettingsSaveQueue } from "@/lib/settingsSaveQueue";
+import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import GlitchOverlay from "@/components/GlitchOverlay";
 import { GLITCH_PRESETS, presetParams } from "@/lib/glitch/state";
 import styles from "./GlitchController.module.css";
@@ -75,11 +76,7 @@ export default function GlitchController() {
       })
       .catch(() => setConnection("DISCONNECTED"));
 
-    const events = new EventSource("/api/events?client=glitch-controller");
-    events.onopen = () => setConnection("CONNECTED");
-    events.onerror = () => setConnection("DISCONNECTED");
-    events.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
+    return subscribePublicRealtime((payload) => {
       const glitch = payload.state?.glitch;
 
       if (!glitch) {
@@ -90,9 +87,7 @@ export default function GlitchController() {
         setPreset(glitch.preset || "normal");
         paramsRef.current = glitch.params || presetParams("normal"); setParams(paramsRef.current);
       }
-    };
-
-    return () => events.close();
+    }, (status) => setConnection(status === "connected" ? "CONNECTED" : "DISCONNECTED"));
   }, [queue]);
 
   useEffect(() => {

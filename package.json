@@ -68,6 +68,7 @@
     "test:instagram:readonly": "node --no-warnings --env-file-if-exists=.env.local scripts/instagram-readonly-audit.js --live",
     "test:scene-zero:e2e": "node --no-warnings scripts/full-show-audit.js",
     "test:public-realtime:browser": "node --no-warnings scripts/public-realtime-browser-test.js",
+    "test:public-realtime:multiwindow": "node --no-warnings scripts/public-realtime-multiwindow-browser-test.js",
     "test:scene-zero": "node --no-warnings scripts/scene-zero-test.js",
     "test:scene-zero:suitcases:browser": "node --no-warnings scripts/scene-zero-suitcases-browser-test.js",
     "test:scene-one-sampler": "node --no-warnings scripts/scene-one-sampler-browser-test.js",

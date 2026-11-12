@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import styles from "./ForcaGShaderControls.module.css";
 
 const INITIAL_SHADERS = {
@@ -37,17 +38,13 @@ export default function ForcaGShaderControls({ externalShaders = null, onApply =
       .then((data) => setShaders(data.forcaGShaders || INITIAL_SHADERS))
       .catch(() => setStatus("SHADERS DISCONNECTED"));
 
-    const events = new EventSource("/api/events?client=forca-g-shaders-controller");
-    events.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
+    return subscribePublicRealtime((payload) => {
       const nextShaders = payload.state?.forcaGShaders || payload.forcaGShaders;
 
       if (nextShaders) {
         setShaders(nextShaders);
       }
-    };
-
-    return () => events.close();
+    });
   }, [externalShaders]);
 
   async function apply(shaderAction, payload = {}) {

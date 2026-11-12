@@ -7,7 +7,7 @@ Verified 2026-10-15; current code is authoritative.
 - Next.js App Router 15 with React 19 and server routes under `app/api/`.
 - Runtime uses `http://localhost:3000` via `scripts/require-port-3000.js`.
 - `lib/showState.js` owns live state and writes atomic, checksummed recovery snapshots to `.runtime/show/current.json`. Operator recovery pauses timers/media and never auto-resumes.
-- Public SSE: `app/api/events/route.js`; revision reconciliation: `lib/publicRealtime.js` and `app/api/state/route.js`.
+- Multiwindow sync: `lib/publicRealtime.js` shares one worker SSE; finite polling fallback. Windows never own execution.
 - Projection registration: `app/api/projection/route.js`; public routes: `lib/projectionScreens.js`; private routes: `lib/controllerSurfaces.js`.
 - Prompts/knowledge live in `prompts/` and `knowledge/`. `lib/openai.js` bounds calls and sends unavailable/invalid replies through the existing local fallback. Participant selection also falls back to existing local lines and the already drawn winner.
 

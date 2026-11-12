@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { DISPLAY_BLACKOUT_TARGETS } from "@/lib/displayBlackout";
+import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import styles from "./ControllerBlackoutBar.module.css";
 
 const TARGETS = Object.values(DISPLAY_BLACKOUT_TARGETS);
@@ -28,19 +29,13 @@ export default function ControllerBlackoutBar() {
       .then((data) => setTargets(data.displayBlackout?.targets || INITIAL_TARGETS))
       .catch(() => setStatus("BLACKOUT DISCONNECTED"));
 
-    const events = new EventSource("/api/events?client=controller-blackout");
-    events.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
+    return subscribePublicRealtime((payload) => {
       const nextTargets = payload.state?.displayBlackout?.targets || payload.displayBlackout?.targets;
 
       if (nextTargets) {
         setTargets(nextTargets);
       }
-    };
-    events.onerror = () => setStatus("BLACKOUT DISCONNECTED");
-    events.onopen = () => setStatus("BLACKOUT READY");
-
-    return () => events.close();
+    }, (connection) => setStatus(connection === "connected" ? "BLACKOUT READY" : "BLACKOUT DISCONNECTED"));
   }, []);
 
   const anyActive = useMemo(() => Object.values(targets || {}).some(Boolean), [targets]);
