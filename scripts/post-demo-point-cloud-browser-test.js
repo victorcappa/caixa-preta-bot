@@ -9,6 +9,7 @@ import { prepareOperatorAudit } from "./operator-public-audit-utils.js";
 import { installPointCloudAnimationProbe, auditPointCloudAnimation } from "./post-demo-point-cloud-animation-audit.js";
 import { auditPointCloudControls } from "./post-demo-point-cloud-controls-audit.js";
 import { auditPostDemoLayout } from "./post-demo-layout-browser-audit.js";
+import { auditPostDemoOpening, holdPostDemoOpening } from "./post-demo-opening-browser-audit.js";
 
 const repository = process.cwd(), root = await prepareOperatorAudit(), base = "http://127.0.0.1:3331";
 const auditBreathing = process.argv.includes("--animation");
@@ -17,9 +18,10 @@ const auditLayout = process.argv.includes("--layout");
 assert.notEqual(root, repository);
 const output = await fs.mkdtemp(path.join(os.tmpdir(), "caixa-point-cloud-browser-")), runtime = path.join(output, "runtime"), provider = path.join(output, "provider.json");
 // A failure switch belongs only to this isolated worker; the real converter/model are never modified.
-const converter = path.join(output, "converter.cjs"), failConversion = path.join(output, "fail-conversion");
+const converter = path.join(output, "converter.cjs"), failConversion = path.join(output, "fail-conversion"), conversionLog = path.join(output, "conversions.jsonl");
 await fs.writeFile(converter, `#!/usr/bin/env node
 const fs = require("node:fs"), { spawnSync } = require("node:child_process");
+fs.appendFileSync(process.env.CLOUD_TEST_CONVERSIONS, JSON.stringify({at:Date.now()}) + "\\n");
 if (fs.existsSync(process.env.CLOUD_TEST_FAILURE)) { console.log(JSON.stringify({error:"CONVERSION_FAILED"})); process.exit(1); }
 const result = spawnSync(process.env.CLOUD_TEST_REAL_CONVERTER, process.argv.slice(2), {stdio:"inherit"});
 process.exit(result.status ?? 1);
@@ -41,9 +43,10 @@ assert(!occupied, "Porta 3331 ocupada; nenhum processo existente será encerrado
 const server = spawn(process.execPath, ["--import", fileURLToPath(new URL("./post-demo-cycle-provider.js", import.meta.url)), "node_modules/next/dist/bin/next", "start", "--port", "3331", "--hostname", "127.0.0.1"], {
   cwd: root, env: { ...process.env, OPENAI_API_KEY: "audit-only", CAIXA_PRETA_POST_DEMO_CYCLE_FIXTURE: provider,
     CAIXA_PRETA_SHOW_RUNTIME_DIR: runtime, CAIXA_PRETA_POINT_CLOUD_TOOLCHAIN: path.join(repository, ".runtime/point-cloud/toolchain"),
-    CAIXA_PRETA_POINT_CLOUD_CONVERTER: converter, CLOUD_TEST_FAILURE: failConversion, CLOUD_TEST_REAL_CONVERTER: path.join(repository, ".runtime/point-cloud/toolchain/convert") }, stdio: ["ignore", "pipe", "pipe"]
+    CAIXA_PRETA_POINT_CLOUD_CONVERTER: converter, CLOUD_TEST_FAILURE: failConversion, CLOUD_TEST_CONVERSIONS: conversionLog,
+    CLOUD_TEST_REAL_CONVERTER: path.join(repository, ".runtime/point-cloud/toolchain/convert") }, stdio: ["ignore", "pipe", "pipe"]
 });
-let log = "", browser, control, projection, animationEvidence;
+let log = "", browser, control, projection, animationEvidence, openingGate, openingEvidence;
 server.stdout.on("data", data => { log += data; }); server.stderr.on("data", data => { log += data; });
 const errors = [], metrics = [], checks = [];
 async function get(route) { const r = await fetch(base + route); assert(r.ok, route); return r.json(); }
@@ -51,6 +54,7 @@ async function post(route, body, status = 200) { const r = await fetch(base + ro
 async function poll(run, label, timeout = 60000) { const end = Date.now() + timeout; while (Date.now() < end) { if (server.exitCode !== null) throw Error(log.slice(-2000)); const value = await run(); if (value) return value; await new Promise(resolve => setTimeout(resolve, 80)); } throw Error(`Timeout: ${label}`); }
 const state = () => get("/api/state"), details = async () => (await get("/api/post-demo")).postDemo;
 const canvas = () => projection.getByLabel("Nuvem de pontos 3D da plateia", { exact: true });
+const conversionCount = async () => { try { return (await fs.readFile(conversionLog, "utf8")).trim().split("\n").filter(Boolean).length; } catch (error) { if (error.code === "ENOENT") return 0; throw error; } };
 try {
   await poll(async () => { try { return (await fetch(base + "/api/health?skipOptional=1")).ok; } catch { return false; } }, "servidor");
   await post("/api/show-session", { action: "new" }); const sessionId = (await state()).reliability.sessionId;
@@ -59,42 +63,70 @@ try {
   const context = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
   if (auditBreathing || auditControls || auditLayout) await installPointCloudAnimationProbe(context);
   projection = await context.newPage(); control = await context.newPage();
+  openingGate = await holdPostDemoOpening([projection, control]);
   for (const page of [projection, control]) page.on("pageerror", error => errors.push(error.message));
   const publicRequests = []; let projectionNavigations = 0;
   projection.on("framenavigated", frame => { if (frame === projection.mainFrame()) projectionNavigations++; });
   projection.on("request", request => publicRequests.push(request.url()));
   await projection.goto(base + "/pos-demo?projectionWindow=cloud-test", { waitUntil: "domcontentloaded" });
   await control.goto(base + "/pos-demo/controle", { waitUntil: "domcontentloaded" });
-  await poll(async () => (await details()).totalRounds >= 1, "cartas iniciadas");
+  await poll(async () => Boolean((await details()).opening), "abertura iniciada antes das cartas e da conversão automática");
   assert.equal(await projection.getByRole("button", { name: "Gerar point cloud", exact: true }).count(), 0);
   assert.equal(await projection.getByLabel("Habitantes possíveis da ilha").count(), 0);
-  async function generate(expectedName) {
-    const before = await details(), previous = before.pointCloud.current?.id;
-    const clickedAt = await projection.evaluate(() => performance.timeOrigin + performance.now());
-    await control.getByRole("button", { name: "Gerar point cloud", exact: true }).click();
-    assert(await control.getByRole("button", { name: "Gerar point cloud", exact: true }).isDisabled());
+  async function generate(expectedName, automatic = false) {
+    const before = await details(), previous = automatic ? null : before.pointCloud.current?.id;
+    const startedAt = automatic ? Date.parse(before.startedAt) : await projection.evaluate(() => performance.timeOrigin + performance.now());
+    if (!automatic) {
+      await control.getByRole("button", { name: "Gerar point cloud", exact: true }).click();
+      assert(await control.getByRole("button", { name: "Gerar point cloud", exact: true }).isDisabled());
+    }
     await poll(async () => { const s = await details(); if (s.pointCloud.status === "failed") throw Error(s.pointCloud.error); return s.pointCloud.status === "ready" && s.pointCloud.current.id !== previous; }, "conversão Core ML");
     const ready = await details(); assert.equal(ready.pointCloud.sourceName, expectedName); assert(ready.pointCloud.current.pointCount >= 147456 * 3.9, "a nova malha deve ter cerca de 4x os pontos da fixture anterior");
     await poll(async () => { const c = canvas(); return await c.count() && await c.getAttribute("data-ready") === "true" && (await state()).postDemo.pointCloud?.id === ready.pointCloud.current.id; }, "primeiro quadro na projeção");
     // Wait for the newly referenced canvas, rather than accidentally measuring the previous cloud.
-    await poll(async () => Number(await canvas().getAttribute("data-first-frame-at")) > clickedAt, "primeiro quadro da nova nuvem");
+    await poll(async () => Number(await canvas().getAttribute("data-first-frame-at")) > startedAt, "primeiro quadro da nova nuvem");
     const firstFrameAt = Number(await canvas().getAttribute("data-first-frame-at"));
     const publicCloud = (await state()).postDemo.pointCloud; assert.deepEqual(Object.keys(publicCloud).sort(), ["id", "url"]);
     assert(!JSON.stringify((await state()).postDemo).includes(expectedName)); assert(!("audienceNames" in (await state()).postDemo));
-    metrics.push({ photo: expectedName, clickToFirstFrameMs: Math.round(firstFrameAt - clickedAt), conversionMs: ready.pointCloud.current.durationMs, points: ready.pointCloud.current.pointCount });
-    console.log(`CORE ML ${expectedName}: ${Math.round(firstFrameAt - clickedAt)} ms clique → primeiro quadro; ${ready.pointCloud.current.pointCount} pontos.`);
+    metrics.push({ photo: expectedName, trigger: automatic ? "entry" : "button", ...(automatic ? { entryToFirstFrameMs: Math.round(firstFrameAt - startedAt) } : { clickToFirstFrameMs: Math.round(firstFrameAt - startedAt) }), conversionMs: ready.pointCloud.current.durationMs, points: ready.pointCloud.current.pointCount });
+    console.log(`CORE ML ${expectedName}: ${Math.round(firstFrameAt - startedAt)} ms ${automatic ? "entrada" : "clique"} → primeiro quadro; ${ready.pointCloud.current.pointCount} pontos.`);
     return publicCloud;
   }
   const roundsBeforeCloud = (await details()).totalRounds;
   const navigationsBeforeCloud = projectionNavigations;
-  const initialCloud = await generate("a-newer.JPEG");
+  assert.equal(roundsBeforeCloud, 0, "A conversão automática deve começar durante a abertura, antes das cartas.");
+  const initialCloud = await generate("a-newer.JPEG", true);
+  const firstDistance = Number(await canvas().getAttribute("data-distance"));
   await projection.screenshot({ path: path.join(output, "initial-points.png") });
+  assert.equal((await details()).totalRounds, 0, "A nuvem bloqueou/ultrapassou a porta da abertura.");
+  assert.equal(await conversionCount(), 1);
+  const firstCloudState = await details(), automaticCloudAt = firstCloudState.autoCloudStartedAt;
+  assert(automaticCloudAt); assert(!("autoCloudStartedAt" in (await state()).postDemo), "A flag operacional automática deve ficar privada.");
+  openingEvidence = await auditPostDemoOpening({ projection, control, gate: openingGate, base, sessionId,
+    providerCallsFile: provider + ".requests.jsonl", output, checkReload: true,
+    beforeAck: async () => {
+      const extraControl = await context.newPage(); await openingGate.addPage(extraControl);
+      extraControl.on("pageerror", error => errors.push(error.message));
+      try {
+        await extraControl.goto(base + "/pos-demo/controle", { waitUntil: "domcontentloaded" });
+        await extraControl.locator("#post-demo-parameters").waitFor();
+        await post("/api/post-demo", { action: "enter", sessionId });
+        const current = await details();
+        assert.equal(current.autoCloudStartedAt, automaticCloudAt);
+        assert.equal(current.pointCloud.startedAt, firstCloudState.pointCloud.startedAt);
+        assert.equal(current.pointCloud.jobId, firstCloudState.pointCloud.jobId);
+        assert.equal(current.pointCloud.current.id, initialCloud.id);
+        assert.equal(await conversionCount(), 1, "Reload, segunda janela ou entrada repetida reconverteram a foto.");
+      } finally { await extraControl.close(); }
+    } });
+  openingGate = null;
+  checks.push("nuvem automática antes das cartas sem clique; abertura digitada/ACK idempotente; reload, múltiplas janelas e entrada repetida sem reconversão");
+  await projection.locator('[data-post-demo-module="card"]').waitFor();
   const geometry = await projection.evaluate(() => {
     const c = document.querySelector('[aria-label="Ilha em nuvem de pontos"]'), text = document.querySelector('[aria-label="Fala da ilha futura"]'), card = document.querySelector("figure");
     return [c, text, card].map(e => { const r = e.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height, right: r.right }; });
   });
   assert(geometry[0].x >= geometry[1].right && geometry[1].x >= geometry[2].right); assert(geometry[0].right <= 1920);
-  const firstDistance = Number(await canvas().getAttribute("data-distance"));
   await poll(async () => Number(await canvas().getAttribute("data-distance")) > firstDistance * 3, "revelação da plateia a partir dos pontos", 20000);
   await poll(async () => await canvas().getAttribute("data-phase") === "automatic", "entrada no escuro e revelação completas", 30000);
   const firstYaw = await canvas().getAttribute("data-yaw");
@@ -160,7 +192,17 @@ try {
   await control.getByRole("button", { name: "Mostrar parâmetros", exact: true }).click();
   const beforeReset = await state(), configBeforeReset = (await details()).config;
   const resetAt = await projection.evaluate(() => performance.timeOrigin + performance.now());
+  openingGate = await holdPostDemoOpening([projection, control]);
   await control.getByRole("button", { name: "RESET", exact: true }).click();
+  await auditPostDemoOpening({ projection, control, gate: openingGate, base, sessionId, providerCallsFile: provider + ".requests.jsonl", output,
+    expectNoPriorCalls: false, reportName: "reset-opening-report.json", beforeAck: async ({ opening }) => {
+      assert.notEqual(opening.id, beforeReset.postDemo.opening.id);
+      const current = await details();
+      assert.equal(current.autoCloudStartedAt, automaticCloudAt);
+      assert.equal(current.pointCloud.current.id, initialCloud.id);
+      assert.equal(await conversionCount(), 1, "RESET repetiu a conversão automática da mesma sessão.");
+    } });
+  openingGate = null;
   await poll(async () => { const next = await state(); return next.postDemo.startedAt !== beforeReset.postDemo.startedAt && next.postDemo.totalRounds === 1; }, "RESET das cartas");
   await poll(async () => Number(await canvas().getAttribute("data-first-frame-at")) > resetAt && await canvas().getAttribute("data-phase") === "reveal", "RESET da revelação 3D");
   assert.deepEqual((await state()).postDemo.pointCloud, beforeReset.postDemo.pointCloud); assert.deepEqual((await details()).config, configBeforeReset);
@@ -194,12 +236,13 @@ try {
   assert.equal((await fetch(base + currentCloud.url)).status, 404); await post("/api/post-demo/point-cloud", { sessionId }, 409);
   checks.push("painel retrátil preserva nuvem à direita; RESET reinicia cartas e revelação sem reconverter foto nem alterar ajustes; seleção por mtime em cada clique; PNG/JPEG; foto original bloqueada inclusive alias/range; falha do processo, foto ilegível e pasta vazia preservam nuvem anterior; sessão nova rejeita resultado/URL antigos");
   assert.deepEqual(errors, []);
-  await fs.writeFile(path.join(output, "report.json"), JSON.stringify({ ok: true, liveDepthModel: true, liveLanguageModel: false, controlsAudit: auditControls, layoutAudit: auditLayout, shaderAnimation: Boolean(animationEvidence), metrics, framesPerSecond, graphicsRenderer, checks, output }, null, 2));
-  console.log(JSON.stringify({ ok: true, controlsAudit: auditControls, layoutAudit: auditLayout, shaderAnimation: Boolean(animationEvidence), metrics, framesPerSecond, graphicsRenderer, checks, output }, null, 2));
+  await fs.writeFile(path.join(output, "report.json"), JSON.stringify({ ok: true, liveDepthModel: true, liveLanguageModel: false, openingAudit: openingEvidence.ok, controlsAudit: auditControls, layoutAudit: auditLayout, shaderAnimation: Boolean(animationEvidence), metrics, framesPerSecond, graphicsRenderer, checks, output }, null, 2));
+  console.log(JSON.stringify({ ok: true, openingAudit: openingEvidence.ok, controlsAudit: auditControls, layoutAudit: auditLayout, shaderAnimation: Boolean(animationEvidence), metrics, framesPerSecond, graphicsRenderer, checks, output }, null, 2));
 } catch (error) {
   await projection?.screenshot({ path: path.join(output, "failure-public.png") }).catch(() => {}); await control?.screenshot({ path: path.join(output, "failure-control.png") }).catch(() => {});
   console.log("Evidence:", output); throw error;
 } finally {
+  await openingGate?.dispose();
   await browser?.close(); if (server.exitCode === null) { const ended = new Promise(resolve => server.once("exit", resolve)); server.kill("SIGTERM"); await ended; }
   await fs.writeFile(path.join(output, "server.log"), log);
 }

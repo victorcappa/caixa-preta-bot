@@ -15,6 +15,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:post-demo:point-cloud:controls` -> `node --no-warnings scripts/post-demo-point-cloud-browser-test.js --controls --animation`
 - `npm run test:post-demo:point-cloud:motion` -> `node --no-warnings scripts/post-demo-point-cloud-motion-test.js`
 - `npm run test:post-demo:layout` -> `node --no-warnings scripts/post-demo-layout-test.js`
+- `npm run test:post-demo:opening` -> `node --no-warnings scripts/post-demo-opening-test.js`
 - `npm run test:post-demo:layout:browser` -> `node --no-warnings scripts/post-demo-point-cloud-browser-test.js --layout`
 - `npm run test:post-demo:cycle` -> `node --no-warnings scripts/post-demo-cycle-test.js`
 - `npm run test:post-demo:combined` -> `node --no-warnings scripts/post-demo-cycle-test.js --combined`
@@ -317,6 +318,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `CAIXA_PRETA_URL`
 - `CAIXA_PRETA_VOICE_GUIDE_PATH`
 - `CAIXA_PRETA_WEB_SEARCH`
+- `CLOUD_TEST_CONVERSIONS`
 - `CLOUD_TEST_FAILURE`
 - `CLOUD_TEST_REAL_CONVERTER`
 - `INSTAGRAM_COMMENT_TYPE_DELAY_MS`
@@ -387,6 +389,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/post-demo-browser-test.js`
 - `scripts/post-demo-cycle-test.js`
 - `scripts/post-demo-layout-test.js`
+- `scripts/post-demo-opening-test.js`
 - `scripts/post-demo-point-cloud-browser-test.js`
 - `scripts/post-demo-point-cloud-motion-test.js`
 - `scripts/post-demo-point-cloud-test.js`

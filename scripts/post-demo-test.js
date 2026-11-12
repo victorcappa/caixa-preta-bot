@@ -9,7 +9,8 @@ import { normalizePostDemoConfig, patchPostDemoConfig } from "../lib/post-demo/s
 const repository = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const fixture = fs.mkdtempSync(path.join(os.tmpdir(), "caixa-post-demo-unit-"));
 for (const item of ["data", "knowledge", "Texto caixa preta.pdf"]) fs.cpSync(path.join(repository, item), path.join(fixture, item), { recursive: true });
-fs.symlinkSync(path.join(repository, "assets"), path.join(fixture, "assets"));
+fs.mkdirSync(path.join(fixture, "assets/publico"), { recursive: true });
+for (const entry of fs.readdirSync(path.join(repository, "assets"))) if (entry !== "publico") fs.symlinkSync(path.join(repository, "assets", entry), path.join(fixture, "assets", entry));
 fs.writeFileSync(path.join(fixture, "data/publico.json"), JSON.stringify([{ name: "publico", nomes: ["Alice", "Bob", "alice", "", "Clara"] }, { name: "equipe", nomes: ["TEAM_SENTINEL"] }]));
 fs.writeFileSync(path.join(fixture, "data/training-examples.json"), "[]");
 process.env.CAIXA_PRETA_SHOW_RUNTIME_DIR = path.join(fixture, "runtime");
@@ -42,13 +43,25 @@ try {
   assert.equal(boundedCloud.preset, "reveal-tour"); assert.equal(boundedCloud.endDistance, 1.8); assert.equal(boundedCloud.localAmplitude, 0); assert.equal(boundedCloud.pulseIntensity, .18);
   assert(!("privatePath" in boundedCloud));
   assert.deepEqual(getRegisteredAudienceNames(), ["Alice", "Bob", "Clara"]);
-  let state = createPostDemoState(), time = 100000, calls = 0, clockId = 0;
+  let state = createPostDemoState(), time = 100000, calls = 0, clockId = 0, cloudStarts = 0, cloudFailure = false;
   const timers = new Map();
   const actor = createPostDemoController({ get: () => state, set: next => { state = next; }, emit() {}, runTurn: async () => { calls++; },
+    openingText: () => "Inicio uma nova rodada de treinamento. Reúno os rastros desta apresentação.",
+    startCloud: () => { cloudStarts++; if (cloudFailure) throw Error("PRIVATE_FAILURE"); },
     saveExample: saveTrainingExample, now: () => time, schedule: (fn, delay) => { timers.set(++clockId, { fn, at: time + delay }); return clockId; }, unschedule: id => timers.delete(id) });
   const advance = ms => { time += ms; for (const [id, timer] of [...timers]) if (timer.at <= time) { timers.delete(id); timer.fn(); } };
   actor.enter(getRegisteredAudienceNames()); actor.enter([]);
-  assert.equal(calls, 1, "entrada duplicada não pode iniciar outra geração");
+  assert.equal(calls, 0); assert.equal(cloudStarts, 1); assert.equal(state.status, "opening"); assert.equal(state.totalRounds, 0);
+  const openingId = state.opening.id;
+  assert.equal(actor.begin(), null); advance(60000); assert.equal(calls, 0, "a primeira carta exige confirmação da abertura digitada");
+  assert.equal(actor.acknowledgeOpening("wrong"), false); actor.pause("stop-all");
+  assert.equal(actor.acknowledgeOpening(openingId), false, "uma abertura pausada não deve liberar cartas");
+  state = restoredPostDemoState(state); assert.equal(state.opening.id, openingId); assert(state.autoCloudStartedAt);
+  actor.enter(); assert.equal(cloudStarts, 1);
+  actor.resume(); assert.equal(state.status, "opening"); assert.equal(calls, 0); assert.equal(cloudStarts, 1);
+  assert.equal(actor.acknowledgeOpening(openingId), true); assert.equal(actor.acknowledgeOpening(openingId), false);
+  assert.equal(calls, 1, "entrada/ACK duplicados não podem iniciar outra geração");
+  assert.equal(postDemoSnapshot(state).opening.id, openingId); assert(!("autoCloudStartedAt" in postDemoSnapshot(state)));
   const first = actor.begin();
   const context = await postDemoContext({ postDemo: state, memories: [{ id: "known", content: "Alice falou de uma mala azul." }], conversation: [],
     sceneZero: { notes: "PRIVATE_SENTINEL" }, tarot: { privateInstruction: "PRIVATE_SENTINEL", hallucination: { memories: [] } } },
@@ -92,9 +105,15 @@ try {
   const legacy = { ...state, audienceNames: ["Alice"], rounds: [{ ...state.rounds[0], content: "Alice e Bob na ilha.", usedNames: ["Bob"] }] };
   assert(!JSON.stringify(postDemoSnapshot(legacy)).includes("Alice")); assert(!JSON.stringify(postDemoSnapshot(legacy)).includes("Bob"));
   assert.equal(restoredPostDemoState(state).active, false); assert.equal(restoredPostDemoState(state).pauseReason, "recovery");
+  const legacyRecovery = restoredPostDemoState({ ...state, opening: undefined, autoCloudStartedAt: undefined });
+  assert.equal(legacyRecovery.autoCloudStartedAt, state.startedAt); assert.equal(legacyRecovery.totalRounds, state.totalRounds);
+  assert.equal(postDemoSnapshot(legacyRecovery).opening, null, "uma apresentação já iniciada não ganha uma abertura retroativa");
   await assert.rejects(() => postDemoContext({ postDemo: { ...state, usedCardIds: [0, 1] }, memories: [], conversation: [] }, context.eligible), /já foram apresentadas/);
   actor.pause();
-  state = createPostDemoState(); actor.config({ cardHoldMs: 1000 }); calls = 0; actor.enter([]);
+  state = createPostDemoState(); actor.config({ cardHoldMs: 1000 }); calls = 0; cloudFailure = true; actor.enter([]);
+  assert.equal(state.status, "opening"); assert.equal(state.pointCloud.status, "failed");
+  assert(!JSON.stringify(postDemoSnapshot(state)).includes("PRIVATE_FAILURE"));
+  actor.acknowledgeOpening(state.opening.id);
   for (let index = 0; index < 22; index++) {
     const job = actor.begin(); assert(job);
     actor.finish(job, { card: { id: index, name: `Carta ${index}` }, content: "Uma ilha possível. Quem a habita?" });
@@ -121,6 +140,8 @@ try {
   assert.equal(state.totalRounds, 0); assert.deepEqual(state.rounds, []); assert.deepEqual(state.usedCardIds, []);
   assert.deepEqual(state.config, savedConfig); assert.equal(state.pointCloud, savedCloud); assert.notEqual(state.startedAt, previousStartedAt);
   assert.equal(state.active, true); assert.equal(state.completedAt, null);
+  assert.equal(state.status, "opening"); assert.equal(actor.begin(), null); assert.equal(cloudStarts, 2, "RESET reutiliza a nuvem sem nova conversão");
+  actor.acknowledgeOpening(state.opening.id);
   const beforeResetJob = actor.begin(); advance(1); actor.restart();
   assert(beforeResetJob.controller.signal.aborted); assert.equal(actor.finish(beforeResetJob, { card: { id: 0 }, content: "Resposta antiga." }), false);
   assert.equal(state.totalRounds, 0); actor.pause();
@@ -133,7 +154,8 @@ try {
   assert.deepEqual(isolated.robotSound, globalPreferences.robotSound); assert.equal(isolated.model, globalPreferences.model);
   showState.patchOperatorPublic({ personality: { sarcasm: 98 } });
   assert.equal(showState.privateSnapshot().postDemo.config.personality.sarcasm, 23);
-  showState.postDemo.enter(["Alice"]); const active = showState.postDemo.begin(); showState.signalStopAll();
+  showState.postDemo.enter(["Alice"]); showState.postDemo.acknowledgeOpening(showState.snapshot().postDemo.opening.id);
+  const active = showState.postDemo.begin(); showState.signalStopAll();
   assert(active.controller.signal.aborted && !showState.snapshot().postDemo.active);
   showState.postDemo.resume(); const emergency = showState.postDemo.begin(); showState.controlReliability("emergency-on");
   assert(emergency.controller.signal.aborted); showState.controlReliability("emergency-off");

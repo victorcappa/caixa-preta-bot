@@ -19,7 +19,7 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
   const [cloudRequest, setCloudRequest] = useState(false);
   const [cardSurfaces, setCardSurfaces] = useState({});
   const entered = useRef(null), session = useRef(null), textArea = useRef(null), pending = useRef(false);
-  const state = snapshot?.postDemo, round = state?.rounds.at(-1);
+  const state = snapshot?.postDemo, round = state?.rounds.at(-1), opening = !round ? state?.opening : null;
   const layout = usePostDemoLayout(state?.layout, snapshot?.reliability.sessionId, controller);
   const rectangles = resolvePostDemoLayout(layout.value, { hasCloud: Boolean(state?.pointCloud) });
   const editableLayout = controller && !panelCollapsed && Boolean(details?.config);
@@ -66,10 +66,15 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
     void post("ready").catch(() => {});
   }, [display, snapshot?.reliability.sessionId, post]);
   useEffect(() => {
-    if (!display || !state?.active || state.status !== "presenting" || !round || typedId !== round.id) return;
-    const acknowledge = () => void post("ack", { roundId: round.id }).catch(() => {});
+    if (!display || !state?.active) return;
+    const acknowledgement = state.status === "opening" && opening && typedId === opening.id
+      ? { action: "opening-ack", data: { openingId: opening.id } }
+      : state.status === "presenting" && round && typedId === round.id
+        ? { action: "ack", data: { roundId: round.id } } : null;
+    if (!acknowledgement) return;
+    const acknowledge = () => void post(acknowledgement.action, acknowledgement.data).catch(() => {});
     acknowledge(); const timer = setInterval(acknowledge, 2000); return () => clearInterval(timer);
-  }, [display, state?.active, state?.status, round, typedId, post]);
+  }, [display, state?.active, state?.status, round, opening, typedId, post]);
   async function action(name, data = {}) {
     if (pending.current) return; pending.current = true; setBusy(true); setError("");
     try { await post(name, data); await refresh(); }
@@ -86,7 +91,8 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
   }
   const cloud = details?.pointCloud, converting = cloud?.status === "generating";
   const phases = { selecting: "Escolhendo a foto mais recente", image: "Lendo a foto", model: "Carregando o modelo local", depth: "Calculando profundidade", points: "Construindo os pontos", writing: "Preparando a projeção" };
-  const message = round && { id: round.id, status: "complete", content: round.content };
+  const speech = round || opening;
+  const message = speech && { id: speech.id, status: "complete", content: speech.content };
   return <main className={styles.surface} data-controller={controller} data-collapsed={panelCollapsed} data-bot-font={presentation.displayFont}>
     <ProjectionWindowClient />
     {controller ? <button type="button" className={styles.panelToggle} disabled={!panelReady} aria-expanded={!panelCollapsed} aria-controls="post-demo-parameters"
@@ -94,7 +100,7 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
       onClick={onTogglePanel}>{panelCollapsed ? "☰" : "›"}</button> : null}
     <header className={styles.header}>
       {!controller ? <h1>A ILHA AINDA NÃO EXISTE</h1> : null}
-      <span>{state?.totalRounds ? `FRAGMENTO ${state.totalRounds}/${POST_DEMO_CARD_LIMIT}` : "_"}</span>
+      <span>{state?.totalRounds ? `FRAGMENTO ${state.totalRounds}/${POST_DEMO_CARD_LIMIT}` : opening ? "INICIANDO TREINAMENTO" : "_"}</span>
     </header>
     {panelCollapsed && panelError ? <p role="alert">{panelError}</p> : null}
     <section className={styles.stage} data-cloud={Boolean(state?.pointCloud)} aria-label="Ilha futura da peça">
@@ -103,10 +109,10 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
         onChange={(id, rect) => layout.change({ [id]: rect })} onCommit={() => void layout.flush()}>
         <figure className={styles.card} key={round.id}><PostDemoCardImage card={round.card} surface={round.card.surface || cardSurfaces[round.card.id]} /><figcaption>{round.card.number} · {round.card.name}</figcaption></figure>
       </PostDemoLayoutFrame> : null}
-      {round ? <PostDemoLayoutFrame key="text" id="text" label="texto" rect={rectangles.text} editable={editableLayout} epoch={snapshot?.reliability.sessionId}
+      {message ? <PostDemoLayoutFrame key="text" id="text" label="texto" rect={rectangles.text} editable={editableLayout} epoch={snapshot?.reliability.sessionId}
         onChange={(id, rect) => layout.change({ [id]: rect })} onCommit={() => void layout.flush()}>
         <div className={styles.voice} ref={textArea} role="log" aria-label="Fala da ilha futura">
-          <OperatorTypedReply key={round.id} message={message} settings={presentation} animate={state.status !== "completed"}
+          <OperatorTypedReply key={message.id} message={message} settings={presentation} animate={round ? state.status !== "completed" : !opening.presentedAt}
             paused={!state.active} onProgress={scroll} onComplete={display ? typed : undefined} />
         </div>
       </PostDemoLayoutFrame> : null}
@@ -114,13 +120,13 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
         onChange={(id, rect) => layout.change({ [id]: rect })} onCommit={() => void layout.flush()}>
         <PostDemoPointCloud key={state.startedAt || "idle"} reference={state.pointCloud} view={state.cloudPresentation} onError={setCloudError} />
       </PostDemoLayoutFrame> : null}
-      {!round ? <p className={styles.cursor} aria-label="Aguardando a ilha">_</p> : null}
+      {!message ? <p className={styles.cursor} aria-label="Aguardando a ilha">_</p> : null}
       </div>
       {state?.status === "generating" ? <span className={styles.drawing}>A PRÓXIMA MARGEM<span>_</span></span> : null}
       {state?.status === "failed" && (!controller || panelCollapsed) ? <p className={styles.suspended}>A ilha ficou em suspenso.</p> : null}
     </section>
     {controller && !panelCollapsed ? <aside className={styles.control} id="post-demo-parameters">
-      <p role="status">{state?.status === "completed" ? "PÓS-DEMO CONCLUÍDO · 22/22" : state?.status === "generating" ? "CRIANDO PRÓXIMA CARTA" : state?.active ? "SEQUÊNCIA AUTOMÁTICA" : "PAUSADO"}</p>
+      <p role="status">{state?.status === "completed" ? "PÓS-DEMO CONCLUÍDO · 22/22" : state?.status === "opening" ? "ABRINDO NOVA RODADA" : state?.status === "generating" ? "CRIANDO PRÓXIMA CARTA" : state?.active ? "SEQUÊNCIA AUTOMÁTICA" : "PAUSADO"}</p>
       <div className={styles.buttons}>
         <button type="button" disabled={busy || !state || state.status === "completed"} onClick={() => void action(!state.startedAt ? "enter" : state.active ? "pause" : "resume")}>{state?.status === "completed" ? "CONCLUÍDO" : !state?.startedAt ? "INICIAR PÓS-DEMO" : state.active ? "PAUSAR" : "RETOMAR"}</button>
         <button type="button" disabled={busy || !state} title="Recomeçar as cartas e a revelação da nuvem, mantendo os ajustes e a foto." onClick={() => void action("restart")}>RESET</button>

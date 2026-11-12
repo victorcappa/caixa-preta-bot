@@ -10,6 +10,7 @@
     "test:post-demo:point-cloud:controls": "node --no-warnings scripts/post-demo-point-cloud-browser-test.js --controls --animation",
     "test:post-demo:point-cloud:motion": "node --no-warnings scripts/post-demo-point-cloud-motion-test.js",
     "test:post-demo:layout": "node --no-warnings scripts/post-demo-layout-test.js",
+    "test:post-demo:opening": "node --no-warnings scripts/post-demo-opening-test.js",
     "test:post-demo:layout:browser": "node --no-warnings scripts/post-demo-point-cloud-browser-test.js --layout",
     "test:post-demo:cycle": "node --no-warnings scripts/post-demo-cycle-test.js",
     "test:post-demo:combined": "node --no-warnings scripts/post-demo-cycle-test.js --combined",

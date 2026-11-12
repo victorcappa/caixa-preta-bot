@@ -7,8 +7,10 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { prepareOperatorAudit } from "./operator-public-audit-utils.js";
 import { auditPostDemoLayout } from "./post-demo-layout-browser-audit.js";
+import { auditPostDemoOpening, holdPostDemoOpening, isolateEmptyPostDemoPhotos } from "./post-demo-opening-browser-audit.js";
 
 const root = await prepareOperatorAudit();
+await isolateEmptyPostDemoPhotos(root);
 const output = await fs.mkdtemp(path.join(os.tmpdir(), "caixa-post-demo-browser-"));
 const fixture = path.join(output, "provider.json"), base = "http://127.0.0.1:3327";
 await fs.writeFile(path.join(root, "data/publico.json"), JSON.stringify([{ name: "publico", nomes: ["Alice", "Bob", "Clara"] }, { name: "equipe", nomes: ["TEAM_SENTINEL"] }]));
@@ -22,7 +24,7 @@ const server = spawn(process.execPath, ["--import", fileURLToPath(new URL("./ope
   cwd: root, env: { ...process.env, OPENAI_API_KEY: "audit-only", OPENAI_BASE_URL: "https://api.openai.com/v1", CAIXA_PRETA_OPERATOR_MOCK: fixture,
     CAIXA_PRETA_SHOW_RUNTIME_DIR: path.join(output, "runtime") }, stdio: ["ignore", "pipe", "pipe"]
 });
-let log = "", browser, projection, control, layoutEvidence, layoutRestore;
+let log = "", browser, projection, control, layoutEvidence, layoutRestore, openingGate, openingEvidence;
 server.stdout.on("data", chunk => { log += chunk; }); server.stderr.on("data", chunk => { log += chunk; });
 const state = async () => (await fetch(base + "/api/state")).json();
 async function post(route, body) {
@@ -48,12 +50,25 @@ try {
   browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
   projection = await context.newPage(); control = await context.newPage();
+  openingGate = await holdPostDemoOpening([projection, control]);
   const errors = [], publicActions = [];
   for (const page of [projection, control]) page.on("pageerror", error => errors.push(error.message));
   projection.on("request", request => { if (request.method() === "POST" && request.url().endsWith("/api/post-demo")) publicActions.push(request.postDataJSON().action); });
   await projection.goto(base + "/pos-demo?projectionWindow=pos-demo-test", { waitUntil: "domcontentloaded" });
   await control.goto(base + "/pos-demo/controle", { waitUntil: "domcontentloaded" });
-  await poll(async () => (await state()).postDemo.totalRounds === 1, "seleção automática na entrada");
+  await poll(async () => Boolean((await (await fetch(base + "/api/post-demo")).json()).postDemo.autoCloudStartedAt), "tentativa automática de nuvem na entrada");
+  const automaticCloudAt = (await (await fetch(base + "/api/post-demo")).json()).postDemo.autoCloudStartedAt;
+  assert(automaticCloudAt, "A entrada deve registrar uma única tentativa automática de nuvem por sessão.");
+  openingEvidence = await auditPostDemoOpening({ projection, control, gate: openingGate, base,
+    sessionId: (await state()).reliability.sessionId, providerCallsFile: fixture + ".request.json", output, checkReload: true,
+    beforeAck: async () => {
+      await poll(async () => (await (await fetch(base + "/api/post-demo")).json()).postDemo.pointCloud.status === "failed", "pasta vazia reporta erro privado sem travar a abertura");
+      await poll(async () => await control.getByText("Nenhuma foto JPG, JPEG ou PNG em assets/publico/.", { exact: true }).count() === 1, "erro da foto visível apenas no controle");
+      assert.equal(await projection.getByText("Nenhuma foto JPG, JPEG ou PNG em assets/publico/.", { exact: true }).count(), 0);
+      await command("enter");
+      assert.equal((await (await fetch(base + "/api/post-demo")).json()).postDemo.autoCloudStartedAt, automaticCloudAt);
+    } });
+  openingGate = null;
   await command("pause");
   const request = JSON.parse(await fs.readFile(fixture + ".request.json", "utf8"));
   assert.equal(request.tools, undefined); assert.equal(request.model, "gpt-5.6-terra");
@@ -134,7 +149,15 @@ try {
   layoutEvidence = await auditPostDemoLayout({ projection, control, output, base, sessionId: (await state()).reliability.sessionId });
   const beforeReset = await state(), configBeforeReset = await privateConfig();
   await fs.writeFile(fixture, JSON.stringify({ principalText: JSON.stringify(reply(0)) }));
+  openingGate = await holdPostDemoOpening([projection, control]);
   await control.getByRole("button", { name: "RESET", exact: true }).click();
+  await auditPostDemoOpening({ projection, control, gate: openingGate, base, sessionId: beforeReset.reliability.sessionId,
+    providerCallsFile: fixture + ".request.json", output, expectNoPriorCalls: false, reportName: "reset-opening-report.json",
+    beforeAck: async ({ opening }) => {
+      assert.notEqual(opening.id, beforeReset.postDemo.opening.id, "RESET precisa repetir a fala de abertura.");
+      assert.equal((await (await fetch(base + "/api/post-demo")).json()).postDemo.autoCloudStartedAt, automaticCloudAt, "RESET não deve repetir a conversão automática.");
+    } });
+  openingGate = null;
   await poll(async () => { const next = (await state()).postDemo; return next.startedAt !== beforeReset.postDemo.startedAt && next.totalRounds === 1; }, "RESET reinicia na primeira carta");
   await command("pause");
   const afterReset = await state(); assert.equal(afterReset.reliability.sessionId, beforeReset.reliability.sessionId);
@@ -152,15 +175,16 @@ try {
   assert.deepEqual((await privateConfig()).layout, layoutEvidence.savedLayout, "A nova sessão perdeu a composição criada com as alças.");
   assert.deepEqual(reset.layout, layoutEvidence.savedLayout, "A nova sessão não publicou a composição salva.");
   await command("config", { config: { layout: layoutRestore } }); layoutRestore = null;
-  assert(publicActions.every(action => ["ack", "ready"].includes(action)), "projeção não pode emitir comandos privados");
+  assert(publicActions.every(action => ["ack", "opening-ack", "ready"].includes(action)), "projeção não pode emitir comandos privados");
   assert.deepEqual(errors, []);
   await operator.close();
-  console.log(JSON.stringify({ ok: true, liveModel: false, layoutAudit: layoutEvidence.ok, output, checks: ["tab starts autonomous selection", "future continuation/own parameters without audience/session details in provider input", "public cards/typing without names", "private independent timing/personality/model/font, no global mirroring either way", "automatic second card and no repetition", "private rating", "pause", "right-edge handle works after scrolling and reload without advancing", "STOP ALL/reload", "card/text drag/resize, failed save retry, public synchronization, navigation/reload/new-session persistence", "RESET restarts cards without changing settings/session/manual mode", "new show stays idle and keeps speed/layout", "public/private boundary"] }, null, 2));
+  console.log(JSON.stringify({ ok: true, liveModel: false, openingAudit: openingEvidence.ok, layoutAudit: layoutEvidence.ok, output, checks: ["opening typed before first card/model call; repeated opening ACK is idempotent", "automatic cloud failure stays private and does not block opening/cards; entry/reload/reset deduplicate the session attempt", "future continuation/own parameters without audience/session details in provider input", "public cards/typing without names", "private independent timing/personality/model/font, no global mirroring either way", "automatic second card and no repetition", "private rating", "pause", "right-edge handle works after scrolling and reload without advancing", "STOP ALL/reload", "card/text drag/resize, failed save retry, public synchronization, navigation/reload/new-session persistence", "RESET repeats opening then cards without changing settings/session/manual mode", "new show stays idle and keeps speed/layout", "public/private boundary"] }, null, 2));
 } catch (error) {
   await projection?.screenshot({ path: path.join(output, "failure-public.png") }).catch(() => {});
   await control?.screenshot({ path: path.join(output, "failure-control.png") }).catch(() => {});
   console.log("Evidence:", output); throw error;
 } finally {
+  await openingGate?.dispose();
   if (layoutRestore && server.exitCode === null) await command("config", { config: { layout: layoutRestore } });
   await browser?.close();
   if (server.exitCode === null) { server.kill("SIGTERM"); await new Promise(resolve => server.once("exit", resolve)); }

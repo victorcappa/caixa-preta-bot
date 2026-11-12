@@ -6,6 +6,7 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { prepareOperatorAudit } from "./operator-public-audit-utils.js";
+import { isolateEmptyPostDemoPhotos } from "./post-demo-opening-browser-audit.js";
 
 const combined = process.argv.includes("--combined");
 const resumeFrom = process.argv.find(value => value.startsWith("--resume="))?.slice(9);
@@ -13,6 +14,7 @@ const live = process.argv.includes("--live"), port = live ? 3330 : 3329, base = 
 if (live && !process.env.OPENAI_API_KEY) throw new Error("A consulta real exige a API já configurada.");
 const root = await prepareOperatorAudit();
 assert.notEqual(path.resolve(root), process.cwd(), "O teste exige uma cópia isolada.");
+await isolateEmptyPostDemoPhotos(root);
 const output = await fs.mkdtemp(path.join(os.tmpdir(), "caixa-post-demo-cycle-")), fixture = path.join(output, "provider.json");
 await fs.writeFile(path.join(root, "data/publico.json"), JSON.stringify([{ name: "publico", nomes: ["Pessoa Aurora", "Pessoa Maré", "Pessoa Horizonte"] }, { name: "equipe", nomes: ["TEAM_SENTINEL"] }]));
 for (const file of ["training-examples.json", "style-notes.json"]) await fs.writeFile(path.join(root, "data", file), "[]");
@@ -32,7 +34,7 @@ const server = spawn(process.execPath, [...(live ? [] : ["--import", preload]), 
 });
 let log = "", browser, projection, heartbeat;
 server.stdout.on("data", chunk => { log += chunk; }); server.stderr.on("data", chunk => { log += chunk; });
-const errors = [], acknowledgements = [], known = new Map(), checks = [], rounds = [];
+const errors = [], acknowledgements = [], openingAcknowledgements = [], known = new Map(), checks = [], rounds = [];
 async function get(route) { const response = await fetch(base + route); assert(response.ok, route); return response.json(); }
 async function post(route, body) {
   const response = await fetch(base + route, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -66,6 +68,16 @@ try {
         const content = await projection.getByLabel("Fala da ilha futura").innerText(), round = known.get(body.roundId);
         if (!round || content.trim() !== round.content.trim()) errors.push(`ACK antes do texto completo: ${body.roundId}`);
         acknowledgements.push(body.roundId);
+      } else if (body?.action === "opening-ack") {
+        const current = await details(), content = await projection.getByLabel("Fala da ilha futura").innerText();
+        if (body.openingId !== current.opening?.id || content.trim() !== current.opening?.content.trim()) errors.push("ACK da abertura antes do texto completo.");
+        if (!openingAcknowledgements.includes(body.openingId)) {
+          assert.equal(current.totalRounds, 0, "A primeira carta apareceu antes do ACK da abertura.");
+          assert.equal(current.status, "opening");
+          const calls = await fs.readFile(fixture + ".requests.jsonl", "utf8").catch(error => { if (error.code === "ENOENT") return ""; throw error; });
+          assert.equal(calls, "", "O modelo foi chamado antes da abertura terminar.");
+          openingAcknowledgements.push(body.openingId);
+        }
       }
       await route.continue();
     });
@@ -84,6 +96,18 @@ try {
     await post("/api/projection", { action: "register", projectionWindowId: "cycle-live-test", path: "/pos-demo" });
     heartbeat = setInterval(() => void post("/api/projection", { action: "heartbeat", projectionWindowId: "cycle-live-test", path: "/pos-demo" }).catch(error => errors.push(error.message)), 4000);
     await command(resumeFrom ? "resume" : "enter");
+    const opening = (await details()).opening;
+    if (opening && !opening.presentedAt) {
+      // The live fixture is a test client: acknowledge the local opening explicitly;
+      // actual typing/visibility is verified in the mock-provider browser branch.
+      assert.equal((await details()).totalRounds, 0);
+      await command("opening-ack", { openingId: opening.id });
+      openingAcknowledgements.push(opening.id);
+    }
+  }
+  if (initial.totalRounds === 0) {
+    await poll(async () => Boolean((await details()).opening?.presentedAt), "abertura concluída antes da sequência de 22 cartas");
+    checks.push(live ? "cliente de teste confirma a abertura local antes da primeira chamada real" : "abertura digitada e confirmada antes da primeira carta/chamada ao provedor");
   }
   for (let number = initial.totalRounds + 1; number <= cards.length; number++) {
     const started = Date.now();
@@ -144,7 +168,8 @@ try {
     checks.push("última fala permanece visível após reload; STOP ALL mantém o encerramento");
   }
   assert.deepEqual(errors, []);
-  const report = { ok: true, liveModel: live, combinedScreen: combined, resumedRounds: initial.totalRounds, display: live ? "ACK pelo cliente de teste; animação coberta no teste de navegador" : "navegador real com provedor simulado", rounds, checks, output };
+  const report = { ok: true, liveModel: live, combinedScreen: combined, resumedRounds: initial.totalRounds, openingAcknowledgements,
+    display: live ? "ACK pelo cliente de teste; animação coberta no teste de navegador" : "navegador real com provedor simulado", rounds, checks, output };
   await fs.writeFile(path.join(output, "report.json"), JSON.stringify(report, null, 2));
   console.log(JSON.stringify({ ok: true, liveModel: live, rounds: rounds.length, checks, output }, null, 2));
 } catch (error) {

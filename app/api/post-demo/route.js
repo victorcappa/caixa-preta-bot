@@ -26,6 +26,10 @@ export async function POST(request) {
     } else if (body.action === "ready") {
       if (state.postDemo.pauseReason === "projection-disconnected") actor.resume();
     } else if (body.action === "ack") actor.acknowledge(body.roundId);
+    else if (body.action === "opening-ack") {
+      if (!actor.acknowledgeOpening) return unavailable();
+      actor.acknowledgeOpening(body.openingId);
+    }
     else if (body.action === "pause") actor.pause();
     else if (body.action === "resume") actor.resume();
     else if (body.action === "restart") actor.restart();
