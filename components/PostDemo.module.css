@@ -23,9 +23,11 @@
 .surface[data-controller="true"][data-collapsed="true"] { grid-template-columns:minmax(0,1fr); }
 .surface[data-controller="true"][data-collapsed="true"] .voice p { font-size:clamp(23px,2.45vw,44px); }
 .surface[data-controller="true"][data-collapsed="true"] .stage[data-cloud="true"] .voice p { font-size:clamp(21px,1.8vw,34px); }
-.panelToggle { color:var(--ink); border:1px solid #237541; background:#06160c; padding:8px 12px; font:inherit; font-size:13px; cursor:pointer; }
+.panelToggle { position:fixed; top:50%; right:330px; transform:translateY(-50%); z-index:50; width:36px; min-height:64px; color:var(--ink); border:1px solid #237541; border-radius:8px 0 0 8px; background:#06160c; padding:8px; font:inherit; font-size:25px; cursor:pointer; }
+.surface[data-collapsed="true"] .panelToggle { right:0; }
+.panelToggle:hover,.panelToggle:focus-visible { background:#124a28; outline:2px solid var(--ink); outline-offset:2px; }
 .panelToggle:disabled { opacity:.4; cursor:default; }
-.surface[data-controller="true"] .header { grid-column:1/-1; }
+.surface[data-controller="true"] .header { grid-column:1/-1; justify-content:flex-end; }
 .surface[data-controller="true"] .stage { grid-column:1; grid-row:2; padding:22px; gap:24px; }
 .surface[data-controller="true"] .voice p { font-size:clamp(18px,1.6vw,26px); }
 .control { grid-column:2; grid-row:2; overflow:auto; min-height:0; padding:18px; border-left:1px solid #174a2b; font-size:13px; }
@@ -40,5 +42,5 @@
 .buttons { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
 @keyframes blink { 50% { opacity:0; } }
 @keyframes reveal { from { opacity:0; transform:rotateY(80deg) scale(.95); } to { opacity:1; transform:none; } }
-@media(max-width:950px) { .surface[data-controller="true"][data-collapsed="false"] { height:auto; grid-template-columns:minmax(0,1fr); grid-template-rows:auto minmax(420px,65svh) auto auto; } .control { grid-column:1; grid-row:4; max-height:500px; border-left:0; } }
+@media(max-width:950px) { .surface[data-controller="true"][data-collapsed="false"] { height:auto; grid-template-columns:minmax(0,1fr); grid-template-rows:auto minmax(420px,65svh) auto auto; } .control { grid-column:1; grid-row:4; max-height:500px; border-left:0; } .panelToggle { right:0; } }
 @media(prefers-reduced-motion:reduce) { .card,.cursor,.drawing span { animation:none; } }

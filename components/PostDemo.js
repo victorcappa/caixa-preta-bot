@@ -76,9 +76,11 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
   const message = round && { id: round.id, status: "complete", content: round.content };
   return <main className={styles.surface} data-controller={controller} data-collapsed={panelCollapsed} data-bot-font={presentation.displayFont}>
     <ProjectionWindowClient />
+    {controller ? <button type="button" className={styles.panelToggle} disabled={!panelReady} aria-expanded={!panelCollapsed} aria-controls="post-demo-parameters"
+      aria-label={panelCollapsed ? "Mostrar parâmetros" : "Recolher parâmetros"} title={panelCollapsed ? "Mostrar parâmetros" : "Recolher parâmetros"}
+      onClick={onTogglePanel}>{panelCollapsed ? "☰" : "›"}</button> : null}
     <header className={styles.header}>
-      {!controller ? <h1>A ILHA AINDA NÃO EXISTE</h1> : <button type="button" className={styles.panelToggle} disabled={!panelReady} aria-expanded={!panelCollapsed} aria-controls="post-demo-parameters"
-        aria-label={panelCollapsed ? "Mostrar parâmetros" : "Recolher parâmetros"} onClick={onTogglePanel}>{panelCollapsed ? "☰" : "RECOLHER PARÂMETROS ›"}</button>}
+      {!controller ? <h1>A ILHA AINDA NÃO EXISTE</h1> : null}
       <span>{state?.totalRounds ? `FRAGMENTO ${state.totalRounds}/${POST_DEMO_CARD_LIMIT}` : "_"}</span>
     </header>
     {panelCollapsed && panelError ? <p role="alert">{panelError}</p> : null}
@@ -92,13 +94,13 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
       </> : <p className={styles.cursor} aria-label="Aguardando a ilha">_</p>}
       {state?.status === "generating" ? <span className={styles.drawing}>A PRÓXIMA MARGEM<span>_</span></span> : null}
       {state?.status === "failed" && (!controller || panelCollapsed) ? <p className={styles.suspended}>A ilha ficou em suspenso.</p> : null}
-      {state?.pointCloud ? <PostDemoPointCloud reference={state.pointCloud} onError={setCloudError} /> : null}
+      {state?.pointCloud ? <PostDemoPointCloud key={state.startedAt || "idle"} reference={state.pointCloud} onError={setCloudError} /> : null}
     </section>
     {controller && !panelCollapsed ? <aside className={styles.control} id="post-demo-parameters">
       <p role="status">{state?.status === "completed" ? "PÓS-DEMO CONCLUÍDO · 22/22" : state?.status === "generating" ? "CRIANDO PRÓXIMA CARTA" : state?.active ? "SEQUÊNCIA AUTOMÁTICA" : "PAUSADO"}</p>
       <div className={styles.buttons}>
         <button type="button" disabled={busy || !state || state.status === "completed"} onClick={() => void action(!state.startedAt ? "enter" : state.active ? "pause" : "resume")}>{state?.status === "completed" ? "CONCLUÍDO" : !state?.startedAt ? "INICIAR PÓS-DEMO" : state.active ? "PAUSAR" : "RETOMAR"}</button>
-        <button type="button" disabled={busy || !state?.startedAt} onClick={() => void action("restart")}>RECOMEÇAR PÓS-DEMO</button>
+        <button type="button" disabled={busy || !state} title="Recomeçar as cartas e a revelação da nuvem, mantendo os ajustes e a foto." onClick={() => void action("restart")}>RESET</button>
         <a href="/pos-demo" target="_blank" rel="noreferrer">ABRIR PROJEÇÃO</a>
       </div>
       <p>Ajustes exclusivos desta sequência. Salvos automaticamente.</p>

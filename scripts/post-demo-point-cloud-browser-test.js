@@ -120,6 +120,13 @@ try {
   assert(combinedLayout.cloudX >= combinedLayout.textRight && combinedLayout.cloudRight <= combinedLayout.width);
   await control.screenshot({ path: path.join(output, "combined-collapsed.png") });
   await control.getByRole("button", { name: "Mostrar parâmetros", exact: true }).click();
+  const beforeReset = await state(), configBeforeReset = (await details()).config;
+  const resetAt = await projection.evaluate(() => performance.timeOrigin + performance.now());
+  await control.getByRole("button", { name: "RESET", exact: true }).click();
+  await poll(async () => { const next = await state(); return next.postDemo.startedAt !== beforeReset.postDemo.startedAt && next.postDemo.totalRounds === 1; }, "RESET das cartas");
+  await poll(async () => Number(await canvas().getAttribute("data-first-frame-at")) > resetAt && await canvas().getAttribute("data-phase") === "reveal", "RESET da revelação 3D");
+  assert.deepEqual((await state()).postDemo.pointCloud, beforeReset.postDemo.pointCloud); assert.deepEqual((await details()).config, configBeforeReset);
+  assert.equal((await state()).reliability.sessionId, beforeReset.reliability.sessionId);
   checks.push("Core ML real; nuvem colorida à direita sem reload; entrada bem próxima e afastamento; giro/zoom/pan e retorno automático");
   for (const file of ["publico/a-newer.JPEG", "publico%2Fa-newer.JPEG", "photo-alias.jpg", "publico/../publico/a-newer.JPEG"]) {
     const response = await fetch(base + "/api/game-assets?file=" + encodeURIComponent(file), { headers: { range: "bytes=0-30" } }); assert.equal(response.status, 404);
@@ -147,7 +154,7 @@ try {
   await poll(async () => !(await state()).postDemo.pointCloud && await canvas().count() === 0, "troca de sessão apaga a referência");
   await new Promise(resolve => setTimeout(resolve, 1800)); assert.equal((await state()).postDemo.pointCloud, null);
   assert.equal((await fetch(base + currentCloud.url)).status, 404); await post("/api/post-demo/point-cloud", { sessionId }, 409);
-  checks.push("painel retrátil preserva nuvem à direita; seleção por mtime em cada clique; PNG/JPEG; foto original bloqueada inclusive alias/range; falha do processo, foto ilegível e pasta vazia preservam nuvem anterior; sessão nova rejeita resultado/URL antigos");
+  checks.push("painel retrátil preserva nuvem à direita; RESET reinicia cartas e revelação sem reconverter foto nem alterar ajustes; seleção por mtime em cada clique; PNG/JPEG; foto original bloqueada inclusive alias/range; falha do processo, foto ilegível e pasta vazia preservam nuvem anterior; sessão nova rejeita resultado/URL antigos");
   assert.deepEqual(errors, []);
   await fs.writeFile(path.join(output, "report.json"), JSON.stringify({ ok: true, liveDepthModel: true, liveLanguageModel: false, metrics, checks, output }, null, 2));
   console.log(JSON.stringify({ ok: true, metrics, checks, output }, null, 2));

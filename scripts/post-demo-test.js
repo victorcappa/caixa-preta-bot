@@ -89,6 +89,14 @@ try {
   assert.equal(calls, 22); assert.equal(actor.resume(), false); assert.equal(actor.begin(), null); actor.enter([]); advance(60000); actor.pause();
   assert.equal(calls, 22, "não pode haver 23ª geração depois do encerramento"); assert.equal(state.status, "completed");
   assert.equal(restoredPostDemoState(state).status, "completed");
+  const savedConfig = structuredClone(state.config), savedCloud = { ...state.pointCloud, current: { id: "cloud-reset-fixture" } }, previousStartedAt = state.startedAt;
+  state.pointCloud = savedCloud; advance(1); actor.restart();
+  assert.equal(state.totalRounds, 0); assert.deepEqual(state.rounds, []); assert.deepEqual(state.usedCardIds, []);
+  assert.deepEqual(state.config, savedConfig); assert.equal(state.pointCloud, savedCloud); assert.notEqual(state.startedAt, previousStartedAt);
+  assert.equal(state.active, true); assert.equal(state.completedAt, null);
+  const beforeResetJob = actor.begin(); advance(1); actor.restart();
+  assert(beforeResetJob.controller.signal.aborted); assert.equal(actor.finish(beforeResetJob, { card: { id: 0 }, content: "Resposta antiga." }), false);
+  assert.equal(state.totalRounds, 0); actor.pause();
   const { showState } = await import("../lib/showState.js");
   const globalPreferences = showState.privateSnapshot();
   showState.postDemo.config({ cardHoldMs: 4000, typingIntervalMs: 150, typingPauseMs: 900, personality: { sarcasm: 23 }, profile: { humor: 17 }, model: "gpt-5.6-luna" });

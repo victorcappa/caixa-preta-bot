@@ -105,6 +105,20 @@ try {
   await poll(async () => (await (await fetch(base + "/api/post-demo")).json()).postDemo.rounds.at(-1).rating === "perfect", "avaliação privada");
   const count = (await state()).postDemo.totalRounds;
   await new Promise(resolve => setTimeout(resolve, 1300)); assert.equal((await state()).postDemo.totalRounds, count);
+  // The handle stays on the right edge even after scrolling a long parameter panel.
+  await control.setViewportSize({ width: 1280, height: 720 });
+  await control.locator("#post-demo-parameters").evaluate(element => { element.scrollTop = element.scrollHeight; });
+  const retract = control.getByRole("button", { name: "Recolher parâmetros", exact: true });
+  const handle = await retract.boundingBox(); assert(handle && handle.x > 800 && handle.y >= 0 && handle.y + handle.height <= 720);
+  await retract.click();
+  assert.equal(await control.locator("#post-demo-parameters").count(), 0); assert.equal(await control.getByRole("navigation").count(), 0);
+  const expand = control.getByRole("button", { name: "Mostrar parâmetros", exact: true }), collapsedHandle = await expand.boundingBox();
+  assert.equal(Math.round(collapsedHandle.x + collapsedHandle.width), 1280);
+  await poll(async () => (await (await fetch(base + "/api/controller-settings?scope=post-demo-panel")).json()).settings.collapsed === true, "painel recolhido salvo");
+  await control.reload(); await control.getByRole("button", { name: "Mostrar parâmetros", exact: true }).click();
+  await control.locator("#post-demo-parameters").waitFor();
+  assert.equal((await state()).postDemo.active, false); assert.equal((await state()).postDemo.totalRounds, count);
+  await control.setViewportSize({ width: 1600, height: 1000 });
   await command("resume");
   await projection.waitForFunction(() => document.querySelector('[aria-label="Fala da ilha futura"] p')?.getAttribute("data-typing") === "false");
   await projection.waitForFunction(() => [...document.images].every(image => image.complete && image.naturalWidth));
@@ -115,6 +129,15 @@ try {
   await projection.reload(); await control.reload();
   await new Promise(resolve => setTimeout(resolve, 1400));
   assert.equal((await state()).postDemo.active, false); assert.equal((await state()).postDemo.totalRounds, stoppedAt);
+  const beforeReset = await state(), configBeforeReset = await privateConfig();
+  await fs.writeFile(fixture, JSON.stringify({ principalText: JSON.stringify(reply(0)) }));
+  await control.getByRole("button", { name: "RESET", exact: true }).click();
+  await poll(async () => { const next = (await state()).postDemo; return next.startedAt !== beforeReset.postDemo.startedAt && next.totalRounds === 1; }, "RESET reinicia na primeira carta");
+  await command("pause");
+  const afterReset = await state(); assert.equal(afterReset.reliability.sessionId, beforeReset.reliability.sessionId);
+  assert.equal(afterReset.audienceWarmup.manualMode, beforeReset.audienceWarmup.manualMode);
+  assert.deepEqual(await privateConfig(), configBeforeReset); assert.equal(afterReset.postDemo.rounds[0].card.id, 0);
+  assert.notEqual(afterReset.postDemo.rounds[0].id, beforeReset.postDemo.rounds[0].id);
   await post("/api/show-session", { action: "new" });
   await new Promise(resolve => setTimeout(resolve, 500));
   const reset = (await state()).postDemo;
@@ -122,7 +145,7 @@ try {
   assert(publicActions.every(action => ["ack", "ready"].includes(action)), "projeção não pode emitir comandos privados");
   assert.deepEqual(errors, []);
   await operator.close();
-  console.log(JSON.stringify({ ok: true, liveModel: false, output, checks: ["tab starts autonomous selection", "future continuation/own parameters without audience/session details in provider input", "public cards/typing without names", "private independent timing/personality/model/font, no global mirroring either way", "automatic second card and no repetition", "private rating", "pause", "STOP ALL/reload", "new show stays idle and keeps speed", "public/private boundary"] }, null, 2));
+  console.log(JSON.stringify({ ok: true, liveModel: false, output, checks: ["tab starts autonomous selection", "future continuation/own parameters without audience/session details in provider input", "public cards/typing without names", "private independent timing/personality/model/font, no global mirroring either way", "automatic second card and no repetition", "private rating", "pause", "right-edge handle works after scrolling and reload without advancing", "STOP ALL/reload", "RESET restarts cards without changing settings/session/manual mode", "new show stays idle and keeps speed", "public/private boundary"] }, null, 2));
 } catch (error) {
   await projection?.screenshot({ path: path.join(output, "failure-public.png") }).catch(() => {});
   await control?.screenshot({ path: path.join(output, "failure-control.png") }).catch(() => {});
