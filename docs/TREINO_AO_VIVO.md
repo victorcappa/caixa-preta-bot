@@ -8,9 +8,17 @@ As três avaliações salvam imediatamente em `data/training-examples.json`, sem
 
 ## Repertório
 
-As seis bases de `knowledge/` são enviadas integralmente: universo, dramaturgia, chatbot, personagens, conceitos e glossário. A recuperação local também consulta todo o arquivo `assets/tarot/CAIXA_PRETA_REFERENCIAS_TARO.md`, os textos de `data/controller-cues.json` e o repertório autoral de BIOS, aquecimento e malas. Conversas públicas da apresentação, histórico deste canal, observações da sessão e memórias textuais habilitadas do Tarô entram como fontes dinâmicas. Exemplos e notas de estilo do Treino calibram a voz.
+As sete bases de `knowledge/` são enviadas integralmente: universo, dramaturgia, chatbot, personagens, conceitos, glossário e mapa completo das cenas. O bot consulta as **34 páginas integrais** de `Texto caixa preta.pdf`, com página de origem; as **59 seções e 63 fontes bibliográficas** do arquivo de referências; textos atuais dos cues e da Queda/Emergência; manifesto do sampler; BIOS/Morel, aquecimento, minijogos, malas e coleta de dados. O catálogo é explícito em `lib/showMemory.js`. Conversas públicas, observações não expiradas e memórias textuais habilitadas do Tarô entram como processo vivo. Exemplos e notas de estilo do Treino calibram a voz.
 
-A busca usa o índice textual local existente, com até 16 trechos e 22 mil caracteres adicionais por geração, além das bases e das últimas 40 mensagens do diálogo. Todo esse acervo está disponível à recuperação; cada resposta recebe os trechos relacionados ao assunto. Não consulta a internet. Referências datadas permanecem datadas. Notas privadas dos controllers, credenciais, logs e perfis de navegador não integram esse acervo.
+A busca usa o índice textual local existente, com até 24 trechos e 24 mil caracteres adicionais por geração, além das bases, do índice das referências e das últimas 40 mensagens. Os trechos grandes são subdivididos, sem descartar conteúdo da indexação. Pedidos por cena ou CP-XX direcionam a recuperação. Todo o texto está disponível; cada resposta recebe os trechos relacionados ao assunto. Essa memória compartilhada também atende o chat principal, o Operator e alternativas do Treino; o Tarô conserva seus próprios filtros de referências.
+
+Textos/configuração atuais prevalecem sobre o rascunho: malas **2 → 1 → 3**, bexigas → forca/disco → toca-discos. Cenas 8, 9 e futuro ato 2 são identificados como propostas. Não consulta a internet para montar esse acervo; referências datadas permanecem datadas. Notas privadas dos controllers, credenciais, logs e perfis de navegador não entram. Vídeos, áudios e imagens não transcritos fornecem apenas os metadados cadastrados; não se alega conhecer seu conteúdo.
+
+### Atualização e auditoria do acervo
+
+Ao substituir o PDF, rode `npm run memory:sync` e `npm run memory:audit`. O primeiro usa PyMuPDF no Python indicado por `CAIXA_PRETA_PDF_PYTHON`, ou `.venv-pdf/bin/python` quando disponível, e gera `knowledge/sources/texto-caixa-preta.json`, sem modificar o original. O runtime não depende de Python. Hashes verificam o PDF e a extração; fonte obrigatória ausente ou incompatível gera falha visível no treino ao vivo. Mudanças nas bases e nos JSONs invalidam o cache sem reiniciar. Arquivos JS seguem o carregamento normal da aplicação (rebuild/restart em produção).
+
+`memory:audit` não chama modelos nem altera a apresentação: compara o texto indexado de todas as páginas com a extração, testa cenas 0–9, todas as CP-01–59, temas, bibliografia, processo, limites, privacidade e falhas de cache/hash numa cópia descartável. Imprime o caminho do relatório JSON com o inventário e hashes. Se mudar a estrutura do PDF, revisar o mapa e as expectativas da auditoria junto da extração. A auditoria comprova disponibilidade e recuperação textual, não garante que toda geração do modelo será correta.
 
 ## Operação e recuperação
 
@@ -23,6 +31,7 @@ Uma falha mantém o texto no campo de envio. Repetir o envio reutiliza o identif
 ## Verificação
 
 - `npm run test:live-training`: fixtures temporárias; feedback/upsert, contexto, alternativas, separação pública/privada, cancelamento e recuperação.
-- `npm run test:live-training:browser`: build em cópia isolada, dados de treino descartáveis e porta 3325; provedor interceptado sem chamadas reais. Verifica navegação, digitação, dois clientes, avaliações, alternativas públicas, reload, reconciliação sem SSE, falha/reenvio e STOP ALL. Recusa porta ocupada e encerra somente o servidor criado pelo teste.
+- `npm run test:live-training:browser`: build em cópia isolada, dados de treino descartáveis e porta 3325; provedor interceptado sem chamadas reais. Verifica navegação, digitação, dois clientes, avaliações, alternativas públicas, reload, reconciliação sem SSE, falha/reenvio, STOP ALL e trecho da página 32 no pedido que chegaria ao provedor. Recusa porta ocupada e encerra somente o servidor criado pelo teste.
+- `npm run memory:live`: cinco gerações reais pelo mesmo adaptador do treino, numa sessão descartável. Envia bases e trechos do acervo ao provedor configurado e usa `OPENAI_API_KEY` de `.env.local`. Rodar com autorização para esse envio; grava perguntas/respostas e lacunas em JSON temporário. É uma amostra com revisão humana, não uma garantia universal de memória.
 
 Essas verificações não comprovam qualidade de resposta do modelo real nem legibilidade no projetor físico.

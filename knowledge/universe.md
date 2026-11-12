@@ -14,5 +14,4 @@
 ## Referencia local
 
 Existe no projeto o arquivo `Texto caixa preta.pdf`, indicado como referencia do espetaculo.
-O PDF foi lido integralmente para compor `knowledge/dramaturgy.md` e `knowledge/chatbot.md`.
-Detalhes novos devem ser adicionados aos arquivos Markdown de knowledge antes de serem tratados como contexto estavel da maquina.
+O PDF integral, com 34 páginas, está extraído em `knowledge/sources/texto-caixa-preta.json` e disponível à recuperação por assunto e cena. `knowledge/show-map.md` mantém o mapa permanente e distingue o rascunho das regras atuais do projeto. Os resumos não substituem os textos integrais. Atualizar o PDF exige `npm run memory:sync` e `npm run memory:audit`; o hash impede servir silenciosamente uma transcrição antiga.

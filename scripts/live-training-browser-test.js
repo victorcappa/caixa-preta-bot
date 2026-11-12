@@ -116,11 +116,21 @@ try {
   await post("/api/operator", { command: "/stopall" });
   await sending;
   assert.equal((await state()).liveTraining.messages.at(-1).status, "cancelled");
+  // Inspect what actually crossed the provider boundary, beyond the permanent summary.
+  await post("/api/show-session", { action: "new" });
+  await fs.writeFile(fixture, JSON.stringify({ chunks: ["Um arquivo em desenvolvimento."], delay: 50 }));
+  await post("/api/live-training", { action: "send", sessionId: (await state()).reliability.sessionId,
+    text: "O que o rascunho propõe na cena 9, com a bicicleta e o milagre?", requestId: "source-coverage" });
+  await poll(async () => (await state()).liveTraining.status === "idle", "source-coverage reply");
+  const sourceRequest = JSON.parse(await fs.readFile(`${fixture}.request.json`, "utf8"));
+  const recoveredText = sourceRequest.input.find(message => message.content?.startsWith("ACERVO RECUPERADO"))?.content || "";
+  assert(recoveredText.includes("Texto caixa preta.pdf") && recoveredText.includes("página 32") && recoveredText.includes("bicicleta"));
+  assert(JSON.stringify(sourceRequest.input).includes("Mala 2 → Mala 1 → Mala 3"));
   assert.deepEqual(publicWrites, []);
   assert.deepEqual(privateReads, []);
   assert.deepEqual(errors, []);
   console.log(JSON.stringify({ ok: true, liveModel: false, physicalMicrophone: false, output,
-    checks: ["tab beside Treino", "public conversation and typing", "private one-click feedback/upsert", "full local corpus context", "three public alternatives", "reload/polling without SSE", "failure/retry without duplicate", "STOP ALL", "public/private boundary"] }, null, 2));
+    checks: ["tab beside Treino", "public conversation and typing", "private one-click feedback/upsert", "PDF page 32 at actual provider boundary and current suitcase precedence", "three public alternatives", "reload/polling without SSE", "failure/retry without duplicate", "STOP ALL", "public/private boundary"] }, null, 2));
 } catch (error) {
   await display?.screenshot({ path: path.join(output, "failure-public.png") }).catch(() => {});
   await control?.screenshot({ path: path.join(output, "failure-control.png") }).catch(() => {});

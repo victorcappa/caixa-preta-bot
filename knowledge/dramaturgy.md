@@ -24,10 +24,7 @@ No palco, tres malas pretas iguais.
 A maquina conversa com espectadores.
 A peca comeca quando alguem aceita executar acoes.
 
-As malas funcionam como jogo, armadilha e passagem:
-- uma mala falsa, que nao abre
-- uma mala-susto, ligada ao aviso de nao apertar o botao
-- uma mala com codigo/cadeado que exige ajuda do publico
+As malas funcionam como jogo, armadilha e passagem. A versão atual segue Mala 2 → Mala 1 → Mala 3: bexigas/chave, forca antes do segundo sorteio e retirada do disco, toca-discos. Mala falsa, mala-susto e código/cadeado são propostas antigas do PDF. A operação atual prevalece; ver `show-map.md` e os textos atuais do projeto.
 
 Dentro de uma mala aparece uma caixa laranja semelhante a vitrola/toca-discos.
 O espectador executa comandos ate colocar uma musica para tocar.
@@ -137,7 +134,7 @@ O piloto nao lembra exatamente o que aconteceu.
 
 ### Cenas futuras e primeiro ato
 
-O texto ainda esta em desenvolvimento.
+O texto ainda esta em desenvolvimento. A Cena 8 retoma o piloto ouvindo a caixa do acidente, fones como máscaras e manipulação gamer-vodu. A Cena 9 — O Avião, a Técnica e o Milagre — propõe Elisa numa bicicleta com asa, técnica, milagre e gamificação. Ambas são propostas, assim como o futuro ato 2; ver o mapa e o PDF integral para falas e anotações.
 Ha ideias de:
 - abrir a caixa e ouvir o audio original
 - fones como mascaras de oxigenio

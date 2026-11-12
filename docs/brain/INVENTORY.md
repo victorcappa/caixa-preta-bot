@@ -8,6 +8,9 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 
 ## Package scripts
 
+- `npm run memory:sync` -> `node --no-warnings scripts/show-memory-sync.js`
+- `npm run memory:audit` -> `node --no-warnings scripts/show-memory-audit.js`
+- `npm run memory:live` -> `node --no-warnings --env-file-if-exists=.env.local scripts/show-memory-live.js --live`
 - `npm run test:live-training` -> `node --no-warnings scripts/live-training-test.js`
 - `npm run test:live-training:browser` -> `node --no-warnings scripts/live-training-browser-test.js`
 - `npm run test:modelo-3d` -> `node scripts/model-3d-test.cjs`
@@ -266,6 +269,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `CAIXA_PRETA_OPENAI_AUDIT_MOCK`
 - `CAIXA_PRETA_OPERATOR_AUDIT_ROOT`
 - `CAIXA_PRETA_OPERATOR_MOCK`
+- `CAIXA_PRETA_PDF_PYTHON`
 - `CAIXA_PRETA_PERFORMATIVE_RESEARCH`
 - `CAIXA_PRETA_RELIABILITY_TESTS`
 - `CAIXA_PRETA_RESEARCH_BUDGET`

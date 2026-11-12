@@ -32,7 +32,7 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 - OpenAI timeout/local fallback -> `lib/externalRequestControl.js` -> `lib/showFallback.js` -> normal chat message/typewriter flow.
 - Public render containment -> `components/PublicErrorBoundary.js`, `app/global-error.js`, and `app/not-found.js`.
 - System prompt -> `prompts/buildSystemPrompt.js` -> `prompts/personality.js`, `prompts/rules.js`, `prompts/modes.js`.
-- Play knowledge -> `lib/knowledge.js` -> `knowledge/`.
+- Play knowledge -> `lib/knowledge.js` (permanent map), `lib/showMemory.js` (full PDF/current authored texts/reference retrieval), `knowledge/sources/texto-caixa-preta.json`; extraction/audit -> `scripts/show-memory-sync.py`, `scripts/show-memory-audit.js`. Commands and limits: `docs/TREINO_AO_VIVO.md`.
 - Web research policy/state -> `lib/research/ResearchDirector.js` and `docs/autonomia-pesquisa.md`.
 
 ## Scene Zero

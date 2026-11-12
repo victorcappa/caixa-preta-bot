@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "memory:sync": "node --no-warnings scripts/show-memory-sync.js",
+    "memory:audit": "node --no-warnings scripts/show-memory-audit.js",
+    "memory:live": "node --no-warnings --env-file-if-exists=.env.local scripts/show-memory-live.js --live",
     "test:live-training": "node --no-warnings scripts/live-training-test.js",
     "test:live-training:browser": "node --no-warnings scripts/live-training-browser-test.js",
     "test:modelo-3d": "node scripts/model-3d-test.cjs",
