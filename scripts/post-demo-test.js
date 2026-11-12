@@ -73,5 +73,14 @@ try {
   assert.equal(showState.snapshot().postDemo.startedAt, null); assert.equal(showState.snapshot().postDemo.config.cardHoldMs, 4000);
   assert.equal(showState.snapshot().postDemo.rounds.length, 0);
   const { flushSnapshotWrites } = await import("../lib/showSessionPersistence.js"); await flushSnapshotWrites();
+  const { POST: sessionAction } = await import("../app/api/show-session/route.js");
+  const capture = (sessionId, origin = "http://localhost:3000") => sessionAction(new Request("http://localhost:3000/api/show-session", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ action: "capture-current", sessionId }) }));
+  assert.equal((await capture("wrong")).status, 409);
+  assert.equal((await capture(showState.snapshot().reliability.sessionId, "https://elsewhere.invalid")).status, 403);
+  const captured = await capture(showState.snapshot().reliability.sessionId); assert.equal(captured.status, 200);
+  const { readSnapshot } = await import("../lib/showSessionPersistence.js");
+  const disk = await readSnapshot({ expectedStoreVersion: showState._storeVersion });
+  assert.equal(disk.envelope.sessionId, showState.snapshot().reliability.sessionId);
+  assert.equal(disk.envelope.revision, (await captured.json()).revision);
   console.log("POST DEMO PASS: entry/ack idempotency, automatic clock, live speed, pause/late jobs, source/card/name validation, full continuation, feedback/upsert, privacy, STOP ALL, emergency, recovery and preference-preserving reset (isolated)");
 } finally { process.chdir(repository); }

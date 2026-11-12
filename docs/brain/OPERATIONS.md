@@ -69,7 +69,7 @@ Targeted logical and browser commands are listed in the generated inventory. Run
 `→` advances; `Shift + →` goes back; `←` is ignored. Malas: 2 → 1 → 3.
 
 If the technical OP terminal reports an interrupted session, inspect scene, step, and snapshot time. Choose `RETOMAR APRESENTAÇÃO` to restore it paused and with transient media/external browser state stopped, or `INICIAR NOVA APRESENTAÇÃO` to discard that recovery path deliberately. Nothing restores automatically.
-Before restarting a live process, verify that its session ID/revision match the disk snapshot. A guarded older recovery is not a current backup. Gate shutdown on successful capture; separate shell lines can still execute after a failed assertion.
+Before restart, preserve the old recovery file, then POST `/api/show-session` with `action: "capture-current"` and the current `sessionId`. This explicitly captures live state even when an older file is guarded. Verify disk/session/revision equality; shut down only after success.
 
 `MODO EMERGÊNCIA` is available at the top of the technical OP terminal in Principal. Activating it cancels and blocks external requests, pauses automatic/timed activity, preserves snapshots, and keeps local/manual controls available. Deactivating it permits future external requests but deliberately leaves the show in manual control.
 

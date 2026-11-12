@@ -1,5 +1,6 @@
 import { showState } from "@/lib/showState";
-import { readSnapshot } from "@/lib/showSessionPersistence";
+import { readSnapshot, createSnapshotEnvelope, writeSnapshotAtomic, flushSnapshotWrites } from "@/lib/showSessionPersistence";
+import { sameOrigin } from "@/lib/tarot/http";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -37,6 +38,22 @@ export async function GET() {
 export async function POST(request) {
   const body = await request.json().catch(() => ({}));
   const action = `${body.action || ""}`;
+
+  if (action === "capture-current") {
+    if (!sameOrigin(request)) return Response.json({ error: "ORIGIN_NOT_ALLOWED" }, { status: 403 });
+    if (body.sessionId !== showState.snapshot().reliability.sessionId) return Response.json({ error: "SHOW_SESSION_CHANGED" }, { status: 409 });
+    // Explicit capture can replace a guarded older recovery; callers preserve that file first.
+    await flushSnapshotWrites();
+    const state = structuredClone(showState.privateSnapshot());
+    if (body.sessionId !== state.reliability.sessionId) return Response.json({ error: "SHOW_SESSION_CHANGED" }, { status: 409 });
+    const envelope = createSnapshotEnvelope({ storeVersion: showState._storeVersion, sessionId: state.reliability.sessionId,
+      bootId: state.reliability.bootId, revision: state.revision, summary: { mode: state.mode, sceneZeroStage: state.sceneZero?.stage,
+        conversationCount: state.conversation.length, liveTrainingCount: state.liveTraining?.messages.length || 0 }, state });
+    try {
+      await writeSnapshotAtomic(envelope);
+      return Response.json({ ok: true, sessionId: envelope.sessionId, revision: envelope.revision, savedAt: envelope.savedAt });
+    } catch { return Response.json({ error: "SNAPSHOT_CAPTURE_FAILED" }, { status: 500 }); }
+  }
 
   if (action === "participant-selection-scope") {
     if (!showState.setParticipantSelectionScope) {
