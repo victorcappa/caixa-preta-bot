@@ -130,6 +130,7 @@ Advance by position, not history length: `[2, 3]` ends at Mala 3. Final instruct
 - Cause: hidden-tab rAF pauses; autoplay, permissions and physical routing also affect audio.
 - Working response: use the audio-clock meter in `lib/audienceMicrophoneMeter.js`, keep Operator open, unlock audio, grant its mic permission, then check hardware.
 - Prevent regression: report static/browser/physical-audio outcomes separately; do not make the public projection request microphone access.
+- Audio unlock: reserve the button's space; removing it on pointerdown can move a checkbox before pointerup and cancel the click.
 
 ## Reels comments need a feed fallback and a usable publish control
 

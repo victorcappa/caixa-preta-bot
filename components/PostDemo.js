@@ -133,7 +133,7 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
         <button type="button" disabled={busy || !state || state.status === "completed"} onClick={() => void action(!state.startedAt ? "enter" : state.active ? "pause" : "resume")}>{state?.status === "completed" ? "CONCLUÍDO" : !state?.startedAt ? "INICIAR PÓS-DEMO" : state.active ? "PAUSAR" : "RETOMAR"}</button>
         <button type="button" disabled={busy || !state} title="Recomeçar as cartas e a revelação da nuvem, mantendo os ajustes e a foto." onClick={() => void action("restart")}>RESET</button>
         <a href="/pos-demo" target="_blank" rel="noreferrer">ABRIR PROJEÇÃO</a>
-        {audio.needsUnlock ? <button type="button" onClick={() => void audio.unlock()}>ATIVAR ÁUDIO</button> : null}
+        <button type="button" disabled={!audio.needsUnlock} style={{ visibility: audio.needsUnlock ? "visible" : "hidden" }} onClick={() => void audio.unlock()}>ATIVAR ÁUDIO</button>
       </div>
       <p>Ajustes exclusivos desta sequência. Salvos automaticamente.</p>
       <section aria-label="Nuvem de pontos da plateia" className={styles.cloudControls}>
