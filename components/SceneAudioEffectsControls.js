@@ -28,30 +28,37 @@ export default function SceneAudioEffectsControls({ cueId = "", cueLabel = "", s
   const [draft, setDraft] = useState(() => normalizeSceneAudioEffects(settings));
   const [status, setStatus] = useState("READY");
   const timersRef = useRef(new Map());
+  const mounted = useRef(true);
 
   useEffect(() => {
     setDraft(normalizeSceneAudioEffects(settings));
     setStatus(cueId ? "READY" : "SELECT SAMPLE");
   }, [cueId, settings]);
 
-  useEffect(() => () => {
-    for (const timer of timersRef.current.values()) window.clearTimeout(timer);
-    timersRef.current.clear();
+  useEffect(() => {
+    mounted.current = true;
+    const flush = () => {
+      for (const { timer, save } of timersRef.current.values()) { window.clearTimeout(timer); void save(); }
+      timersRef.current.clear();
+    };
+    window.addEventListener("pagehide", flush);
+    return () => { mounted.current = false; window.removeEventListener("pagehide", flush); flush(); };
   }, []);
 
   function persist(targetCueId, next, delayMs = 120) {
     if (!targetCueId || !onPersist) return;
-    window.clearTimeout(timersRef.current.get(targetCueId));
-    timersRef.current.set(targetCueId, window.setTimeout(async () => {
+    window.clearTimeout(timersRef.current.get(targetCueId)?.timer);
+    const save = async () => {
       timersRef.current.delete(targetCueId);
-      setStatus("SAVING");
+      if (mounted.current) setStatus("SAVING");
       try {
         await onPersist(targetCueId, next);
-        setStatus("SAVED");
+        if (mounted.current) setStatus("SAVED");
       } catch {
-        setStatus("ERROR");
+        if (mounted.current) setStatus("ERROR");
       }
-    }, delayMs));
+    };
+    timersRef.current.set(targetCueId, { timer: window.setTimeout(save, delayMs), save });
   }
 
   function commit(patch, delayMs = 120) {

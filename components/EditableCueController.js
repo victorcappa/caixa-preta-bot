@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { createSettingsSaveQueue } from "@/lib/settingsSaveQueue";
 import {
   attachSceneAudioEffects,
   detachSceneAudioEffects,
@@ -88,6 +89,7 @@ async function fetchCueConfig(controllerId) {
 async function saveCueConfig(controllerId, config) {
   const response = await fetch("/api/controller-cues", {
     method: "PUT",
+    keepalive: true,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ id: controllerId, config })
   });
@@ -134,7 +136,25 @@ const EditableCueController = forwardRef(function EditableCueController({
   const previewMediaRef = useRef(null);
   const clearPreviewRef = useRef(null);
   const publicCueRequestRef = useRef(Promise.resolve());
-  const effectsSaveRequestRef = useRef(Promise.resolve());
+  const configRef = useRef(null), mounted = useRef(false);
+  const saveQueue = useMemo(() => createSettingsSaveQueue({
+    merge: (_before, next) => next,
+    save: async next => {
+      const { response, data } = await saveCueConfig(controllerId, next);
+      if (!response.ok) throw new Error(data.error || "SAVE ERROR");
+      return data.config;
+    },
+    onStatus: status => { if (mounted.current) setStatus({ pending: "AJUSTES PENDENTES", saving: "SALVANDO AJUSTES...", saved: "AJUSTES SALVOS", error: "ERRO AO SALVAR · TENTE SALVAR NOVAMENTE" }[status]); }
+  }), [controllerId]);
+  function changeConfig(update) {
+    const next = typeof update === "function" ? update(configRef.current) : update;
+    configRef.current = next; setConfig(next); saveQueue.enqueue(next);
+  }
+  useEffect(() => {
+    mounted.current = true;
+    const flush = () => void saveQueue.flush(); window.addEventListener("pagehide", flush);
+    return () => { mounted.current = false; window.removeEventListener("pagehide", flush); flush(); };
+  }, [saveQueue]);
   const screenRef = useRef(null);
   const triggerCueRef = useRef(null);
   const toggleSelectedLoopRef = useRef(null);
@@ -207,7 +227,7 @@ const EditableCueController = forwardRef(function EditableCueController({
           return;
         }
 
-        setConfig(data.config);
+        configRef.current = data.config; setConfig(data.config);
         setAssets(data.assets || EMPTY_ASSETS);
         setColors(data.colors || ["#00ff66"]);
         setSelectedCueId(data.config?.cues?.[0]?.id || "");
@@ -243,12 +263,12 @@ const EditableCueController = forwardRef(function EditableCueController({
     if (!config || !cueId) return Promise.resolve(null);
     const normalized = normalizeSceneAudioEffects(settings);
     const nextConfig = {
-      ...config,
-      cues: config.cues.map((cue) => cue.id === cueId
+      ...configRef.current,
+      cues: configRef.current.cues.map((cue) => cue.id === cueId
         ? { ...cue, audioEffects: normalized }
         : cue)
     };
-    setConfig(nextConfig);
+    changeConfig(nextConfig);
 
     for (const instance of audioInstancesRef.current.values()) {
       if (instance.cueId !== cueId) continue;
@@ -262,16 +282,7 @@ const EditableCueController = forwardRef(function EditableCueController({
     });
 
     if (!persist) return Promise.resolve(normalized);
-    const request = effectsSaveRequestRef.current
-      .catch(() => {})
-      .then(() => saveCueConfig(controllerId, nextConfig))
-      .then(({ response, data }) => {
-        if (!response.ok) throw new Error(data.error || "EFFECT SAVE ERROR");
-        setStatus("EFEITOS SALVOS");
-        return data.config;
-      });
-    effectsSaveRequestRef.current = request.catch(() => {});
-    return request;
+    return saveQueue.flush().then(result => { if (!result.ok) throw result.error; return result.value; });
   }
 
   useImperativeHandle(ref, () => ({ updateCueAudioEffects }));
@@ -319,7 +330,7 @@ const EditableCueController = forwardRef(function EditableCueController({
   }, [cues]);
 
   function updateCue(cueId, patch) {
-    setConfig((current) => ({
+    changeConfig((current) => ({
       ...current,
       cues: current.cues.map((cue) => cue.id === cueId ? { ...cue, ...patch } : cue)
     }));
@@ -328,7 +339,7 @@ const EditableCueController = forwardRef(function EditableCueController({
   function addCue() {
     const shortcut = controllerId === "queda-aviao-sampler" ? nextSceneOneSampleShortcut(cues) : "";
     const cue = createCue(allowedTypes, colors, shortcut);
-    setConfig((current) => ({
+    changeConfig((current) => ({
       ...current,
       cues: [...current.cues, cue]
     }));
@@ -347,7 +358,7 @@ const EditableCueController = forwardRef(function EditableCueController({
       shortcut: controllerId === "queda-aviao-sampler" ? nextSceneOneSampleShortcut(cues) : ""
     };
 
-    setConfig((current) => ({
+    changeConfig((current) => ({
       ...current,
       cues: [...current.cues, cue]
     }));
@@ -360,7 +371,7 @@ const EditableCueController = forwardRef(function EditableCueController({
     }
 
     const nextCues = cues.filter((cue) => cue.id !== selectedCue.id);
-    setConfig((current) => ({
+    changeConfig((current) => ({
       ...current,
       cues: nextCues
     }));
@@ -596,16 +607,9 @@ const EditableCueController = forwardRef(function EditableCueController({
     setStatus("SAVING...");
 
     try {
-      const { response, data } = await saveCueConfig(controllerId, config);
-
-      if (!response.ok) {
-        setStatus(data.error || "SAVE ERROR");
-        return;
-      }
-
-      setConfig(data.config);
-      setAssets(data.assets || assets);
-      setColors(data.colors || colors);
+      saveQueue.enqueue(configRef.current);
+      const result = await saveQueue.flush();
+      if (!result.ok) throw result.error;
       setStatus("PADRÃO SALVO");
     } catch {
       setStatus("SAVE ERROR");
@@ -661,16 +665,9 @@ const EditableCueController = forwardRef(function EditableCueController({
       }
 
       const nextConfig = { ...config, cues: [...config.cues, ...importedCues] };
-      const { response: saveResponse, data: saveData } = await saveCueConfig(controllerId, nextConfig);
-
-      if (!saveResponse.ok) {
-        setStatus(saveData.error || "FOLDER IMPORT ERROR");
-        return;
-      }
-
-      setConfig(saveData.config);
-      setAssets(saveData.assets || refreshData.assets || assets);
-      setColors(saveData.colors || colors);
+      changeConfig(nextConfig);
+      const result = await saveQueue.flush();
+      if (!result.ok) throw result.error;
       setSelectedCueId(importedCues[0].id);
       setStatus(importedCues.length === 1
         ? "1 BOTÃO CRIADO DA PASTA"
@@ -811,7 +808,8 @@ const EditableCueController = forwardRef(function EditableCueController({
           {importDirectory ? (
             <button disabled={saving} onClick={importFolderAssets} type="button">CRIAR BOTÕES DOS ARQUIVOS DA PASTA</button>
           ) : null}
-          <button className={styles.saveButton} disabled={saving} onClick={saveDefault} type="button">SALVAR PADRÃO</button>
+          <button className={styles.saveButton} disabled={saving} onClick={saveDefault} type="button">SALVAR AGORA</button>
+          <span>AJUSTES SALVOS AUTOMATICAMENTE</span>
         </div>
 
         {selectedCue ? (

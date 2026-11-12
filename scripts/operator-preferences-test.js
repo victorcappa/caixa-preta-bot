@@ -74,6 +74,14 @@ showState.controlTarot('hallucination',{patch:{randomEnabled:true,randomChance:3
 showState.controlTarot('hallucination-memory',{memories:[{id:'interview',title:'Entrevista',text:'Memória editorial de teste.',personIds:['face-a']}]});
 showState.controlTarot('hallucination-preset',{operation:'save',name:'Preferência teste'});
 showState.postDemo.config({typingIntervalMs:145,typingPauseMs:950,cardHoldMs:33000,displayFont:'vt323',model:'gpt-5.6-terra',personality:{sarcasm:21,verbosity:67},profile:{humor:31,poetry:48}});
+showState.setParticipantSelectionScope('audience-only');
+showState.controlAudienceWarmup('set-interval',{intervalMs:9400});
+showState.controlAudienceWarmup('set-manual-mode',{manualMode:false});
+showState.controlAudienceWarmup('set-automatic',{automatic:true});
+const minigame=Object.keys(showState.privateSnapshot().audienceWarmup.minigame.durations).find(id=>id!=='tapao');
+assert(showState.controlAudienceWarmup('minigame-set-duration',{gameId:minigame,seconds:77}).ok);
+showState.controlPlayUnlock('toggle-sound',{enabled:false});
+showState.controlGlitch('update',{preset:'normal',params:{intensity:.68}});
 const expected=extractOperatorPreferences(showState.privateSnapshot());
 assert.deepEqual(saved().values,expected);assert.equal(fs.statSync(path.join(directory,'operator-preferences.json')).mode&0o777,0o600);
 checks.push('current edits are written atomically before acknowledgement, including isolated post-demo timing/personality/model/font');
@@ -86,6 +94,11 @@ checks.push('history, camera ownership, card counters, running effects and recov
 const before=showState.privateSnapshot();let events=0;const unsubscribe=showState.subscribe(()=>events++);
 showState._refreshOperatorPreferences(createOperatorPreferenceStore());assert.equal(events,0);assert.deepEqual(showState.privateSnapshot().conversation,before.conversation);unsubscribe();
 checks.push('hot persistence refresh keeps live listeners/history and does not emit a presentation event');
+showState.controlPlayUnlock('reset');assert.deepEqual(extractOperatorPreferences(showState.privateSnapshot()),expected);
+showState.controlReliability('emergency-on');assert.deepEqual(extractOperatorPreferences(showState.privateSnapshot()),expected);
+assert.equal(showState.privateSnapshot().glitch.active,false);assert.deepEqual(showState.privateSnapshot().forcaGSampler.audioCues,[]);
+showState.controlReliability('emergency-off');assert.deepEqual(extractOperatorPreferences(showState.privateSnapshot()),expected);
+checks.push('BIOS reset and emergency preserve chosen timing, mini-game durations, participant scope, audio and effects without resuming routines');
 showState.controlTarot('reset');assert.deepEqual(extractOperatorPreferences(showState.privateSnapshot()),expected);assert.deepEqual(showState.privateSnapshot().tarot.hallucination.seenCards,[]);
 showState.startNewPresentation();assert.deepEqual(extractOperatorPreferences(showState.privateSnapshot()),expected);assert.equal(showState.privateSnapshot().conversation.length,0);assert.equal(showState.privateSnapshot().tarot.active,false);
 checks.push('Tarot reset and new presentation retain every selected setting while resetting performance state');

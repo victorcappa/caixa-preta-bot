@@ -1,7 +1,8 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- Raw reference pixels are used by the local vision pipeline. */
 import PublicCompositionControls from "@/components/PublicCompositionControls";
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
+import { createSettingsSaveQueue } from "@/lib/settingsSaveQueue";
 import { prepareDeck, tarotCommand } from "@/lib/tarot/client";
 import {TarotHallucinationControls,TarotFacePreparation,TarotPreview} from "./TarotHallucinationControls";
 import TarotReferenceControls from "./TarotReferenceControls";
@@ -24,6 +25,18 @@ export default function TarotControls() {
   const [context,setContext]=useState({text:"",date:"",url:"",checkedAt:"",verification:"unverified"});
   const refreshSequence=useRef(0),settingsPending=useRef(0);
   const tarot=snapshot?.tarot,sessionId=snapshot?.sessionId;
+  const instructionLoaded = useRef(null);
+  const instructionQueue = useMemo(() => createSettingsSaveQueue({
+    save: patch => tarotCommand(sessionId, "instruction", patch),
+    onStatus: status => { if (status === "error") setError("Não foi possível salvar a instrução privada."); }
+  }), [sessionId]);
+  useEffect(() => {
+    if (sessionId && instructionLoaded.current !== sessionId) { instructionLoaded.current = sessionId; setInstruction(tarot.privateInstruction || ""); }
+  }, [sessionId, tarot?.privateInstruction]);
+  useEffect(() => {
+    const flush = () => void instructionQueue.flush(); window.addEventListener("pagehide", flush);
+    return () => { window.removeEventListener("pagehide", flush); flush(); };
+  }, [instructionQueue]);
   const readiness=tarot?.hallucination?hallucinationReadiness(tarot):null;
   const refresh=useCallback(async(force=false)=>{
     if(settingsPending.current&&!force)return;
@@ -127,7 +140,7 @@ export default function TarotControls() {
         </div></details>
         <details open hidden={section!=="conversa"}><summary>CONVERSA</summary><div className={styles.section}>
           <form onSubmit={ask}><label>Pergunta ao bot<textarea value={question} onChange={(e)=>setQuestion(e.target.value)} placeholder="O que esta imagem diz sobre a percepção?" /></label><button disabled={pending||!question.trim()||!tarot.currentCard||!tarot.active||!["idle","interpreting"].includes(tarot.floor?.phase||"idle")}>ENVIAR PERGUNTA</button></form>
-          <label>Instrução privada<textarea value={instruction} onChange={(e)=>setInstruction(e.target.value)} /></label><button onClick={()=>command("instruction",{text:instruction})}>SALVAR INSTRUÇÃO PRIVADA</button>
+          <label>Instrução privada<textarea value={instruction} onChange={(e)=>{setInstruction(e.target.value);instructionQueue.enqueue({text:e.target.value});}} /></label><button onClick={()=>void instructionQueue.flush()}>SALVAR INSTRUÇÃO PRIVADA</button>
           <details><summary>HISTÓRICO DA SESSÃO</summary><div className={styles.history}>{snapshot.history.map((message)=><p key={message.id}><strong>{message.role==="user"?"PERGUNTA":"BOT"}:</strong> {message.content}</p>)}</div></details>
         </div></details>
         <details open hidden={section!=="autonomia"}><summary>AUTONOMIA</summary><div className={styles.section}>

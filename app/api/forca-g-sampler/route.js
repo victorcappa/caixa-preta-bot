@@ -1,7 +1,8 @@
 import {
   findForcaGSamplerItem,
   readForcaGSamplerConfig,
-  saveForcaGSamplerAudioEffects
+  saveForcaGSamplerAudioEffects,
+  saveForcaGSamplerItemSettings
 } from "@/lib/forca-g-sampler/config";
 import { showState } from "@/lib/showState";
 
@@ -110,6 +111,7 @@ export async function POST(request) {
         result = failed || { applied: true, state: showState.snapshot().forcaGSampler };
       }
     } else {
+      const previous = showState.snapshot().forcaGSampler.layers[body.category];
       result = applySampler(action, {
         category: body.category,
         itemId: `${body.itemId || ""}`,
@@ -118,6 +120,9 @@ export async function POST(request) {
         patch: body.patch || {},
         message: body.message
       });
+      if (result.applied && action === "update" && previous?.id && !Array.isArray(previous) && findForcaGSamplerItem(config, previous.id)) {
+        saveForcaGSamplerItemSettings(previous.id, body.patch || {});
+      }
     }
 
     if (!result.applied) {

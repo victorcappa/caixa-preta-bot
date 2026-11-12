@@ -15,6 +15,8 @@ import { PLAY_UNLOCK_CONFIG } from "@/data/scene-zero-unlock";
 import { audienceWarmupResponseOptions } from "@/data/audience-warmup-reactions";
 import { AUDIENCE_WARMUP_PROMPTS } from "@/data/audience-warmup-prompts";
 import styles from "./SceneZeroController.module.css";
+import { useControllerSettings } from "@/lib/useControllerSettings";
+import { createSettingsSaveQueue } from "@/lib/settingsSaveQueue";
 import OperatorPublicLauncher from "./OperatorPublicLauncher";
 import { subscribePublicRealtime } from "@/lib/publicRealtime";
 
@@ -112,14 +114,29 @@ export default function SceneZeroController() {
   const [instagramGuidance, setInstagramGuidance] = useState("");
   const [instagramPanelClosed, setInstagramPanelClosed] = useState(false);
   const [glitchVideos, setGlitchVideos] = useState([]);
-  const [glitchVideoFile, setGlitchVideoFile] = useState("");
-  const [glitchVideoLoop, setGlitchVideoLoop] = useState(false);
-  const [glitchVideoTransitionSeconds, setGlitchVideoTransitionSeconds] = useState(5.2);
+  const videoPreferences = useControllerSettings("scene-zero-video");
+  const { ready: videoPreferencesReady, change: changeVideoPreferences } = videoPreferences;
+  const { file: glitchVideoFile, loop: glitchVideoLoop, transitionMs } = videoPreferences.settings;
+  const glitchVideoTransitionSeconds = transitionMs / 1000;
+  const setGlitchVideoFile = file => videoPreferences.change({ file });
+  const setGlitchVideoLoop = loop => videoPreferences.change({ loop });
+  const setGlitchVideoTransitionSeconds = seconds => videoPreferences.change({ transitionMs: seconds * 1000 });
   const [activeIndexSection, setActiveIndexSection] = useState("scene-zero-boot");
   const [warmupOpen, setWarmupOpen] = useState(false);
   const [extrasOpen, setExtrasOpen] = useState(false);
   const [openSuitcaseControls, setOpenSuitcaseControls] = useState(null);
   const [notice, setNotice] = useState("SISTEMA PRONTO");
+  const guidanceQueue = useMemo(() => createSettingsSaveQueue({
+    save: async patch => {
+      const response = await fetch("/api/scene-zero", { method: "POST", headers: { "Content-Type": "application/json" }, keepalive: true,
+        body: JSON.stringify({ action: "set-personality-guidance", ...patch }) });
+      const data = await response.json(); if (!response.ok) throw new Error(data.error || "ERRO AO SALVAR ORIENTAÇÃO");
+    }, onStatus: status => { if (status === "error") setNotice("ERRO AO SALVAR ORIENTAÇÃO · TENTE NOVAMENTE"); }
+  }), []);
+  useEffect(() => {
+    const flush = () => void guidanceQueue.flush(); window.addEventListener("pagehide", flush);
+    return () => { window.removeEventListener("pagehide", flush); flush(); };
+  }, [guidanceQueue]);
   const [microphonePermission, setMicrophonePermission] = useState("requesting");
   const [now, setNow] = useState(Date.now());
   const teaAudioRef = useRef(null);
@@ -308,9 +325,6 @@ export default function SceneZeroController() {
       .then((data) => {
         const videos = data.videos || [];
         setGlitchVideos(videos);
-        setGlitchVideoFile(data.glitch?.video?.file || videos[0]?.file || "");
-        setGlitchVideoLoop(Boolean(data.glitch?.video?.loop));
-        setGlitchVideoTransitionSeconds(Number(((data.glitch?.video?.transitionMs || 5200) / 1000).toFixed(1)));
       })
       .catch(() => setNotice("VÍDEOS DE GLITCH INDISPONÍVEIS"));
     return subscribePublicRealtime((payload) => {
@@ -318,6 +332,10 @@ export default function SceneZeroController() {
       setSnapshot(payload.state || {});
     }, (connection) => { if (connection === "disconnected") setNotice("SSE DESCONECTADO"); });
   }, []);
+
+  useEffect(() => {
+    if (videoPreferencesReady && !glitchVideoFile && glitchVideos[0]?.file) changeVideoPreferences({ file: glitchVideos[0].file });
+  }, [videoPreferencesReady, changeVideoPreferences, glitchVideoFile, glitchVideos]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 100);
@@ -874,8 +892,8 @@ export default function SceneZeroController() {
   }
 
   async function savePersonalityGuidance(guidance) {
-    const saved = await sceneAction("set-personality-guidance", { guidance });
-    if (saved) setPersonalityGuidanceDirty(false);
+    guidanceQueue.enqueue({ guidance });
+    if ((await guidanceQueue.flush()).ok) setPersonalityGuidanceDirty(false);
   }
 
   async function togglePersonalityDirection(direction) {
@@ -893,8 +911,8 @@ export default function SceneZeroController() {
 
   async function clearPersonalityGuidance() {
     setPersonalityGuidance("");
-    const cleared = await sceneAction("set-personality-guidance", { guidance: "", quickDirections: [] });
-    if (cleared) setPersonalityGuidanceDirty(false);
+    guidanceQueue.enqueue({ guidance: "", quickDirections: [] });
+    if ((await guidanceQueue.flush()).ok) setPersonalityGuidanceDirty(false);
   }
 
   const sceneZero = snapshot.sceneZero || {};
@@ -1459,6 +1477,7 @@ export default function SceneZeroController() {
             onChange={(event) => {
               setPersonalityGuidance(event.target.value);
               setPersonalityGuidanceDirty(true);
+              guidanceQueue.enqueue({ guidance: event.target.value });
             }}
             placeholder="Ex.: mais impaciente e sarcástica; respostas mais curtas; implicar com excesso de confiança"
             rows={3}
@@ -1593,6 +1612,7 @@ export default function SceneZeroController() {
           <Button onClick={() => sceneAction("step-glitch", { delta: -1 })} pending={pending}>GLITCH -</Button>
           <Button danger onClick={() => sceneAction("set-glitch", { level: "normal" })} pending={pending}>RESET</Button>
           <div className={styles.glitchVideoConfig}>
+            {videoPreferences.error ? <p role="alert">{videoPreferences.error}</p> : null}
             <label className={styles.glitchVideoField}>
               VÍDEO FINAL
               <select value={glitchVideoFile} onChange={(event) => setGlitchVideoFile(event.target.value)}>

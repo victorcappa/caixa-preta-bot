@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:controller-settings": "node --no-warnings scripts/controller-settings-test.js",
     "test:post-demo": "node --no-warnings scripts/post-demo-test.js",
     "test:post-demo:browser": "node --no-warnings scripts/post-demo-browser-test.js",
     "test:post-demo:live": "node --no-warnings --env-file-if-exists=.env.local scripts/post-demo-live.js --live",

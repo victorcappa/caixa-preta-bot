@@ -104,7 +104,7 @@ If generated Next artifacts are demonstrably stale, stop the server first and th
 
 ## Persistence, health, and writes
 
-- Operator choices save atomically to `.runtime/show/operator-preferences.json` (or the configured runtime directory), independently of recovery. New presentations, Tarot reset and process restart keep current tuning; recovery also retains the latest choices. Scope, capture/activation and checks: `docs/PREFERENCIAS_OPERADOR.md`.
+- Operator choices save atomically to `.runtime/show/operator-preferences.json` (or the configured runtime directory), independently of recovery. New sessions, BIOS/Tarot reset and restart keep tuning; recovery also retains the latest choices. Scope, capture/activation and checks: `docs/PREFERENCIAS_OPERADOR.md`.
 - Recovery snapshots are written asynchronously and atomically to `.runtime/show/current.json`; checksum/schema/store-version failures are rejected. The live singleton remains authoritative.
 - `show-reliability-v43` rejects earlier snapshots because suitcase IDs 1 and 3 changed. Files remain on disk; start a new presentation. Operator preferences are independent.
 - `GET /api/health` reports `core` app/storage/emergency state separately from optional internet/OpenAI/request state. Optional failure does not make the core unhealthy.

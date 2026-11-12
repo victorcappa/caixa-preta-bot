@@ -1,11 +1,14 @@
 "use client";
 import { useEffect, useState } from 'react';
+import { useControllerSettings } from '@/lib/useControllerSettings';
 import { referenceSettings, REFERENCE_THEMES } from '@/lib/tarot/reference-settings';
 import styles from './TarotControls.module.css';
 
 export default function TarotReferenceControls({tarot,cards,sessionId,command,history=[]}) {
   const [status,setStatus]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
-  const [cardId,setCardId]=useState(16),[question,setQuestion]=useState(''),[mode,setMode]=useState('associative');
+  const preview=useControllerSettings('tarot-preview'),{cardId,mode}=preview.settings;
+  const [question,setQuestion]=useState('');
+  const setCardId=cardId=>preview.change({cardId}),setMode=mode=>preview.change({mode});
   const [results,setResults]=useState({});
   const settings=referenceSettings(tarot.references);
   useEffect(()=>{fetch('/api/tarot/references',{cache:'no-store'}).then(async r=>{const data=await r.json();if(!r.ok)throw new Error(data.error);setStatus(data);}).catch(e=>setError(e.message));},[]);
@@ -40,6 +43,6 @@ export default function TarotReferenceControls({tarot,cards,sessionId,command,hi
       <details><summary>TERMOS E PONTES DA BUSCA</summary><p>{result.references.searchTerms.join(', ')}</p><p>{result.references.expansion.join(' → ')}</p><p>Pessoas selecionadas: {result.references.people.map(p=>p.name).join(', ')||'nenhuma'}</p></details>
       {result.references.chunks.map(c=><article key={c.id}><strong>{c.title} · {REFERENCE_THEMES[c.theme]}</strong><p>{c.origin} · {c.checkedAt?`fontes consultadas em ${c.checkedAt}; sem atualização posterior`:c.cutoff?`recorte ${c.cutoff}, não revalidado`:'memória local'}</p><p>{c.relations.join(' · ')}</p><p style={{whiteSpace:'pre-line'}}>{c.text}</p><details><summary>PROCEDÊNCIA E FONTES</summary><p>{c.headings.join(' / ')}</p><p>{c.metadata}</p>{c.sources.map(source=><p key={source}>{source}</p>)}</details></article>)}
     </div></details>)}
-    {error?<p role="alert">{error}</p>:null}
+    {error||preview.error?<p role="alert">{error||preview.error}</p>:null}
   </div></details>;
 }

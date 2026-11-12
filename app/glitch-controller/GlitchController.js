@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useControllerSettings } from "@/lib/useControllerSettings";
+import { createSettingsSaveQueue } from "@/lib/settingsSaveQueue";
 import GlitchOverlay from "@/components/GlitchOverlay";
 import { GLITCH_PRESETS, presetParams } from "@/lib/glitch/state";
 import styles from "./GlitchController.module.css";
@@ -43,12 +45,23 @@ export default function GlitchController() {
   const [preset, setPreset] = useState("normal");
   const [params, setParams] = useState(() => presetParams("normal"));
   const [videos, setVideos] = useState([]);
-  const [selectedVideo, setSelectedVideo] = useState("painel-aeroporto.mp4");
-  const [loop, setLoop] = useState(false);
+  const videoPreferences = useControllerSettings("glitch-video");
+  const { file: selectedVideo, loop } = videoPreferences.settings;
+  const setSelectedVideo = file => videoPreferences.change({ file });
+  const setLoop = loop => videoPreferences.change({ loop });
   const [connection, setConnection] = useState("CONNECTING");
   const [log, setLog] = useState("SYSTEM READY");
   const [sequence, setSequence] = useState(1);
   const [previewEnabled, setPreviewEnabled] = useState(false);
+  const paramsRef = useRef(params), mounted = useRef(true);
+  const queue = useMemo(() => createSettingsSaveQueue({
+    save: async payload => { const { response, data } = await postGlitch("update", payload); if (!response.ok) throw new Error(data.error); },
+    onStatus: status => { if (mounted.current) setLog(status === "error" ? "ERRO AO SALVAR AJUSTES" : status === "saved" ? "AJUSTES SALVOS" : "SALVANDO AJUSTES..."); }
+  }), []);
+  useEffect(() => {
+    mounted.current = true; const flush = () => void queue.flush(); window.addEventListener("pagehide", flush);
+    return () => { mounted.current = false; window.removeEventListener("pagehide", flush); flush(); };
+  }, [queue]);
 
   useEffect(() => {
     fetch("/api/glitch")
@@ -57,7 +70,7 @@ export default function GlitchController() {
         setVideos(data.videos || []);
         setPreset(data.glitch?.preset || "normal");
         setParams(data.glitch?.params || presetParams("normal"));
-        setSelectedVideo(data.glitch?.video?.file || data.videos?.[0]?.file || "painel-aeroporto.mp4");
+        paramsRef.current = data.glitch?.params || presetParams("normal");
         setConnection("READY");
       })
       .catch(() => setConnection("DISCONNECTED"));
@@ -73,15 +86,14 @@ export default function GlitchController() {
         return;
       }
 
-      setPreset(glitch.preset || "normal");
-      setParams(glitch.params || presetParams("normal"));
-      if (glitch.video?.file) {
-        setSelectedVideo(glitch.video.file);
+      if (!queue.busy) {
+        setPreset(glitch.preset || "normal");
+        paramsRef.current = glitch.params || presetParams("normal"); setParams(paramsRef.current);
       }
     };
 
     return () => events.close();
-  }, []);
+  }, [queue]);
 
   useEffect(() => {
     if (!previewEnabled) {
@@ -102,23 +114,20 @@ export default function GlitchController() {
 
   function updateParam(key, value) {
     const nextValue = Number(value);
-    setParams((current) => ({ ...current, [key]: nextValue }));
+    paramsRef.current = { ...paramsRef.current, [key]: nextValue };
+    setParams(paramsRef.current); queue.enqueue({ preset, params: paramsRef.current });
     setSequence((current) => current + 1);
   }
 
   async function pushUpdate(nextParams = params, nextPreset = preset) {
-    const { response, data } = await postGlitch("update", {
-      preset: nextPreset,
-      params: nextParams
-    });
-
-    setLog(response.ok ? data.message || "GLITCH UPDATED" : data.error || "GLITCH ERROR");
+    queue.enqueue({ preset: nextPreset, params: nextParams }); await queue.flush();
   }
 
   async function applyPreset(nextPreset) {
     const nextParams = presetParams(nextPreset);
     setPreset(nextPreset);
     setParams(nextParams);
+    paramsRef.current = nextParams;
     setSequence((current) => current + 1);
     await pushUpdate(nextParams, nextPreset);
   }
@@ -137,6 +146,7 @@ export default function GlitchController() {
 
   return (
     <main className={styles.screen}>
+      {videoPreferences.error ? <p role="alert">{videoPreferences.error}</p> : null}
       <section className={styles.preview}>
         <GlitchOverlay glitch={previewGlitch} preview={previewEnabled}>
           <div className={styles.fakeBot}>

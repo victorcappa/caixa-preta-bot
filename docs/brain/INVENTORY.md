@@ -8,6 +8,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 
 ## Package scripts
 
+- `npm run test:controller-settings` -> `node --no-warnings scripts/controller-settings-test.js`
 - `npm run test:post-demo` -> `node --no-warnings scripts/post-demo-test.js`
 - `npm run test:post-demo:browser` -> `node --no-warnings scripts/post-demo-browser-test.js`
 - `npm run test:post-demo:live` -> `node --no-warnings --env-file-if-exists=.env.local scripts/post-demo-live.js --live`
@@ -129,6 +130,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `POST /api/chat` -> `app/api/chat/route.js`
 - `POST /api/controller-cues/play` -> `app/api/controller-cues/play/route.js`
 - `GET, PUT, POST /api/controller-cues` -> `app/api/controller-cues/route.js`
+- `GET, POST /api/controller-settings` -> `app/api/controller-settings/route.js`
 - `GET /api/events` -> `app/api/events/route.js`
 - `GET, PUT, POST /api/forca-g-sampler` -> `app/api/forca-g-sampler/route.js`
 - `GET /api/game-assets` -> `app/api/game-assets/route.js`
@@ -339,6 +341,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/audience-warmup-test.js`
 - `scripts/audience-warmup-transition-test.js`
 - `scripts/baralho-morbido-test.js`
+- `scripts/controller-settings-test.js`
 - `scripts/forca-g-sampler-browser-test.js`
 - `scripts/forca-g-sampler-test.js`
 - `scripts/game-director-test.js`

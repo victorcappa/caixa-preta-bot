@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useControllerSettings } from '@/lib/useControllerSettings';
 import styles from './Model3DController.module.css';
 
 const errors = {
@@ -33,7 +34,8 @@ const pendingKey = 'caixa-preta:model-3d-request';
 export default function Model3DController() {
   const [image, setImage] = useState(null), [preview, setPreview] = useState('');
   const [tasks, setTasks] = useState([]), [diagnostic, setDiagnostic] = useState(null);
-  const [preset, setPreset] = useState('draft'), [removeBackground, setRemoveBackground] = useState(false);
+  const preferences = useControllerSettings('model-3d');
+  const { preset, removeBackground } = preferences.settings;
   const [confirmed, setConfirmed] = useState(false), [busy, setBusy] = useState(false), [checking, setChecking] = useState(false);
   const [error, setError] = useState(''), [connectionError, setConnectionError] = useState('');
   const requestRef = useRef(null), uploadInput = useRef(null);
@@ -96,8 +98,9 @@ export default function Model3DController() {
         <label className={styles.upload}>Imagem de referência<input ref={uploadInput} type="file" accept="image/png,image/jpeg,image/webp" onChange={e => { setImage(e.target.files?.[0] || null); requestRef.current = null; setError(''); }} required /><small>PNG, JPEG ou WebP · até 20 MB. Prefira um objeto inteiro e bem iluminado.</small></label>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {preview && <img className={styles.preview} src={preview} alt="Imagem de referência selecionada" />}
-        <label>Qualidade<select value={preset} onChange={e => { setPreset(e.target.value); requestRef.current = null; }}><option value="draft">Rápida · 512 · recomendada</option><option value="standard">Padrão · 1024 · mais demorada</option><option value="high">Alta · 1536 · mais demorada</option></select></label>
-        <label className={styles.check}><input type="checkbox" checked={removeBackground} onChange={e => { setRemoveBackground(e.target.checked); requestRef.current = null; }} />Remover o fundo da imagem antes de gerar</label>
+        <label>Qualidade<select value={preset} disabled={!preferences.ready} onChange={e => { preferences.change({ preset: e.target.value }); requestRef.current = null; }}><option value="draft">Rápida · 512 · recomendada</option><option value="standard">Padrão · 1024 · mais demorada</option><option value="high">Alta · 1536 · mais demorada</option></select></label>
+        <label className={styles.check}><input type="checkbox" checked={removeBackground} disabled={!preferences.ready} onChange={e => { preferences.change({ removeBackground: e.target.checked }); requestRef.current = null; }} />Remover o fundo da imagem antes de gerar</label>
+        {preferences.error ? <p role="alert">{preferences.error}</p> : null}
         <p className={styles.note}>MP4: 1920×1080 · 30 fps · 20 segundos · sem áudio. O fundo do vídeo será sempre preto. Você pode fechar esta aba e voltar depois.</p>
         <label className={styles.check}><input type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} />Autorizar esta geração no RunPod, com cobrança de GPU na conta configurada.</label>
         <button type="submit" disabled={!image || !confirmed || busy || active || !diagnostic?.ready}>{busy ? 'Enviando…' : 'Gerar modelo + vídeo'}</button>
