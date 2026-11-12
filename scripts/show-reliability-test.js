@@ -76,6 +76,13 @@ try {
     /offline/,
     "OpenAI offline deve liberar o chamador"
   );
+  const timeoutStarted = Date.now();
+  await assert.rejects(runExternalRequest("openai", () => new Promise(() => {}), { timeoutMs: 250 }), ExternalRequestTimeoutError,
+    "o limite deve funcionar mesmo se o transporte ignorar o sinal de cancelamento");
+  assert(Date.now() - timeoutStarted < 1500);
+  const stop = new AbortController();
+  const ignoringAbort = runExternalRequest("openai", () => new Promise(() => {}), { signal: stop.signal, timeoutMs: 10000 });
+  stop.abort("STOP ALL"); await assert.rejects(ignoringAbort, { name: "AbortError" });
 
   const fallback = localFallbackTurn({ state, userMessage: "a mala falhou", reason: "offline" });
   assert.equal(fallback.fallback.active, true);

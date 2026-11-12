@@ -1,18 +1,18 @@
 import { showState } from "@/lib/showState";
 import { getRegisteredAudienceNames } from "@/lib/participants";
-import { normalizePostDemoConfig, POST_DEMO_SETTINGS_VERSION } from "@/lib/post-demo/settings";
+import { normalizePostDemoConfig, POST_DEMO_SETTINGS_VERSION, POST_DEMO_RUNTIME_VERSION } from "@/lib/post-demo/settings";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 const unavailable = () => Response.json({ error: "Reinicie o servidor para carregar o pós-demo; a apresentação em uso foi preservada." }, { status: 409 });
 
 export async function GET() {
-  if (!showState.postDemo || showState.postDemo.settingsVersion !== POST_DEMO_SETTINGS_VERSION) return unavailable();
+  if (!showState.postDemo || showState.postDemo.runtimeVersion !== POST_DEMO_RUNTIME_VERSION) return unavailable();
   const state = showState.privateSnapshot();
   return Response.json({ postDemo: { ...state.postDemo, config: normalizePostDemoConfig(state.postDemo.config) }, sessionId: state.reliability.sessionId }, { headers: { "Cache-Control": "no-store" } });
 }
 export async function POST(request) {
-  if (!showState.postDemo) return unavailable();
+  if (!showState.postDemo || showState.postDemo.runtimeVersion !== POST_DEMO_RUNTIME_VERSION) return unavailable();
   const origin = request.headers.get("origin"), host = request.headers.get("host") || new URL(request.url).host;
   try { if (origin && new URL(origin).host !== host) throw new Error(); }
   catch { return Response.json({ error: "ORIGIN_NOT_ALLOWED" }, { status: 403 }); }

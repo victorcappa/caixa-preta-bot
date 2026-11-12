@@ -8,6 +8,9 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 
 ## Package scripts
 
+- `npm run test:post-demo:cycle` -> `node --no-warnings scripts/post-demo-cycle-test.js`
+- `npm run test:post-demo:combined` -> `node --no-warnings scripts/post-demo-cycle-test.js --combined`
+- `npm run test:post-demo:cycle:live` -> `node --no-warnings --env-file-if-exists=.env.local scripts/post-demo-cycle-test.js --live`
 - `npm run test:controller-settings` -> `node --no-warnings scripts/controller-settings-test.js`
 - `npm run test:post-demo` -> `node --no-warnings scripts/post-demo-test.js`
 - `npm run test:post-demo:browser` -> `node --no-warnings scripts/post-demo-browser-test.js`
@@ -199,6 +202,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/OperatorTypedReply.js`
 - `components/PerformanceLayer.js`
 - `components/PostDemo.js`
+- `components/PostDemoController.js`
 - `components/PostDemoParameters.js`
 - `components/PreparedSceneController.js`
 - `components/ProjectionMenu.js`
@@ -251,6 +255,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/ForcaGSamplerController.js`
 - `components/ForcaGShadersController.js`
 - `components/Model3DController.js`
+- `components/PostDemoController.js`
 - `components/PreparedSceneController.js`
 - `components/SceneZeroController.js`
 - `lib/controllerSurfaces.js`
@@ -281,6 +286,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `CAIXA_PRETA_OPERATOR_MOCK`
 - `CAIXA_PRETA_PDF_PYTHON`
 - `CAIXA_PRETA_PERFORMATIVE_RESEARCH`
+- `CAIXA_PRETA_POST_DEMO_CYCLE_FIXTURE`
 - `CAIXA_PRETA_RELIABILITY_TESTS`
 - `CAIXA_PRETA_RESEARCH_BUDGET`
 - `CAIXA_PRETA_RESEARCH_ENABLED`
@@ -360,6 +366,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/performance-system-test.js`
 - `scripts/play-unlock-browser-test.js`
 - `scripts/post-demo-browser-test.js`
+- `scripts/post-demo-cycle-test.js`
 - `scripts/post-demo-test.js`
 - `scripts/public-composition-browser-test.js`
 - `scripts/public-realtime-browser-test.js`

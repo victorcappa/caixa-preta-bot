@@ -1,3 +1,2 @@
-import ControllerSurface from "@/components/ControllerSurface";
-import PostDemo from "@/components/PostDemo";
-export default function PostDemoControllerPage() { return <ControllerSurface><PostDemo controller /></ControllerSurface>; }
+import PostDemoController from "@/components/PostDemoController";
+export default function PostDemoControllerPage() { return <PostDemoController />; }

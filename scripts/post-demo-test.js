@@ -70,9 +70,23 @@ try {
   assert.deepEqual(Object.keys(postDemoSnapshot(state).presentation).sort(), ["displayFont", "typingIntervalMs", "typingPauseMs"]);
   assert.deepEqual(postDemoSnapshot(state, true).config, state.config);
   assert.equal(restoredPostDemoState(state).active, false); assert.equal(restoredPostDemoState(state).pauseReason, "recovery");
-  const next = await postDemoContext({ postDemo: { ...state, usedCardIds: [0, 1] }, memories: [], conversation: [] }, context.eligible);
-  assert.equal(next.cycleReset, true); assert(next.eligible.every(card => card.id !== state.rounds.at(-1).card.id));
+  await assert.rejects(() => postDemoContext({ postDemo: { ...state, usedCardIds: [0, 1] }, memories: [], conversation: [] }, context.eligible), /já foram apresentadas/);
   actor.pause();
+  state = createPostDemoState(); actor.config({ cardHoldMs: 1000 }); calls = 0; actor.enter([]);
+  for (let index = 0; index < 22; index++) {
+    const job = actor.begin(); assert(job);
+    actor.finish(job, { card: { id: index, name: `Carta ${index}` }, content: "Uma ilha possível. Quem a habita?" });
+    if (index < 21) { actor.acknowledge(job.id); advance(1000); }
+    else {
+      advance(60000); assert.equal(calls, 22, "a última fala também deve aguardar digitação");
+      actor.acknowledge(job.id); advance(999); assert.equal(state.status, "waiting");
+      actor.pause(); advance(1000); assert.equal(state.status, "paused"); actor.resume(); advance(0);
+    }
+  }
+  assert.equal(state.status, "completed"); assert.equal(state.active, false); assert(state.completedAt);
+  assert.equal(calls, 22); assert.equal(actor.resume(), false); assert.equal(actor.begin(), null); actor.enter([]); advance(60000); actor.pause();
+  assert.equal(calls, 22, "não pode haver 23ª geração depois do encerramento"); assert.equal(state.status, "completed");
+  assert.equal(restoredPostDemoState(state).status, "completed");
   const { showState } = await import("../lib/showState.js");
   const globalPreferences = showState.privateSnapshot();
   showState.postDemo.config({ cardHoldMs: 4000, typingIntervalMs: 150, typingPauseMs: 900, personality: { sarcasm: 23 }, profile: { humor: 17 }, model: "gpt-5.6-luna" });

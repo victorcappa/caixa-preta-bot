@@ -36,7 +36,7 @@ const request = runExternalRequest("operator-test", (signal) => new Promise((res
   signal.addEventListener("abort", () => reject(new Error("cancelled")), { once: true });
 }), { signal: controller.signal });
 controller.abort();
-await assert.rejects(request, /cancelled/);
+await assert.rejects(request, error => error.name === "AbortError" || /cancelled/.test(error.message));
 let reports = 0;
 const instagram = getInstagramController({ reporter: () => { reports += 1; } });
 const initialGeneration = instagram.googleGuidanceGeneration;
