@@ -5,6 +5,8 @@
   "scripts": {
     "point-cloud:prepare": "node --no-warnings scripts/prepare-post-demo-point-cloud.js",
     "test:post-demo:point-cloud": "node --no-warnings scripts/post-demo-point-cloud-test.js",
+    "test:post-demo:point-cloud:watch": "node --no-warnings scripts/post-demo-point-cloud-watch-test.js",
+    "test:post-demo:point-cloud:watch:browser": "node --no-warnings scripts/post-demo-point-cloud-watch-browser-test.js",
     "test:post-demo:point-cloud:browser": "node --no-warnings scripts/post-demo-point-cloud-browser-test.js",
     "test:post-demo:point-cloud:animation": "node --no-warnings scripts/post-demo-point-cloud-browser-test.js --animation",
     "test:post-demo:point-cloud:controls": "node --no-warnings scripts/post-demo-point-cloud-browser-test.js --controls --animation",

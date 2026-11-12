@@ -10,6 +10,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 
 - `npm run point-cloud:prepare` -> `node --no-warnings scripts/prepare-post-demo-point-cloud.js`
 - `npm run test:post-demo:point-cloud` -> `node --no-warnings scripts/post-demo-point-cloud-test.js`
+- `npm run test:post-demo:point-cloud:watch` -> `node --no-warnings scripts/post-demo-point-cloud-watch-test.js`
+- `npm run test:post-demo:point-cloud:watch:browser` -> `node --no-warnings scripts/post-demo-point-cloud-watch-browser-test.js`
 - `npm run test:post-demo:point-cloud:browser` -> `node --no-warnings scripts/post-demo-point-cloud-browser-test.js`
 - `npm run test:post-demo:point-cloud:animation` -> `node --no-warnings scripts/post-demo-point-cloud-browser-test.js --animation`
 - `npm run test:post-demo:point-cloud:controls` -> `node --no-warnings scripts/post-demo-point-cloud-browser-test.js --controls --animation`
@@ -395,6 +397,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/post-demo-point-cloud-browser-test.js`
 - `scripts/post-demo-point-cloud-motion-test.js`
 - `scripts/post-demo-point-cloud-test.js`
+- `scripts/post-demo-point-cloud-watch-browser-test.js`
+- `scripts/post-demo-point-cloud-watch-test.js`
 - `scripts/post-demo-test.js`
 - `scripts/public-composition-browser-test.js`
 - `scripts/public-realtime-browser-test.js`

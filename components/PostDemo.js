@@ -138,6 +138,7 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
       <p>Ajustes exclusivos desta sequência. Salvos automaticamente.</p>
       <section aria-label="Nuvem de pontos da plateia" className={styles.cloudControls}>
         <button type="button" disabled={cloudRequest || converting || !session.current} onClick={() => void generatePointCloud()}>Gerar point cloud</button>
+        <p>Fotos novas são carregadas automaticamente. Use o botão para gerar novamente.</p>
         {converting ? <><p role="status">{phases[cloud.phase] || "Convertendo a foto"} · {cloud.progress}%</p><progress max="100" value={cloud.progress} /></> : null}
         {cloud?.sourceName ? <p>Foto selecionada: {cloud.sourceName}</p> : null}
         {cloud?.status === "ready" ? <p role="status">Nuvem pronta · {cloud.current?.pointCount.toLocaleString("pt-BR")} pontos</p> : null}

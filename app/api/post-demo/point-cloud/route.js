@@ -1,6 +1,7 @@
 import { showState } from "@/lib/showState";
 import { sameOrigin } from "@/lib/tarot/http";
 import { POINT_CLOUD_CONTROLLER_VERSION } from "@/lib/post-demo/pointCloudState";
+import { ensurePointCloudPhotoWatch } from "@/lib/post-demo/pointCloudPhotoWatchRuntime";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export async function POST(request) {
@@ -9,6 +10,11 @@ export async function POST(request) {
   if (!body || body.sessionId !== state.reliability.sessionId) return Response.json({ error: "A apresentação mudou. Atualize esta tela." }, { status: 409 });
   if (state.reliability.emergencyMode.active) return Response.json({ error: "Modo emergência ativo." }, { status: 409 });
   if (showState.postDemoPointCloud?.version !== POINT_CLOUD_CONTROLLER_VERSION) return Response.json({ error: "Reinicie o servidor para carregar o conversor; a sessão atual foi preservada." }, { status: 409 });
+  if (body.action === "watch") {
+    ensurePointCloudPhotoWatch(showState);
+    return Response.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
+  }
   const result = showState.postDemoPointCloud.start();
+  ensurePointCloudPhotoWatch(showState);
   return Response.json(result.busy ? { error: "Já existe uma conversão em andamento." } : { ok: true }, { status: result.busy ? 409 : 202 });
 }

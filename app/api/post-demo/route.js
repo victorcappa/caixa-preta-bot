@@ -1,5 +1,6 @@
 import { showState } from "@/lib/showState";
 import { normalizePostDemoConfig, POST_DEMO_SETTINGS_VERSION, POST_DEMO_RUNTIME_VERSION } from "@/lib/post-demo/settings";
+import { ensurePointCloudPhotoWatch } from "@/lib/post-demo/pointCloudPhotoWatchRuntime";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -43,6 +44,7 @@ export async function POST(request) {
     }
     else if (body.action === "rate") { if (!actor.rate(body.roundId, body.rating)) throw new Error("Avaliação inválida."); }
     else return Response.json({ error: "AÇÃO INVÁLIDA" }, { status: 400 });
+    if (["enter", "ready", "resume", "restart"].includes(body.action)) ensurePointCloudPhotoWatch(showState);
     return Response.json({ ok: true, ...(body.action === "config" ? { config: showState.privateSnapshot().postDemo.config } : {}) });
   } catch { return Response.json({ error: "Não foi possível concluir esta ação." }, { status: 500 }); }
 }
