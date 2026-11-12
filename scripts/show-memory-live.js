@@ -10,7 +10,7 @@ if (!process.argv.includes("--live")) throw new Error("Use --live para consultar
 if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY não configurada.");
 const repository = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const directory = fs.mkdtempSync(path.join(os.tmpdir(), "caixa-memory-live-"));
-for (const item of ["knowledge", "data", "Texto caixa preta.pdf", "assets/dramaturgia/proximas-etapas-da-peca.pdf", "assets/tarot/CAIXA_PRETA_REFERENCIAS_TARO.md", "assets/sampler-forca-g/manifest.json"]) {
+for (const item of ["knowledge", "data", "Texto caixa preta.pdf", "assets/dramaturgia/proximas-etapas-da-peca.pdf", "assets/referencias/labirinto-de-labirintos-marcus-garcia-2025.pdf", "assets/tarot/CAIXA_PRETA_REFERENCIAS_TARO.md", "assets/sampler-forca-g/manifest.json"]) {
   fs.mkdirSync(path.dirname(path.join(directory, item)), { recursive: true });
   fs.cpSync(path.join(repository, item), path.join(directory, item), { recursive: true });
 }

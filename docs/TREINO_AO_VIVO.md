@@ -14,6 +14,8 @@ As sete bases de `knowledge/` são enviadas integralmente: universo, dramaturgia
 
 A busca usa o índice textual local existente, com até 24 trechos e 24 mil caracteres adicionais por geração, além das bases, do índice das referências e das últimas 40 mensagens. Os trechos grandes são subdivididos, sem descartar conteúdo da indexação. Pedidos por cena ou CP-XX direcionam a recuperação. Todo o texto está disponível; cada resposta recebe os trechos relacionados ao assunto. Essa memória compartilhada também atende o chat principal, o Operator e alternativas do Treino; o Tarô conserva seus próprios filtros de referências.
 
+O acervo também recupera as 182 páginas da dissertação **Labirinto de Labirintos**, de Marcus Garcia. A pesquisa pública de 35 pessoas da criação/equipe e rede de colaboradores alimenta uma camada compartilhada de **inconsciente coletivo**: motivos e associações sem currículos, nomes, títulos ou URLs nessa camada. O bot não cita referências espontaneamente ao público. Fontes, obras, cobertura real e limites podem ser consultados na aba **Referências**; detalhes e verificações: [REFERENCIAS.md](REFERENCIAS.md).
+
 Textos/configuração atuais prevalecem sobre o rascunho: malas **2 → 1 → 3**, bexigas → forca/disco → toca-discos. Cenas 8, 9 e futuro ato 2 são identificados como propostas. Não consulta a internet para montar esse acervo; referências datadas permanecem datadas. Notas privadas dos controllers, credenciais, logs e perfis de navegador não entram. Vídeos, áudios e imagens não transcritos fornecem apenas os metadados cadastrados; não se alega conhecer seu conteúdo.
 
 ### Atualização e auditoria do acervo

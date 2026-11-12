@@ -4,8 +4,9 @@ import { buildHostGameLibraryBlock } from "../lib/host/games";
 import { getModePrompt } from "./modes";
 import { caixaPretaPersonality } from "./personality";
 import { caixaPretaRules } from "./rules";
+import { getCollectiveInfluenceContext } from "../lib/collectiveMemory.js";
 
-export const PROMPT_VERSION = 32;
+export const PROMPT_VERSION = 33;
 
 function variablesBlock(variables = {}) {
   if (!variables || Object.keys(variables).length === 0) {
@@ -29,6 +30,7 @@ export function buildSystemPrompt({ knowledge = "", variables = {}, styleContext
     styleContext,
     "REGRAS:",
     caixaPretaRules,
+    getCollectiveInfluenceContext(),
     "BIBLIOTECA DE MECANICAS DO HOST:",
     buildHostGameLibraryBlock(),
     "MODO DRAMATURGICO ATUAL:",

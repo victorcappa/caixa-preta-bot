@@ -10,11 +10,12 @@ registerHooks({ resolve(specifier, context, nextResolve) {
   if (specifier.startsWith("@/")) return nextResolve(pathToFileURL(path.resolve(repository, `${specifier.slice(2)}.js`)).href, context);
   return nextResolve(specifier, context);
 } });
-const { showMemoryArchive, retrieveShowMemory, boundedMemoryDocuments, getShowKnowledgeContext } = await import("../lib/showMemory.js");
+const { showMemoryArchive, retrieveShowMemory, boundedMemoryDocuments, getShowKnowledgeContext, DISSERTATION_PDF } = await import("../lib/showMemory.js");
 const archive = await showMemoryArchive();
 const transcript = JSON.parse(fs.readFileSync("knowledge/sources/texto-caixa-preta.json", "utf8"));
 assert.equal(archive.coverage.pages, 34);
 assert.equal(archive.coverage.continuationPages, 12);
+assert.equal(archive.coverage.dissertationPages, 182);
 assert.deepEqual(archive.coverage.scenes, Array.from({ length: 16 }, (_, index) => index));
 assert.deepEqual(archive.coverage.referenceSections.map(section => section.id), Array.from({ length: 59 }, (_, i) => `CP-${String(i + 1).padStart(2, "0")}`));
 assert.equal(archive.coverage.bibliography.length, 63);
@@ -74,10 +75,12 @@ assert(!JSON.stringify(dynamic).includes(privateSentinel));
 assert(!dynamic.repertoire.includes("EXPIRED_SENTINEL") && !dynamic.repertoire.includes("DISABLED_SENTINEL"));
 const filtered = await retrieveShowMemory({ query: "CP-50 Banco Master", includeReferences: false });
 assert(!filtered.selected.some(chunk => chunk.origin.startsWith("assets/tarot/")), "Tarô mantém seu próprio filtro de referências");
+const withoutDissertation = await retrieveShowMemory({ query: "Marcus Garcia Labirinto de Labirintos T.GIRLS", includeReferences: false });
+assert(!withoutDissertation.selected.some(chunk => chunk.origin === DISSERTATION_PDF), "Tarô mantém a seleção teórica independente da memória geral");
 
 // Exercise invalidation and fail-closed behavior in a disposable copy, never the active show.
 const fixture = fs.mkdtempSync(path.join(os.tmpdir(), "caixa-memory-audit-"));
-for (const item of ["knowledge", "data", "Texto caixa preta.pdf", "assets/dramaturgia/proximas-etapas-da-peca.pdf", "assets/tarot/CAIXA_PRETA_REFERENCIAS_TARO.md", "assets/sampler-forca-g/manifest.json"]) {
+for (const item of ["knowledge", "data", "Texto caixa preta.pdf", "assets/dramaturgia/proximas-etapas-da-peca.pdf", DISSERTATION_PDF, "assets/tarot/CAIXA_PRETA_REFERENCIAS_TARO.md", "assets/sampler-forca-g/manifest.json"]) {
   fs.mkdirSync(path.dirname(path.join(fixture, item)), { recursive: true });
   fs.cpSync(path.join(repository, item), path.join(fixture, item), { recursive: true });
 }
@@ -99,4 +102,4 @@ try {
 } finally { process.chdir(repository); }
 const output = path.join(fixture, "coverage.json");
 fs.writeFileSync(output, JSON.stringify({ ...archive.coverage, retrievalChecks: checks, referencesTested: 59, validation: "local retrieval; no model calls" }, null, 2));
-console.log(`SHOW MEMORY PASS: 34 + 12 páginas integrais, 16 cenas, 59 seções, 63 fontes, ${archive.coverage.chunks} trechos; temas, processo, privacidade e cache/hash.\nRelatório: ${output}`);
+console.log(`SHOW MEMORY PASS: 34 + 12 páginas da peça + 182 páginas da dissertação, 16 cenas, 59 seções, 63 fontes no dossiê, ${archive.coverage.chunks} trechos; temas, processo, privacidade e cache/hash.\nRelatório: ${output}`);
