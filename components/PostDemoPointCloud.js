@@ -3,6 +3,8 @@ import { useEffect, useRef } from "react";
 import { decodePointCloud } from "@/lib/post-demo/pointCloudFormat";
 import styles from "./PostDemo.module.css";
 
+const FRAMING_SCALE = .8;
+
 export default function PostDemoPointCloud({ reference, onError }) {
   const host = useRef(null), reportError = useRef(onError);
   reportError.current = onError;
@@ -56,11 +58,11 @@ export default function PostDemoPointCloud({ reference, onError }) {
           const rect = element.getBoundingClientRect(), width = Math.max(1, rect.width), height = Math.max(1, rect.height);
           renderer.setSize(width, height, false); camera.aspect = width / height; camera.updateProjectionMatrix();
           fitDistance = Math.max(size.y, size.x / camera.aspect) / (2 * Math.tan(Math.PI / 8)) * 1.15 + size.z * .45;
-          material.uniforms.fitDistance.value = fitDistance;
+          material.uniforms.fitDistance.value = fitDistance * FRAMING_SCALE;
           material.uniforms.pointSize.value = Math.max(.9, Math.min(2.1, height / 500)) * renderer.getPixelRatio();
         };
         resize(); observer = new ResizeObserver(resize); observer.observe(element);
-        camera.position.set(0, 0, Math.max(.075, fitDistance * .07)); baseDistance = fitDistance;
+        camera.position.set(0, 0, Math.max(.075, fitDistance * .07)); baseDistance = fitDistance * FRAMING_SCALE;
         controls.update();
         const start = performance.now(); let previous = start, frames = 0, lastMetrics = 0;
         controls.addEventListener("start", () => { interacting = true; introCancelled = true; lastManual = performance.now(); canvas.focus({ preventScroll: true }); });
@@ -72,16 +74,16 @@ export default function PostDemoPointCloud({ reference, onError }) {
           const quiet = (now - lastManual) / 1000, blend = interacting ? 0 : Math.max(0, Math.min(1, (quiet - 1.8) / 2));
           if (!introCancelled && elapsed < 12) {
             const phase = elapsed / 12, ease = phase * phase * (3 - 2 * phase);
-            camera.position.set(0, 0, fitDistance * (.07 + .93 * ease));
+            camera.position.set(0, 0, fitDistance * (.07 + (FRAMING_SCALE - .07) * ease));
             geometry.setDrawRange(0, Math.max(1, Math.floor(cloud.count * (.002 + .998 * ease))));
           } else if (!interacting && quiet > 1.8) {
-            const distance = (introCancelled ? baseDistance : fitDistance) * (1 + .03 * Math.sin(elapsed / 9));
+            const distance = (introCancelled ? baseDistance : fitDistance * FRAMING_SCALE) * (1 + .015 * Math.sin(elapsed / 9));
             direction.copy(camera.position).sub(controls.target).normalize();
             const current = camera.position.distanceTo(controls.target), target = current + (distance - current) * (1 - Math.exp(-dt * blend));
             camera.position.copy(controls.target).addScaledVector(direction, target);
           }
           if (introCancelled || elapsed >= 12) geometry.setDrawRange(0, cloud.count);
-          if (blend > 0) { points.rotation.y += (Math.sin(elapsed / 7) * .14 - points.rotation.y) * (1 - Math.exp(-dt * blend * 2)); }
+          if (blend > 0) { points.rotation.y += (Math.sin(elapsed / 3.5) * .14 - points.rotation.y) * (1 - Math.exp(-dt * blend * 2)); }
           controls.update();
           if (introCancelled && (interacting || quiet < 1.8)) baseDistance = camera.position.distanceTo(controls.target);
           renderer.render(scene, camera); frames++;
