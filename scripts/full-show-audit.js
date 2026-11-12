@@ -93,10 +93,6 @@ try {
   current = await wait((s) => s.audienceWarmup.minigame.status === "ready", "selected mini game rules");
   evidence.minigame = current.audienceWarmup.minigame.selectedId;
   await warmup("minigame-start");
-  if (evidence.minigame === "tapao") {
-    await wait((s) => s.audienceWarmup.minigame.status === "ready_round_two", "Tapao first round and exchange");
-    await warmup("minigame-start");
-  }
   await wait((s) => s.audienceWarmup.phase === "complete", "warmup completed on real timer");
   await scene("set-stage", { stage: "participant" });
   await wait((s) => s.sceneZero.participantSelection.status === "complete", "participant invitation, countdown, name and center call");
@@ -113,11 +109,11 @@ try {
   const answer = getSceneZeroHangmanWord(current.sceneZero.suitcaseGame.hangman.wordId);
   assert(answer, "selected authored hangman word must exist");
   await scene("hangman-guess", { guess: answer.text });
-  await wait((s) => s.sceneZero.suitcaseGame.currentSuitcase === 3 && !["drawing", "selected", "open"].includes(s.sceneZero.suitcaseGame.cuePhase), "second suitcase released only after win");
+  await wait((s) => s.sceneZero.suitcaseGame.currentSuitcase === 1 && !["drawing", "selected", "open"].includes(s.sceneZero.suitcaseGame.cuePhase), "second suitcase released only after win");
   await scene("suitcase-next");
   await projection.getByText("Abra a segunda mala e pegue o disco.", { exact: true }).waitFor();
-  current = await wait((s) => s.sceneZero.suitcaseGame.currentSuitcase === 1 && s.sceneZero.suitcaseGame.contentInstruction?.status === "complete", "last suitcase and turntable instruction");
-  assert.deepEqual(current.sceneZero.suitcaseGame.openedSuitcases, [2, 3, 1]);
+  current = await wait((s) => s.sceneZero.suitcaseGame.currentSuitcase === 3 && s.sceneZero.suitcaseGame.contentInstruction?.status === "complete", "last suitcase and turntable instruction");
+  assert.deepEqual(current.sceneZero.suitcaseGame.openedSuitcases, [2, 1, 3]);
   assert.notEqual(current.sceneZero.unlock.progress, 100);
   await scene("suitcase-finish");
   await wait((s) => s.sceneZero.unlock.progress === 100, "tutorial complete");

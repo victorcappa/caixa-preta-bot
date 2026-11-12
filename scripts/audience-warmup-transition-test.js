@@ -30,6 +30,7 @@ function action(name, payload = {}) {
 
 mock.timers.enable({ apis: ["Date", "setTimeout"], now: new Date("2026-11-11T12:00:00Z") });
 try {
+  assert.equal(showState.restoreFromRecovery({ storeVersion: "show-reliability-v42", state: initial }).error, "SNAPSHOT_INCOMPATIBLE", "a numeração antiga das malas não pode ser reinterpretada na ordem nova");
   for (const manualMode of [true, false]) {
     const state = structuredClone(initial);
     state.sceneZero.unlock.status = "HUMAN_VERIFICATION";

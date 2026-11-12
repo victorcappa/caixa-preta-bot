@@ -10,7 +10,7 @@ sceneZero.stage = "suitcases";
 sceneZero.unlock = { ...sceneZero.unlock, status: "UNLOCKED", progress: 100, bootComplete: true };
 sceneZero.suitcaseGame = {
   ...sceneZero.suitcaseGame,
-  currentSuitcase: 3, openedSuitcases: [2, 3], status: "active", cuePhase: "open",
+  currentSuitcase: 1, openedSuitcases: [2, 1], status: "active", cuePhase: "open",
   suitcaseSelectedAt: new Date().toISOString(), suitcaseSelectionSequence: 4
 };
 const previousMessage = { id: "previous", role: "assistant", source: "scene-zero-suitcase-choice", content: "Próxima mala." };
@@ -55,7 +55,7 @@ try {
   await projection.getByLabel("Cursor da Caixa Preta", { exact: true }).waitFor();
   state = suitcaseState;
   await projection.goto(baseUrl, { waitUntil: "domcontentloaded" });
-  const cue = projection.getByLabel("Mala indicada: Esquerda", { exact: true });
+  const cue = projection.getByLabel("Mala indicada: 1", { exact: true });
   await cue.waitFor();
   assert.match(await cue.textContent(), /ABRA A MALA/);
   assert.equal(await projection.getByText(previousMessage.content, { exact: true }).count(), 0,
@@ -87,7 +87,7 @@ try {
       ...state.sceneZero,
       suitcaseGame: {
         ...state.sceneZero.suitcaseGame, currentSuitcase: 2, cuePhase: "complete",
-        choice: { targetSuitcase: 3, status: "challenge_instruction", messageId: instruction.id },
+        choice: { targetSuitcase: 1, status: "challenge_instruction", messageId: instruction.id },
         hangman: { ...state.sceneZero.suitcaseGame.hangman, status: "ready", theme: "aviação", themeDraw: { status: "selected" } }
       }
     }
@@ -102,8 +102,8 @@ try {
     ...state.sceneZero,
     suitcaseGame: {
       ...state.sceneZero.suitcaseGame,
-      currentSuitcase: 1, openedSuitcases: [2, 1], cuePhase: "complete",
-      choice: { status: "ready", targetSuitcase: 1, messageId: "stale-draw" },
+      currentSuitcase: 3, openedSuitcases: [2, 3], cuePhase: "complete",
+      choice: { status: "ready", targetSuitcase: 3, messageId: "stale-draw" },
       contentInstruction: { kind: "last-suitcase", status: "complete", selectionSequence: 4 }
     }
   };
@@ -114,6 +114,18 @@ try {
   await finish.waitFor();
   assert.equal(await finish.isEnabled(), true);
   await controller.locator("body").click({ position: { x: 10, y: 10 } });
+  const beforeLeft = actions.length;
+  await controller.keyboard.press("ArrowLeft");
+  await controller.waitForTimeout(150);
+  assert.equal(actions.length, beforeLeft, "a seta esquerda sozinha não pode voltar nem avançar etapas");
+  const [backResponse] = await Promise.all([
+    controller.waitForResponse((response) => response.url().endsWith("/api/scene-zero")
+      && response.request().postDataJSON()?.action === "set-stage"),
+    controller.keyboard.press("Shift+ArrowRight")
+  ]);
+  assert.equal(backResponse.request().postDataJSON().stage, "participant", "Shift + seta direita deve voltar das malas ao participante");
+  await finish.waitFor({ state: "visible" });
+  await controller.waitForFunction(() => !Array.from(document.querySelectorAll("button")).find((button) => button.textContent === "SEGUIR → COMPLETAR DESBLOQUEIO")?.disabled);
   await Promise.all([
     controller.waitForResponse((response) => response.url().endsWith("/api/scene-zero")
       && response.request().postDataJSON()?.action === "suitcase-finish"),

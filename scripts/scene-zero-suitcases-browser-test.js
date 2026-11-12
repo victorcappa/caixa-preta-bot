@@ -115,7 +115,7 @@ try {
 
   await controller.getByRole("heading", { name: "MALA 2 / BEXIGAS E CHAVE" }).waitFor();
   await controller.getByRole("heading", { name: "DESAFIO ANTES DA SEGUNDA MALA / FORCA — 60s" }).waitFor();
-  await controller.getByRole("heading", { name: "MALA 1 / FIM DO TUTORIAL" }).waitFor();
+  await controller.getByRole("heading", { name: "MALA 3 / FIM DO TUTORIAL" }).waitFor();
 
   const manualResponse = await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "set-manual-mode", manualMode: true } });
   assert.equal(manualResponse.ok(), true);
@@ -128,10 +128,10 @@ try {
   await waitForState(context.request, (value) => value.audienceWarmup.phase === "complete", 20000);
   const restoreManualResponse = await context.request.post(`${BASE_URL}/api/audience-warmup`, { data: { action: "set-manual-mode", manualMode: true } });
   assert.equal(restoreManualResponse.ok(), true);
-  const manualSuitcaseTwo = controller.getByRole("button", { name: "SORTEAR MALA CENTRO", exact: true });
+  const manualSuitcaseTwo = controller.getByRole("button", { name: "SORTEAR MALA 2", exact: true });
   await manualSuitcaseTwo.waitFor();
-  await controller.getByRole("button", { name: "SORTEAR MALA ESQUERDA", exact: true }).waitFor();
-  await controller.getByRole("button", { name: "SORTEAR MALA DIREITA", exact: true }).waitFor();
+  await controller.getByRole("button", { name: "SORTEAR MALA 1", exact: true }).waitFor();
+  await controller.getByRole("button", { name: "SORTEAR MALA 3", exact: true }).waitFor();
   await manualSuitcaseTwo.click();
   let state = await waitForState(context.request, (value) => (
     value.sceneZero.suitcaseGame.currentSuitcase === 2
@@ -142,7 +142,7 @@ try {
   assert.equal(result.sceneZero.suitcaseGame.gincana.currentTask.id, "bexigas-chave");
   assert.doesNotMatch(result.sceneZero.suitcaseGame.gincana.currentTask.text, /PLATEIA/);
   await waitForState(context.request, (value) => value.sceneZero.suitcaseGame.cuePhase === "selected");
-  const suitcaseCue = projection.getByLabel("Mala indicada: Centro");
+  const suitcaseCue = projection.getByLabel("Mala indicada: 2");
   await suitcaseCue.waitFor();
   assert.equal(await suitcaseCue.getByText("ABRA A MALA").count(), 0, "a mala escolhida deve aguardar a seta antes da ordem de abrir");
   const openSuitcaseButton = controller.getByRole("button", { name: "SEGUIR → ABRA A MALA" });
@@ -360,13 +360,13 @@ try {
   await projection.getByLabel("Forca antes da segunda mala").waitFor({ state: "detached" });
   await projection.getByText("REGISTRO RECUPERADO. A PALAVRA ERA CAIXA PRETA.", { exact: true }).waitFor();
   await projection.locator('[data-warmup-effect="success"]').waitFor();
-  await projection.getByText(SCENE_ZERO_NEXT_SUITCASE_COMMENTS[3], { exact: true }).waitFor({ timeout: 12000 });
+  await projection.getByText(SCENE_ZERO_NEXT_SUITCASE_COMMENTS[1], { exact: true }).waitFor({ timeout: 12000 });
   state = await waitForState(
     context.request,
-    (value) => value.sceneZero.suitcaseGame.currentSuitcase === 3,
+    (value) => value.sceneZero.suitcaseGame.currentSuitcase === 1,
     20000
   );
-  assert.deepEqual(state.sceneZero.suitcaseGame.openedSuitcases, [2, 3]);
+  assert.deepEqual(state.sceneZero.suitcaseGame.openedSuitcases, [2, 1]);
 
   await sceneAction(context.request, "hangman-configure", { wordId: "hangman-03" });
   await sceneAction(context.request, "hangman-start");
@@ -379,7 +379,7 @@ try {
   await projection.getByText(SCENE_ZERO_HANGMAN_RETRY_COMMENTS[0], { exact: true }).waitFor();
   await projection.locator('[data-warmup-effect="failure"]').waitFor();
   await projection.waitForFunction(() => window.__hangmanImpactCalls >= 3);
-  await projection.screenshot({ path: "/private/tmp/caixa-preta-mala-3-tempo-esgotado.png" });
+  await projection.screenshot({ path: "/private/tmp/caixa-preta-mala-1-tempo-esgotado.png" });
   state = await waitForState(
     context.request,
     (value) => value.sceneZero.suitcaseGame.hangman.retry?.status === "running",
@@ -396,16 +396,16 @@ try {
   await projection.locator('[data-warmup-effect="success"]').waitFor();
 
   result = await sceneAction(context.request, "suitcase-next");
-  assert.deepEqual(result.sceneZero.suitcaseGame.openedSuitcases, [2, 3]);
-  await projection.getByText(SCENE_ZERO_NEXT_SUITCASE_COMMENTS[1], { exact: true }).waitFor({ timeout: 30000 });
+  assert.deepEqual(result.sceneZero.suitcaseGame.openedSuitcases, [2, 1]);
+  await projection.getByText(SCENE_ZERO_NEXT_SUITCASE_COMMENTS[3], { exact: true }).waitFor({ timeout: 30000 });
   state = await snapshot(context.request);
-  assert.equal(state.sceneZero.suitcaseGame.currentSuitcase, 3, "a piada deve terminar antes do sorteio da última mala");
+  assert.equal(state.sceneZero.suitcaseGame.currentSuitcase, 1, "a piada deve terminar antes do sorteio da última mala");
   state = await waitForState(
     context.request,
-    (value) => value.sceneZero.suitcaseGame.currentSuitcase === 1,
+    (value) => value.sceneZero.suitcaseGame.currentSuitcase === 3,
     20000
   );
-  assert.deepEqual(state.sceneZero.suitcaseGame.openedSuitcases, [2, 3, 1]);
+  assert.deepEqual(state.sceneZero.suitcaseGame.openedSuitcases, [2, 1, 3]);
   await projection.getByLabel("Forca antes da segunda mala").waitFor({ state: "detached" });
   await projection.getByText("Use o disco no toca-discos.", { exact: true }).waitFor({ timeout: 14000 });
   state = await waitForState(
@@ -424,16 +424,16 @@ try {
   assert.equal(state.sceneZero.unlock.progress, 100, "a última mala deve ser a única conclusão da barra");
   assert.equal(state.sceneZero.unlock.unlockSequenceSource, "suitcases-finished");
   assert.notEqual(state.sceneZero.suitcaseGame.morelBios.status, "running", "glitch não pode começar enquanto FIM DO TUTORIAL está visível");
-  await projection.screenshot({ path: "/private/tmp/caixa-preta-mala-1-fim-tutorial.png" });
+  await projection.screenshot({ path: "/private/tmp/caixa-preta-mala-3-fim-tutorial.png" });
   state = await waitForState(context.request, (value) => value.sceneZero.suitcaseGame.morelBios.status === "running", 5000);
-  assert.equal(state.sceneZero.suitcaseGame.currentSuitcase, 1);
+  assert.equal(state.sceneZero.suitcaseGame.currentSuitcase, 3);
   assert.equal(state.sceneZero.unlock.status, "UNLOCKED");
   assert.equal(state.sceneZero.unlock.progress, 100);
   await projection.getByLabel("Nova BIOS corrompida").waitFor();
   await projection.getByRole("progressbar", { name: "DESBLOQUEIO DO ESPETÁCULO: 100%" }).waitFor();
   state = await waitForState(context.request, (value) => value.glitch.active && value.glitch.scope === "full-frame", 5000);
   assert.equal(state.glitch.scope, "full-frame", "o glitch final deve tomar o quadro público inteiro");
-  await projection.screenshot({ path: "/private/tmp/caixa-preta-mala-1-bios.png" });
+  await projection.screenshot({ path: "/private/tmp/caixa-preta-mala-3-bios.png" });
 
   state = await waitForState(
     context.request,

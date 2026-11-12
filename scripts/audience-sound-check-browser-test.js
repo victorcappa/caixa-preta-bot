@@ -94,6 +94,12 @@ try {
   assert.equal(ending.bootProgress, 100);
   await waitFor(context.request, (value) => value.sceneZero.unlock.soundCheck?.phase === "listening", 8000);
 
+  await waitFor(context.request, (value) => value.publicMessage?.content === PLAY_UNLOCK_CONFIG.soundCheck.waitingComments[0].text);
+  const soundInstruction = await waitFor(context.request, (value) => value.publicMessage?.content === PLAY_UNLOCK_CONFIG.soundCheck.instruction, 15000);
+  const spoken = soundInstruction.conversation.map((message) => message.content);
+  assert.equal(spoken.at(-2), "Boa noite...", "o pedido de barulho deve vir imediatamente depois de Boa noite");
+  if (!backgroundTest) await projection.getByText(PLAY_UNLOCK_CONFIG.soundCheck.instruction, { exact: true }).waitFor();
+
   await controller.evaluate(async () => {
     const input = window.__audienceSoundCheckTestInput;
     await input.audioContext.resume();

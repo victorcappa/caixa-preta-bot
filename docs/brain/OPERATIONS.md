@@ -63,8 +63,10 @@ Targeted logical and browser commands are listed in the generated inventory. Run
 3. In `ABRIR NOVA JANELA COM`, open the desired public route from the operator so the projection window receives an ID and registers.
 4. Move that public window to the extended display/projector and enter fullscreen manually.
 5. Use `MUDAR PARA TELA` or the scene-controller tabs only after the projection status reports a connected window.
-6. For Scene Zero, open `/cena-0-controller` (or `/videomapping-controller`), confirm microphone permission/status, then use `BOOT` and the visible operator sequence. Keep that tab open when switching to Bot: microphone detection uses the audio clock and continues while Operator is hidden; the public page never requests the microphone.
+6. Open `/cena-0-controller` (or `/videomapping-controller`), confirm microphone access and use `BOOT`. Keep the controller open: its audio clock detects sound while hidden. The public page never requests the microphone.
 7. Before audience entry, verify text, blackout/recovery, global volume, media playback, selected audio output, microphone level, and STOP ALL on the actual browser/hardware path.
+
+`→` advances; `Shift + →` goes back; `←` is ignored. Malas: 2 → 1 → 3.
 
 If the technical OP terminal reports an interrupted session, inspect scene, step, and snapshot time. Choose `RETOMAR APRESENTAÇÃO` to restore it paused and with transient media/external browser state stopped, or `INICIAR NOVA APRESENTAÇÃO` to discard that recovery path deliberately. Nothing restores automatically.
 Before restarting a live process, verify that its session ID/revision match the disk snapshot. A guarded older recovery is not a current backup. Gate shutdown on successful capture; separate shell lines can still execute after a failed assertion.
@@ -104,6 +106,7 @@ If generated Next artifacts are demonstrably stale, stop the server first and th
 
 - Operator choices save atomically to `.runtime/show/operator-preferences.json` (or the configured runtime directory), independently of recovery. New presentations, Tarot reset and process restart keep current tuning; recovery also retains the latest choices. Scope, capture/activation and checks: `docs/PREFERENCIAS_OPERADOR.md`.
 - Recovery snapshots are written asynchronously and atomically to `.runtime/show/current.json`; checksum/schema/store-version failures are rejected. The live singleton remains authoritative.
+- `show-reliability-v43` rejects earlier snapshots because suitcase IDs 1 and 3 changed. Files remain on disk; start a new presentation. Operator preferences are independent.
 - `GET /api/health` reports `core` app/storage/emergency state separately from optional internet/OpenAI/request state. Optional failure does not make the core unhealthy.
 - `data/scene-notes.json`, `data/controller-cues.json`, and `data/forca-g-sampler-settings.json` are local persisted operator data and can be changed by their UIs.
 - Scene Zero and general game draws use only valid names from the `publico` group in `data/publico.json`. Only when that list is empty do they draw from `equipe`; session-memory names never enter the pool. The rule also applies after reset/recovery and to the legacy `all`/`audience-only` values retained by POST `/api/show-session` (`participant-selection-scope`). An in-progress draw keeps its prepared candidates. Check with `node --no-warnings scripts/participant-pool-test.js` and `npm run test:games`; both use isolated participant fixtures.

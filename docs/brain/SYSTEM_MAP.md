@@ -49,7 +49,7 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 - Hangman -> `lib/scene-zero/suitcaseHangman.js` and `data/scene-zero-hangman-words.js`.
 - Physical challenge -> `data/scene-zero-physical-challenges.js` and `data/scene-zero-gincanas.js`.
 - Morel ending -> `data/scene-zero-morel.js` -> suitcase handlers in `app/api/scene-zero/route.js`.
-- Older general suitcase mode -> `lib/suitcases/SuitcaseDirector.js`; do not confuse it with the current Scene Zero 2 -> 3 -> 1 orchestration.
+- Older general suitcase mode -> `lib/suitcases/SuitcaseDirector.js`; do not confuse it with the current Scene Zero 2 -> 1 -> 3 orchestration.
 
 ## Scene and media surfaces
 

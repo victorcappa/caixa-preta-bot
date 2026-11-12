@@ -25,10 +25,10 @@ export const PLAY_UNLOCK_CONFIG = {
     progressValue: 5,
     greeting: "Olá, mundo...",
     question: "Tem alguém aí?",
-    instruction: "Preciso escutar alguma evidência de vida antes de começar. Façam algum barulho.",
+    instruction: "Vamos testar o som. Façam barulho: palmas, gritos, qualquer sinal de vida.",
    waitingComments: [
   { text: "Boa noite...", delayMs: 3200 },
-  { text: "Preciso escutar alguma evidência de vida antes de começar. Façam algum barulho.", delayMs: 5200 },
+  { text: "Vamos testar o som. Façam barulho: palmas, gritos, qualquer sinal de vida.", delayMs: 5200 },
   { text: "Não precisam responder todos ao mesmo tempo.", delayMs: 6200 },
   { text: "Excelente. Uma plateia inteira praticando silêncio administrativo.", delayMs: 7200 },
   { text: "A peça não vai começar... O metrô fecha e vocês vão continuar aqui.", delayMs: 8200 },
@@ -384,7 +384,7 @@ const SOUND_CHECK_LINKED_RUNS = new Map([
 export function shuffledSoundCheckCommentOrder(random = Math.random) {
   const comments = PLAY_UNLOCK_CONFIG.soundCheck.waitingComments;
   const blocks = [];
-  for (let index = 1; index < comments.length;) {
+  for (let index = 2; index < comments.length;) {
     const length = SOUND_CHECK_LINKED_RUNS.get(comments[index].text) || 1;
     blocks.push(Array.from({ length }, (_, offset) => index + offset));
     index += length;
@@ -393,7 +393,8 @@ export function shuffledSoundCheckCommentOrder(random = Math.random) {
     const other = Math.floor(random() * (index + 1));
     [blocks[index], blocks[other]] = [blocks[other], blocks[index]];
   }
-  return [0, ...blocks.flat()];
+  // Greet the audience, then explain the sound test before any shuffled joke.
+  return [0, 1, ...blocks.flat()];
 }
 
 export function playUnlockSequenceLines(source = "progress") {

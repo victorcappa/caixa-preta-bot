@@ -30,7 +30,7 @@ import { buildDataCollectionSystemPrompt } from "@/prompts/dataCollection";
 import { SCENE_ZERO_MOREL_BIOS_DURATION_MS } from "@/data/scene-zero-morel";
 import { PLAY_UNLOCK_CONFIG } from "@/data/scene-zero-unlock";
 import { robotTypingIntervalMs } from "@/lib/robot-sound/state";
-import { localParticipantSequence } from "@/lib/scene-zero/participantFallback";
+import { localParticipantSequence, participantCenterInvitationIsComplete } from "@/lib/scene-zero/participantFallback";
 import {
   sceneZeroEmergenceCueForMessage,
   sceneZeroEmergenceCueForNextSuitcase,
@@ -79,8 +79,8 @@ function sceneZeroGooglePlan(guidance, originalCommand) {
 }
 
 function sceneZeroHangmanAvailable(suitcaseGame) {
-  return suitcaseGame?.currentSuitcase === 3 || (
-    suitcaseGame?.choice?.targetSuitcase === 3
+  return suitcaseGame?.currentSuitcase === 1 || (
+    suitcaseGame?.choice?.targetSuitcase === 1
     && ["challenge_preparing", "challenge_instruction", "challenge_ready", "challenge", "challenge_result", "challenge_complete"].includes(suitcaseGame.choice.status)
   );
 }
@@ -231,14 +231,12 @@ async function generateParticipantSequence({ candidates, winner, detail = "" }) 
       "Formato exato: {\"convite\":\"...\",\"comentarios\":[\"...\",\"...\",\"...\"],\"anuncio\":\"...\",\"centro\":\"...\"}.",
       `Use exatamente este convite: ${SCENE_ZERO_PARTICIPANT_INVITE}`,
       "Os três comentários acontecem durante a roleta e não podem revelar o vencedor.",
-      `O anúncio revela exatamente ${winner.name}. Em centro, fale diretamente com ${winner.name} e mande a pessoa vir até o centro da cena.`
+      `O anúncio revela exatamente ${winner.name}. Em centro, fale diretamente com ${winner.name}, mande a pessoa vir até o centro da cena e ficar de frente para você, olhando para a tela. Fale em primeira pessoa: de frente para mim.`
     ].join(" ")
   });
   const sequence = parseParticipantSequence(turn.text);
   if (!sequence) return localParticipantSequence(winner.name, SCENE_ZERO_PARTICIPANT_INVITE);
-  const normalizeCopy = (value) => `${value || ""}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
-  const centerCopy = normalizeCopy(sequence.centerInvitation);
-  if (!centerCopy.includes(normalizeCopy(winner.name)) || !centerCopy.includes("centro")) {
+  if (!participantCenterInvitationIsComplete(sequence.centerInvitation, winner.name)) {
     return localParticipantSequence(winner.name, SCENE_ZERO_PARTICIPANT_INVITE);
   }
   return sequence;
@@ -501,7 +499,7 @@ function advanceSuitcaseBriefing(messageId) {
     return ready;
   }
 
-  if (Number(choice.targetSuitcase) === 3) {
+  if (Number(choice.targetSuitcase) === 1) {
     return startPreDrawHangman(choice.messageId);
   }
 
@@ -548,7 +546,7 @@ function announceNextSuitcase({ bypassEmergence = false } = {}) {
     ? suitcaseGame.gincana?.result === "failed"
       || ["running", "paused"].includes(suitcaseGame.gincana?.timer?.status)
       || suitcaseGame.gincana?.retry?.status === "announcing"
-    : suitcaseGame.currentSuitcase === 3
+    : suitcaseGame.currentSuitcase === 1
       && ["active", "retry_wait"].includes(suitcaseGame.hangman?.status));
   if (retryingCurrentSuitcase) {
     return { applied: false, error: "A MALA ATUAL PRECISA SER CONCLUÍDA ANTES DO PRÓXIMO SORTEIO", state: sceneZero };
@@ -697,7 +695,7 @@ function startPreDrawHangman(messageId) {
     const current = showState.snapshot().sceneZero.suitcaseGame;
     if (
       current?.choice?.status !== "challenge_preparing"
-      || current.choice.targetSuitcase !== 3
+      || current.choice.targetSuitcase !== 1
       || current.choice.sequence !== choiceSequence
       || current.hangman?.status !== "theme-drawing"
       || current.hangman.themeDraw.sequence !== drawSequence
@@ -753,7 +751,7 @@ function continueAfterPreDrawHangman(messageId) {
   if (!["challenge_result", "challenge_complete"].includes(choice?.status) || choice.messageId !== messageId) {
     return { applied: false, error: "FORCA AINDA NÃO LIBEROU O SORTEIO", state: showState.snapshot().sceneZero };
   }
-  return publishSuitcaseChoiceAnnouncement(3);
+  return publishSuitcaseChoiceAnnouncement(1);
 }
 
 function completePreDrawHangmanResult(messageId) {
@@ -786,15 +784,15 @@ function scheduleHangmanStart(selectionSequence, selectedAt, immediate = false) 
     const current = showState.snapshot().sceneZero.suitcaseGame;
     if (
       current?.suitcaseSelectionSequence !== selectionSequence
-      || current.currentSuitcase !== 3
+      || current.currentSuitcase !== 1
     ) return;
     const announceAndStart = () => {
       const latest = showState.snapshot().sceneZero.suitcaseGame;
-      if (latest?.suitcaseSelectionSequence !== selectionSequence || latest.currentSuitcase !== 3 || latest.hangman?.status !== "ready") return;
+      if (latest?.suitcaseSelectionSequence !== selectionSequence || latest.currentSuitcase !== 1 || latest.hangman?.status !== "ready") return;
       showState.addMessage("assistant", SCENE_ZERO_HANGMAN_INSTRUCTION, "scene-zero-hangman-instruction");
       setTimeout(() => {
         const active = showState.snapshot().sceneZero.suitcaseGame;
-        if (active?.suitcaseSelectionSequence !== selectionSequence || active.currentSuitcase !== 3 || active.hangman?.status !== "ready") return;
+        if (active?.suitcaseSelectionSequence !== selectionSequence || active.currentSuitcase !== 1 || active.hangman?.status !== "ready") return;
         showState.controlSceneZero("hangman-start", {}, { source: "system" });
       }, suitcaseSpeechDelay(SCENE_ZERO_HANGMAN_INSTRUCTION));
     };
@@ -811,7 +809,7 @@ function scheduleHangmanStart(selectionSequence, selectedAt, immediate = false) 
     const drawSequence = draw.state.suitcaseGame.hangman.themeDraw.sequence;
     setTimeout(() => {
       const latest = showState.snapshot().sceneZero.suitcaseGame;
-      if (latest?.suitcaseSelectionSequence !== selectionSequence || latest.currentSuitcase !== 3
+      if (latest?.suitcaseSelectionSequence !== selectionSequence || latest.currentSuitcase !== 1
         || latest.hangman?.status !== "theme-drawing" || latest.hangman.themeDraw.sequence !== drawSequence) return;
       const word = chooseSceneZeroHangmanWord({ theme });
       if (!word) return;
@@ -841,7 +839,7 @@ async function finishTutorialAfterTurntableInstruction() {
     const next = showState.snapshot().sceneZero.suitcaseGame;
     if (
       next?.suitcaseSelectionSequence !== selectionSequence
-      || next.currentSuitcase !== 1
+      || next.currentSuitcase !== 3
       || next.status !== "finished"
     ) return;
     beginMorelBiosSequence(selectionSequence, "system");
@@ -851,11 +849,11 @@ async function finishTutorialAfterTurntableInstruction() {
 
 function startSelectedSuitcaseContent(suitcaseGame, immediate = false) {
   const { currentSuitcase, suitcaseSelectionSequence, suitcaseSelectedAt } = suitcaseGame;
-  if (currentSuitcase === 3) {
+  if (currentSuitcase === 1) {
     scheduleHangmanStart(suitcaseSelectionSequence, suitcaseSelectedAt, immediate);
     return null;
   }
-  if (currentSuitcase === 1) {
+  if (currentSuitcase === 3) {
     startSuitcaseContentInstruction(suitcaseGame, "last-suitcase", immediate);
     return null;
   }
@@ -883,7 +881,7 @@ function beginMorelBiosSequence(selectionSequence, source = "operator") {
       const sceneZero = showState.snapshot().sceneZero;
       const suitcaseGame = sceneZero.suitcaseGame;
       if (
-        suitcaseGame?.currentSuitcase !== 1
+        suitcaseGame?.currentSuitcase !== 3
         || suitcaseGame.suitcaseSelectionSequence !== selectionSequence
         || suitcaseGame.morelBios?.status !== "running"
         || suitcaseGame.morelBios.sequence !== biosSequence
@@ -897,7 +895,7 @@ function beginMorelBiosSequence(selectionSequence, source = "operator") {
     const sceneZero = showState.snapshot().sceneZero;
     const suitcaseGame = sceneZero.suitcaseGame;
     if (
-      suitcaseGame?.currentSuitcase !== 1
+      suitcaseGame?.currentSuitcase !== 3
       || suitcaseGame.suitcaseSelectionSequence !== selectionSequence
       || suitcaseGame.morelBios?.status !== "running"
       || suitcaseGame.morelBios.sequence !== biosSequence
@@ -938,12 +936,12 @@ async function interruptPreviousSuitcase(nextSuitcaseNumber, { force = false } =
     showState.controlSceneZero("instagram-session-stop", {}, { source: "scene-zero-operator" });
   }
 
-  if (previousSuitcase === 1) {
+  if (previousSuitcase === 3) {
     showState.controlSceneZero("morel-bios-stop", {}, { source: "scene-zero-operator" });
     clearSceneZeroFinalBlackout();
   }
 
-  if (previousSuitcase === 1 && snapshot.sceneZero.glitchLevel !== "normal") {
+  if (previousSuitcase === 3 && snapshot.sceneZero.glitchLevel !== "normal") {
     showState.controlSceneZero("set-glitch", { level: "normal" }, { source: "scene-zero-operator" });
     applyGlitchLevel("normal");
   }
@@ -991,7 +989,7 @@ async function activateSuitcase(suitcaseNumber, detail = "", { force = false } =
     if (!challenge.applied) return challenge;
   }
 
-  if (suitcaseNumber === 1) {
+  if (suitcaseNumber === 3) {
     const activeGame = showState.snapshot().game;
     if (activeGame?.active && activeGame.id === "verdade_ou_bolo") {
       showState.stopGame({ status: "removed_from_suitcase_flow", source: "scene-zero-operator" });
@@ -1135,11 +1133,11 @@ async function prepareSceneZeroInstagramPost(index) {
 
 async function startSceneZeroInstagramTarget(targetId) {
   const sceneZero = showState.snapshot().sceneZero;
-  if (sceneZero.suitcaseGame?.currentSuitcase !== 3) {
-    return { applied: false, error: "INICIE A MALA 3 ANTES DO INSTAGRAM", state: sceneZero };
+  if (sceneZero.suitcaseGame?.currentSuitcase !== 1) {
+    return { applied: false, error: "INICIE A MALA 1 ANTES DO INSTAGRAM", state: sceneZero };
   }
   const profile = resolveSceneZeroInstagramTarget(targetId);
-  if (!profile) return { applied: false, error: "PERFIL DA MALA 3 NÃO CONFIGURADO", state: sceneZero };
+  if (!profile) return { applied: false, error: "PERFIL DA MALA 1 NÃO CONFIGURADO", state: sceneZero };
   const started = showState.controlSceneZero("instagram-session-start", { profile }, { source: "operator" });
   if (!started.applied) return started;
   try {
@@ -1720,8 +1718,8 @@ export async function POST(request) {
     }
 
     if (action === "morel-bios-start" || action === "morel-bios-stop") {
-      if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase !== 1) {
-        return Response.json({ error: "INICIE A MALA 1 ANTES DA BIOS FINAL", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
+      if (showState.snapshot().sceneZero.suitcaseGame?.currentSuitcase !== 3) {
+        return Response.json({ error: "INICIE A MALA 3 ANTES DA BIOS FINAL", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
       }
       const suitcaseGame = showState.snapshot().sceneZero.suitcaseGame;
       const result = action === "morel-bios-start"
@@ -1756,8 +1754,8 @@ export async function POST(request) {
 
     if (action === "suitcase-instagram-next") {
       const session = showState.privateSnapshot().sceneZero.suitcaseGame?.instagram;
-      if (!session?.currentProfile) return Response.json({ error: "INSTAGRAM DA MALA 3 NÃO INICIADO" }, { status: 409 });
-      if (session.paused) return Response.json({ error: "INSTAGRAM DA MALA 3 ESTÁ PAUSADO" }, { status: 409 });
+      if (!session?.currentProfile) return Response.json({ error: "INSTAGRAM DA MALA 1 NÃO INICIADO" }, { status: 409 });
+      if (session.paused) return Response.json({ error: "INSTAGRAM DA MALA 1 ESTÁ PAUSADO" }, { status: 409 });
       const nextIndex = (session.currentPostIndex || 0) + 1;
       if (nextIndex > (session.maxPosts || 10)) return Response.json({ error: "LIMITE DE 10 POSTS ATINGIDO", sceneZero: showState.snapshot().sceneZero }, { status: 409 });
       try {
@@ -1794,16 +1792,16 @@ export async function POST(request) {
       const controller = getExistingInstagramController();
       if (controller) await controller.stopAllRoutines();
       const result = showState.controlSceneZero("instagram-session-pause", body, { source: "operator" });
-      return Response.json({ message: "INSTAGRAM DA MALA 3 PAUSADO", sceneZero: result.state });
+      return Response.json({ message: "INSTAGRAM DA MALA 1 PAUSADO", sceneZero: result.state });
     }
 
     if (action === "suitcase-instagram-resume") {
       const session = showState.privateSnapshot().sceneZero.suitcaseGame?.instagram;
-      if (!session?.currentProfile) return Response.json({ error: "INSTAGRAM DA MALA 3 NÃO INICIADO" }, { status: 409 });
+      if (!session?.currentProfile) return Response.json({ error: "INSTAGRAM DA MALA 1 NÃO INICIADO" }, { status: 409 });
       showState.controlSceneZero("instagram-session-start", { profile: session.currentProfile }, { source: "operator" });
       try {
         await prepareSceneZeroInstagramPost(Math.max(1, session.currentPostIndex || 1));
-        return Response.json({ message: "INSTAGRAM DA MALA 3 RETOMADO", sceneZero: showState.snapshot().sceneZero });
+        return Response.json({ message: "INSTAGRAM DA MALA 1 RETOMADO", sceneZero: showState.snapshot().sceneZero });
       } catch (error) {
         showState.controlSceneZero("instagram-session-error", { error: error.message }, { source: "system" });
         return Response.json({ error: error.message, sceneZero: showState.snapshot().sceneZero }, { status: 502 });
@@ -1814,7 +1812,7 @@ export async function POST(request) {
       const controller = getExistingInstagramController();
       if (controller) await controller.stopAllRoutines();
       const result = showState.controlSceneZero("instagram-session-stop", body, { source: "operator" });
-      return Response.json({ message: "INSTAGRAM DA MALA 3 INTERROMPIDO", sceneZero: result.state });
+      return Response.json({ message: "INSTAGRAM DA MALA 1 INTERROMPIDO", sceneZero: result.state });
     }
 
     if (["timer-start", "timer-pause", "timer-resume", "timer-restart", "timer-cancel"].includes(action)) {

@@ -20,7 +20,7 @@ async function main() {
   assert.equal(state.phase, "WAITING_FOR_SUITCASE_SELECTION");
   assert(started.events.some((event) => event.type === "FULLSCREEN_TEXT"));
 
-  for (const [label, id] of [["Esquerda",3],["Centro",2],["Direita",1]]) {
+  for (const [label, id] of [["1",1],["2",2],["3",3]]) {
     const selected=director.advanceSuitcases(state,label);
     assert.equal(selected.state.selectedSuitcase,id);
     assert(selected.events.some(event=>event.payload?.text===`MALA ${label.toUpperCase()}`));
