@@ -14,9 +14,39 @@ Coloque as fotos reais em `assets/publico/`. A pasta aceita arquivos regulares `
 
 ## Operação e imagem
 
-Em `/pos-demo/controle`, use a alça na borda direita para abrir/recolher os parâmetros e clique em **Gerar point cloud**. O botão fica desabilitado enquanto o processo calcula profundidade e pontos; andamento, nome do arquivo e erros são privados. Cartas, digitação e intervalos continuam em paralelo. Outra geração bem-sucedida substitui a nuvem; pasta vazia, foto ilegível ou falha do conversor mantêm a nuvem anterior da mesma apresentação. **RESET** reinicia as cartas e a revelação da nuvem desde os pontos próximos, reutilizando os dados 3D existentes e preservando os ajustes. STOP ALL, emergência e troca/recuperação de sessão cancelam trabalhos pendentes.
+Em `/pos-demo/controle`, use a alça na borda direita para abrir/recolher os parâmetros e clique em **Gerar point cloud**. O botão fica desabilitado enquanto o processo calcula profundidade e pontos; andamento, nome do arquivo e erros são privados. Cartas, digitação e intervalos continuam em paralelo. Outra geração bem-sucedida substitui a nuvem; pasta vazia, foto ilegível ou falha do conversor mantêm a nuvem anterior da mesma apresentação. **Reiniciar passeio** volta ao início do movimento selecionado, mantendo cartas, foto convertida e ajustes. **RESET** reinicia as cartas e o passeio, também reutilizando os dados 3D e preservando os ajustes. STOP ALL, emergência e troca/recuperação de sessão cancelam trabalhos pendentes.
 
-As duas rotas compartilham `PostDemo`. A nuvem surge sem reload em uma coluna de **28% à direita**, com altura de **72svh**, ao lado da fala e sem deslocar a carta. A câmera começa muito próxima, vendo pontos isolados, e se afasta durante **12 segundos** até revelar a plateia. O afastamento final é **20% menor** que o enquadramento anterior; esse alvo mais próximo continua após a entrada, mantendo a nuvem maior. A densidade cresce gradualmente junto com o afastamento, para o rosto não aparecer antes da revelação. A rotação lateral mantém cerca de **8°** para cada lado, agora com ciclo de **22 segundos** (duas vezes mais rápida). A respiração de distância foi reduzida para **1,5%**. O tamanho dos pontos compensa a câmera mais próxima para preservar sua aparência fina.
+As duas rotas compartilham `PostDemo`. A nuvem ocupa uma coluna de **28% à direita**, com altura de **72svh**, ao lado da fala e sem deslocar a carta. O padrão **Revelar e passear** faz zoom-in durante **2 segundos no escuro**, revela os pontos com afastamento gradual durante **18 segundos** e então inicia um passeio contínuo de **48 segundos por ciclo**. A entrada escura começa depois que os dados estão prontos; o tempo até o primeiro quadro visível inclui essa escolha cênica. A distância final padrão é **0,8×** o enquadramento de referência, conservando a nuvem próxima e grande. Os pontos mantêm sua aparência fina quando a câmera se aproxima.
+
+### Presets e controles privados
+
+O painel **NUVEM 3D** tem seletor de preset, chaves de movimento automático e respiração do shader e dois grupos recolhíveis: **Câmera e passeio** e **Shader e pontos**. Os controles ficam somente em `/pos-demo/controle`; a projeção recebe os valores necessários para renderizar. Os ajustes salvam automaticamente em `postDemo.config.pointCloud`, por meio das preferências do operador, e voltam na próxima sessão. Eles são independentes do bot e do Tarô.
+
+| Preset | Movimento |
+| --- | --- |
+| **Revelar e passear** — padrão | Zoom-in no escuro, revelação com zoom-out gradual e passeio panorâmico. |
+| Passeio panorâmico | Desloca câmera e foco pelo espaço, com variações pequenas de ângulo e profundidade. |
+| Entre as fileiras | Percorre a plateia verticalmente, aproximando e afastando a câmera. |
+| Travessia lateral | Passeia de um lado ao outro da plateia. |
+| Só rotacionar | Mantém a câmera no centro e gira a nuvem lateralmente, sem passeio ou zoom automático. |
+| Aproximar e afastar | Varia apenas a distância da câmera. |
+| Câmera parada | Mantém o enquadramento; a respiração continua se estiver habilitada. |
+
+Selecionar outro preset reinicia somente o passeio selecionado. **Reiniciar passeio** publica a ação `cloud-replay`, sem zerar cartas nem reconverter a foto. Ambos compartilham o início do movimento entre as janelas. As outras alterações aplicam-se ao vivo, sem recriar o canvas ou os atributos da geometria.
+
+| Controle de câmera | Padrão |
+| --- | ---: |
+| Tempo no escuro | 2 s |
+| Tempo de revelação | 18 s |
+| Distância inicial | 0,05× |
+| Distância final / zoom-out | 0,8× |
+| Duração do passeio | 48 s |
+| Amplitude do passeio | 14% do maior lado da nuvem |
+| Duração do giro | 22 s |
+| Amplitude do giro | Até 8° para cada lado; menor nos passeios |
+| Espera após navegação manual | 2 s |
+
+Distâncias menores aproximam a câmera; tempos maiores tornam o movimento mais lento. O período do giro é independente da duração do caminho nos passeios panorâmico, lateral e pelas fileiras. Os campos continuam editáveis quando o movimento ou o shader estão desligados, permitindo preparar o próximo estado.
 
 A malha usa até **1024 amostras no maior lado**, preservando a proporção da foto e sem ampliar imagens menores. Em fotos grandes, isso produz cerca de **4× mais pontos** que a malha anterior de 512, até **1.048.576 pontos** em imagens quadradas. O diâmetro base dos pontos passou a **60% do anterior**, com limite físico de **1–6 pixels** no canvas, para uma nuvem mais densa e pontos menores.
 
@@ -30,7 +60,7 @@ Cada ponto oscila em torno da posição original, com fases espaciais coerentes 
 
 O RGB original da foto é usado diretamente, **sem a LUT de clareamento anterior**. O ganho é escalar, preservando as proporções entre os canais; a margem até o branco (`1 - max(RGB)`) limita pulso e realces para evitar saturar os rostos iluminados. Brilho, tamanho e oscilação continuam enquanto o operador gira, aproxima ou desloca a nuvem: `uTime` avança fora dos ramos de navegação manual.
 
-Os valores ficam em `POINT_CLOUD_ANIMATION`, em `lib/post-demo/pointCloudAnimation.js`. São ajustes no código, sem controles na projeção e sem reconverter a foto; recarregar a tela aplica a calibração à nuvem existente.
+O grupo **Shader e pontos** permite calibrar diretamente a nuvem existente, sem reconverter a foto. Valores e limites aceitos estão em `lib/post-demo/pointCloudSettings.js`; os shaders e seus padrões de base estão em `lib/post-demo/pointCloudAnimation.js`. A alteração do período do pulso ou da velocidade da oscilação conserva a fase atual, para evitar um salto na animação.
 
 | Parâmetro | Padrão | Unidade / efeito |
 | --- | ---: | --- |
@@ -41,17 +71,17 @@ Os valores ficam em `POINT_CLOUD_ANIMATION`, em `lib/post-demo/pointCloudAnimati
 | `localAmplitude` | 0,0025 | Fração máxima do maior lado da geometria (0,25%) |
 | `motionSpeed` | 0,85 | Radianos por segundo, com harmônicos mais lentos nos três eixos |
 | `rowPhaseSpread` | 1,65π | Radianos de defasagem ao longo das fileiras |
-| `rotationPeriodSeconds` | 22 | Segundos por ciclo do giro lateral |
-| `rotationAmplitude` | 0,14 | Radianos para cada lado, cerca de 8° |
+| `pointSize` | 1 | Multiplicador do tamanho dos pontos |
+| `brightness` | 1 | Multiplicador de brilho com proteção dos realces |
 
-Zerar `pulseIntensity`, `pulseSize`, `highlightIntensity` ou `localAmplitude` desativa o respectivo efeito. O shader limita as intensidades de luz e realce e a variação de tamanho; a amplitude local exige calibração visual na escala do projetor.
+Zerar `pulseIntensity`, `pulseSize`, `highlightIntensity` ou `localAmplitude` desativa o respectivo efeito. A chave **Respiração do shader** desliga pulso, realces e oscilação juntos, preservando os valores escolhidos. O shader limita as intensidades de luz e realce e a variação de tamanho; a amplitude local exige calibração visual na escala do projetor.
 
-Nuvens já existentes mantêm sua quantidade de pontos: clique novamente em **Gerar point cloud** para aplicar a densidade nova. **RESET** apenas reinicia a sequência e a revelação usando a mesma nuvem; não reconverte a foto.
+Nuvens já existentes mantêm sua quantidade de pontos: clique novamente em **Gerar point cloud** para aplicar uma mudança de densidade do conversor. Trocar preset, calibrar o shader, **Reiniciar passeio** e **RESET** reutilizam os dados 3D existentes.
 
 - Arrastar: giro 3D.
 - Roda do mouse: zoom.
 - Shift + arrastar ou botão direito: deslocamento.
-- Depois de 1,8 segundo sem interação, o movimento automático volta gradualmente, preservando o enquadramento manual.
+- Depois da espera configurada (padrão 2 segundos), o movimento automático volta gradualmente a partir do enquadramento manual. Desligar **Movimento automático da nuvem** conserva a vista escolhida. O relógio e a respiração do shader continuam durante giro, zoom e deslocamento manuais.
 
 Não há textura fotográfica nem plano 2D: são pontos XYZ com RGB, renderizados por Three.js/WebGL. A profundidade é uma estimativa monocular relativa; não é um escaneamento volumétrico calibrado nem reconstrói o verso das pessoas. A oscilação pequena conserva a legibilidade da foto de origem. A navegação manual é local a cada janela; a referência à nuvem é compartilhada por estado/SSE.
 
@@ -59,7 +89,7 @@ Não há textura fotográfica nem plano 2D: são pontos XYZ com RGB, renderizado
 
 A foto original fica no servidor. `/api/game-assets` bloqueia `publico/`, inclusive caminhos codificados, aliases por symlink e pedidos Range. O servidor cria uma cópia privada apenas durante a conversão, apaga-a ao terminar e mantém somente os dados 3D necessários em `<runtime>/point-clouds/<hash-da-sessão>/<id>/points.bin`. Não gera vídeo, HTML, PLY ou imagem auxiliar. Nenhuma foto, profundidade ou nuvem vai à API de texto.
 
-O formato binário `CPPC` tem cabeçalho de 16 bytes (assinatura, versão 1, quantidade, stride 15) e pontos float32 little-endian XYZ + RGB8. O decodificador valida formato, tamanho, coordenadas e limite de **1.048.576 pontos**, mantendo compatibilidade com as nuvens anteriores. O estado público recebe **apenas `{id, url}`**, sem caminho, foto original, nome do arquivo, progresso ou erro. O endpoint binário exige a sessão e o ID atualmente publicados, revalidando-os depois da leitura do arquivo.
+O formato binário `CPPC` tem cabeçalho de 16 bytes (assinatura, versão 1, quantidade, stride 15) e pontos float32 little-endian XYZ + RGB8. O decodificador valida formato, tamanho, coordenadas e limite de **1.048.576 pontos**, mantendo compatibilidade com as nuvens anteriores. A referência pública à nuvem continua sendo **apenas `{id, url}`**, sem caminho, foto original, nome do arquivo, progresso ou erro. Separadamente, `cloudPresentation` leva somente configurações de renderização e o token/data de início do passeio; personalidade, modelo e demais ajustes privados do bot ficam fora desse objeto. O endpoint binário exige a sessão e o ID atualmente publicados, revalidando-os depois da leitura do arquivo.
 
 Cada trabalho captura o ID da apresentação e um token exclusivo. Antes de publicar progresso ou resultado, valida ambos. Uma conversão atrasada não aparece em outra apresentação, mesmo se o processo ignorar o cancelamento. Apresentação nova não recebe referência anterior; URL antiga retorna 404. A recuperação pausada da mesma sessão pode reutilizar uma nuvem já concluída presente no disco; nunca retoma uma conversão interrompida.
 
@@ -69,6 +99,8 @@ Cada trabalho captura o ID da apresentação e um token exclusivo. Antes de publ
 npm run test:post-demo:point-cloud
 npm run test:post-demo:point-cloud:browser
 npm run test:post-demo:point-cloud:animation
+npm run test:post-demo:point-cloud:controls
+npm run test:post-demo:point-cloud:motion
 ```
 
 O teste de navegador usa **Chromium completo em headless novo** (`channel: "chromium"`), com `chromiumSandbox: true` e remoção do argumento padrão `--enable-unsafe-swiftshader`. O relatório registra o renderer WebGL e médias de quadros por segundo nas duas janelas; escolher o canal completo, por si só, não comprova aceleração de hardware.
@@ -79,7 +111,9 @@ O navegador usa build/servidor isolados na porta 3331, provedor textual simulado
 
 O comando `test:post-demo:point-cloud:animation` acrescenta pelo menos **dois ciclos completos em vista frontal e dois durante o giro**, observando o `uTime` real enviado ao WebGL. Exercita giro, zoom e deslocamento manuais com o relógio ativo; verifica defasagem entre faixas, pixels no pico/vale, canvas persistente e **zero uploads `ARRAY_BUFFER`/`bufferSubData` durante os ciclos**. Salva `animation-report.json` e PNGs de pico/vale para inspeção de rostos, fileiras e contornos. As métricas não substituem a leitura visual na projeção física.
 
-O shader atual passou na auditoria de 12/11/2026: **10,25 segundos de frente e 10,26 segundos no giro**, dois ciclos de 5 segundos em cada vista. A defasagem entre faixas foi de **1,37/1,16 rad**, com o mesmo canvas, zero reenvios dos atributos e relógio ativo na navegação manual. No pico, branco próximo da saturação ocupou **0,0326%/0,00563%** dos pixels iluminados. A inspeção dos PNGs de pico/vale manteve rostos e fileiras legíveis. A GPU Metal Apple M4 Pro mediu **120/121 fps** nas duas janelas. Evidências temporárias: [auditoria da animação](/var/folders/zh/ffx555rn6wb0374j4z23s3jr0000gn/T/caixa-point-cloud-browser-hGXerW/animation-report.json) e [relatório geral](/var/folders/zh/ffx555rn6wb0374j4z23s3jr0000gn/T/caixa-point-cloud-browser-hGXerW/report.json), que registra 588.800/589.824 pontos e 1.426/632 ms até o primeiro quadro. **Projetor físico não testado.**
+`test:post-demo:point-cloud:controls` combina a auditoria de animação com os controles privados: presets, sincronização com a projeção, ajustes ao vivo, reinício independente do passeio e persistência. `test:post-demo:point-cloud:motion` verifica matematicamente os caminhos e sua continuidade nas transições e limites de ciclo, sem navegador ou modelo.
+
+Em 12/11/2026, a implementação com controles passou na auditoria completa: **sete presets**, ajustes privados ao vivo, persistência, replay independente das cartas e navegação manual. O teste usou Core ML local e provedor textual simulado; 588.800/589.824 pontos, **120/121 fps** nas duas janelas com Metal Apple M4 Pro. Clique até o primeiro quadro visível: **4.060/3.682 ms**, incluindo o escuro e o início da revelação; conversão: 726/382 ms. A animação foi observada por **10,26 segundos de frente e 10,25 segundos no giro**, dois ciclos de 5 segundos por vista, com zero reenvios dos atributos. A inspeção dos PNGs conservou rostos e fileiras legíveis. Evidências temporárias: [relatório completo](/var/folders/zh/ffx555rn6wb0374j4z23s3jr0000gn/T/caixa-point-cloud-browser-3K2gPo/report.json), [controles](/var/folders/zh/ffx555rn6wb0374j4z23s3jr0000gn/T/caixa-point-cloud-browser-3K2gPo/point-cloud-controls-report.json) e [animação](/var/folders/zh/ffx555rn6wb0374j4z23s3jr0000gn/T/caixa-point-cloud-browser-3K2gPo/animation-report.json). Unitários de movimento, pós-demo e preferências (incluindo processo novo), lint e brain check também passaram. **Projetor físico não testado.**
 
 Em 12/11/2026, a **malha de 1024 anterior à respiração no shader** passou no teste de navegador com o renderer `ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Pro, Unspecified Version)`. Evidência histórica: diretório temporário `caixa-point-cloud-browser-EZaCFT/report.json`.
 

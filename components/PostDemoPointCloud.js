@@ -1,14 +1,15 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { decodePointCloud } from "@/lib/post-demo/pointCloudFormat";
-import { POINT_CLOUD_ANIMATION as animation, pointCloudVertexShader, pointCloudFragmentShader } from "@/lib/post-demo/pointCloudAnimation";
+import { pointCloudVertexShader, pointCloudFragmentShader } from "@/lib/post-demo/pointCloudAnimation";
+import { normalizePointCloudSettings } from "@/lib/post-demo/pointCloudSettings";
+import { samplePointCloudMotion } from "@/lib/post-demo/pointCloudMotion";
 import styles from "./PostDemo.module.css";
 
-const FRAMING_SCALE = .8;
-
-export default function PostDemoPointCloud({ reference, onError }) {
-  const host = useRef(null), reportError = useRef(onError);
+export default function PostDemoPointCloud({ reference, view, onError }) {
+  const host = useRef(null), reportError = useRef(onError), live = useRef(null);
   reportError.current = onError;
+  live.current = { settings: normalizePointCloudSettings(view?.settings), playback: view?.playback };
   useEffect(() => {
     const abort = new AbortController(), element = host.current;
     let disposed = false, renderer, geometry, material, controls, observer, frame;
@@ -41,7 +42,7 @@ export default function PostDemoPointCloud({ reference, onError }) {
         geometry = new THREE.BufferGeometry(); geometry.setAttribute("position", new THREE.BufferAttribute(cloud.positions, 3));
         geometry.setAttribute("color", new THREE.BufferAttribute(cloud.colors, 3, true)); geometry.computeBoundingBox();
         const size = geometry.boundingBox.getSize(new THREE.Vector3());
-        const largestSide = Math.max(size.x, size.y, size.z, .000001), localAmplitude = largestSide * animation.localAmplitude;
+        const largestSide = Math.max(size.x, size.y, size.z, .000001), initial = live.current.settings;
         const life = new Float32Array(cloud.count * 4), minimum = geometry.boundingBox.min;
         for (let index = 0; index < cloud.count; index++) {
           const offset = index * 3, x = (cloud.positions[offset] - minimum.x) / Math.max(size.x, .000001);
@@ -53,57 +54,106 @@ export default function PostDemoPointCloud({ reference, onError }) {
           life.set([x * 18 + y * 13 + z * 9 + random * .6, y * .8 + (1 - z) * .2, random, .45 + .55 * (1 - luminance)], index * 4);
         }
         geometry.setAttribute("aLife", new THREE.BufferAttribute(life, 4));
-        geometry.computeBoundingSphere(); geometry.boundingSphere.radius += localAmplitude;
+        geometry.computeBoundingSphere(); geometry.boundingSphere.radius += largestSide * .008;
         material = new THREE.ShaderMaterial({ vertexColors: true, uniforms: {
           pointSize: { value: 1.2 }, fitDistance: { value: 2 }, uTime: { value: 0 },
-          uPulsePeriod: { value: animation.pulsePeriodSeconds }, uPulseIntensity: { value: animation.pulseIntensity },
-          uPulseSize: { value: animation.pulseSize }, uHighlightIntensity: { value: animation.highlightIntensity },
-          uLocalAmplitude: { value: localAmplitude }, uMotionSpeed: { value: animation.motionSpeed }, uRowPhaseSpread: { value: animation.rowPhaseSpread }
+          uPulsePhaseOffset: { value: 0 }, uMotionPhaseOffset: { value: 0 },
+          uPulsePeriod: { value: initial.pulsePeriodSeconds }, uPulseIntensity: { value: initial.pulseIntensity },
+          uPulseSize: { value: initial.pulseSize }, uHighlightIntensity: { value: initial.highlightIntensity },
+          uLocalAmplitude: { value: largestSide * initial.localAmplitude }, uMotionSpeed: { value: initial.motionSpeed },
+          uRowPhaseSpread: { value: initial.rowPhaseSpread }, uBrightness: { value: initial.brightness }, uRevealOpacity: { value: 0 }
         }, vertexShader: pointCloudVertexShader, fragmentShader: pointCloudFragmentShader });
         const points = new THREE.Points(geometry, material); scene.add(points);
         controls = new orbit.OrbitControls(camera, canvas); controls.enableDamping = true; controls.dampingFactor = .1;
         controls.minDistance = .055; controls.maxDistance = 30; controls.rotateSpeed = .45; controls.panSpeed = .65; controls.zoomSpeed = .7;
         controls.screenSpacePanning = true; controls.listenToKeyEvents(canvas);
-        let fitDistance = 2, interacting = false, introCancelled = false, lastManual = -Infinity, baseDistance = 2;
+        let fitDistance = 2, basePointSize = 1.2, interacting = false, introCancelled = false, lastManual = -Infinity;
         const resize = () => {
           const rect = element.getBoundingClientRect(), width = Math.max(1, rect.width), height = Math.max(1, rect.height);
           renderer.setSize(width, height, false); camera.aspect = width / height; camera.updateProjectionMatrix();
           fitDistance = Math.max(size.y, size.x / camera.aspect) / (2 * Math.tan(Math.PI / 8)) * 1.15 + size.z * .45;
-          material.uniforms.fitDistance.value = fitDistance * FRAMING_SCALE;
-          material.uniforms.pointSize.value = Math.max(.9, Math.min(2.1, height / 500)) * renderer.getPixelRatio();
+          basePointSize = Math.max(.9, Math.min(2.1, height / 500)) * renderer.getPixelRatio();
         };
         resize(); observer = new ResizeObserver(resize); observer.observe(element);
-        camera.position.set(0, 0, Math.max(.075, fitDistance * .07)); baseDistance = fitDistance * FRAMING_SCALE;
+        camera.position.set(0, 0, fitDistance * initial.endDistance);
         controls.update();
-        const start = performance.now(); let previous = start, frames = 0, lastMetrics = 0;
+        const start = performance.now(), startedWall = performance.timeOrigin + start;
+        let previous = start, frames = 0, lastMetrics = 0, playbackToken = null, firstPose = true, manualAnchor = null;
+        let wasMotionEnabled = initial.motionEnabled, opacity = 0, visibleFraction = 0;
         controls.addEventListener("start", () => { interacting = true; introCancelled = true; lastManual = performance.now(); canvas.focus({ preventScroll: true }); });
         controls.addEventListener("end", () => { interacting = false; lastManual = performance.now(); });
-        const direction = new THREE.Vector3();
+        const desiredCamera = new THREE.Vector3(), desiredTarget = new THREE.Vector3();
+        const dampUniform = (name, value, alpha) => {
+          const difference = value - material.uniforms[name].value;
+          material.uniforms[name].value = Math.abs(difference) < 1e-7 ? value : material.uniforms[name].value + difference * alpha;
+        };
         const draw = now => {
           if (disposed) return;
           const elapsed = (now - start) / 1000, dt = Math.min(.05, (now - previous) / 1000); previous = now;
           material.uniforms.uTime.value = elapsed;
-          const quiet = (now - lastManual) / 1000, blend = interacting ? 0 : Math.max(0, Math.min(1, (quiet - 1.8) / 2));
-          if (!introCancelled && elapsed < 12) {
-            const phase = elapsed / 12, ease = phase * phase * (3 - 2 * phase);
-            camera.position.set(0, 0, fitDistance * (.07 + (FRAMING_SCALE - .07) * ease));
-            geometry.setDrawRange(0, Math.max(1, Math.floor(cloud.count * (.002 + .998 * ease))));
-          } else if (!interacting && quiet > 1.8) {
-            const distance = (introCancelled ? baseDistance : fitDistance * FRAMING_SCALE) * (1 + .015 * Math.sin(elapsed / 9));
-            direction.copy(camera.position).sub(controls.target).normalize();
-            const current = camera.position.distanceTo(controls.target), target = current + (distance - current) * (1 - Math.exp(-dt * blend));
-            camera.position.copy(controls.target).addScaledVector(direction, target);
+          const { settings, playback } = live.current, wallNow = performance.timeOrigin + now;
+          const token = playback?.token || reference.id;
+          if (token !== playbackToken) {
+            playbackToken = token; introCancelled = interacting; lastManual = interacting ? now : -Infinity; manualAnchor = null;
+            canvas.dataset.ready = "false"; delete canvas.dataset.firstFrameAt;
+            if (settings.preset === "reveal-tour") { opacity = 0; visibleFraction = 0; }
           }
-          if (introCancelled || elapsed >= 12) geometry.setDrawRange(0, cloud.count);
-          if (blend > 0) { points.rotation.y += (Math.sin(elapsed * Math.PI * 2 / animation.rotationPeriodSeconds) * animation.rotationAmplitude - points.rotation.y) * (1 - Math.exp(-dt * blend * 2)); }
+          const epoch = Date.parse(playback?.startedAt), motionTime = Math.max(0, (wallNow - (Number.isFinite(epoch) ? epoch : startedWall)) / 1000);
+          const pose = samplePointCloudMotion(introCancelled && settings.preset === "reveal-tour" ? { ...settings, preset: "tour" } : settings, motionTime);
+          const quiet = (now - lastManual) / 1000, manual = interacting || quiet < settings.resumeDelaySeconds;
+          const alpha = 1 - Math.exp(-dt * 4), enabled = settings.shaderEnabled ? 1 : 0;
+          material.uniforms.uPulsePhaseOffset.value += elapsed * Math.PI * 2 * (1 / material.uniforms.uPulsePeriod.value - 1 / settings.pulsePeriodSeconds);
+          material.uniforms.uMotionPhaseOffset.value += elapsed * (material.uniforms.uMotionSpeed.value - settings.motionSpeed);
+          material.uniforms.uPulsePeriod.value = settings.pulsePeriodSeconds;
+          material.uniforms.uMotionSpeed.value = settings.motionSpeed;
+          dampUniform("fitDistance", fitDistance * settings.endDistance, alpha);
+          dampUniform("pointSize", basePointSize * settings.pointSize, alpha);
+          dampUniform("uPulseIntensity", settings.pulseIntensity * enabled, alpha);
+          dampUniform("uPulseSize", settings.pulseSize * enabled, alpha);
+          dampUniform("uHighlightIntensity", settings.highlightIntensity * enabled, alpha);
+          dampUniform("uLocalAmplitude", largestSide * settings.localAmplitude * enabled, alpha);
+          dampUniform("uRowPhaseSpread", settings.rowPhaseSpread, alpha);
+          dampUniform("uBrightness", settings.brightness, alpha);
+
+          desiredCamera.set(pose.camera[0] * largestSide, pose.camera[1] * largestSide, pose.camera[2] * fitDistance);
+          desiredTarget.set(...pose.target).multiplyScalar(largestSide);
+          let desiredYaw = pose.yaw;
+          if (!settings.motionEnabled || wasMotionEnabled !== settings.motionEnabled) introCancelled = true;
+          if (manualAnchor) {
+            const direction = manualAnchor.camera.clone().sub(manualAnchor.target).normalize();
+            desiredCamera.copy(manualAnchor.camera).addScaledVector(direction, (pose.camera[2] - manualAnchor.pose.camera[2]) * fitDistance);
+            desiredCamera.x += (pose.camera[0] - manualAnchor.pose.camera[0]) * largestSide;
+            desiredCamera.y += (pose.camera[1] - manualAnchor.pose.camera[1]) * largestSide;
+            desiredTarget.copy(manualAnchor.target).add(new THREE.Vector3(...pose.target).sub(new THREE.Vector3(...manualAnchor.pose.target)).multiplyScalar(largestSide));
+            desiredYaw = manualAnchor.yaw + pose.yaw - manualAnchor.pose.yaw;
+          }
+          if (firstPose) {
+            camera.position.copy(desiredCamera); controls.target.copy(desiredTarget); points.rotation.y = desiredYaw;
+            opacity = pose.opacity; visibleFraction = pose.reveal; firstPose = false;
+          } else if (!manual && settings.motionEnabled && settings.preset !== "still") {
+            const resumeBlend = Number.isFinite(lastManual) ? Math.max(0, Math.min(1, (quiet - settings.resumeDelaySeconds) / 2)) : 1;
+            camera.position.lerp(desiredCamera, alpha * resumeBlend); controls.target.lerp(desiredTarget, alpha * resumeBlend);
+            points.rotation.y += (desiredYaw - points.rotation.y) * alpha * resumeBlend;
+          }
           controls.update();
-          if (introCancelled && (interacting || quiet < 1.8)) baseDistance = camera.position.distanceTo(controls.target);
+          if (manual || !settings.motionEnabled || wasMotionEnabled !== settings.motionEnabled) {
+            manualAnchor = { camera: camera.position.clone(), target: controls.target.clone(), yaw: points.rotation.y, pose };
+          }
+          wasMotionEnabled = settings.motionEnabled;
+          const show = introCancelled || !settings.motionEnabled;
+          opacity += ((show ? 1 : pose.opacity) - opacity) * alpha;
+          visibleFraction += ((show ? 1 : pose.reveal) - visibleFraction) * alpha;
+          material.uniforms.uRevealOpacity.value = opacity;
+          geometry.setDrawRange(0, Math.max(0, Math.min(cloud.count, Math.floor(cloud.count * visibleFraction))));
           renderer.render(scene, camera); frames++;
-          if (frames === 1) { canvas.dataset.firstFrameAt = String(performance.timeOrigin + performance.now()); canvas.dataset.ready = "true"; }
+          if (canvas.dataset.ready !== "true" && opacity > .01 && geometry.drawRange.count > 0) { canvas.dataset.firstFrameAt = String(performance.timeOrigin + performance.now()); canvas.dataset.ready = "true"; }
           if (now - lastMetrics > 180 || frames === 1) {
             lastMetrics = now; canvas.dataset.frames = String(frames); canvas.dataset.yaw = points.rotation.y.toFixed(4);
             canvas.dataset.distance = camera.position.distanceTo(controls.target).toFixed(4); canvas.dataset.pan = controls.target.toArray().map(value => value.toFixed(3)).join(",");
-            canvas.dataset.camera = camera.position.toArray().map(value => value.toFixed(3)).join(","); canvas.dataset.phase = !introCancelled && elapsed < 12 ? "reveal" : interacting || quiet < 1.8 ? "manual" : "automatic";
+            canvas.dataset.camera = camera.position.toArray().map(value => value.toFixed(3)).join(",");
+            canvas.dataset.phase = manual ? "manual" : show || pose.phase === "still" ? "automatic" : pose.phase;
+            canvas.dataset.preset = settings.preset; canvas.dataset.playbackToken = playbackToken;
+            canvas.dataset.revealOpacity = opacity.toFixed(4); canvas.dataset.motionElapsed = motionTime.toFixed(3);
           }
           frame = requestAnimationFrame(draw);
         };

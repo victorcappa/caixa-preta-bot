@@ -7,6 +7,8 @@
     "test:post-demo:point-cloud": "node --no-warnings scripts/post-demo-point-cloud-test.js",
     "test:post-demo:point-cloud:browser": "node --no-warnings scripts/post-demo-point-cloud-browser-test.js",
     "test:post-demo:point-cloud:animation": "node --no-warnings scripts/post-demo-point-cloud-browser-test.js --animation",
+    "test:post-demo:point-cloud:controls": "node --no-warnings scripts/post-demo-point-cloud-browser-test.js --controls --animation",
+    "test:post-demo:point-cloud:motion": "node --no-warnings scripts/post-demo-point-cloud-motion-test.js",
     "test:post-demo:cycle": "node --no-warnings scripts/post-demo-cycle-test.js",
     "test:post-demo:combined": "node --no-warnings scripts/post-demo-cycle-test.js --combined",
     "test:post-demo:cycle:live": "node --no-warnings --env-file-if-exists=.env.local scripts/post-demo-cycle-test.js --live",

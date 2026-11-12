@@ -29,6 +29,10 @@ export async function POST(request) {
     else if (body.action === "pause") actor.pause();
     else if (body.action === "resume") actor.resume();
     else if (body.action === "restart") actor.restart();
+    else if (body.action === "cloud-replay") {
+      if (!actor.replayCloud) return unavailable();
+      actor.replayCloud();
+    }
     else if (body.action === "config") {
       if (actor.settingsVersion !== POST_DEMO_SETTINGS_VERSION) return unavailable();
       actor.config(body.config && typeof body.config === "object" && !Array.isArray(body.config) ? body.config : { cardHoldMs: body.cardHoldMs });

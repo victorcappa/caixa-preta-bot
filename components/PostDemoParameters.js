@@ -5,17 +5,23 @@ import { OPENAI_MODEL_OPTIONS } from "@/lib/openaiModels";
 import { ROBOT_DISPLAY_FONTS } from "@/lib/robot-sound/state";
 import { EXPRESSION_PARAMETERS } from "@/lib/operatorPublic";
 import PublicOperatorPanel from "./PublicOperatorPanel";
+import PostDemoPointCloudControls from "./PostDemoPointCloudControls";
 
 const merge = (base, patch) => ({ ...base, ...patch,
   ...(base.personality || patch.personality ? { personality: { ...base.personality, ...patch.personality } } : {}),
-  ...(base.profile || patch.profile ? { profile: { ...base.profile, ...patch.profile } } : {}) });
+  ...(base.profile || patch.profile ? { profile: { ...base.profile, ...patch.profile } } : {}),
+  ...(base.pointCloud || patch.pointCloud ? { pointCloud: { ...base.pointCloud, ...patch.pointCloud } } : {}) });
 
-export default function PostDemoParameters({ config, sessionId }) {
+export default function PostDemoParameters({ config, sessionId, onReplayCloud, replayDisabled = false }) {
   const [value, setValue] = useState(() => normalizePostDemoConfig(config)), [error, setError] = useState("");
-  const pending = useRef({}), flight = useRef(null), timer = useRef(null), mounted = useRef(true);
+  const pending = useRef({}), flight = useRef(null), timer = useRef(null), mounted = useRef(true), waitForSave = useRef(null);
   const save = useCallback(async function save() {
-    if (flight.current || !Object.keys(pending.current).length || !sessionId) return;
+    clearTimeout(timer.current);
+    if (flight.current) return waitForSave.current;
+    if (!Object.keys(pending.current).length || !sessionId) return { ok: true };
     const patch = pending.current; pending.current = {}; flight.current = patch;
+    let finished;
+    waitForSave.current = new Promise(resolve => { finished = resolve; });
     let succeeded = false;
     try {
       const response = await fetch("/api/post-demo", { method: "POST", headers: { "Content-Type": "application/json" },
@@ -28,9 +34,8 @@ export default function PostDemoParameters({ config, sessionId }) {
       pending.current = merge(patch, pending.current);
       if (mounted.current) setError(failure.message || "Parâmetros não salvos.");
     } finally { flight.current = null; }
-    if (succeeded && Object.keys(pending.current).length) {
-      if (mounted.current) timer.current = setTimeout(save, 150); else void save();
-    }
+    const next = succeeded && Object.keys(pending.current).length ? await save() : null;
+    const result = { ok: succeeded && next?.ok !== false }; finished(result); return result;
   }, [sessionId]);
   useEffect(() => {
     if (config) setValue(patchPostDemoConfig(config, merge(flight.current || {}, pending.current)));
@@ -45,6 +50,8 @@ export default function PostDemoParameters({ config, sessionId }) {
     clearTimeout(timer.current); timer.current = setTimeout(save, 150);
   }
   return <section aria-label="Parâmetros exclusivos do pós-demo">
+    <PostDemoPointCloudControls value={value.pointCloud} onChange={patch => change({ pointCloud: patch })} onFlush={() => void save()}
+      disabled={!config} replayDisabled={replayDisabled} onReplay={async () => { const saved = await save(); if (saved.ok) await onReplayCloud?.(); }} />
     <h3>RITMO DO PÓS-DEMO</h3>
     {[["typingIntervalMs", "Tempo por letra do pós-demo", 20, 200, 5],
       ["typingPauseMs", "Pausa na pontuação do pós-demo", 0, 2000, 50],

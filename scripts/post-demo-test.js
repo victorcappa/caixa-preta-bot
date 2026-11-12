@@ -35,6 +35,12 @@ try {
   const { getRegisteredAudienceNames } = await import("../lib/participants.js");
   const { saveTrainingExample, listTrainingExamples } = await import("../lib/training.js");
   const { postDemoContext, validatePostDemoTurn } = await import("../lib/post-demo/context.js");
+  const { normalizePointCloudSettings } = await import("../lib/post-demo/pointCloudSettings.js");
+  const cloudDefaults = normalizePointCloudSettings();
+  assert.equal(cloudDefaults.preset, "reveal-tour"); assert.equal(cloudDefaults.startDarkSeconds, 2); assert.equal(cloudDefaults.revealSeconds, 18);
+  const boundedCloud = normalizePointCloudSettings({ preset: "unknown", endDistance: 99, localAmplitude: -1, pulseIntensity: "invalid", privatePath: "PRIVATE" });
+  assert.equal(boundedCloud.preset, "reveal-tour"); assert.equal(boundedCloud.endDistance, 1.8); assert.equal(boundedCloud.localAmplitude, 0); assert.equal(boundedCloud.pulseIntensity, .18);
+  assert(!("privatePath" in boundedCloud));
   assert.deepEqual(getRegisteredAudienceNames(), ["Alice", "Bob", "Clara"]);
   let state = createPostDemoState(), time = 100000, calls = 0, clockId = 0;
   const timers = new Map();
@@ -53,6 +59,13 @@ try {
   const response = { cardId: 0, text: "Uma máquina de ecos poderia criar outra margem para a obra.", question: "Quem poderia devolver esse vestígio?", sourcePages: [5, 12], memoryIds: [], audienceNames: [] };
   for (const patch of [{ cardId: 99 }, { sourcePages: [99] }, { memoryIds: ["fabricated"] }, { audienceNames: ["TEAM_SENTINEL"] }, { text: "Alice habita a ilha." }, { question: "Sem pergunta" }]) assert.throws(() => validatePostDemoTurn({ ...response, ...patch }, context));
   actor.finish(first, validatePostDemoTurn(response, context));
+  const beforeViewChangeCalls = calls;
+  actor.config({ pointCloud: { preset: "rotate", pulseIntensity: .27 } });
+  const firstViewSequence = state.pointCloudView.sequence;
+  actor.config({ pointCloud: { endDistance: .65 } });
+  assert.equal(state.config.pointCloud.preset, "rotate"); assert.equal(state.config.pointCloud.pulseIntensity, .27);
+  assert.equal(state.pointCloudView.sequence, firstViewSequence); assert.equal(calls, beforeViewChangeCalls);
+  assert.equal(postDemoSnapshot(state).cloudPresentation.settings.endDistance, .65);
   assert.equal(state.status, "presenting"); advance(60000); assert.equal(calls, 1, "tempo sozinho não pode pular uma fala ainda não exibida");
   assert.equal(actor.acknowledge("wrong"), false); assert.equal(actor.acknowledge(first.id), true); assert.equal(actor.acknowledge(first.id), false);
   advance(2000); actor.config({ cardHoldMs: 1000 }); advance(0); assert.equal(calls, 2, "o ritmo ajustado deve descontar o tempo já decorrido");
@@ -89,6 +102,10 @@ try {
   assert.equal(calls, 22); assert.equal(actor.resume(), false); assert.equal(actor.begin(), null); actor.enter([]); advance(60000); actor.pause();
   assert.equal(calls, 22, "não pode haver 23ª geração depois do encerramento"); assert.equal(state.status, "completed");
   assert.equal(restoredPostDemoState(state).status, "completed");
+  const beforeReplay = structuredClone({ rounds: state.rounds, count: state.totalRounds, config: state.config, status: state.status });
+  actor.replayCloud();
+  assert.deepEqual({ rounds: state.rounds, count: state.totalRounds, config: state.config, status: state.status }, beforeReplay);
+  assert(state.pointCloudView.startedAt); assert.equal(calls, 22);
   const savedConfig = structuredClone(state.config), savedCloud = { ...state.pointCloud, current: { id: "cloud-reset-fixture" } }, previousStartedAt = state.startedAt;
   state.pointCloud = savedCloud; advance(1); actor.restart();
   assert.equal(state.totalRounds, 0); assert.deepEqual(state.rounds, []); assert.deepEqual(state.usedCardIds, []);

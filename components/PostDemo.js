@@ -101,7 +101,7 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
       </> : <p className={styles.cursor} aria-label="Aguardando a ilha">_</p>}
       {state?.status === "generating" ? <span className={styles.drawing}>A PRÓXIMA MARGEM<span>_</span></span> : null}
       {state?.status === "failed" && (!controller || panelCollapsed) ? <p className={styles.suspended}>A ilha ficou em suspenso.</p> : null}
-      {state?.pointCloud ? <PostDemoPointCloud key={state.startedAt || "idle"} reference={state.pointCloud} onError={setCloudError} /> : null}
+      {state?.pointCloud ? <PostDemoPointCloud key={state.startedAt || "idle"} reference={state.pointCloud} view={state.cloudPresentation} onError={setCloudError} /> : null}
     </section>
     {controller && !panelCollapsed ? <aside className={styles.control} id="post-demo-parameters">
       <p role="status">{state?.status === "completed" ? "PÓS-DEMO CONCLUÍDO · 22/22" : state?.status === "generating" ? "CRIANDO PRÓXIMA CARTA" : state?.active ? "SEQUÊNCIA AUTOMÁTICA" : "PAUSADO"}</p>
@@ -122,7 +122,8 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
       {round ? <div className={styles.buttons} aria-label="Avaliar fragmento">{[["perfect", "PERFEITO"], ["almost", "QUASE"], ["bad", "RUIM"]].map(([rating, label]) => <button key={rating} type="button" disabled={busy} aria-pressed={details?.rounds.find(item => item.id === round.id)?.rating === rating} onClick={() => void action("rate", { roundId: round.id, rating })}>{label}</button>)}</div> : null}
       {error ? <p role="alert">{error}</p> : null}
       {panelError ? <p role="alert">{panelError}</p> : null}
-      <PostDemoParameters key={snapshot?.reliability.sessionId} config={details?.config} sessionId={snapshot?.reliability.sessionId} />
+      <PostDemoParameters key={snapshot?.reliability.sessionId} config={details?.config} sessionId={snapshot?.reliability.sessionId}
+        onReplayCloud={() => action("cloud-replay")} replayDisabled={busy || !state?.pointCloud} />
     </aside> : null}
   </main>;
 }

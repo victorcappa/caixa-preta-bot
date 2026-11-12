@@ -7,9 +7,11 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { prepareOperatorAudit } from "./operator-public-audit-utils.js";
 import { installPointCloudAnimationProbe, auditPointCloudAnimation } from "./post-demo-point-cloud-animation-audit.js";
+import { auditPointCloudControls } from "./post-demo-point-cloud-controls-audit.js";
 
 const repository = process.cwd(), root = await prepareOperatorAudit(), base = "http://127.0.0.1:3331";
 const auditBreathing = process.argv.includes("--animation");
+const auditControls = process.argv.includes("--controls");
 assert.notEqual(root, repository);
 const output = await fs.mkdtemp(path.join(os.tmpdir(), "caixa-point-cloud-browser-")), runtime = path.join(output, "runtime"), provider = path.join(output, "provider.json");
 // A failure switch belongs only to this isolated worker; the real converter/model are never modified.
@@ -53,7 +55,7 @@ try {
   await post("/api/post-demo", { action: "config", sessionId, config: { typingIntervalMs: 20, typingPauseMs: 0, cardHoldMs: 1000 } });
   browser = await chromium.launch({ channel: "chromium", headless: true, chromiumSandbox: true, ignoreDefaultArgs: ["--enable-unsafe-swiftshader"] });
   const context = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
-  if (auditBreathing) await installPointCloudAnimationProbe(context);
+  if (auditBreathing || auditControls) await installPointCloudAnimationProbe(context);
   projection = await context.newPage(); control = await context.newPage();
   for (const page of [projection, control]) page.on("pageerror", error => errors.push(error.message));
   const publicRequests = []; let projectionNavigations = 0;
@@ -92,6 +94,7 @@ try {
   assert(geometry[0].x >= geometry[1].right && geometry[1].x >= geometry[2].right); assert(geometry[0].right <= 1920);
   const firstDistance = Number(await canvas().getAttribute("data-distance"));
   await poll(async () => Number(await canvas().getAttribute("data-distance")) > firstDistance * 3, "revelação da plateia a partir dos pontos", 20000);
+  await poll(async () => await canvas().getAttribute("data-phase") === "automatic", "entrada no escuro e revelação completas", 30000);
   const firstYaw = await canvas().getAttribute("data-yaw");
   await poll(async () => Math.abs(Number(await canvas().getAttribute("data-yaw")) - Number(firstYaw)) > .005, "rotação lateral automática", 6000);
   const colored = await canvas().evaluate(element => new Promise(resolve => requestAnimationFrame(() => {
@@ -110,8 +113,20 @@ try {
   console.log(`ANIMATION ${framesPerSecond.join(" / ")} fps médios (projeção / controle).`);
   assert.equal(projectionNavigations, navigationsBeforeCloud, "A nuvem deve aparecer sem recarregar a projeção.");
   assert((await details()).totalRounds > roundsBeforeCloud, "As cartas devem continuar durante a geração/animação da nuvem.");
+  if (auditControls) {
+    await auditPointCloudControls({ projection, control, output, base, sessionId });
+    checks.push("controles privados de shader/câmera, sete presets, replay independente, persistência e sincronização sem recriar o canvas");
+  }
   if (auditBreathing) {
+    const originalCloudSettings = (await details()).config.pointCloud;
+    await post("/api/post-demo", { action: "config", sessionId, config: { pointCloud: { preset: "rotate" } } });
+    await poll(async () => await canvas().getAttribute("data-preset") === "rotate" && Number(await canvas().getAttribute("data-reveal-opacity")) > .999,
+      "preset de giro aplicado e completamente visível antes de medir o pulso");
     animationEvidence = await auditPointCloudAnimation({ projection, control, output });
+    await post("/api/post-demo", { action: "config", sessionId, config: { pointCloud: originalCloudSettings } });
+    await poll(async () => await canvas().getAttribute("data-preset") === originalCloudSettings.preset &&
+      await canvas().getAttribute("data-phase") === "automatic" && Number(await canvas().getAttribute("data-reveal-opacity")) > .999,
+    "entrada original concluída nas janelas antes da navegação manual", (originalCloudSettings.startDarkSeconds + originalCloudSettings.revealSeconds + 10) * 1000);
     checks.push("shader: dois ciclos completos de frente e no giro, onda entre fileiras, relógio contínuo no controle manual e zero reenvios dos vértices");
   }
   await projection.screenshot({ path: path.join(output, "revealed.png") });
@@ -173,8 +188,8 @@ try {
   assert.equal((await fetch(base + currentCloud.url)).status, 404); await post("/api/post-demo/point-cloud", { sessionId }, 409);
   checks.push("painel retrátil preserva nuvem à direita; RESET reinicia cartas e revelação sem reconverter foto nem alterar ajustes; seleção por mtime em cada clique; PNG/JPEG; foto original bloqueada inclusive alias/range; falha do processo, foto ilegível e pasta vazia preservam nuvem anterior; sessão nova rejeita resultado/URL antigos");
   assert.deepEqual(errors, []);
-  await fs.writeFile(path.join(output, "report.json"), JSON.stringify({ ok: true, liveDepthModel: true, liveLanguageModel: false, shaderAnimation: Boolean(animationEvidence), metrics, framesPerSecond, graphicsRenderer, checks, output }, null, 2));
-  console.log(JSON.stringify({ ok: true, shaderAnimation: Boolean(animationEvidence), metrics, framesPerSecond, graphicsRenderer, checks, output }, null, 2));
+  await fs.writeFile(path.join(output, "report.json"), JSON.stringify({ ok: true, liveDepthModel: true, liveLanguageModel: false, controlsAudit: auditControls, shaderAnimation: Boolean(animationEvidence), metrics, framesPerSecond, graphicsRenderer, checks, output }, null, 2));
+  console.log(JSON.stringify({ ok: true, controlsAudit: auditControls, shaderAnimation: Boolean(animationEvidence), metrics, framesPerSecond, graphicsRenderer, checks, output }, null, 2));
 } catch (error) {
   await projection?.screenshot({ path: path.join(output, "failure-public.png") }).catch(() => {}); await control?.screenshot({ path: path.join(output, "failure-control.png") }).catch(() => {});
   console.log("Evidence:", output); throw error;

@@ -12,6 +12,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:post-demo:point-cloud` -> `node --no-warnings scripts/post-demo-point-cloud-test.js`
 - `npm run test:post-demo:point-cloud:browser` -> `node --no-warnings scripts/post-demo-point-cloud-browser-test.js`
 - `npm run test:post-demo:point-cloud:animation` -> `node --no-warnings scripts/post-demo-point-cloud-browser-test.js --animation`
+- `npm run test:post-demo:point-cloud:controls` -> `node --no-warnings scripts/post-demo-point-cloud-browser-test.js --controls --animation`
+- `npm run test:post-demo:point-cloud:motion` -> `node --no-warnings scripts/post-demo-point-cloud-motion-test.js`
 - `npm run test:post-demo:cycle` -> `node --no-warnings scripts/post-demo-cycle-test.js`
 - `npm run test:post-demo:combined` -> `node --no-warnings scripts/post-demo-cycle-test.js --combined`
 - `npm run test:post-demo:cycle:live` -> `node --no-warnings --env-file-if-exists=.env.local scripts/post-demo-cycle-test.js --live`
@@ -212,6 +214,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/PostDemoController.js`
 - `components/PostDemoParameters.js`
 - `components/PostDemoPointCloud.js`
+- `components/PostDemoPointCloudControls.js`
 - `components/PreparedSceneController.js`
 - `components/ProjectionMenu.js`
 - `components/ProjectionOperatorSurface.js`
@@ -381,6 +384,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/post-demo-browser-test.js`
 - `scripts/post-demo-cycle-test.js`
 - `scripts/post-demo-point-cloud-browser-test.js`
+- `scripts/post-demo-point-cloud-motion-test.js`
 - `scripts/post-demo-point-cloud-test.js`
 - `scripts/post-demo-test.js`
 - `scripts/public-composition-browser-test.js`
