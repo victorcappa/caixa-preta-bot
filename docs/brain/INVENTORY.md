@@ -197,7 +197,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/OperatorTypedReply.js`
 - `components/PerformanceLayer.js`
 - `components/PostDemo.js`
-- `components/PostDemoSpeed.js`
+- `components/PostDemoParameters.js`
 - `components/PreparedSceneController.js`
 - `components/ProjectionMenu.js`
 - `components/ProjectionOperatorSurface.js`

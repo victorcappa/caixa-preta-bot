@@ -1,14 +1,15 @@
 import { showState } from "@/lib/showState";
 import { getRegisteredAudienceNames } from "@/lib/participants";
+import { normalizePostDemoConfig, POST_DEMO_SETTINGS_VERSION } from "@/lib/post-demo/settings";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 const unavailable = () => Response.json({ error: "Reinicie o servidor para carregar o pós-demo; a apresentação em uso foi preservada." }, { status: 409 });
 
 export async function GET() {
-  if (!showState.postDemo) return unavailable();
+  if (!showState.postDemo || showState.postDemo.settingsVersion !== POST_DEMO_SETTINGS_VERSION) return unavailable();
   const state = showState.privateSnapshot();
-  return Response.json({ postDemo: state.postDemo, sessionId: state.reliability.sessionId }, { headers: { "Cache-Control": "no-store" } });
+  return Response.json({ postDemo: { ...state.postDemo, config: normalizePostDemoConfig(state.postDemo.config) }, sessionId: state.reliability.sessionId }, { headers: { "Cache-Control": "no-store" } });
 }
 export async function POST(request) {
   if (!showState.postDemo) return unavailable();
@@ -29,9 +30,12 @@ export async function POST(request) {
     else if (body.action === "pause") actor.pause();
     else if (body.action === "resume") actor.resume();
     else if (body.action === "restart") actor.restart(getRegisteredAudienceNames());
-    else if (body.action === "config") actor.config({ cardHoldMs: body.cardHoldMs });
+    else if (body.action === "config") {
+      if (actor.settingsVersion !== POST_DEMO_SETTINGS_VERSION) return unavailable();
+      actor.config(body.config && typeof body.config === "object" && !Array.isArray(body.config) ? body.config : { cardHoldMs: body.cardHoldMs });
+    }
     else if (body.action === "rate") { if (!actor.rate(body.roundId, body.rating)) throw new Error("Avaliação inválida."); }
     else return Response.json({ error: "AÇÃO INVÁLIDA" }, { status: 400 });
-    return Response.json({ ok: true });
+    return Response.json({ ok: true, ...(body.action === "config" ? { config: showState.privateSnapshot().postDemo.config } : {}) });
   } catch { return Response.json({ error: "Não foi possível concluir esta ação." }, { status: 500 }); }
 }

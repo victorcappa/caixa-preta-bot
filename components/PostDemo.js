@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import ProjectionWindowClient from "./ProjectionWindowClient";
 import OperatorTypedReply from "./OperatorTypedReply";
-import PublicOperatorControls from "./PublicOperatorControls";
-import Link from "next/link";
+import PostDemoParameters from "./PostDemoParameters";
+import { postDemoPresentation } from "@/lib/post-demo/settings";
 import styles from "./PostDemo.module.css";
 
 export default function PostDemo({ controller = false }) {
@@ -13,6 +13,7 @@ export default function PostDemo({ controller = false }) {
   const [busy, setBusy] = useState(false), [typedId, setTypedId] = useState(null);
   const entered = useRef(null), session = useRef(null), textArea = useRef(null), pending = useRef(false);
   const state = snapshot?.postDemo, round = state?.rounds.at(-1);
+  const presentation = state?.presentation || postDemoPresentation();
   const scroll = useCallback(() => { if (textArea.current) textArea.current.scrollTop = textArea.current.scrollHeight; }, []);
   const typed = useCallback(id => setTypedId(id), []);
   const refresh = useCallback(async () => {
@@ -58,14 +59,14 @@ export default function PostDemo({ controller = false }) {
     finally { pending.current = false; setBusy(false); }
   }
   const message = round && { id: round.id, status: "complete", content: round.content };
-  return <main className={styles.surface} data-controller={controller}>
+  return <main className={styles.surface} data-controller={controller} data-bot-font={presentation.displayFont}>
     {!controller ? <ProjectionWindowClient /> : null}
     <header className={styles.header}><h1>{controller ? "pós-demo" : "A ILHA AINDA NÃO EXISTE"}</h1><span>{state?.totalRounds ? `FRAGMENTO ${state.totalRounds}` : "_"}</span></header>
     <section className={styles.stage} aria-label="Ilha futura da peça">
       {round ? <>
         <figure className={styles.card} key={round.id}><img src={round.card.imageUrl} alt={round.card.name} /><figcaption>{round.card.number} · {round.card.name}</figcaption></figure>
         <div className={styles.voice} ref={textArea} role="log" aria-label="Fala da ilha futura">
-          <OperatorTypedReply key={round.id} message={message} settings={snapshot.robotSound} animate
+          <OperatorTypedReply key={round.id} message={message} settings={presentation} animate
             paused={!state.active} onProgress={scroll} onComplete={controller ? undefined : typed} />
         </div>
       </> : <p className={styles.cursor} aria-label="Aguardando a ilha">_</p>}
@@ -80,10 +81,10 @@ export default function PostDemo({ controller = false }) {
         <button type="button" disabled={busy || !state?.startedAt} onClick={() => void action("restart")}>RECOMEÇAR PÓS-DEMO</button>
         <a href="/pos-demo" target="_blank" rel="noreferrer">ABRIR PROJEÇÃO</a>
       </div>
-      <p>A sequência avança depois da digitação na projeção. <Link href="/operator">Ajustar velocidade no Operator →</Link></p>
+      <p>Ajustes exclusivos desta sequência. Salvos automaticamente.</p>
       {round ? <div className={styles.buttons} aria-label="Avaliar fragmento">{[["perfect", "PERFEITO"], ["almost", "QUASE"], ["bad", "RUIM"]].map(([rating, label]) => <button key={rating} type="button" disabled={busy} aria-pressed={details?.rounds.find(item => item.id === round.id)?.rating === rating} onClick={() => void action("rate", { roundId: round.id, rating })}>{label}</button>)}</div> : null}
       {error ? <p role="alert">{error}</p> : null}
-      <PublicOperatorControls parametersOnly />
+      <PostDemoParameters key={snapshot?.reliability.sessionId} config={details?.config} sessionId={snapshot?.reliability.sessionId} />
     </aside> : null}
   </main>;
 }

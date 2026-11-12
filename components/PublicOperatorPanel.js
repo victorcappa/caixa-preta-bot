@@ -6,7 +6,7 @@ import styles from "./PublicOperator.module.css";
 import PublicModule from "./PublicModule";
 import OperatorTypedReply from "./OperatorTypedReply";
 
-export default function PublicOperatorPanel({ channel = createOperatorPublicState(), privateControls = null, connection = "connecting", publicSurface = false, parametersOnly = false, profile = null, typingSettings, initialMessageIds }) {
+export default function PublicOperatorPanel({ channel = createOperatorPublicState(), privateControls = null, connection = "connecting", publicSurface = false, parametersOnly = false, parameterTitle = "PERSONALIDADE DO BOT", profile = null, typingSettings, initialMessageIds }) {
   const history = useRef(null);
   const follow = useRef(true);
   const followHistory = useCallback(() => {
@@ -15,7 +15,7 @@ export default function PublicOperatorPanel({ channel = createOperatorPublicStat
   useEffect(followHistory, [channel.messages, followHistory]);
   const parameters = (
     <PublicModule as="section" id="operator-personality" disabled={!publicSurface} className={styles.personality} aria-label="Parâmetros de personalidade">
-      <h3>{parametersOnly ? "PERSONALIDADE DO BOT" : "PERSONALITY PARAMETERS"}</h3>
+      <h3>{parametersOnly ? parameterTitle : "PERSONALITY PARAMETERS"}</h3>
       {PERSONALITY_PARAMETERS.map(({ id, label }) => (
         <div className={styles.parameter} key={id}>
           <label htmlFor={`${privateControls && !publicSurface ? "private" : "public"}-${id}`}>{label}<output>{channel.personality[id]}%</output></label>

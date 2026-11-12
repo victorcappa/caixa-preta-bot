@@ -1,4 +1,4 @@
-.surface { --ink:#00ff66; background:#000; color:var(--ink); height:100svh; min-height:0; display:grid; grid-template-rows:auto minmax(0,1fr) auto; font-family:var(--font-mono,"Courier New",monospace); }
+.surface { --ink:#00ff66; background:#000; color:var(--ink); height:100svh; min-height:0; display:grid; grid-template-rows:auto minmax(0,1fr) auto; font-family:var(--bot-font-family,"Courier New",monospace); }
 .header { display:flex; align-items:baseline; justify-content:space-between; gap:20px; padding:24px 4vw; border-bottom:1px solid #174a2b; }
 .header h1 { font:inherit; font-size:clamp(20px,2.5vw,38px); margin:0; letter-spacing:.12em; }
 .header span { color:#8abb9b; font-size:14px; }
@@ -22,6 +22,9 @@
 .surface[data-controller="true"] .roster { grid-column:1; grid-row:3; }
 .control { grid-column:2; grid-row:2/span 2; overflow:auto; min-height:0; padding:18px; border-left:1px solid #174a2b; font-size:13px; }
 .control a { color:#9df5b9; }
+.control label { display:block; margin-top:14px; }
+.control input[type="range"],.control select { width:100%; }
+.control select { color:var(--ink); background:#06160c; border:1px solid #237541; padding:8px; font:inherit; }
 .control button { color:var(--ink); background:#06160c; border:1px solid #237541; font:inherit; padding:10px; cursor:pointer; }
 .control button:disabled { opacity:.4; cursor:default; }
 .control button[aria-pressed="true"] { background:var(--ink); color:#000; }

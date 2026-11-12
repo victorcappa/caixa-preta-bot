@@ -5,6 +5,7 @@ import path from "node:path";
 import { registerHooks } from "node:module";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createPostDemoState, createPostDemoController, restoredPostDemoState, postDemoSnapshot } from "../lib/postDemo.js";
+import { normalizePostDemoConfig, patchPostDemoConfig } from "../lib/post-demo/settings.js";
 
 const repository = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const fixture = fs.mkdtempSync(path.join(os.tmpdir(), "caixa-post-demo-unit-"));
@@ -22,6 +23,15 @@ registerHooks({ resolve(specifier, context, nextResolve) {
   return nextResolve(url || specifier, context);
 } });
 try {
+  const defaults = normalizePostDemoConfig();
+  assert.equal(defaults.cardHoldMs, 20000); assert.equal(defaults.typingIntervalMs, 100); assert.equal(defaults.typingPauseMs, 700);
+  assert.equal(normalizePostDemoConfig({ cardHoldMs: 1000 }).cardHoldMs, 20000, "migrar o ritmo antigo para um padrão mais lento");
+  assert.equal(normalizePostDemoConfig({ version: 2, cardHoldMs: 1000 }).cardHoldMs, 1000, "preservar ajuste explícito novo");
+  assert.equal(normalizePostDemoConfig({ version: 2, cardHoldMs: 200000 }).cardHoldMs, 120000);
+  const adjusted = patchPostDemoConfig(defaults, { personality: { sarcasm: 23 }, profile: { humor: 17 }, unrelated: "discard" });
+  assert.equal(adjusted.personality.sarcasm, 23); assert.equal(adjusted.personality.curiosity, defaults.personality.curiosity);
+  assert.equal(adjusted.profile.humor, 17); assert.equal(adjusted.profile.poetry, 50); assert(!("unrelated" in adjusted));
+  adjusted.personality.curiosity = 1; assert.notEqual(normalizePostDemoConfig().personality.curiosity, 1);
   const { getRegisteredAudienceNames } = await import("../lib/participants.js");
   const { saveTrainingExample, listTrainingExamples } = await import("../lib/training.js");
   const { postDemoContext, validatePostDemoTurn } = await import("../lib/post-demo/context.js");
@@ -56,12 +66,22 @@ try {
   actor.rate(third.id, "perfect"); actor.rate(third.id, "bad");
   assert.equal(listTrainingExamples().filter(example => example.source === "post-demo").length, 1);
   assert(!JSON.stringify(postDemoSnapshot(state)).includes("rating") && !JSON.stringify(postDemoSnapshot(state)).includes("PRIVATE_TRACE"));
+  assert(!("config" in postDemoSnapshot(state)));
+  assert.deepEqual(Object.keys(postDemoSnapshot(state).presentation).sort(), ["displayFont", "typingIntervalMs", "typingPauseMs"]);
+  assert.deepEqual(postDemoSnapshot(state, true).config, state.config);
   assert.equal(restoredPostDemoState(state).active, false); assert.equal(restoredPostDemoState(state).pauseReason, "recovery");
   const next = await postDemoContext({ postDemo: { ...state, usedCardIds: [0, 1] }, memories: [], conversation: [] }, context.eligible);
   assert.equal(next.cycleReset, true); assert(next.eligible.every(card => card.id !== state.rounds.at(-1).card.id));
   actor.pause();
   const { showState } = await import("../lib/showState.js");
-  showState.postDemo.config({ cardHoldMs: 4000 });
+  const globalPreferences = showState.privateSnapshot();
+  showState.postDemo.config({ cardHoldMs: 4000, typingIntervalMs: 150, typingPauseMs: 900, personality: { sarcasm: 23 }, profile: { humor: 17 }, model: "gpt-5.6-luna" });
+  const isolated = showState.privateSnapshot();
+  assert.deepEqual(isolated.operatorPublic.personality, globalPreferences.operatorPublic.personality);
+  assert.deepEqual(isolated.tarot.profile, globalPreferences.tarot.profile);
+  assert.deepEqual(isolated.robotSound, globalPreferences.robotSound); assert.equal(isolated.model, globalPreferences.model);
+  showState.patchOperatorPublic({ personality: { sarcasm: 98 } });
+  assert.equal(showState.privateSnapshot().postDemo.config.personality.sarcasm, 23);
   showState.postDemo.enter(["Alice"]); const active = showState.postDemo.begin(); showState.signalStopAll();
   assert(active.controller.signal.aborted && !showState.snapshot().postDemo.active);
   showState.postDemo.resume(); const emergency = showState.postDemo.begin(); showState.controlReliability("emergency-on");
@@ -70,7 +90,7 @@ try {
   assert.equal(showState.restoreFromRecovery({ storeVersion: showState._storeVersion, sessionId: saved.reliability.sessionId, state: saved }).ok, true);
   assert.equal(showState.snapshot().postDemo.active, false);
   showState.startNewPresentation();
-  assert.equal(showState.snapshot().postDemo.startedAt, null); assert.equal(showState.snapshot().postDemo.config.cardHoldMs, 4000);
+  assert.equal(showState.snapshot().postDemo.startedAt, null); assert.deepEqual(showState.privateSnapshot().postDemo.config, isolated.postDemo.config);
   assert.equal(showState.snapshot().postDemo.rounds.length, 0);
   const { flushSnapshotWrites } = await import("../lib/showSessionPersistence.js"); await flushSnapshotWrites();
   const { POST: sessionAction } = await import("../app/api/show-session/route.js");
@@ -82,5 +102,9 @@ try {
   const disk = await readSnapshot({ expectedStoreVersion: showState._storeVersion });
   assert.equal(disk.envelope.sessionId, showState.snapshot().reliability.sessionId);
   assert.equal(disk.envelope.revision, (await captured.json()).revision);
+  const { GET: privatePostDemo, POST: postDemoAction } = await import("../app/api/post-demo/route.js");
+  assert.deepEqual((await (await privatePostDemo()).json()).postDemo.config, isolated.postDemo.config);
+  const publicAck = await postDemoAction(new Request("http://localhost:3000/api/post-demo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "ack", roundId: "missing", sessionId: showState.snapshot().reliability.sessionId }) }));
+  assert.deepEqual(await publicAck.json(), { ok: true }, "ACK da projeção não recebe parâmetros privados");
   console.log("POST DEMO PASS: entry/ack idempotency, automatic clock, live speed, pause/late jobs, source/card/name validation, full continuation, feedback/upsert, privacy, STOP ALL, emergency, recovery and preference-preserving reset (isolated)");
 } finally { process.chdir(repository); }

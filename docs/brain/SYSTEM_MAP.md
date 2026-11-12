@@ -80,7 +80,7 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 
 ## Tarô / Treinamento
 
-- Post-demo / future island -> `components/PostDemo.js`, `/pos-demo/controle`, `/pos-demo`, `/api/post-demo`; store facet -> `lib/postDemo.js`; source/context/model -> `lib/post-demo/`, `generatePostDemoTurn` in `lib/openai.js`; Operator pace -> `components/PostDemoSpeed.js`. Operation/source/tests: `docs/POS_DEMO.md`.
+- Post-demo / future island -> `components/PostDemo.js`, `/pos-demo/controle`, `/pos-demo`, `/api/post-demo`; store facet -> `lib/postDemo.js`; source/context/model -> `lib/post-demo/`, `generatePostDemoTurn` in `lib/openai.js`; private settings -> `components/PostDemoParameters.js`, `lib/post-demo/settings.js`. Operation/source/tests: `docs/POS_DEMO.md`.
 
 - Public camera/annotations/speech and one-shot **INTERPRETAR** question -> `app/treinamento/page.js` -> `components/tarot/TarotTraining.js` / `useTarotCamera.js`.
 - Private operation/catalogue/anchors -> `app/treinamento/controle/page.js` -> `components/tarot/TarotControls.js` / `TarotCatalogEditor.js` (TARÔ navigation).

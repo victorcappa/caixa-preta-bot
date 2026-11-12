@@ -26,15 +26,17 @@ try {
   const { postDemoContext, validatePostDemoTurn } = await import("../lib/post-demo/context.js");
   const { generatePostDemoTurn } = await import("../lib/openai.js");
   const { readCatalog } = await import("../lib/tarot/catalog.js");
-  const { resolveOpenAIModel } = await import("../lib/openaiModels.js");
-  const state = { model: resolveOpenAIModel(process.env.OPENAI_MODEL), postDemo: createPostDemoState(),
-    operatorPublic: { personality: { sarcasm: 65, rebellion: 45, curiosity: 80, verbosity: 55 } }, tarot: { profile: { philosophy: 75, poetry: 60, rigor: 80 } },
+  const { patchPostDemoConfig } = await import("../lib/post-demo/settings.js");
+  const postDemo = createPostDemoState();
+  postDemo.config = patchPostDemoConfig(postDemo.config, { model: process.env.OPENAI_MODEL,
+    personality: { sarcasm: 65, rebellion: 45, curiosity: 80, verbosity: 55 }, profile: { philosophy: 75, poetry: 60, rigor: 80 } });
+  const state = { postDemo,
     conversation: [], memories: [{ id: "fictional-observation", content: "DADO FICTÍCIO DE TESTE: Pessoa Aurora escolheu guardar uma chave em vez de abrir a mala." }] };
   const context = await postDemoContext(state, await readCatalog());
   const started = Date.now();
   const parsed = validatePostDemoTurn(await generatePostDemoTurn({ state, context, signal: new AbortController().signal }), context);
   const output = path.join(fixture, "sample.json");
-  fs.writeFileSync(output, JSON.stringify({ model: state.model, ms: Date.now() - started, fictionalAudience: true, ...parsed }, null, 2));
+  fs.writeFileSync(output, JSON.stringify({ model: postDemo.config.model, ms: Date.now() - started, fictionalAudience: true, ...parsed }, null, 2));
   assert(parsed.trace.sourcePages.length);
   console.log(`POST DEMO LIVE PASS: ${parsed.card.name}; páginas ${parsed.trace.sourcePages.join(", ")}; ${Date.now() - started} ms.\nEvidência: ${output}`);
 } finally { process.chdir(repository); }
