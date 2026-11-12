@@ -140,7 +140,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `GET /api/modelo-3d/[id]/[asset]` -> `app/api/modelo-3d/[id]/[asset]/route.js`
 - `GET, POST /api/modelo-3d` -> `app/api/modelo-3d/route.js`
 - `GET, POST /api/operator-preferences` -> `app/api/operator-preferences/route.js`
-- `POST /api/operator-public` -> `app/api/operator-public/route.js`
+- `GET, POST /api/operator-public` -> `app/api/operator-public/route.js`
 - `POST /api/operator` -> `app/api/operator/route.js`
 - `POST /api/performance/interaction` -> `app/api/performance/interaction/route.js`
 - `GET, POST /api/projection` -> `app/api/projection/route.js`

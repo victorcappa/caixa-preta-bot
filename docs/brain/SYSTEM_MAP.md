@@ -18,7 +18,7 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 - Right-menu launcher -> `components/OperatorPublicLauncher.js` in `components/SceneZeroController.js`; private controls/monitor -> `components/PublicOperatorControls.js` and `components/OperatorLivePreview.js`.
 - LIVE reply pacing -> `components/OperatorTypedReply.js`, using private `robotSound` typing speed/punctuation pause; completed history is restored immediately.
 - Training conversation/feedback -> `components/TrainingConsole.js`, `app/api/training/`, and `lib/training.js`; visible composer sends by Enter or button and preserves the draft after errors.
-- Live training -> `components/LiveTraining.js`, `/treino-ao-vivo/controle`, `/treino-ao-vivo`, `/api/live-training`; shared state -> `lib/liveTraining.js`; repertoire -> `lib/liveTrainingContext.js`. Operation: `docs/TREINO_AO_VIVO.md`.
+- Live training -> `components/LiveTraining.js`, `/treino-ao-vivo/controle`, `/treino-ao-vivo`, `/api/live-training`; state -> `lib/liveTraining.js`; repertoire -> `lib/liveTrainingContext.js`; shared 11-parameter panel -> `PublicOperatorControls.js`, `lib/operatorPublic.js`, `/api/operator-public`. Operation: `docs/TREINO_AO_VIVO.md`.
 - Editable public conversation/sliders reuse `components/PublicOperatorControls.js` with `publicSurface`; private operational commands remain outside the projection.
 - Projection calibration `/?menu` -> `components/ProjectionMenu.js`, `PublicCompositionControls.js`, `PublicModule.js`, `lib/publicComposition.js`; bot/Tarot text fitting -> `lib/useProjectionTextFit.js`; preferences sync via the operator API/SSE.
 - Default public 65/35 layout -> `app/layout.js` -> `components/ProjectionOperatorSurface.js` -> `components/PublicOperatorLayout.js`.

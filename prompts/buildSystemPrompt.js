@@ -1,11 +1,11 @@
-import { personalityPrompt } from "../lib/operatorPublic";
+import { personalityPrompt, expressionProfilePrompt } from "../lib/operatorPublic";
 import { caixaPretaExamples } from "./examples";
 import { buildHostGameLibraryBlock } from "../lib/host/games";
 import { getModePrompt } from "./modes";
 import { caixaPretaPersonality } from "./personality";
 import { caixaPretaRules } from "./rules";
 
-export const PROMPT_VERSION = 30;
+export const PROMPT_VERSION = 31;
 
 function variablesBlock(variables = {}) {
   if (!variables || Object.keys(variables).length === 0) {
@@ -18,12 +18,13 @@ ${JSON.stringify(variables, null, 2)}
 `.trim();
 }
 
-export function buildSystemPrompt({ knowledge = "", variables = {}, styleContext = "", personality } = {}) {
+export function buildSystemPrompt({ knowledge = "", variables = {}, styleContext = "", personality, profile } = {}) {
   return [
     `PROMPT VERSION: ${PROMPT_VERSION}`,
     "PERSONALIDADE:",
     caixaPretaPersonality,
     personalityPrompt(personality),
+    expressionProfilePrompt(profile),
     styleContext ? "INTERNET VOICE - FORMA LINGUISTICA:" : "",
     styleContext,
     "REGRAS:",

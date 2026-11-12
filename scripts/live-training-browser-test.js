@@ -60,6 +60,32 @@ try {
   assert.deepEqual(tabs.slice(-2), ["Treino", "treino-ao-vivo"]);
   assert.equal(await display.getByRole("textbox").count(), 0);
   assert.equal(await display.getByRole("button").count(), 0);
+  const operator = await context.newPage(), tarot = await context.newPage();
+  await operator.goto(`${base}/operator`, { waitUntil: "domcontentloaded" });
+  await tarot.goto(`${base}/treinamento/controle`, { waitUntil: "domcontentloaded" });
+  await tarot.getByRole("button", { name: "10 — Personalidade e contexto", exact: true }).click();
+  const panels = [control, operator, tarot];
+  const slider = (page, name) => page.getByRole("slider", { name, exact: true });
+  async function slide(page, name, value) {
+    const input = slider(page, name);
+    await input.fill(String(value));
+    await poll(async () => (await Promise.all(panels.map(panel => slider(panel, name).inputValue()))).every(current => current === String(value)), `${name} espelhado nas três telas`);
+  }
+  await slider(control, "Humor").waitFor();
+  await slide(control, "SARCASMO", 82);
+  await slide(operator, "CURIOSIDADE", 67);
+  await slide(tarot, "Humor", 23);
+  await slide(control, "Linguagem poética", 81);
+  await slide(operator, "Rigor analítico", 37);
+  // Independent keys edited in different clients must survive concurrent writes.
+  await Promise.all([slider(control, "Provocação").fill("29"), slider(tarot, "Crítica social").fill("73")]);
+  await poll(async () => (await Promise.all(panels.flatMap(panel => [slider(panel, "Provocação").inputValue(), slider(panel, "Crítica social").inputValue()]))).every((value, index) => value === (index % 2 ? "73" : "29")), "edições simultâneas preservadas");
+  const settings = await (await fetch(`${base}/api/operator-public`)).json();
+  assert.deepEqual(Object.keys(settings).sort(), ["personality", "profile", "revision", "sessionId"]);
+  assert.equal((await state()).tarot.profile, undefined, "perfil privado não deve entrar na projeção");
+  await control.reload();
+  await poll(async () => await slider(control, "Linguagem poética").inputValue() === "81", "perfil compartilhado após reload");
+  await operator.close(); await tarot.close();
   const draft = control.getByLabel("Mensagem");
   await draft.fill("Como Morel atravessa a memória desta peça?");
   const firstResponse = control.waitForResponse(response => response.url().endsWith("/api/live-training") && response.request().method() === "POST");
@@ -80,6 +106,7 @@ try {
   const input = JSON.parse(await fs.readFile(`${fixture}.request.json`, "utf8"));
   const prompt = JSON.stringify(input.input);
   assert(prompt.includes("knowledge/dramaturgy.md") && prompt.includes("Morel") && prompt.includes("ACERVO RECUPERADO"));
+  assert(prompt.includes("SARCASMO: 82%") && prompt.includes("CURIOSIDADE: 67%") && prompt.includes("Humor: 23%") && prompt.includes("Linguagem poética: 81%"));
   assert.equal(input.tools, undefined, "a conversa não deve executar comandos ou ferramentas");
   await fs.writeFile(fixture, JSON.stringify({ principalText: JSON.stringify({ alternatives: ["O arquivo responde ao corpo.", "A ausência também deixa rastro.", "Uma cópia pede outra lembrança."] }) }));
   await control.getByRole("button", { name: "GERAR ALTERNATIVAS", exact: true }).click();
@@ -130,7 +157,7 @@ try {
   assert.deepEqual(privateReads, []);
   assert.deepEqual(errors, []);
   console.log(JSON.stringify({ ok: true, liveModel: false, physicalMicrophone: false, output,
-    checks: ["tab beside Treino", "public conversation and typing", "private one-click feedback/upsert", "PDF page 32 at actual provider boundary and current suitcase precedence", "three public alternatives", "reload/polling without SSE", "failure/retry without duplicate", "STOP ALL", "public/private boundary"] }, null, 2));
+    checks: ["tab beside Treino", "bidirectional Operator/Tarot/live parameter mirroring and concurrent edits", "shared parameters reach provider prompt", "public conversation and typing", "private one-click feedback/upsert", "PDF page 32 at actual provider boundary and current suitcase precedence", "three public alternatives", "reload/polling without SSE", "failure/retry without duplicate", "STOP ALL", "public/private boundary"] }, null, 2));
 } catch (error) {
   await display?.screenshot({ path: path.join(output, "failure-public.png") }).catch(() => {});
   await control?.screenshot({ path: path.join(output, "failure-control.png") }).catch(() => {});

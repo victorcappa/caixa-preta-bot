@@ -4,6 +4,8 @@ A aba **treino-ao-vivo**, ao lado de **Treino**, abre `/treino-ao-vivo/controle`
 
 No controle, escreva e pressione Enter ou **ENVIAR**. Shift+Enter quebra a linha. Cada resposta e alternativa tem apenas quatro ações de qualificação: **PERFEITO**, **QUASE**, **RUIM** e **GERAR ALTERNATIVAS**. As avaliações são privadas; a conversa e as alternativas aparecem para o público. A página pública não possui campo de envio nem controles de avaliação.
 
+A lateral privada tem os mesmos onze parâmetros de personalidade do **Operator** e da seção **Personalidade e contexto** do **Tarô**: sarcasmo, rebeldia, curiosidade, verbosidade, humor, provocação, densidade filosófica, associação livre, crítica social, linguagem poética e rigor analítico. Alterar em qualquer uma dessas telas espelha os valores nas demais e orienta as próximas gerações, incluindo alternativas. Não reinicia uma fala em andamento. O modelo, a fonte e o ritmo de digitação também usam o estado global já ajustado no Operator. Configurações próprias de cartas, câmera e limites de leitura continuam específicas do Tarô.
+
 As três avaliações salvam imediatamente em `data/training-examples.json`, sem exigir correção escrita. Requalificar uma resposta atualiza o mesmo exemplo. Esses exemplos também aparecem no Treino existente. PERFEITO fornece uma direção aprovada; QUASE e RUIM orientam ajustes sem recomendar como preferida uma resposta negativa que não recebeu correção. Isso calibra o contexto das próximas gerações; não altera os pesos do modelo.
 
 ## Repertório

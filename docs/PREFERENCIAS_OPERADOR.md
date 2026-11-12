@@ -8,14 +8,16 @@ O salvamento usa os valores reais de `showState`, sem substituir pelos padrões 
 
 | Grupo | Configurações preservadas |
 | --- | --- |
-| Operador | Personalidade, modelo, parâmetros de som, velocidade/pausa/intervalo de digitação, fonte, frequência dos cliques e volume global. |
+| Operador / bot global | Onze parâmetros de personalidade espelhados em Operator, Tarô e treino ao vivo; modelo, som, velocidade/pausa/intervalo de digitação, fonte, cliques e volume global. |
 | Composição pública | Posição/tamanho de cada módulo e cor dos textos públicos do Operator. |
-| Tarô | Configuração de leitura/autonomia, visual/Matrix, perfil complementar, instrução privada, referências e temas, contexto contemporâneo, câmera escolhida e modo automático. |
+| Tarô | Configuração de leitura/autonomia, visual/Matrix, instrução privada, referências e temas, contexto contemporâneo, câmera escolhida e modo automático. |
 | Alucinação | Chaves gerais, limite de cartas, filtros, política de retirada, efeitos, intensidades, mistura facial, eventos da timeline, presets e memórias/entrevistas vinculadas. |
 | Outros controles de estado | Parâmetros/preset/áudio do glitch e transição, intensidade dos shaders, volume do sampler, texto/subdivisão/ritmo/fade/modos da Queda Avião, orientação de personalidade e som do BIOS, opções de aquecimento e configuração de pesquisa. |
 | Cadastros existentes | Catálogo, fotos, fusões/aprovações, cues, notas e configurações individuais do sampler continuam em seus arquivos existentes. Não são substituídos por esta camada. |
 
 O mesmo conjunto é mantido em **REINICIAR TREINAMENTO**, **INICIAR NOVA APRESENTAÇÃO**, `/reset` e ao abrir outro processo do servidor. Recuperar uma apresentação antiga usa seu histórico/progresso, mas preserva os ajustes mais recentes do operador.
+
+Os valores existentes não são migrados para padrões: os quatro controles principais continuam em `operatorPublic.personality` e os sete de expressão em `tarot.profile`, agora consumidos por todos os canais do bot. As três telas reutilizam o mesmo painel e endpoint de parâmetros. A leitura privada não inclui notas, instruções nem histórico; o perfil não foi acrescentado à projeção pública. **RESTAURAR PERFIL** coloca os sete ajustes de expressão em 50 em todas as telas.
 
 Não são preferências: conversa/rascunho, participantes, etapa/carta atual, malas abertas, contagens, progresso do BIOS, posição de timers/timeline, reprodução de áudio/vídeo, conexões de telas/câmera ou ações externas. Uma nova apresentação e um novo processo começam com execução limpa. Habilitar uma opção de autonomia não inicia sozinho uma apresentação; as autorizações e os controles de início existentes continuam valendo. Aprovações de fusões permanecem no cadastro local, sem aprovação automática de combinações pendentes.
 
@@ -35,6 +37,8 @@ npm run test:operator-preferences:browser
 ```
 
 O primeiro verifica gravação exata, exclusão de execução/história, arquivos privados/atômicos, erros de gravação/corrupção, reset do Tarô, nova apresentação, recuperação de snapshot antigo e leitura por outro processo Node. O teste de navegador usa build/servidor isolados na porta 3319, altera valores pelas APIs reais, confere o aviso na interface e para/reabre esse servidor para confirmar a carga automática. Não faz chamadas ao modelo nem opera a porta 3000.
+
+Para os parâmetros compartilhados, `npm run test:live-training:browser` abre Operator, Tarô e treino ao vivo simultaneamente. Verifica edições nas três origens, campos distintos alterados concorrentemente, reload, separação pública/privada e valores efetivamente enviados ao provedor simulado. Em 12/11/2026 passou com lint, unitários de Operator/Tarô/treino, persistência e brain check. A auditoria ampla `test:operator-public:browser` encontrou recorte do envio público em 1280×720; a mesma falha foi reproduzida num build anterior, cujos controles/painel/CSS públicos correspondem ao código anterior a esta alteração. Isso não bloqueia o espelhamento, mas essa auditoria ampla não está integralmente aprovada. Sem validação de modelo real ou projetor físico nesta mudança.
 
 Na implementação de 16/10/2026 passaram os sete grupos do teste de preferências, hot refresh de som, regressões Tarô/alucinação e confiabilidade, lint focado e build isolado. A execução HTTP/Playwright passou em `/private/tmp/operator-preferences-evidence-wAE4eh/report.json`, com capturas do operador e do Tarô após reinício. Isso valida persistência local; não é ensaio de hardware ou validação de geração de IA.
 

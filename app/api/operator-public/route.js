@@ -4,6 +4,13 @@ import { streamOperatorReply } from "@/lib/openai";
 import { markStopAll } from "@/lib/stopAllSignal";
 import { abortExternalRequests } from "@/lib/externalRequestControl";
 import { retireInstagramController } from "@/lib/instagram/InstagramController";
+import { normalizeExpressionProfile } from "@/lib/operatorPublic";
+
+export async function GET() {
+  const state = showState.privateSnapshot();
+  return Response.json({ personality: state.operatorPublic.personality, profile: normalizeExpressionProfile(state.tarot?.profile),
+    revision: state.revision, sessionId: state.reliability.sessionId }, { headers: { "Cache-Control": "no-store" } });
+}
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -54,6 +61,10 @@ export async function POST(request) {
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") return Response.json({ error: "INVALID_BODY" }, { status: 400 });
   if (body.action === "patch") {
+    if (body.profile && typeof body.profile === "object" && !Array.isArray(body.profile)) {
+      const current = showState.privateSnapshot().tarot.profile;
+      showState.controlTarot("profile", { profile: normalizeExpressionProfile(Object.keys(body.profile).length ? { ...current, ...body.profile } : {}) });
+    }
     const operatorPublic = showState.patchOperatorPublic(body);
     return Response.json({ operatorPublic });
   }

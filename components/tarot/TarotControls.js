@@ -14,7 +14,6 @@ import { referenceSettings } from "@/lib/tarot/reference-settings";
 import styles from "./TarotControls.module.css";
 
 const configFields = [["questionsUntilAutonomy","Perguntas até autonomia"],["maxCards","Máximo de cartas"],["intervalMs","Intervalo entre cartas (ms)"],["maxDurationMs","Duração total (ms)"],["reflectionSeconds","Reflexão aproximada (s)"],["questionFrequency","Perguntar a cada N cartas"],["associationIntensity","Intensidade de associações (0–100)"]];
-const profileFields = [["humor","Humor"],["provocation","Provocação"],["philosophy","Densidade filosófica"],["association","Associação livre"],["social","Crítica social"],["poetry","Linguagem poética"],["rigor","Rigor analítico"]];
 
 export default function TarotControls() {
   const [snapshot,setSnapshot]=useState(null),[cards,setCards]=useState([]),[back,setBack]=useState(null);
@@ -137,7 +136,7 @@ export default function TarotControls() {
           <label className={styles.check}><input type="checkbox" checked={tarot.config.automatic} onChange={(e)=>command("config",{config:{automatic:e.target.checked}})}/>Ativar após a última resposta terminar</label>
           <div className={styles.actions}>{[["autonomy-start","ATIVAR AGORA"],["autonomy-pause","PAUSAR"],["autonomy-resume","RETOMAR"],["next","PRÓXIMA CARTA"],["human","RETOMAR CONTROLE HUMANO"]].map(([action,label])=><button key={action} onClick={()=>command(action)}>{label}</button>)}<button onClick={()=>command("next",{cardId:selected})}>USAR CARTA {selected} NA PRÓXIMA REFLEXÃO</button></div>
         </div></details>
-        <details open hidden={section!=="contexto"}><summary>PERSONALIDADE DO TREINAMENTO</summary><div className={styles.section}><PublicOperatorControls parametersOnly /><p className={styles.hint}>Os controles abaixo complementam a personalidade compartilhada do bot.</p>{profileFields.map(([key,label])=><label className={styles.slider} key={key}>{label}<input type="range" min="0" max="100" value={tarot.profile[key]??50} onChange={(e)=>command("profile",{profile:{...tarot.profile,[key]:Number(e.target.value)}})}/><span>{tarot.profile[key]??50}%</span></label>)}<button onClick={()=>command("profile",{profile:{}})}>RESTAURAR PERFIL</button></div></details>
+        <details open hidden={section!=="contexto"}><summary>PERSONALIDADE DO BOT</summary><div className={styles.section}><PublicOperatorControls parametersOnly /><p className={styles.hint}>Parâmetros compartilhados com Operator e treino-ao-vivo.</p></div></details>
         <details hidden={section!=="contexto"}><summary>CONTEXTO CONTEMPORÂNEO</summary><div className={styles.section}>
           <p className={styles.hint}>Prepare antes do espetáculo. Cada fato exige data e fonte; a consulta durante a apresentação usa os dados locais.</p>
           <label>Acontecimento<textarea value={context.text} onChange={(e)=>setContext({...context,text:e.target.value})}/></label><label>Data<input type="date" value={context.date} onChange={(e)=>setContext({...context,date:e.target.value})}/></label><label>Fonte<input type="url" value={context.url} onChange={(e)=>setContext({...context,url:e.target.value})}/></label>

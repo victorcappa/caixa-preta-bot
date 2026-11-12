@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import { PERSONALITY_PARAMETERS, createOperatorPublicState } from "@/lib/operatorPublic";
+import { PERSONALITY_PARAMETERS, EXPRESSION_PARAMETERS, createOperatorPublicState } from "@/lib/operatorPublic";
 import styles from "./PublicOperator.module.css";
 import PublicModule from "./PublicModule";
 import OperatorTypedReply from "./OperatorTypedReply";
 
-export default function PublicOperatorPanel({ channel = createOperatorPublicState(), privateControls = null, connection = "connecting", publicSurface = false, parametersOnly = false, typingSettings, initialMessageIds }) {
+export default function PublicOperatorPanel({ channel = createOperatorPublicState(), privateControls = null, connection = "connecting", publicSurface = false, parametersOnly = false, profile = null, typingSettings, initialMessageIds }) {
   const history = useRef(null);
   const follow = useRef(true);
   const followHistory = useCallback(() => {
@@ -29,6 +29,19 @@ export default function PublicOperatorPanel({ channel = createOperatorPublicStat
           </div>
         </div>
       ))}
+      {parametersOnly && profile && privateControls ? <>
+        {EXPRESSION_PARAMETERS.map(({ id, label }) => <div className={styles.parameter} key={id}>
+          <label htmlFor={`expression-${id}`}>{label}<output>{profile[id] ?? 50}%</output></label>
+          <div className={styles.sliderRow}>
+            <button type="button" aria-label={`Diminuir ${label}`} onClick={() => privateControls.profile(id, (profile[id] ?? 50) - 5)}>−</button>
+            <input id={`expression-${id}`} type="range" min="0" max="100" step="1" aria-label={label}
+              style={{ "--parameter-percent": `${profile[id] ?? 50}%` }} value={profile[id] ?? 50}
+              onChange={event => privateControls.profile(id, Number(event.target.value))} />
+            <button type="button" aria-label={`Aumentar ${label}`} onClick={() => privateControls.profile(id, (profile[id] ?? 50) + 5)}>+</button>
+          </div>
+        </div>)}
+        <button type="button" onClick={() => privateControls.profile(null)}>RESTAURAR PERFIL</button>
+      </> : null}
     </PublicModule>
   );
   if (parametersOnly) return parameters;

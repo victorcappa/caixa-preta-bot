@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import OperatorTypedReply from "./OperatorTypedReply";
 import ProjectionWindowClient from "./ProjectionWindowClient";
+import PublicOperatorControls from "./PublicOperatorControls";
 import styles from "./LiveTraining.module.css";
 
 const ratings = [["perfect", "PERFEITO"], ["almost", "QUASE"], ["bad", "RUIM"]];
@@ -115,6 +116,7 @@ export default function LiveTraining({ controller = false }) {
       {channel.status === "generating" && !channel.messages.at(-1)?.content ? <p className={styles.waiting}>A Caixa está escrevendo<span aria-hidden="true">...</span></p> : null}
       {channel.status === "alternatives" ? <p className={styles.waiting}>Outras possibilidades<span aria-hidden="true">...</span></p> : null}
     </div>
+    {controller ? <aside className={styles.parameters} aria-label="Parâmetros compartilhados do bot"><PublicOperatorControls parametersOnly /></aside> : null}
     {controller ? <form className={styles.composer} onSubmit={send}>
       {error ? <p role="alert" className={styles.error}>{error}</p> : null}
       <div><textarea id="live-training-message" aria-label="Mensagem" value={input} maxLength={4000} rows={2}
