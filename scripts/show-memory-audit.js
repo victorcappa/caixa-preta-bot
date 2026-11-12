@@ -37,6 +37,9 @@ for (let scene = 0; scene <= 9; scene++) {
 }
 const multipleScenes = await retrieveShowMemory({ query: "O que se propõe nas cenas 8 e 9?" });
 assert(multipleScenes.selected.some(chunk => chunk.scene === 8) && multipleScenes.selected.some(chunk => chunk.scene === 9));
+const sceneList = await retrieveShowMemory({ query: "Dê uma frase concreta para cada cena: 1 aeroporto; 2 queda e corpo; 4 piloto e observadora; 5 mão; 7 caixas pretas e ensaio. Quero reconhecer a matéria específica de cada uma." });
+for (const scene of [1, 2, 4, 5, 7]) assert(sceneList.selected.some(chunk => chunk.scene === scene), `lista comentada deve recuperar Cena ${scene}`);
+assert(sceneList.selected.some(chunk => chunk.scene === 5 && /borracha/i.test(chunk.text)), "Cena 5 deve trazer o dispositivo de Elisa, sem se limitar à mão do piloto");
 for (const section of archive.coverage.referenceSections) {
   const context = await retrieveShowMemory({ query: `Desenvolva ${section.id}` });
   assert(context.selected.some(chunk => chunk.sectionId === section.id), `${section.id} deve ser acessível por ID`);

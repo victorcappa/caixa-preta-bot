@@ -33,10 +33,13 @@ try {
     { id: "atual-versus-rascunho", question: "Quero conferir o que você sabe: qual é a ordem NUMÉRICA atual das três malas e a ação em cada uma? A mala falsa do PDF ainda é a regra? Responda concretamente.", patterns: [/2[\s\S]*1[\s\S]*3/, /bexiga/i, /forca/i, /toca.discos/i] },
     { id: "cenas-8-9", question: "No rascunho, o que se propõe para as cenas 8 e 9? Inclua os fones e o veículo de Elisa. Isso já é uma sequência consolidada?", patterns: [/fone/i, /bicicleta/i, /propost|rascunho|desenvolvimento|chute|consolidada/i] },
     { id: "cenas-3-6", question: "Que aparelho registra a voz na cena 3, a quem ele se liga, e qual pintor se relaciona à acromatopsia na cena 6? Como corpo e arquivo se cruzam aí?", patterns: [/fon[oó]grafo/i, /Edison/i, /Jonathan/i] },
-    { id: "cenas-1-2-4-5-7", question: "Dê uma frase concreta para cada cena: 1 aeroporto; 2 queda e corpo; 4 piloto e observadora; 5 mão; 7 caixas pretas e ensaio. Quero reconhecer a matéria específica de cada uma.", patterns: [/aeroporto|medalha|quati|colis[aã]o/i, /força G|G.LOC|redout/i, /ge[oó]grafa|gamer/i, /borracha|destac[aá]vel/i, /ensaio|rehearsal/i] },
+    { id: "cenas-1-2-4-5-7", question: "Dê uma frase concreta para cada cena: 1 aeroporto; 2 queda e corpo; 4 piloto e observadora; 5 mão; 7 caixas pretas e ensaio. Quero reconhecer a matéria específica de cada uma. Nomeie a observadora e o dispositivo usado por Elisa.", patterns: [/aeroporto|medalha|quati|colis[aã]o/i, /força G|G.LOC|redout/i, /ge[oó]grafa|gamer/i, /borracha|destac[aá]vel/i, /ensaio|rehearsal/i] },
     { id: "referencias", question: "Quais ligações concretas o arquivo da peça faz com A Invenção de Morel e com Janaina Leite? Não invente citações literais.", patterns: [/Morel/i, /Janaina|Janaína/i, /duplic|repet|ilha|proje/i, /real|document|autofic|testemunh/i] }
   ];
-  for (const test of cases) {
+  const caseId = process.argv.find(argument => argument.startsWith("--case="))?.slice(7);
+  const selected = caseId ? cases.filter(test => test.id === caseId) : cases;
+  assert(selected.length, "Caso de teste desconhecido.");
+  for (const test of selected) {
     let answer = "";
     const started = Date.now();
     try {
@@ -54,5 +57,5 @@ try {
   }
   fs.writeFileSync(path.join(directory, "model-evaluation.json"), JSON.stringify({ model, live: true, results }, null, 2));
   console.log(`Evidências: ${path.join(directory, "model-evaluation.json")}`);
-  assert(results.length === cases.length && results.every(result => result.pass), "Amostra real incompleta ou com lacunas; consulte as respostas, sem confundir indisponibilidade com memória validada.");
+  assert(results.length === selected.length && results.every(result => result.pass), "Amostra real incompleta ou com lacunas; consulte as respostas, sem confundir indisponibilidade com memória validada.");
 } finally { process.chdir(repository); }
