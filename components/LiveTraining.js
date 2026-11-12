@@ -98,7 +98,7 @@ export default function LiveTraining({ controller = false }) {
       <h1>{controller ? "treino-ao-vivo" : "INCONSCIENTE COLETIVO"}</h1>
     </header>
     <div className={styles.history} ref={historyRef} role="log" aria-label="Conversa do treino ao vivo" aria-live="off">
-      {!channel.messages.length ? <p className={styles.empty}>A conversa começa aqui<span aria-hidden="true">_</span></p> : null}
+      {!channel.messages.length ? <p className={styles.empty} aria-hidden="true"><span>_</span></p> : null}
       {channel.messages.map(message => <article key={message.id} data-message-id={message.id} data-role={message.role} className={styles.message}>
         <small>{message.role === "user" ? "VOCÊ" : message.kind === "alternative" ? "CAIXA · ALTERNATIVA" : "CAIXA PRETA"}</small>
         {message.role === "assistant" ? <OperatorTypedReply message={message} settings={settings}
@@ -117,9 +117,8 @@ export default function LiveTraining({ controller = false }) {
     </div>
     {controller ? <form className={styles.composer} onSubmit={send}>
       {error ? <p role="alert" className={styles.error}>{error}</p> : null}
-      <label htmlFor="live-training-message">FALE COM A CAIXA</label>
-      <div><textarea id="live-training-message" value={input} maxLength={4000} rows={2}
-        placeholder="O que atravessa a peça agora?" disabled={pending || channel.status !== "idle" || !sessionId}
+      <div><textarea id="live-training-message" aria-label="Mensagem" value={input} maxLength={4000} rows={2}
+        disabled={pending || channel.status !== "idle" || !sessionId}
         onChange={event => setInput(event.target.value)} onKeyDown={event => {
           if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send(event); }
         }} />

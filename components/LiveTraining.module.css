@@ -18,13 +18,14 @@
 .feedback button:disabled, .composer button:disabled { opacity: .4; cursor: default; }
 .feedback button:focus-visible, .composer :focus-visible { outline: 2px solid #c6ffd9; outline-offset: 3px; }
 .composer { border-top: 1px solid #174a2b; padding: 16px clamp(22px,5vw,100px); background: #030a05; }
-.composer label { display: block; font-size: 11px; letter-spacing: .1em; margin-bottom: 8px; }
 .composer > div { display: flex; align-items: stretch; gap: 10px; }
 .composer textarea { flex: 1; min-width: 0; resize: vertical; max-height: 160px; padding: 12px; font: inherit; font-size: 16px; color: #e1ffe9; background: #000; border: 1px solid #237541; }
 .empty { color: #6b9c7a; font-size: clamp(20px,2vw,34px); }
-.empty span, .waiting span { animation: pulse 1s steps(2) infinite; }
+.empty span { animation: blink 1s steps(1) infinite; }
+.waiting span { animation: pulse 1s steps(2) infinite; }
 .waiting { color: #8abb9b; font-size: 16px; }
 .error, .interrupted { color: #ffb3ba; font-size: 14px; }
 .error { margin: 0 0 12px; }
 @keyframes pulse { 50% { opacity: .25; } }
+@keyframes blink { 50% { opacity: 0; } }
 @media(max-width:600px) { .header { gap: 10px; flex-wrap: wrap; } .history { padding-top: 22px; } .message { padding-left: 10px; } .composer > div { flex-direction: column; } }

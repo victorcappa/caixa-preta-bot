@@ -60,7 +60,7 @@ try {
   assert.deepEqual(tabs.slice(-2), ["Treino", "treino-ao-vivo"]);
   assert.equal(await display.getByRole("textbox").count(), 0);
   assert.equal(await display.getByRole("button").count(), 0);
-  const draft = control.getByLabel("FALE COM A CAIXA");
+  const draft = control.getByLabel("Mensagem");
   await draft.fill("Como Morel atravessa a memória desta peça?");
   const firstResponse = control.waitForResponse(response => response.url().endsWith("/api/live-training") && response.request().method() === "POST");
   await draft.press("Enter");
