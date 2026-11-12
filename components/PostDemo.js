@@ -1,11 +1,11 @@
 "use client";
-/* eslint-disable @next/next/no-img-element -- Existing local Tarot reference, no remote image pipeline. */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import ProjectionWindowClient from "./ProjectionWindowClient";
 import OperatorTypedReply from "./OperatorTypedReply";
 import PostDemoParameters from "./PostDemoParameters";
 import PostDemoPointCloud from "./PostDemoPointCloud";
+import PostDemoCardImage from "./PostDemoCardImage";
 import { postDemoPresentation, POST_DEMO_CARD_LIMIT } from "@/lib/post-demo/settings";
 import styles from "./PostDemo.module.css";
 
@@ -14,6 +14,7 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
   const [busy, setBusy] = useState(false), [typedId, setTypedId] = useState(null);
   const [cloudError, setCloudError] = useState("");
   const [cloudRequest, setCloudRequest] = useState(false);
+  const [cardSurfaces, setCardSurfaces] = useState({});
   const entered = useRef(null), session = useRef(null), textArea = useRef(null), pending = useRef(false);
   const state = snapshot?.postDemo, round = state?.rounds.at(-1);
   const presentation = state?.presentation || postDemoPresentation();
@@ -34,6 +35,12 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
       body: JSON.stringify({ action, ...data, sessionId: session.current }), signal: AbortSignal.timeout(12000) });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "Não foi possível concluir.");
+  }, []);
+  useEffect(() => {
+    const abort = new AbortController();
+    fetch("/api/tarot/catalog", { cache: "no-store", signal: abort.signal }).then(response => response.ok ? response.json() : Promise.reject())
+      .then(data => setCardSurfaces(Object.fromEntries(data.cards.map(card => [card.id, card.surface])))).catch(() => {});
+    return () => abort.abort();
   }, []);
   useEffect(() => {
     const unsubscribe = subscribePublicRealtime(({ state: next, event }) => {
@@ -86,7 +93,7 @@ export default function PostDemo({ controller = false, panelCollapsed = false, p
     {panelCollapsed && panelError ? <p role="alert">{panelError}</p> : null}
     <section className={styles.stage} data-cloud={Boolean(state?.pointCloud)} aria-label="Ilha futura da peça">
       {round ? <>
-        <figure className={styles.card} key={round.id}><img src={round.card.imageUrl} alt={round.card.name} /><figcaption>{round.card.number} · {round.card.name}</figcaption></figure>
+        <figure className={styles.card} key={round.id}><PostDemoCardImage card={round.card} surface={round.card.surface || cardSurfaces[round.card.id]} /><figcaption>{round.card.number} · {round.card.name}</figcaption></figure>
         <div className={styles.voice} ref={textArea} role="log" aria-label="Fala da ilha futura">
           <OperatorTypedReply key={round.id} message={message} settings={presentation} animate={state.status !== "completed"}
             paused={!state.active} onProgress={scroll} onComplete={display ? typed : undefined} />

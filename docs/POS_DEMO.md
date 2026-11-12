@@ -6,6 +6,8 @@ A alça **› / Recolher parâmetros**, na borda do painel direito, esconde o pa
 
 O público vê a carta e a fala com digitação animada, voltadas ao **futuro da peça**: cenas possíveis, dispositivos, desdobramentos e questões filosóficas. Não há lista de participantes no rodapé nem nomes na fala. A única referência à plateia é uma nuvem de pontos colorida, gerada localmente a partir de uma foto e exibida à direita. O botão **Gerar point cloud**, andamento e erros ficam apenas no painel privado. A geração é independente das cartas; ver preparo offline, navegação e limites em [POST_DEMO_POINT_CLOUD.md](POST_DEMO_POINT_CLOUD.md).
 
+As cartas aparecem recortadas pelo contorno cadastrado no catálogo, com cantos suavizados, sem o fundo branco da fotografia nem moldura externa. O tamanho de exibição foi reduzido em 15% nas duas telas. O recorte é visual: preserva as referências originais usadas pelo reconhecimento do Tarô.
+
 ## Material e memória
 
 O PDF fornecido foi preservado em `assets/dramaturgia/proximas-etapas-da-peca.pdf`; as 12 páginas integrais estão extraídas em `knowledge/sources/proximas-etapas-da-peca.json`. Seus planos para as cenas 7–15 prevalecem sobre as propostas antigas do rascunho para imaginar a continuação. `memory:sync` atualiza as duas extrações; `memory:audit` verifica integralidade e hashes de ambos os PDFs.

@@ -4,7 +4,8 @@
 .header span { color:#8abb9b; font-size:14px; }
 .stage { display:grid; grid-template-columns:minmax(180px,28%) minmax(0,1fr); align-items:center; gap:4vw; padding:28px 5vw; min-height:0; position:relative; }
 .card { margin:0; min-height:0; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; animation:reveal .65s ease-out; }
-.card img { display:block; max-width:100%; max-height:calc(100% - 42px); object-fit:contain; border:1px solid #237541; }
+.card img { display:block; max-width:85%; max-height:calc((100% - 42px) * .85); width:auto; height:auto; object-fit:contain; border:0; }
+.cardMask { position:absolute; width:0; height:0; overflow:hidden; }
 .card figcaption { font-size:clamp(14px,1.5vw,23px); text-align:center; padding:14px 0 0; }
 .voice { align-self:stretch; overflow-y:auto; display:flex; align-items:safe center; min-height:0; scrollbar-color:#174a2b #000; }
 .voice p { font:inherit; font-size:clamp(23px,2.45vw,44px); line-height:1.33; white-space:pre-wrap; overflow-wrap:anywhere; margin:0; padding:12px 0; }
