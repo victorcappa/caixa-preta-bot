@@ -202,3 +202,31 @@
 @media (min-width:1700px) { .scene { min-height:720px; } .detail { max-height:860px; } }
 @media (max-width:1000px) { .exhibition { grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr); } .scene { min-height:620px; } .trails article { flex-wrap:wrap; } }
 @media (max-width:720px) { .header h1 { font-size:43px; } .exhibition { grid-template-columns:minmax(0,1fr); } .viewport { min-height:500px; } .scene { min-height:470px; } .detail { max-height:none; } .topicFilters { gap:5px; } .topicFilters button { font-size:9px; padding:7px; } .topicFilters>span { width:100%; margin-bottom:3px; } .trails { gap:10px; } .trails>span { width:100%; } .trails>div { gap:5px; } .trails>div>button { font-size:9px; padding:8px; } .trails article>div { flex-wrap:wrap; flex-shrink:1; } .objectBar button { padding:6px; font-size:9px; } .islandTools { right:10px; top:44px; } .islandTools button { font-size:7px; padding:7px; } .islandHud { font-size:7px; left:12px; bottom:18px; max-width:240px; } .sceneControls { align-items:flex-start; } .sceneControls>span { max-width:175px; line-height:1.8; } .laboratory { padding:20px; } .laboratoryHeading { flex-direction:column; align-items:flex-start; gap:15px; } .laboratoryHeading h2 { font-size:28px; } .experimentSlots { grid-template-columns:minmax(0,1fr); gap:9px; } .experimentSlots>div { min-height:62px; } .experimentActions { flex-direction:column; } .experimentActions button:last-child { margin-left:0; } .experimentResult>p { font-size:18px; } }
+/* Cena 3: a cabinet of things, with their uses displaced. */
+.cabinetTools { border:1px solid #514c3d; background:linear-gradient(100deg,#29221844,#101b2133); padding:17px 20px; margin:0 0 18px; }
+.cabinetTools>div:first-child { display:flex; justify-content:space-between; align-items:center; gap:15px; margin-bottom:13px; }
+.cabinetTools>div:first-child>span { font:9px "Courier New",monospace; letter-spacing:.08em; color:#e9cca0; }
+.cabinetTools>div:first-child>p { margin:0; color:#bcb5a2; font:12px Georgia,serif; }
+.cabinetToolButtons { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; }
+.cabinetToolButtons button { text-align:left; padding:10px 12px; border:1px solid #4a4d41; background:#0c1519; color:#eadcc1; min-height:63px; }
+.cabinetToolButtons strong { display:block; font:16px Georgia,serif; }
+.cabinetToolButtons small { display:block; color:#aab4a8; font:9px/1.55 "Courier New",monospace; margin-top:6px; }
+.cabinetToolButtons button:hover,.cabinetToolButtons button:focus-visible { background:#30281d; border-color:#b99455; }
+.toolNote { font:12px/1.7 Georgia,serif; color:#c9c1a7; margin:13px 0 0; }
+.toolNote strong { color:#f1d9ac; }
+.cabinetPagination { display:flex; align-items:center; justify-content:space-between; padding:10px 20px; gap:15px; border-top:1px solid var(--line); color:#bac1af; font:9px "Courier New",monospace; }
+.cabinetPagination>div { display:flex; align-items:center; gap:10px; }
+.cabinetPagination button { padding:6px 10px; background:none; border:1px solid #455a53; color:#dac9a7; }
+.thingHover { position:absolute; z-index:3; left:18px; top:53px; max-width:290px; padding:14px 17px; background:#0e151bf2; border:1px solid #937446; pointer-events:none; box-shadow:0 12px 35px #0006; }
+.thingHover strong { color:#ebd6b1; font:19px Georgia,serif; }
+.thingHover p { color:#c0c7b9; font:12px/1.7 Georgia,serif; margin:8px 0 0; }
+.biography { margin:5px 0 23px; padding:18px 0 20px; border-block:1px solid #61523c; }
+.biography>span { font:8px "Courier New",monospace; letter-spacing:.1em; color:#c9b080; }
+.biography>p { font:18px/1.65 Georgia,serif; color:#e2e3cc; margin:13px 0 0; }
+.displacedThing { padding:15px; background:#2a281d44; border:1px solid #4f513c; margin-bottom:20px; }
+.displacedThing>span { display:block; color:#a9ab8e; font:8px "Courier New",monospace; letter-spacing:.08em; }
+.displacedThing>strong { display:block; color:#dfc795; font:20px Georgia,serif; margin:9px 0; }
+.displacedThing>p { font:13px/1.6 Georgia,serif; color:#c9cbb8; margin:0 0 9px; }
+.displacedThing>small { font:8px/1.6 "Courier New",monospace; color:#94a091; }
+@media(max-width:900px) { .cabinetTools>div:first-child { align-items:flex-start; flex-direction:column; gap:7px; } .cabinetToolButtons { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:720px) { .cabinetTools { padding:15px; } .cabinetToolButtons button { padding:10px; } .cabinetToolButtons strong { font-size:16px; } .cabinetToolButtons small { font-size:8px; } .thingHover { max-width:230px; left:10px; padding:11px 13px; top:80px; } .thingHover strong { font-size:17px; } .thingHover p { font-size:11px; } .cabinetPagination { padding:9px 12px; font-size:8px; } .biography>p { font-size:18px; } }

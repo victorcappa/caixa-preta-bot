@@ -38,6 +38,8 @@ for (const item of library.items) {
     assert.match(item.description, /texto integral.*não está incorporado/);
   }
   if (item.group === "pessoas") {
+    assert(item.biography?.length > 180 && item.biography?.length < 700, "cada pessoa precisa de uma biografia breve e autoral");
+    assert(item.thing?.type && item.thing?.basis.includes("não um pertence real"), "objeto pessoal é associação curatorial");
     assert.equal(item.chunkCount, 0, "pesquisa de motivos não deve alegar indexação integral da obra");
     assert.equal(item.pageCount, null);
     assert(item.works.every(work => work.readStatus), "cada obra precisa declarar o alcance da consulta");

@@ -17,9 +17,32 @@ const { getReferenceLibrary } = await import('../lib/referenceLibrary.js');
 const { islandTopics, islandTrails, referenceRelations, islandReferencePosition } = await import('../lib/referenceIsland.js');
 const { referenceExperimentContext, generateReferenceExperiment } = await import('../lib/referenceExperiment.js');
 const { POST } = await import('../app/api/reference-experiment/route.js');
+const { cabinetTools, cabinetPage, referenceThing } = await import('../lib/referenceThings.js');
+const { createReferenceThing } = await import('../lib/createReferenceThing.js');
+const THREE = await import('three');
 const library = await getReferenceLibrary();
 assert.equal(library.island.models.length, 14);
 assert.equal(new Set(library.island.models.map(model => model.id)).size, 14);
+assert.equal(cabinetTools.length, 8);
+assert.equal(new Set(cabinetTools.map(tool => tool.action)).size, 8, 'Each functional object has a distinct use');
+const people = library.items.filter(item => item.group === 'pessoas');
+assert.equal(people.length, 35);
+for (const person of people) {
+  assert(person.biography && person.biography.length > 180 && person.biography.length < 700, `${person.title}: brief authored biography`);
+  assert(person.objectType && person.thing.type === person.objectType);
+  assert(person.sources.length > 0, `${person.title}: factual provenance stays accessible`);
+}
+for (const type of new Set([...cabinetTools.map(tool => tool.type), ...people.map(person => person.objectType)])) {
+  const object = createReferenceThing(THREE, type, { size: 1.5 });
+  const box = new THREE.Box3().setFromObject(object), size = box.getSize(new THREE.Vector3());
+  assert(Math.abs(Math.max(size.x, size.y, size.z) - 1.5) < .001, `${type}: tangible prop has a normalized selectable volume`);
+  let meshes = 0; object.traverse(part => { if (part.isMesh) meshes++; assert(!part.isSprite && !part.isPoints, 'Things must be geometry, not luminous point markers'); });
+  assert(meshes > 1, `${type}: an identifiable assembled object`);
+  object.traverse(part => { part.geometry?.dispose(); [].concat(part.material || []).forEach(material => material.dispose()); });
+}
+const page = cabinetPage(library.items, people.map(person => person.id), people[0].id, 1);
+assert(page.items.length <= 13 && page.count === 3, '35 people are explored as readable groups of tangible things');
+assert.equal(referenceThing(people[0]).basis.includes('não um pertence real'), true);
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 for (const model of library.island.models) {
   const file = path.resolve(root, model.storagePath || `public${model.url}`);

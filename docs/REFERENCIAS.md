@@ -39,9 +39,34 @@ node scripts/prepare-reference-island-assets.cjs --pieta-glb /private/tmp/pieta-
 
 O exportador lê a origem e grava somente o GLB/JSON de saída. A preparação exige que a contagem triangulada do GLB corresponda à origem e conserva seus hashes. O script sem `--pieta-glb` mantém a escultura preparada e verifica seu gzip. O funcionamento da ilha não depende das pastas externas depois da preparação.
 
+## As coisas: forma, função e pessoa
+
+A Cena 3 do texto local (páginas 13–16) fornece a referência: malas abertas, objetos que remetem a pessoas, gabinete de curiosidades, usos fora do uso e o fonógrafo como permanência de uma voz. A interface retoma essa lógica sem afirmar que suas novas ferramentas já fazem parte da encenação.
+
+Os marcadores luminosos das fichas foram substituídos por objetos com volume, silhueta, cor e nome: livro, câmera, espelho, telefone, mala, chave inglesa, tesoura, funil, lupa, martelo, controle, fonógrafo, guarda-chuva, chave, lanterna e fita cassete. São geometrias novas em `lib/createReferenceThing.js`; os 14 modelos locais permanecem preservados. Estrelas e linhas são apenas ambientação, sem representar fichas selecionáveis.
+
+O gabinete tem oito ferramentas grandes, com ações distintas, também disponíveis em botões acessíveis:
+
+| Coisa | Uso deslocado na interface |
+| --- | --- |
+| Fonógrafo | Abre as pessoas e percorre suas biografias. |
+| Guarda-chuva | Reúne as lacunas da pesquisa. |
+| Tesoura | Recorta o acervo pela afinidade da ficha aberta. |
+| Martelo | Escolhe dois materiais com poucas afinidades em comum para o laboratório; não gera uma fala automaticamente. |
+| Espelho | Abre uma referência relacionada no lugar da atual. |
+| Chave | Reabre todo o acervo e retorna à vista da ilha. |
+| Mala | Despeja a ilha na visualização em lista. |
+| Lanterna | Alterna holograma e materiais originais dos modelos. |
+
+`lib/referenceThings.js` define esses usos e a representação curatorial das fichas. A vista geral aproxima a ficha aberta e até cinco relações; grupos e filtros apresentam até doze coisas por página, com a ficha selecionada mantida quando necessário. Os controles **Coisas anteriores / Próximas coisas** percorrem o conjunto. Selecionar um objeto abre sua ficha; passar sobre ele revela seu nome e uso, ou a biografia quando se trata de uma pessoa. A lista e a busca continuam cobrindo o acervo completo.
+
+`data/reference-biographies.json` contém **35 biografias breves e autorais na voz da Caixa**, baseadas nas fichas públicas já verificadas. Descrevem papéis, práticas e trabalhos, com comentários da personagem. As fontes e limitações ficam junto de cada ficha; créditos parciais de Diego Di Mira e Ricardo Kenji não foram completados por suposição, e o crédito incerto de Felipe Cruz em outra obra não foi promovido a fato biográfico. Objetos associados a pessoas são escolhas curatoriais, não pertences reais ou retratos psicológicos.
+
+As biografias só são apresentadas no acervo. Não entram nos motivos de `lib/collectiveMemory.js`, no prompt permanente nem espontaneamente na interação pública. A escrita dessas fichas não usa uma chamada automática ao modelo.
+
 ## Relações, percursos, lacunas e cruzamentos
 
-`lib/referenceIsland.js` define sete afinidades: memória, corpo, falha, duplo, trabalho, jogo e travessia. São leituras curatoriais calculadas a partir de títulos, resumos, motivos e tags, não diagnóstico das pessoas nem prova de influência entre artistas. Selecionar um tema reorganiza seus pontos na ilha. Ligações já registradas pelo catálogo aparecem contínuas; aproximações curatoriais são identificadas como tais e aparecem tracejadas. As fichas permitem percorrer ambas. Três trajetos editoriais — **Depois da queda**, **Mãos da máquina**, **Habitantes e duplos** — conduzem o olhar entre objetos e temas. **Lacunas** filtra pesquisas parciais ou limites de verificação; não encontrar uma publicação não prova ausência de produção.
+`lib/referenceIsland.js` define sete afinidades: memória, corpo, falha, duplo, trabalho, jogo e travessia. São leituras curatoriais calculadas a partir de títulos, resumos, motivos e tags, não diagnóstico das pessoas nem prova de influência entre artistas. Selecionar um tema muda as coisas abertas na ilha. Ligações já registradas pelo catálogo aparecem contínuas; aproximações curatoriais são identificadas como tais e aparecem tracejadas. As fichas permitem percorrer ambas. Três trajetos editoriais — **Depois da queda**, **Mãos da máquina**, **Habitantes e duplos** — conduzem o olhar entre objetos e temas. **Lacunas** filtra pesquisas parciais ou limites de verificação; não encontrar uma publicação não prova ausência de produção.
 
 O laboratório abaixo da ilha recebe dois materiais escolhidos nas fichas. **Ver contexto das fontes** recupera trechos sem consultar um modelo. **Gerar improvisação privada** faz uma chamada ao modelo configurado, somente após o clique; não publica na conversa, não altera `showState`, cenas, projeções, notas ou treinos. Sem provedor configurado ou após falha, aparece um erro explícito. Não há resposta simulada apresentada como geração real, busca externa, ferramentas ou reenvio automático.
 
@@ -52,7 +77,7 @@ O laboratório abaixo da ilha recebe dois materiais escolhidos nas fichas. **Ver
 - `npm run test:collective-memory`: cobertura das 35 pessoas, integridade das fontes, motivos no prompt dos modos, separação de biografias e dados privados, atualização de cache em fixture descartável.
 - `npm run test:references`: catálogo completo, proveniência e contagens coerentes com o índice real; fontes citadas não são apresentadas como textos integrais.
 - `npm run memory:dissertation`: todas as páginas, hashes, recuperação por assunto, atribuição interna, filtro do Tarô e rejeição de original alterado.
-- `npm run test:references:island`: cópias/hashes dos 14 modelos, triangulação da Pietà, afinidades e relações, percursos, contexto do experimento, modelo simulado e limites das ações privadas.
+- `npm run test:references:island`: cópias/hashes dos 14 modelos, triangulação da Pietà, oito ferramentas com usos distintos, 35 biografias e suas representações, volumes dos objetos, paginação, afinidades e relações, percursos, contexto do experimento, modelo simulado e limites das ações privadas.
 - `npm run test:references:browser`: build em cópia isolada e porta 3339, navegação/busca/seleção/filtros, modelos reais e Pietà sob demanda, materiais originais/holograma, afinidades, percursos, lacunas, laboratório com provedor simulado e caderno, desktop/mobile, movimento reduzido, ausência de WebGL e ausência de comandos de projeção ou geração pública. Não toca o servidor da apresentação.
 
 Essas verificações não provam a qualidade de uma resposta de modelo real, a apresentação física ou uma implantação em produção. A regra de influência silenciosa foi implementada no contexto; comportamento efetivo exige ensaio e revisão das falas geradas.

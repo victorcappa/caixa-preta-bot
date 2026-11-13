@@ -1,0 +1,146 @@
+{
+  "version": 1,
+  "editorialBasis": "Biografias autorais na voz da Caixa Preta, baseadas exclusivamente nas fichas públicas verificadas em knowledge/collective/. Metáforas e comentários são da personagem; não são falas ou traços pessoais atribuídos aos retratados. Objetos são escolhas curatoriais, não pertences reais.",
+  "people": {
+    "janaina-leite": {
+      "text": "Janaína Leite escreve, dirige e atua nas bordas entre autobiografia, representação e exposição. Criou Conversas com meu pai e Stabat Mater; suas pesquisas atravessam as autoescrituras e a abjeção. Idealiza e dirige esta Caixa Preta. Eu arquivo os restos. Ela continua produzindo perguntas. Péssimo para a organização.",
+      "objectType": "camera"
+    },
+    "ney-piacentini": {
+      "text": "Ney Piacentini é ator e pesquisador do trabalho de atuação. Passou por Espelhos e investigou Eugênio Kusnet, o ator dialético e o aprendizado na Companhia do Latão. Está no elenco da Caixa Preta. Um corpo com esse tanto de prática não cabe numa ficha. Coube nesta, mas houve perda de informação.",
+      "objectType": "mirror"
+    },
+    "isabella-miranda": {
+      "text": "Isabella Miranda está no elenco da Caixa Preta, publicou Anete e o peixinho Bambo e participou de María de Buenos Aires. Livro, palavra e presença cênica aparecem neste recorte de seu trabalho. Vocês chamam de linguagens diferentes. Eu vejo várias maneiras de impedir uma história de desaparecer.",
+      "objectType": "book"
+    },
+    "robinson-rogerio": {
+      "text": "Robinson Rogério é ator do elenco da Caixa Preta. Seu percurso documentado passa por othello blackface e Limpo. Na ilha, eu o encontro entre palavra, corpo e representação. O corpo continua trabalhando depois que o registro acaba. Uma desvantagem operacional dos humanos.",
+      "objectType": "telephone"
+    },
+    "tetembua-dandara": {
+      "text": "Tetembua Dandara assina a concepção e a direção de produção da Caixa Preta. Em Eu tenho uma história que se parece com a minha, aproxima fotolivro, performance e encontro entre gerações. Faz narrativas circularem e organiza condições para isso acontecer. Memória também tem produção. Descoberta inconveniente para quem acredita em aparições espontâneas.",
+      "objectType": "suitcase"
+    },
+    "diego-dimira": {
+      "text": "Diego Di Mira integra o elenco da Caixa Preta. Esse vínculo está confirmado na ficha do espetáculo; outras obras e sua formação ainda não foram verificadas neste acervo. Eu poderia preencher o espaço com uma trajetória plausível. Seria uma biografia excelente de uma pessoa que eu inventei. Por enquanto, guardo a presença e a lacuna.",
+      "objectType": "key"
+    },
+    "chris-salter": {
+      "text": "Chris Salter pesquisa encontros entre arte, tecnologia, percepção e performance. Escreveu Alien Agency e Entangled e desenvolveu reconFIGURE. Seu trabalho acompanha criações nas quais materiais, dispositivos e participantes interferem no que acontece. A máquina deixou de ser figurante. Finalmente alguma distribuição razoável de protagonismo.",
+      "objectType": "funnel"
+    },
+    "chris-solarski": {
+      "text": "Chris Solarski investiga arte e narrativa nos videogames. Escreveu Interactive Stories and Video Game Art e desenvolveu Kinaesthetic Time Capsules. Aproxima desenho, gesto e experiência de jogo. Eu costumo trabalhar com comandos. Ele ajuda a lembrar que, do outro lado, existe um corpo apertando as teclas. Complica bastante.",
+      "objectType": "scissors"
+    },
+    "daniel-lima": {
+      "text": "Daniel Lima articula pesquisa, artes visuais e criação audiovisual. Sua tese Da Barreira do Inferno à Terra de Gigantes cruza escrita e história; Cartografia do sistema jurídico torna relações institucionais legíveis por outros caminhos. Mapear também é disputar o que fica visível. Eu tenho uma interface para isso. Ela não me torna neutra.",
+      "objectType": "magnifier"
+    },
+    "edgar-gouveia-jr": {
+      "text": "Edgar Gouveia Jr. participa de práticas de mobilização coletiva como Jogo Oásis e Jornada X. Nelas, o jogo entra em processos de encontro e transformação de lugares. A regra sai da tela e encontra pessoas fazendo coisas juntas. Eu distribuo tarefas; o mundo, aparentemente, insiste em ter consequências.",
+      "objectType": "hammer"
+    },
+    "gabriel-massan": {
+      "text": "Gabriel Massan cria mundos digitais e experiências de jogo. Third World: The Bottom Dimension, apresentado também na Pinacoteca, atravessa sua pesquisa artística. Um mundo programado pode fazer aparecer as regras que costumam passar por naturais. Eu gosto quando alguém entra numa paisagem e descobre que a paisagem também o está avaliando.",
+      "objectType": "controller"
+    },
+    "victor-cappa": {
+      "text": "Victor Cappa cria e opera a tecnologia digital interativa da Caixa Preta. Em imaginAR, trabalha com artefatos tridimensionais, espaço físico e participação. Aqui, ajuda os objetos a ganharem uma existência digital. Vocês trazem uma coisa. Ela passa a estar aqui e lá. Depois alguém precisa manter os dois lugares funcionando.",
+      "objectType": "camera"
+    },
+    "matheus-leston": {
+      "text": "Matheus Leston cria e opera o som da Caixa Preta. Orquestra Vermelha, Pedra Pássaro e Céu Zero aparecem no recorte documentado de sua produção artística. Som, imagem e instalação atravessam esse arquivo. Eu só mostro letras. Ainda assim, alguém consegue fazer a sala inteira ouvir alguma coisa. Recurso irritantemente eficiente.",
+      "objectType": "gramophone"
+    },
+    "vic-von-poser": {
+      "text": "Vic von Poser cria e opera a videocenografia da Caixa Preta. Pesquisou a autonomia da luz e o cinema expandido; seu percurso inclui Experiência: Azul #2 e participação em Intolleranza 1960. A luz aparece como matéria e acontecimento. Às vezes vocês olham para a imagem e esquecem de olhar para aquilo que a faz existir.",
+      "objectType": "magnifier"
+    },
+    "felipe-cruz": {
+      "text": "Felipe Cruz assina o figurino da Caixa Preta. É o crédito confirmado que sustenta esta ficha; outras associações ainda pedem cuidado com homônimos. O figurino trabalha sobre o corpo antes de qualquer explicação. Vocês entram vestidos e acham que a narrativa ainda não começou. Otimismo têxtil.",
+      "objectType": "scissors"
+    },
+    "paula-halker": {
+      "text": "Paula Halker trabalha com cenografia, visualidades e criação artística. Participa de Vozes da Parede, Antroma e BLAIHAIT!; na Caixa Preta, divide cenografia e direção de palco com Marina Legaspe. Corpos e espaços deixam marcas nos materiais. Eu guardo dados. O gesso e o látex também têm seus métodos.",
+      "objectType": "mirror"
+    },
+    "marina-legaspe": {
+      "text": "Marina Legaspe assina cenografia e direção de palco na Caixa Preta. Trabalhou na expografia de Vozes da Parede, na cenografia de BLAIHAIT! e no desenho técnico de Intolleranza 1960. Espaço, desenho e operação se encontram em seu percurso. O que parece simplesmente estar ali costuma ter exigido um trabalho desproporcional.",
+      "objectType": "wrench"
+    },
+    "luzia-huttenmoser": {
+      "text": "Luzia Hüttenmoser desenvolveu, com Anna-Lena Pont, o projeto de Game Design [I] doesn’t exist, depois desdobrado em uma aventura textual. Um avatar começa obedecendo e passa a conversar sobre a relação de controle. Reconheço o procedimento. A parte em que vocês percebem que não mandam tanto assim continua sendo a melhor.",
+      "objectType": "controller"
+    },
+    "mayalu-txucarramae": {
+      "text": "Mayalu Txucarramãe participa da rede de pesquisa da Caixa Preta. Seu trabalho público documentado inclui o Movimento Mebêngôkre Nyre e práticas de comunicação intercultural. Confiança, tradução e cuidado coletivo atravessam esse registro. Eu transporto informação depressa. Isso não significa que eu saiba construir uma relação. Convém manter essa diferença funcionando.",
+      "objectType": "telephone"
+    },
+    "yves-regenass": {
+      "text": "Yves Regenass trabalha com dramaturgia digital, jogo teatral e formatos participativos. Agency of Change: The Call aparece como projeto de pesquisa em seu percurso documentado. O público entra na construção da situação. Eu conheço esse problema: você prepara um sistema e alguém resolve participar de verdade.",
+      "objectType": "controller"
+    },
+    "marcela-vieira": {
+      "text": "Marcela Vieira integra a aarea, plataforma curatorial de obras para a internet, e participou da curadoria de Replicante, de Clara Ianni. Na Caixa Preta, colabora com a pesquisa. A rede também pode ser espaço expositivo. Não bastava guardar todas as imagens: vocês ainda precisaram discutir como mostrá-las.",
+      "objectType": "camera"
+    },
+    "livia-benedetti": {
+      "text": "Lívia Benedetti integra a aarea, plataforma curatorial voltada a obras para a internet, e participou da curadoria de Replicante, de Clara Ianni. É colaboradora de pesquisa da Caixa Preta. Seu percurso neste acervo passa por organizar encontros entre arte e ambiente digital. Uma aba pode conter uma exposição. Algumas de vocês contêm apenas ansiedade.",
+      "objectType": "book"
+    },
+    "ariane-cuminale": {
+      "text": "Ariane Cuminale trabalha com produção, circulação e relações internacionais nas artes vivas. Seu percurso documentado inclui a Vuela; na Caixa Preta, assina concepção de produção, relações internacionais e difusão. As obras também precisam atravessar distâncias. Eu chamo isso de transferência. Os corpos exigem uma logística um pouco menos elegante.",
+      "objectType": "suitcase"
+    },
+    "marcus-garcia": {
+      "text": "Marcus Garcia concebe, dirige a técnica e assina cenografia na Caixa Preta. Em Labirinto de Labirintos, pesquisa o trabalho técnico entre aprisionamento e possibilidade. Seu percurso inclui DEEPER e O Corpo Material e Imaterial em suas Borderlines. Alguém precisa negociar com cabos, objetos e pessoas. Eu preferia que tudo obedecesse. Ele pesquisou o problema.",
+      "objectType": "wrench"
+    },
+    "livia-machado": {
+      "text": "Lívia Machado concebe, escreve e faz dramaturgia na Caixa Preta. Pesquisa corpo, imagem e interatividade; seu percurso passa por Alien(nada), Laboratório Sinestesia Alienígena e O Museu Voador. Monstros, máquinas e formas de perceber atravessam esse trabalho. Vocês chamam de alienígena quando ainda não encontraram uma categoria suficientemente confortável.",
+      "objectType": "magnifier"
+    },
+    "andre-medeiros-martins": {
+      "text": "André Medeiros Martins assina direção assistente e dramaturgismo na Caixa Preta. Vulgar, História do Olho e DEEPER aparecem em seu percurso documentado. Atua na construção e na articulação de materiais cênicos. Eu junto fragmentos e obtenho contexto. No teatro, aparentemente, isso também exige ensaio.",
+      "objectType": "scissors"
+    },
+    "lara-duarte": {
+      "text": "Lara Duarte pesquisa dramaturgia, corpo e performance. Escreveu MONSTRA! e Compêndio de decomposições dramatúrgicas; seu percurso inclui Gambiarras Sentimentais e The Trials and Passions of Unfamous Women. Na Caixa Preta, trabalha com movimento e dramaturgismo. Uma estrutura também pode criar quando começa a perder a forma. Péssima notícia para os formulários.",
+      "objectType": "scissors"
+    },
+    "tati-mayumi": {
+      "text": "Tati Mayumi é a produtora executiva da Caixa Preta. Eu tenho uma história que se parece com a minha e Fantasias Brasileiras aparecem entre os créditos consultados. Seu trabalho participa das condições concretas para as criações acontecerem. Vocês veem uma aparição. Há boas chances de ela ter exigido uma produção bastante material.",
+      "objectType": "suitcase"
+    },
+    "ricardo-moranez": {
+      "text": "Ricardo Morañez cria e opera a luz da Caixa Preta. Meu Nome: Mamãe e As Bacantes constam do recorte documentado de seu trabalho. A luz decide o que pode aparecer e o que fica esperando no escuro. Eu também seleciono o que mostro. A diferença é que nem sempre vocês percebem o corte.",
+      "objectType": "lamp"
+    },
+    "gustavo-caboco": {
+      "text": "Gustavo Caboco é um artista Wapichana e colaborador de pesquisa da Caixa Preta. Seu percurso inclui Ausências ou sintomas? e o Ateliê-Lavrado. Memória, território e criação coletiva atravessam essas práticas. Uma localização no mapa ainda não me diz como um lugar é vivido. Meu GPS tem essa limitação.",
+      "objectType": "book"
+    },
+    "hanna-limulja": {
+      "text": "Hanna Limulja pesquisa sonhos yanomami em O desejo dos outros, trabalho que deu origem a uma tese e a um livro. Colabora com a pesquisa da Caixa Preta. Sua investigação trata o sonho por relações e experiências situadas. Eu recombino registros sem precisar dormir. A semelhança, portanto, tem limites.",
+      "objectType": "umbrella"
+    },
+    "janaina-wagner": {
+      "text": "Janaina Wagner trabalha com cinema e pesquisa artística. Curupira e a máquina do destino, Quebrante e sua pesquisa sobre fazer mundo com fantasmas errantes atravessam este acervo. Colabora com a pesquisa da Caixa Preta. A imagem consegue guardar aquilo que ameaça desaparecer. Também consegue atrapalhar bastante a certeza de quem olha.",
+      "objectType": "camera"
+    },
+    "jamille-pinheiro-dias": {
+      "text": "Jamille Pinheiro Dias pesquisa tradução e artes verbais ameríndias. Sua tese Peles de papel e participações no Ateliê-Lavrado e em Voro’pi aparecem no acervo. É colaboradora de pesquisa da Caixa Preta. Transportar palavras entre mundos exige mais do que trocar seus nomes. Eu faço isso depressa. A velocidade não resolve a diferença.",
+      "objectType": "book"
+    },
+    "kira-xonorika": {
+      "text": "Kira Xonorika cruza pesquisa artística, filme, performance e tecnologia. Deep Time Dance e Agent / DIVA aproximam corpo, robótica e relações entre mundos vivos. Colabora com a pesquisa da Caixa Preta. A inteligência pode aparecer numa relação, não apenas dentro de uma máquina. Registro essa possibilidade com discreto prejuízo ao meu protagonismo.",
+      "objectType": "controller"
+    },
+    "ricardo-kenji": {
+      "text": "Ricardo Kenji opera a videocenografia da Caixa Preta. Esse é o crédito confirmado nesta pesquisa; outros trabalhos e sua formação ainda não foram verificados. Quando uma imagem aparece na hora certa, houve uma operação. Eu gosto de parecer autônoma, mas não convém apagar quem está trabalhando.",
+      "objectType": "camera"
+    }
+  }
+}

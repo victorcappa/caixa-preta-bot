@@ -122,6 +122,7 @@ try {
   assert(picked, "Clicking a 3D island object or source opens its corresponding record.");
   checks.push("The paused 3D archive rotates by dragging and selecting a real 3D object updates its source record.");
 
+  await page.locator('[data-cabinet-tool="chave"]').click();
   await selectDissertation(page);
   await page.screenshot({ path: path.join(output, "references-dissertation.png"), fullPage: true });
   checks.push("Search and keyboard selection reveal the dissertation's real author, page count and original USP link.");
@@ -213,6 +214,38 @@ try {
   assert(!await page.locator('body').innerText().then(text => text.includes('STALE_EXPERIMENT_SENTINEL')));
   await page.unroute('**/api/reference-experiment');
   checks.push('The private two-source laboratory previews exact context and records a mocked generation in the tab notebook without publishing to the show.');
+
+  await page.locator('[data-cabinet-tool="chave"]').click();
+  await page.locator('[data-cabinet-tool="fonografo"]').click();
+  await page.locator('[data-reference-biography]').waitFor();
+  assert.equal(await page.locator('button[data-reference-group="pessoas"]').getAttribute('aria-pressed'), 'true');
+  await page.waitForFunction(() => (document.querySelector('[data-reference-scene]')?.dataset.cabinetTypes || '').length > 0);
+  const thingIds = (await page.locator('[data-reference-scene]').getAttribute('data-cabinet-visible')).split(',').filter(Boolean);
+  assert(thingIds.length <= 13 && thingIds.length > 0, 'The island presents readable objects, not a cloud of tiny markers.');
+  await page.getByRole('button', { name: 'Próximas coisas', exact: true }).click();
+  await page.locator('[data-reference-biography]').waitFor();
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const bioBox = await page.locator('[data-reference-biography]').boundingBox();
+  assert(bioBox && bioBox.y >= 0 && bioBox.y + bioBox.height <= page.viewportSize().height, 'Opening or paging a biography reveals its beginning rather than retaining an old scroll position.');
+  await page.screenshot({ path: path.join(output, 'as-coisas-biography.png'), fullPage: true });
+  await page.locator('[data-cabinet-tool="guarda-chuva"]').click();
+  assert.equal(await page.locator('[data-reference-gaps]').getAttribute('aria-pressed'), 'true');
+  await page.locator('[data-cabinet-tool="chave"]').click();
+  await page.locator('[data-cabinet-tool="tesoura"]').click();
+  assert(await page.locator('[data-island-topic][aria-pressed="true"]').count() === 1);
+  await page.locator('[data-cabinet-tool="chave"]').click();
+  const beforeMirror = await page.locator('[data-reference-detail]').getAttribute('data-reference-detail');
+  await page.locator('[data-cabinet-tool="espelho"]').click();
+  assert.notEqual(await page.locator('[data-reference-detail]').getAttribute('data-reference-detail'), beforeMirror);
+  await page.locator('[data-cabinet-tool="lanterna"]').click();
+  assert.equal(await page.getByRole('button', { name: 'Ver como holograma', exact: true }).getAttribute('aria-pressed'), 'true');
+  await page.locator('[data-cabinet-tool="lanterna"]').click();
+  await page.locator('[data-cabinet-tool="martelo"]').click();
+  assert.equal(await page.locator('[aria-label="Laboratório privado de associações"] button[aria-label^="Retirar"]').count(), 2);
+  await page.locator('[data-cabinet-tool="mala"]').click();
+  assert.equal(await page.getByRole('button', { name: 'Lista', exact: true }).getAttribute('aria-pressed'), 'true');
+  await page.locator('[data-cabinet-tool="chave"]').click();
+  checks.push('As Coisas uses eight recognizable functional props, pages through tangible references, and presents factual biographies in the bot voice for all 35 people.');
 
   const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: "reduce" });
   const mobile = await mobileContext.newPage();
