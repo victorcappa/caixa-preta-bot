@@ -21,6 +21,8 @@ const { cabinetTools, cabinetPage, referenceThing } = await import('../lib/refer
 const { createReferenceThing } = await import('../lib/createReferenceThing.js');
 const { createReferenceFragments } = await import('../lib/createReferenceFragments.js');
 const { referencePeoplePosition } = await import('../lib/referenceIsland.js');
+const { referenceAtlasLayout, referenceModelPosition } = await import('../lib/referenceIsland.js');
+const { pickReferenceTarget } = await import('../lib/referencePicking.js');
 const THREE = await import('three');
 const library = await getReferenceLibrary();
 assert.equal(library.island.models.length, 14);
@@ -47,6 +49,13 @@ for (const type of new Set([...cabinetTools.map(tool => tool.type), ...people.ma
 const page = cabinetPage(library.items, people.map(person => person.id), people[0].id, 1, false, true);
 assert.equal(page.items.length, people.length, 'Every person has a simultaneously available object.');
 assert.equal(page.count, 1); assert.equal(page.page, 0);
+const allRecords = cabinetPage(library.items, library.items.map(item => item.id));
+assert.equal(allRecords.items.length + library.island.models.length, library.items.length, 'Tudo represents every catalogue entry once.');
+const atlas = referenceAtlasLayout(allRecords.items.length);
+assert(atlas.scale > 3 && atlas.positions.length === allRecords.items.length);
+assert.equal(new Set(atlas.positions.map(position => position.join(','))).size, allRecords.items.length);
+for (const [x, z] of atlas.positions) assert(Math.hypot(x, z / .75) >= 14.5, 'References do not overlap the scenic-model hub.');
+assert.equal(new Set(library.island.models.map((model, index) => referenceModelPosition(model.id, index, library.island.models.length).join(','))).size, 14);
 const positions = people.map((_, index) => referencePeoplePosition(index, people.length));
 assert.equal(new Set(positions.map(position => position.join(','))).size, people.length);
 for (const [x, y, z] of positions) assert(Math.abs(x) < 7.3 && Math.abs(z) < 7.3 && y >= 1.6);
@@ -67,6 +76,22 @@ fragmented.update(2, 1, true); assert.equal(fragmented.progress, 1); assert(sour
 fragmented.update(3, 0, false, true); assert.equal(fragmented.progress, 0); assert(!source.visible); assert(fragmented.particles.visible);
 assert.deepEqual(fragmented.particles.instanceMatrix.array, matrices, 'The shader animates fragments without overwriting their assembled surface positions.');
 fragmented.object.traverse(node => { if (node.isInstancedMesh) node.dispose(); node.geometry?.dispose(); [].concat(node.material || []).forEach(material => material.dispose()); });
+const small = createReferenceFragments(THREE, new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial()), { id: 'small' });
+const frame = createReferenceFragments(THREE, new THREE.Mesh(new THREE.TorusGeometry(3, .08, 8, 64), new THREE.MeshStandardMaterial()), { id: 'large-frame', size: 6 });
+frame.object.position.z = 2; small.object.updateMatrixWorld(true); frame.object.updateMatrixWorld(true);
+const pickCamera = new THREE.PerspectiveCamera(40, 1, .1, 100); pickCamera.position.set(0, 0, 10); pickCamera.lookAt(0, 0, 0); pickCamera.updateMatrixWorld();
+const raycaster = new THREE.Raycaster(); raycaster.setFromCamera(new THREE.Vector2(0, 0), pickCamera);
+assert.equal(small.particles.count, 1700);
+assert.equal(pickReferenceTarget(raycaster, [frame.target, small.target], 640), small.target, 'The empty interior of a large click volume cannot steal the smaller object behind it.');
+small.update(1, 2, true, true); small.object.updateMatrixWorld(true);
+assert.equal(pickReferenceTarget(raycaster, [frame.target, small.target], 640), small.target, 'An integrated object is selected on its actual mesh.');
+const overlappingLabel = new THREE.Sprite(new THREE.SpriteMaterial()); overlappingLabel.position.set(0, 0, 3); overlappingLabel.scale.set(8, 3, 1); overlappingLabel.updateMatrixWorld(true);
+assert.equal(pickReferenceTarget(raycaster, [overlappingLabel, small.target], 640), small.target, 'A floating label cannot steal a touch on the visible object.');
+overlappingLabel.material.dispose();
+const matrix = new THREE.Matrix4(), translation = new THREE.Vector3(), rotation = new THREE.Quaternion(), chunkScale = new THREE.Vector3();
+small.particles.getMatrixAt(0, matrix); matrix.decompose(translation, rotation, chunkScale); assert(chunkScale.x >= .0189 && chunkScale.x <= .0371);
+small.setDetail(200); assert.equal(small.particles.count, 240); small.setDetail(1); assert.equal(small.particles.count, 1700);
+for (const effect of [small, frame]) effect.object.traverse(node => { if (node.isInstancedMesh) node.dispose(); node.geometry?.dispose(); [].concat(node.material || []).forEach(material => material.dispose()); });
 assert.equal(referenceThing(people[0]).basis.includes('não um pertence real'), true);
 const morel = library.items.find(item => item.id === 'CP-05');
 assert.equal(morel.thing.type, 'triptychMirror');
@@ -86,7 +111,7 @@ for (const model of library.island.models) {
     assert.equal(model.triangles, model.sourceTriangles);
     assert.equal(model.sourcePolygons, 950347);
     assert.equal(model.source, '../pieta1.blend');
-    assert.equal(model.initial, false, 'Heavy original must remain on-demand');
+    assert.equal(model.initial, false, 'The basic manifest keeps its deferred flag; Tudo explicitly admits every model.');
   } else {
     assert.equal(hash(bytes), model.sha256);
     if (fs.existsSync(path.resolve(root, model.source))) assert.equal(hash(fs.readFileSync(path.resolve(root, model.source))), model.sha256, `${model.id}: exact source copy`);

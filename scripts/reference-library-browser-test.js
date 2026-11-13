@@ -120,6 +120,11 @@ try {
   assert.equal(await canvas.count(), 1);
   await page.waitForFunction(() => ['aviao-quebrado', 'piloto', 'caixa-preta', 'cadeira', 'quati', 'borboleta'].every(id => document.querySelector('[data-reference-scene]')?.dataset.islandLoaded?.split(',').includes(id)), null, { timeout: 90000 });
   assert.equal(await page.locator('[data-reference-scene]').getAttribute('data-island-failed'), '');
+  await page.waitForFunction(() => new Set(document.querySelector('[data-reference-scene]')?.dataset.islandVisible?.split(',')).size === 197, null, { timeout: 180000 });
+  assert.equal((await page.locator('[data-reference-scene]').getAttribute('data-island-models')).split(',').length, 14);
+  assert.equal(await page.getByRole('button', { name: 'Próximas coisas', exact: true }).count(), 0);
+  await canvas.screenshot({ path: path.join(output, 'everything-expanded-island.png') });
+  checks.push('Tudo displays every one of the 197 catalogue entries and all 14 scenic models on an expanded island.');
   const itemCount = await page.locator("[data-reference-id]").count();
   assert(itemCount > 60, "The archive includes the actual collection rather than a few decorative samples.");
   const visibleText = await page.locator("body").innerText();
@@ -214,7 +219,7 @@ try {
   assert.equal(await personDetail.getAttribute('data-reference-detail'), 'pessoa-luzia-huttenmoser');
   await page.getByRole('button', { name: 'Ilha 3D', exact: true }).click();
   await page.locator('[data-reference-scene="ready"]').waitFor();
-  await page.waitForFunction(() => ['aviao-quebrado', 'piloto', 'caixa-preta', 'cadeira', 'quati', 'borboleta'].every(id => document.querySelector('[data-reference-scene]')?.dataset.islandLoaded?.split(',').includes(id)), null, { timeout: 90000 });
+  assert.equal(await page.locator('[data-island-models]').getAttribute('data-island-models'), '', 'The people filter does not require scenic models.');
   checks.push('The original 3D books remain available beside the island and list, retaining search, Pessoas and selected material while releasing each prior canvas.');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
@@ -290,7 +295,7 @@ try {
   await page.waitForFunction(() => document.querySelector('[data-reference-scene]')?.dataset.assemblyObject === 'objeto-pieta' && document.querySelector('[data-reference-scene]')?.dataset.assemblyPhase === 'integrated');
   assert.equal(await page.locator('[data-reference-detail]').getAttribute('data-reference-detail'), 'objeto-pieta');
   await page.screenshot({ path: path.join(output, 'island-pieta-source.png'), fullPage: true });
-  checks.push('Pietà materializes only on request from the original pieta1.blend export.');
+  checks.push('Pietà is included in Tudo and assembles from the original pieta1.blend export.');
   await page.getByRole('button', { name: '＋ Adicionar ao cruzamento', exact: true }).click();
   await page.locator('[data-island-object="caixa-preta"]').click();
   await page.getByRole('button', { name: '＋ Adicionar ao cruzamento', exact: true }).click();
@@ -375,7 +380,7 @@ try {
   await mobile.getByRole('button', { name: 'Ilha 3D', exact: true }).tap();
   await selectDissertation(mobile);
   await mobile.locator('[data-reference-scene="ready"]').waitFor();
-  await mobile.waitForFunction(() => ['aviao-quebrado', 'piloto', 'caixa-preta', 'cadeira', 'quati', 'borboleta'].every(id => document.querySelector('[data-reference-scene]')?.dataset.islandLoaded?.split(',').includes(id)), null, { timeout: 90000 });
+  await mobile.waitForFunction(() => document.querySelector('[data-reference-scene]')?.dataset.assemblyPhase === 'integrated');
   const mobileCanvas = mobile.locator('canvas[aria-label="Ilha holográfica das referências"]');
   await mobile.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const stillFrame = await mobileCanvas.screenshot();

@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import styles from "./ReferenceArchive.module.css";
 import { islandTopics, islandTrails, referenceRelations } from "@/lib/referenceIsland";
-import { cabinetTools, cabinetPage as getCabinetPage, CABINET_PAGE_SIZE, cabinetToolReference } from "@/lib/referenceThings";
+import { cabinetTools, cabinetToolReference } from "@/lib/referenceThings";
 import ReferenceExperiment from "./ReferenceExperiment";
 
 const ArchiveScene = dynamic(() => import("./ReferenceArchiveScene"), { ssr: false });
@@ -20,7 +20,7 @@ export default function ReferenceArchive({ library }) {
   const [inspection, setInspection] = useState(null), [focusTarget, setFocusTarget] = useState(null);
   const [mode, setMode] = useState("3d");
   const [paused, setPaused] = useState(false);
-  const [cabinetPage, setCabinetPage] = useState(0), [toolNote, setToolNote] = useState(null), [resetToken, setResetToken] = useState(0), [originalMaterials, setOriginalMaterials] = useState(false);
+  const [toolNote, setToolNote] = useState(null), [resetToken, setResetToken] = useState(0), [originalMaterials, setOriginalMaterials] = useState(false);
   const [topic, setTopic] = useState(null), [objectId, setObjectId] = useState(null), [focusToken, setFocusToken] = useState(0);
   const [pair, setPair] = useState([]), [gaps, setGaps] = useState(false), [trailId, setTrailId] = useState(null), [trailStep, setTrailStep] = useState(0);
   const hasGap = item => item.status === "research" || item.limitations?.some(limit => /nao.*(localiz|identific|confirm|verific)/.test(fold(limit)));
@@ -38,15 +38,14 @@ export default function ReferenceArchive({ library }) {
   function clearInspection() { setInspection(null); setFocusTarget(null); }
   function switchMode(next) { if (selected?.toolId) clearInspection(); setMode(next); }
   function revealDetail() { requestAnimationFrame(() => { const detail = document.querySelector('[data-reference-detail]'); if (detail) { detail.scrollTop = 0; detail.scrollIntoView({ block: "start", behavior: "auto" }); } }); }
-  function chooseItem(id, revealPage = true) {
+  function chooseItem(id) {
     const item = items.find(item => item.id === id); if (!item) return;
     setInspection({ id, scope: selectionScope });
-    const index = filtered.filter(item => !item.modelId).findIndex(item => item.id === id);
-    if (filtered.some(item => item.id === id)) { setSelectedId(id); if (revealPage && group !== "pessoas" && index >= 0) setCabinetPage(Math.floor(index / CABINET_PAGE_SIZE)); }
+    if (filtered.some(item => item.id === id)) setSelectedId(id);
     setObjectId(item.modelId || null); setFocusTarget({ kind: item.modelId ? 'model' : 'reference', id: item.modelId || id, scope: selectionScope });
     setFocusToken(value => value + 1); revealDetail();
   }
-  function chooseObject(id) { chooseItem(`objeto-${id}`, false); }
+  function chooseObject(id) { chooseItem(`objeto-${id}`); }
   function inspectTool(id) {
     if (!cabinetToolReference(id)) return;
     setInspection({ toolId: id, materialId: activeInspection?.toolId ? activeInspection.materialId : selected?.id, scope: selectionScope }); setObjectId(null);
@@ -54,15 +53,13 @@ export default function ReferenceArchive({ library }) {
   }
   function walk(id, step = 0) { const route = islandTrails.find(route => route.id === id); setInspection(null); setFocusTarget({ kind: "model", id: route.steps[step].object, scope: JSON.stringify(["all", "", route.steps[step].topic, false]) }); setTrailId(id); setTrailStep(step); setQuery(""); setGroup("all"); setGaps(false); setSelectedId(`objeto-${route.steps[step].object}`); setObjectId(route.steps[step].object); setFocusToken(value => value + 1); setTopic(route.steps[step].topic); setMode("3d"); }
   function cross(id) { setPair(current => current.includes(id) ? current.filter(value => value !== id) : current.length < 2 ? [...current, id] : current); }
-  const cabinet = getCabinetPage(items, visibleIds, selected?.id, cabinetPage, group === "all" && !topic && !query && !gaps, group === "pessoas");
-  function turnPage(next) { const page = Math.max(0, Math.min(next, cabinet.count - 1)); clearInspection(); setCabinetPage(page); const candidates = filtered.filter(item => !item.modelId); if (candidates[page * CABINET_PAGE_SIZE]) setSelectedId(candidates[page * CABINET_PAGE_SIZE].id); revealDetail(); }
   function activateTool(id) {
     const tool = cabinetTools.find(tool => tool.id === id); if (!tool) return;
     const material = selected?.toolId ? items.find(item => item.id === activeInspection.materialId) || filtered.find(item => item.id === selectedId) || filtered[0] : selected;
-    clearInspection(); setToolNote(tool); setCabinetPage(0);
+    clearInspection(); setToolNote(tool);
     if (tool.action === "people") revealDetail();
     if (!["people", "cross", "double"].includes(tool.action)) requestAnimationFrame(() => document.querySelector('[aria-label="Explorar acervo"]')?.scrollIntoView({ block: "start", behavior: "auto" }));
-    if (tool.action === "people") { const people = items.filter(item => item.group === "pessoas"); const index = people.findIndex(item => item.id === material?.id); setGroup("pessoas"); setQuery(""); setTopic(null); setGaps(false); setSelectedId(people[(index + 1) % people.length].id); setCabinetPage(Math.floor(((index + 1) % people.length) / CABINET_PAGE_SIZE)); setMode("3d"); }
+    if (tool.action === "people") { const people = items.filter(item => item.group === "pessoas"); const index = people.findIndex(item => item.id === material?.id); setGroup("pessoas"); setQuery(""); setTopic(null); setGaps(false); setSelectedId(people[(index + 1) % people.length].id); setMode("3d"); }
     if (tool.action === "gaps") { setGaps(value => !value); setGroup("all"); setQuery(""); setTopic(null); }
     if (tool.action === "affinity") { setTopic(material?.affinities?.[0] || "memoria"); setGroup("all"); setQuery(""); setGaps(false); }
     if (tool.action === "double") { const other = tool.relatedIds?.[0] || (material && referenceRelations(material, items).find(relation => relation.id !== material.id)?.id); if (other) chooseItem(other); }
@@ -91,24 +88,24 @@ export default function ReferenceArchive({ library }) {
     </header>
 
     <div className={styles.toolbar}>
-      <label className={styles.search}><span aria-hidden="true">⌕</span><input aria-label="Buscar referências" placeholder="Buscar uma ideia, pessoa ou material" value={query} onChange={event => { clearInspection(); setQuery(event.target.value); setCabinetPage(0); }} />{query && <button onClick={() => { clearInspection(); setQuery(""); setCabinetPage(0); }} aria-label="Limpar busca">×</button>}</label>
+      <label className={styles.search}><span aria-hidden="true">⌕</span><input aria-label="Buscar referências" placeholder="Buscar uma ideia, pessoa ou material" value={query} onChange={event => { clearInspection(); setQuery(event.target.value); }} />{query && <button onClick={() => { clearInspection(); setQuery(""); }} aria-label="Limpar busca">×</button>}</label>
       <div className={styles.modeSwitch} aria-label="Visualização"><button aria-pressed={mode === "3d"} onClick={() => switchMode("3d")}>Ilha 3D</button><button aria-pressed={mode === "books"} onClick={() => switchMode("books")}>Livros 3D</button><button aria-pressed={mode === "list"} onClick={() => switchMode("list")}>Lista</button></div>
     </div>
     <div className={styles.filters} aria-label="Filtrar acervo">
-      <button data-reference-group="all" aria-pressed={group === "all"} onClick={() => { clearInspection(); setGroup("all"); setCabinetPage(0); }}>Tudo <span>{items.length}</span></button>
-      {groups.map(category => <button key={category.id} data-reference-group={category.id} aria-pressed={group === category.id} onClick={() => { clearInspection(); setGroup(category.id); setCabinetPage(0); }}>{category.label} <span>{category.count ?? items.filter(item => item.group === category.id).length}</span></button>)}
+      <button data-reference-group="all" aria-pressed={group === "all"} onClick={() => { clearInspection(); setGroup("all"); }}>Tudo <span>{items.length}</span></button>
+      {groups.map(category => <button key={category.id} data-reference-group={category.id} aria-pressed={group === category.id} onClick={() => { clearInspection(); setGroup(category.id); }}>{category.label} <span>{category.count ?? items.filter(item => item.group === category.id).length}</span></button>)}
     </div>
 
-    <div className={styles.topicFilters} aria-label="Afinidades da ilha"><span>APROXIMAR POR</span>{islandTopics.map(theme => <button key={theme.id} style={{ "--topic-color": theme.color }} data-island-topic={theme.id} aria-pressed={topic === theme.id} onClick={() => { clearInspection(); setTopic(current => current === theme.id ? null : theme.id); setCabinetPage(0); }}><i />{theme.label}</button>)}<button data-reference-gaps aria-pressed={gaps} onClick={() => { clearInspection(); setGaps(value => !value); setCabinetPage(0); }}>◌ Lacunas {gapCount}</button></div>
+    <div className={styles.topicFilters} aria-label="Afinidades da ilha"><span>APROXIMAR POR</span>{islandTopics.map(theme => <button key={theme.id} style={{ "--topic-color": theme.color }} data-island-topic={theme.id} aria-pressed={topic === theme.id} onClick={() => { clearInspection(); setTopic(current => current === theme.id ? null : theme.id); }}><i />{theme.label}</button>)}<button data-reference-gaps aria-pressed={gaps} onClick={() => { clearInspection(); setGaps(value => !value); }}>◌ Lacunas {gapCount}</button></div>
     <section className={styles.trails} aria-label="Percursos da ilha"><span>PERCURSOS CURATORIAIS</span><div>{islandTrails.map(route => <button key={route.id} data-island-trail={route.id} aria-pressed={trailId === route.id} onClick={() => walk(route.id)}>{route.label} <b>↗</b></button>)}</div>{trail && <article data-island-trail-step={trailStep}><p><span>0{trailStep + 1} / 0{trail.steps.length}</span>{trail.steps[trailStep].text}</p><div><button onClick={() => setTrailId(null)}>Sair do percurso</button><button disabled={trailStep === 0} onClick={() => walk(trail.id, trailStep - 1)}>← Anterior</button><button disabled={trailStep === trail.steps.length - 1} onClick={() => walk(trail.id, trailStep + 1)}>Próximo vestígio →</button></div></article>}</section>
-    {mode === "3d" && group !== "pessoas" && <div className={styles.objectBar} aria-label="Objetos cênicos da ilha"><span>MATERIALIZAR</span>{island.models.map(model => <button key={model.id} data-island-object={model.id} aria-pressed={objectId === model.id} title={`${model.label} · ${model.initial ? "presente na ilha" : "carrega sob demanda"}`} onClick={() => chooseObject(model.id)}>{model.label}{!model.initial && <small>＋</small>}</button>)}</div>}
+    {mode === "3d" && group !== "pessoas" && <div className={styles.objectBar} aria-label="Objetos cênicos da ilha"><span>OBJETOS CÊNICOS</span>{island.models.map(model => <button key={model.id} data-island-object={model.id} aria-pressed={objectId === model.id} title={`Integrar ${model.label}`} onClick={() => chooseObject(model.id)}>{model.label}</button>)}</div>}
 
     {selected ? <div className={`${styles.exhibition} ${mode === "books" ? styles.booksMode : mode === "list" ? styles.listMode : ""}`}>
       <section className={styles.viewport} aria-label="Explorar acervo">
         <div className={styles.viewportHeader}><span>FIG. 01 / {mode === "3d" ? "ILHA / CAMPO DE MEMÓRIA" : mode === "books" ? "LIVROS / CAMPO DE MEMÓRIA" : "ÍNDICE DO ACERVO"}</span><span>{String(filtered.length).padStart(3, "0")} FRAGMENTOS</span></div>
         {mode === "3d" ? <>
-          <ArchiveScene items={items} manifest={island} visibleIds={visibleIds} topic={topic} selectedId={selected.id} onSelect={id => chooseItem(id, false)} onObjectSelect={chooseObject} focusTarget={focusTarget?.scope === selectionScope ? focusTarget : null} focusToken={focusToken} onTool={inspectTool} scope={group} cabinetPage={cabinetPage} resetToken={resetToken} originalMaterials={originalMaterials} onMaterialChange={() => setOriginalMaterials(value => !value)} paused={paused} />
-          <div className={styles.cabinetPagination}>{group === "pessoas" ? <span>{cabinet.total} pessoas · {cabinet.items.length} objetos na ilha</span> : <><span>{cabinet.total} fichas · coisas em grupos de {CABINET_PAGE_SIZE}</span><div><button aria-label="Coisas anteriores" disabled={cabinet.page === 0} onClick={() => turnPage(cabinet.page - 1)}>←</button><span>{cabinet.page + 1} / {cabinet.count}</span><button aria-label="Próximas coisas" disabled={cabinet.page >= cabinet.count - 1} onClick={() => turnPage(cabinet.page + 1)}>→</button></div></>}</div><div className={styles.sceneLegend}><span><i /> LIGAÇÃO DOCUMENTADA</span><span><i /> PONTE CURATORIAL</span></div>
+          <ArchiveScene items={items} manifest={island} visibleIds={visibleIds} topic={topic} selectedId={selected.id} onSelect={chooseItem} onObjectSelect={chooseObject} focusTarget={focusTarget?.scope === selectionScope ? focusTarget : null} focusToken={focusToken} onTool={inspectTool} scope={group} resetToken={resetToken} originalMaterials={originalMaterials} onMaterialChange={() => setOriginalMaterials(value => !value)} paused={paused} />
+          <div className={styles.cabinetPagination}><span>{filtered.length} materiais · todos na ilha</span></div><div className={styles.sceneLegend}><span><i /> LIGAÇÃO DOCUMENTADA</span><span><i /> PONTE CURATORIAL</span></div>
           <div className={styles.sceneControls}><span>Toque para integrar · arraste para orbitar · roda para aproximar</span><button aria-pressed={paused} onClick={() => setPaused(value => !value)}>{paused ? "Retomar movimento" : "Pausar movimento"}</button></div>
         </> : mode === "books" ? <>
           <BooksScene items={bookItems} selectedId={selected.id} onSelect={chooseItem} paused={paused} />
