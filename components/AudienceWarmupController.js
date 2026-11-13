@@ -14,6 +14,25 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
   const [requestPending, setRequestPending] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [promptLibraryOpen, setPromptLibraryOpen] = useState(false);
+  const [currentAffairs, setCurrentAffairs] = useState(null);
+  const [currentAffairsRefreshing, setCurrentAffairsRefreshing] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let timer;
+    async function refresh() {
+      try {
+        const response = await fetch("/api/audience-warmup", { signal: controller.signal, cache: "no-store" });
+        if (response.ok) {
+          const data = await response.json();
+          if (!controller.signal.aborted) setCurrentAffairs(data.currentAffairs);
+        }
+      } catch {}
+      if (!controller.signal.aborted) timer = window.setTimeout(refresh, 60000);
+    }
+    refresh();
+    return () => { controller.abort(); window.clearTimeout(timer); };
+  }, []);
 
   useEffect(() => setHydrated(true), []);
   useEffect(() => setProgressDraft(Math.max(0, Math.min(PLAY_UNLOCK_CONFIG.preFinalProgressLimit, Number(playUnlock.progress) || 0))), [playUnlock.progress]);
@@ -23,7 +42,9 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
   }, []);
 
   async function act(action, payload = {}) {
-    setRequestPending(true);
+    const research = action === "refresh-current-affairs";
+    if (research) setCurrentAffairsRefreshing(true);
+    else setRequestPending(true);
     try {
       const response = await fetch("/api/audience-warmup", {
         method: "POST",
@@ -32,13 +53,15 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "WARMUP ERROR");
+      if (data.currentAffairs) setCurrentAffairs(data.currentAffairs);
       onLog(data.message || `WARMUP ${action.toUpperCase()}`, "ok");
       return data;
     } catch (error) {
       onLog(error.message || "WARMUP ERROR", "error");
       return null;
     } finally {
-      setRequestPending(false);
+      if (research) setCurrentAffairsRefreshing(false);
+      else setRequestPending(false);
     }
   }
 
@@ -46,7 +69,9 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
   const sequence = warmup.sequence;
   const current = sequence?.steps?.[warmup.currentStep] || null;
   const next = sequence?.steps?.[warmup.currentStep + 1] || null;
-  const previewPrompt = AUDIENCE_WARMUP_PROMPTS.find((prompt) => prompt.id === warmup.previewPromptId) || null;
+  const promptLibrary = [...AUDIENCE_WARMUP_PROMPTS, ...(currentAffairs?.prompts || [])];
+  const previewPrompt = (warmup.previewPrompt?.id === warmup.previewPromptId ? warmup.previewPrompt : null)
+    || promptLibrary.find((prompt) => prompt.id === warmup.previewPromptId) || null;
   const previewDuration = previewPrompt?.durationSeconds
     || previewPrompt?.steps?.find((promptStep) => promptStep.durationSeconds)?.durationSeconds
     || null;
@@ -90,7 +115,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
           <h2 id="audience-warmup-title">ESQUENTAR PÚBLICO</h2>
         </div>
         <div className={styles.headerStatus}>
-          <strong>SETA → AVANÇA · PERGUNTAS: INTENSIDADE 4</strong>
+          <strong>SETA → AVANÇA · 3ª PERGUNTA: ATUALIDADES</strong>
           <span className={warmup.active ? styles.live : styles.ready}>{(warmup.phase || "idle").replaceAll("_", " ").toUpperCase()}</span>
         </div>
       </header>
@@ -249,9 +274,27 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
 
       {!questionsReady ? <p className={styles.questionsLocked}>{warmup.phase === "complete" ? "RODADA DE PERGUNTAS CONCLUÍDA" : "PERGUNTAS AINDA NÃO INICIADAS"}</p> : null}
 
+      <section className={styles.currentAffairs} aria-label="Atualidades da semana">
+        <strong>ATUALIDADES · TERCEIRA PERGUNTA</strong>
+        <p>MORTOS → PERGUNTA SORTEADA → ATUALIDADES. Inclui pandemia cibernética, alertas da Defesa Civil e notícias de São Paulo, Brasil e mundo.</p>
+        <p role="status">{!currentAffairs ? "CONFERINDO A EDIÇÃO SEMANAL…" : currentAffairs.stale
+          ? "EDIÇÃO VENCIDA OU INDISPONÍVEL · ALERTAS, HIPÓTESE CIBERNÉTICA E COMPARTILHAMENTO DE NOTÍCIAS CONTINUAM DISPONÍVEIS."
+          : `SEMANA DE ${currentAffairs.week} · ${currentAffairs.prompts.length} AÇÕES · ATUALIZAÇÃO SEMANAL AUTOMÁTICA`}</p>
+        {currentAffairs?.error ? <p role="alert">{currentAffairs.error}</p> : null}
+        <button disabled={disabled || !hydrated || currentAffairsRefreshing} onClick={() => act("refresh-current-affairs")} type="button">{currentAffairsRefreshing ? "PESQUISANDO ATUALIDADES…" : "ATUALIZAR ATUALIDADES AGORA"}</button>
+        {currentAffairs?.items?.length ? <details>
+          <summary>FONTES E VÍNCULOS COM A PEÇA{currentAffairs.stale ? " · EDIÇÃO ANTERIOR" : ""}</summary>
+          {currentAffairs.items.map((item) => <article key={item.id}>
+            <strong>{item.region.replaceAll("_", " ").toUpperCase()} · {item.title}</strong>
+            <p>{item.fact}</p><p>{item.relevance}</p>
+            <a href={item.source.url} target="_blank" rel="noreferrer">{item.source.title} · {item.source.publishedAt}</a>
+          </article>)}
+        </details> : null}
+      </section>
+
       <section className={styles.promptLibraryDisclosure} aria-label="Ações configuradas da verificação humana">
         <button aria-expanded={promptLibraryOpen} onClick={() => setPromptLibraryOpen((currentValue) => !currentValue)} type="button">
-          <span><strong>AÇÕES CONFIGURADAS</strong><small>{AUDIENCE_WARMUP_PROMPTS.length} FALAS DISPONÍVEIS</small></span>
+          <span><strong>AÇÕES CONFIGURADAS</strong><small>{promptLibrary.length} FALAS DISPONÍVEIS</small></span>
           <b>{promptLibraryOpen ? "COMPRIMIR" : "EXPANDIR"}</b>
         </button>
         {promptLibraryOpen ? <div className={styles.promptLibrary}>
@@ -260,7 +303,7 @@ export default function AudienceWarmupController({ state, unlock, disabled = fal
             <h3>AÇÕES CONFIGURADAS</h3>
           </header>
           <div className={styles.promptList}>
-          {AUDIENCE_WARMUP_PROMPTS.map((prompt) => {
+          {promptLibrary.map((prompt) => {
             const scored = playUnlock.scoredActionIds?.includes(prompt.id) && !prompt.repeatableProgress;
             return (
               <article className={styles.promptItem} key={prompt.id}>

@@ -10,7 +10,7 @@ import styles from "./LiveTraining.module.css";
 
 const ratings = [["perfect", "PERFEITO"], ["almost", "QUASE"], ["bad", "RUIM"]];
 
-export default function LiveTraining({ controller = false }) {
+export default function LiveTraining({ controller = false, headerCollapsed = false, headerReady = true, headerError = "", onToggleHeader }) {
   const [channel, setChannel] = useState({ messages: [], status: "idle" });
   const [settings, setSettings] = useState({});
   const [feedback, setFeedback] = useState({});
@@ -93,9 +93,12 @@ export default function LiveTraining({ controller = false }) {
     else if (sessionRef.current === sentSession) setInput(text);
   }
 
-  return <main className={styles.surface} data-controller={controller}>
+  return <main className={styles.surface} data-controller={controller} data-collapsed={controller && headerCollapsed}>
     {!controller ? <ProjectionWindowClient /> : null}
-    <header className={styles.header}>
+    {controller ? <button type="button" className={styles.panelToggle} disabled={!headerReady} aria-expanded={!headerCollapsed} aria-controls="live-training-header"
+      aria-label={headerCollapsed ? "Mostrar cabeçalho" : "Recolher cabeçalho"} title={headerCollapsed ? "Mostrar cabeçalho" : "Recolher cabeçalho"}
+      onClick={onToggleHeader}>{headerCollapsed ? "☰" : "›"}</button> : null}
+    <header className={styles.header} id="live-training-header" hidden={controller && headerCollapsed}>
       <span>CAIXA PRETA</span>
       <h1>{controller ? "treino-ao-vivo" : "INCONSCIENTE COLETIVO"}</h1>
     </header>
@@ -117,8 +120,9 @@ export default function LiveTraining({ controller = false }) {
       {channel.status === "generating" && !channel.messages.at(-1)?.content ? <p className={styles.waiting}>A Caixa está escrevendo<span aria-hidden="true">...</span></p> : null}
       {channel.status === "alternatives" ? <p className={styles.waiting}>Outras possibilidades<span aria-hidden="true">...</span></p> : null}
     </div>
-    {controller ? <aside className={styles.parameters} aria-label="Parâmetros compartilhados do bot"><PublicOperatorControls parametersOnly /></aside> : null}
+    {controller ? <aside className={styles.parameters} id="live-training-parameters" aria-label="Parâmetros compartilhados do bot"><PublicOperatorControls parametersOnly /></aside> : null}
     {controller ? <form className={styles.composer} onSubmit={send}>
+      {headerError ? <p role="alert" className={styles.error}>{headerError}</p> : null}
       {error ? <p role="alert" className={styles.error}>{error}</p> : null}
       <div><textarea id="live-training-message" aria-label="Mensagem" value={input} maxLength={4000} rows={2}
         disabled={pending || channel.status !== "idle" || !sessionId}

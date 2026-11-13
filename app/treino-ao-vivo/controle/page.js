@@ -1,6 +1,5 @@
-import ControllerSurface from "@/components/ControllerSurface";
-import LiveTraining from "@/components/LiveTraining";
+import LiveTrainingController from "@/components/LiveTrainingController";
 
 export default function LiveTrainingControllerPage() {
-  return <ControllerSurface><LiveTraining controller /></ControllerSurface>;
+  return <LiveTrainingController />;
 }

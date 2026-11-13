@@ -87,6 +87,39 @@ try {
   await poll(async () => await slider(control, "Linguagem poética").inputValue() === "81", "perfil compartilhado após reload");
   await operator.close(); await tarot.close();
   const draft = control.getByLabel("Mensagem");
+  const panel = control.locator("#live-training-parameters");
+  const expandedHistory = await control.getByRole("log").boundingBox();
+  const projectionNavigations = [];
+  control.on("request", request => {
+    if (request.method() === "POST" && request.url().endsWith("/api/projection")) projectionNavigations.push(request.postData());
+  });
+  await draft.fill("Rascunho preservado ao recolher.");
+  await panel.evaluate(element => { element.scrollTop = element.scrollHeight; });
+  await control.getByRole("button", { name: "Recolher cabeçalho", exact: true }).click();
+  assert.equal(await panel.isVisible(), true);
+  assert.equal(await slider(control, "Linguagem poética").inputValue(), "81");
+  assert.equal(await control.getByRole("navigation").count(), 0);
+  assert.equal(await control.getByRole("heading", { name: "treino-ao-vivo", exact: true }).count(), 0);
+  assert.equal(await control.getByRole("slider", { name: "Volume geral", exact: true }).count(), 0);
+  assert.equal(await draft.inputValue(), "Rascunho preservado ao recolher.");
+  const collapsedHistory = await control.getByRole("log").boundingBox();
+  assert.equal(collapsedHistory.width, expandedHistory.width);
+  assert(collapsedHistory.height > expandedHistory.height);
+  const expand = control.getByRole("button", { name: "Mostrar cabeçalho", exact: true });
+  const handle = await expand.boundingBox();
+  assert.equal(handle.y, 12); assert.equal(handle.width, 28); assert.equal(handle.height, 28);
+  await control.screenshot({ path: path.join(output, "collapsed-controls.png") });
+  await poll(async () => (await (await fetch(base + "/api/controller-settings?scope=live-training-header")).json()).settings.collapsed === true, "cabeçalho recolhido salvo");
+  assert.equal((await (await fetch(base + "/api/controller-settings?scope=post-demo-panel")).json()).settings.collapsed, false);
+  assert.deepEqual(projectionNavigations, [], "recolher não deve navegar a projeção");
+  await control.reload();
+  await poll(async () => await expand.isVisible(), "cabeçalho recolhido após reload");
+  assert.equal(await panel.isVisible(), true);
+  await expand.click();
+  assert.equal(await panel.isVisible(), true);
+  assert.equal(await slider(control, "Linguagem poética").inputValue(), "81");
+  assert.equal(await control.getByRole("navigation").count(), 1);
+  assert.equal(await control.getByRole("heading", { name: "treino-ao-vivo", exact: true }).count(), 1);
   await draft.fill("Como Morel atravessa a memória desta peça?");
   const firstResponse = control.waitForResponse(response => response.url().endsWith("/api/live-training") && response.request().method() === "POST");
   await draft.press("Enter");
@@ -94,6 +127,12 @@ try {
   assert(accepted.ok(), JSON.stringify(await accepted.json()));
   await display.locator('[data-role="user"]').filter({ hasText: "Como Morel" }).waitFor();
   await display.locator('[data-role="assistant"] [data-typing="true"]').waitFor();
+  const typing = await control.locator('[data-role="assistant"] [data-typing="true"]').elementHandle();
+  assert(typing);
+  await control.getByRole("button", { name: "Recolher cabeçalho", exact: true }).click();
+  assert.equal(await typing.evaluate(element => element.isConnected), true, "recolher deve preservar a fala montada");
+  await expand.click();
+  assert.equal(await typing.evaluate(element => element.isConnected), true, "reabrir deve preservar a fala montada");
   await display.getByText("A memória da peça também responde.", { exact: true }).waitFor();
   await control.getByText("A memória da peça também responde.", { exact: true }).waitFor();
   await control.getByRole("button", { name: "PERFEITO", exact: true }).click();
@@ -157,7 +196,7 @@ try {
   assert.deepEqual(privateReads, []);
   assert.deepEqual(errors, []);
   console.log(JSON.stringify({ ok: true, liveModel: false, physicalMicrophone: false, output,
-    checks: ["tab beside Treino", "bidirectional Operator/Tarot/live parameter mirroring and concurrent edits", "shared parameters reach provider prompt", "public conversation and typing", "private one-click feedback/upsert", "PDF page 32 at actual provider boundary and current suitcase precedence", "three public alternatives", "reload/polling without SSE", "failure/retry without duplicate", "STOP ALL", "public/private boundary"] }, null, 2));
+    checks: ["tab beside Treino", "retractable header keeps sidebar, saves independent preference, preserves draft/typing without projection navigation", "bidirectional Operator/Tarot/live parameter mirroring and concurrent edits", "shared parameters reach provider prompt", "public conversation and typing", "private one-click feedback/upsert", "PDF page 32 at actual provider boundary and current suitcase precedence", "three public alternatives", "reload/polling without SSE", "failure/retry without duplicate", "STOP ALL", "public/private boundary"] }, null, 2));
 } catch (error) {
   await display?.screenshot({ path: path.join(output, "failure-public.png") }).catch(() => {});
   await control?.screenshot({ path: path.join(output, "failure-control.png") }).catch(() => {});

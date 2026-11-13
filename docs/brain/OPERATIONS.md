@@ -56,7 +56,9 @@ Targeted checks: generated inventory. Check each script's server/fixture require
 
 Post-demo cloud: run `npm run point-cloud:prepare` before the show; private button, photos and offline tests: `docs/POST_DEMO_POINT_CLOUD.md`.
 
-`npm run test:audience-warmup:transition` checks the play-dead typewriter acknowledgement, full 20-second timer, closing acknowledgement and first question in manual and automatic modes. It uses a fake clock and temporary snapshot storage without touching the active show or calling a model. Requires Node 22.15+ or 24, like the other `registerHooks` tests.
+`test:audience-warmup:transition` checks play-dead → first question and timer/typing gates, manual/automatic, with isolated fake time (Node 22.15+/24; no model/live-show writes).
+
+Weekly news refresh/cache and offline checks: `docs/AQUECIMENTO_ATUALIDADES.md`.
 
 ## Start a local presentation
 
@@ -68,7 +70,7 @@ Post-demo cloud: run `npm run point-cloud:prepare` before the show; private butt
 6. Open `/cena-0-controller` (or `/videomapping-controller`), confirm microphone access and use `BOOT`. Keep the controller open: its audio clock detects sound while hidden. The public page never requests the microphone.
 7. Before audience entry, verify text, blackout/recovery, global volume, media playback, selected audio output, microphone level, and STOP ALL on the actual browser/hardware path.
 
-`→` advances; `Shift + →` goes back; `←` is ignored. Malas: 2 → 1 → 3.
+Timer with time left: `Shift + →` advances where allowed; at zero, `→` suffices. Challenge guards remain. Otherwise `→` advances, `Shift + →` returns. `←` ignored. Malas: 2 → 1 → 3.
 
 If the technical OP terminal reports an interrupted session, inspect scene, step, and snapshot time. Choose `RETOMAR APRESENTAÇÃO` to restore it paused and with transient media/external browser state stopped, or `INICIAR NOVA APRESENTAÇÃO` to discard that recovery path deliberately. Nothing restores automatically.
 Before restart, preserve the old recovery file, then POST `/api/show-session` with `action: "capture-current"` and the current `sessionId`. This explicitly captures live state even when an older file is guarded. Verify disk/session/revision equality; shut down only after success.

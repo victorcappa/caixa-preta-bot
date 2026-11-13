@@ -530,7 +530,22 @@ export default function SceneZeroController() {
       }
       const bootStatus = snapshot.sceneZero?.unlock?.status;
       const stage = snapshot.sceneZero?.stage;
-      if (event.key === "ArrowRight" && event.shiftKey) {
+      const shortcutNow = Date.now();
+      const hasActiveTimer = [
+        snapshot.audienceWarmup?.actionTimer,
+        snapshot.audienceWarmup?.minigame?.timer,
+        snapshot.sceneZero?.timer,
+        snapshot.sceneZero?.collection?.activeCountdown,
+        snapshot.sceneZero?.suitcaseGame?.gincana?.timer,
+        snapshot.sceneZero?.suitcaseGame?.hangman?.timer
+      ].some((timer) => ["running", "paused"].includes(timer?.status) && remainingTimer(timer, shortcutNow) > 0)
+        || (snapshot.sceneZero?.participantSelection?.status === "countdown"
+          && countdownSeconds(snapshot.sceneZero.participantSelection.countdownEndsAt, shortcutNow) > 0);
+      if (hasActiveTimer && !event.shiftKey) {
+        event.preventDefault();
+        return;
+      }
+      if (event.key === "ArrowRight" && event.shiftKey && !hasActiveTimer) {
         const previous = stage === "suitcases"
           ? ["set-stage", { stage: "participant" }]
           : stage === "participant"
@@ -656,7 +671,7 @@ export default function SceneZeroController() {
     }
     window.addEventListener("keydown", handleStageArrow);
     return () => window.removeEventListener("keydown", handleStageArrow);
-  }, [pending, runSuitcaseAdvance, sceneAction, snapshot.audienceWarmup, snapshot.sceneZero?.currentParticipant?.name, snapshot.sceneZero?.participantSelection?.sequence, snapshot.sceneZero?.participantSelection?.status, snapshot.sceneZero?.stage, snapshot.sceneZero?.suitcaseGame, snapshot.sceneZero?.unlock, warmupAction]);
+  }, [pending, runSuitcaseAdvance, sceneAction, snapshot.audienceWarmup, snapshot.sceneZero?.collection?.activeCountdown, snapshot.sceneZero?.currentParticipant?.name, snapshot.sceneZero?.participantSelection?.countdownEndsAt, snapshot.sceneZero?.participantSelection?.sequence, snapshot.sceneZero?.participantSelection?.status, snapshot.sceneZero?.stage, snapshot.sceneZero?.suitcaseGame, snapshot.sceneZero?.timer, snapshot.sceneZero?.unlock, warmupAction]);
 
   useEffect(() => {
     const activeSuitcase = snapshot.sceneZero?.suitcaseGame?.currentSuitcase;

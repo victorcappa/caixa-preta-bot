@@ -19,7 +19,7 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 - LIVE reply pacing -> `components/OperatorTypedReply.js`, using private `robotSound` typing speed/punctuation pause; completed history is restored immediately.
 - Live training punctuation/paragraph holds -> `lib/liveTrainingTyping.js`, passed to `components/OperatorTypedReply.js`; letters retain shared speed, streamed blank lines receive one hold.
 - Training conversation/feedback -> `components/TrainingConsole.js`, `app/api/training/`, and `lib/training.js`; visible composer sends by Enter or button and preserves the draft after errors.
-- Live training -> `components/LiveTraining.js`, `/treino-ao-vivo/controle`, `/treino-ao-vivo`, `/api/live-training`; state -> `lib/liveTraining.js`; repertoire -> `lib/liveTrainingContext.js`; shared 11-parameter panel -> `PublicOperatorControls.js`, `lib/operatorPublic.js`, `/api/operator-public`. Operation: `docs/TREINO_AO_VIVO.md`.
+- Live training -> `components/LiveTraining.js`, `/treino-ao-vivo/controle`, `/treino-ao-vivo`, `/api/live-training`; retractable header -> `LiveTrainingController.js`, `live-training-header` settings scope; state -> `lib/liveTraining.js`; repertoire -> `lib/liveTrainingContext.js`; shared 11-parameter panel -> `PublicOperatorControls.js`, `lib/operatorPublic.js`, `/api/operator-public`. Operation: `docs/TREINO_AO_VIVO.md`.
 - Editable public conversation/sliders reuse `components/PublicOperatorControls.js` with `publicSurface`; private operational commands remain outside the projection.
 - Projection calibration `/?menu` -> `components/ProjectionMenu.js`, `PublicCompositionControls.js`, `PublicModule.js`, `lib/publicComposition.js`; bot/Tarot text fitting -> `lib/useProjectionTextFit.js`; preferences sync via the operator API/SSE.
 - Default public 65/35 layout -> `app/layout.js` -> `components/ProjectionOperatorSurface.js` -> `components/PublicOperatorLayout.js`.
@@ -46,6 +46,7 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 - Public BIOS/unlock/countdown rendering -> `components/SceneZeroProjectionLayer.js` and its CSS module.
 - Sound meter/microphone -> `components/SceneZeroController.js` uses `lib/audienceMicrophoneMeter.js` and `public/audio-worklets/audience-meter.js`; audio-clock sampling continues in hidden tabs/windows, with a timer fallback. Public receives numeric level only.
 - Warmup prompt library -> `data/audience-warmup-prompts.js`; selection/timers -> `lib/audienceWarmup.js`; UI -> `components/AudienceWarmupController.js`.
+- Weekly warmup news / third question -> `lib/audienceWarmupCurrentAffairsStore.js`, `lib/audienceWarmupCurrentAffairs.js`, `data/audience-warmup-current-affairs.json`; operation -> `docs/AQUECIMENTO_ATUALIDADES.md`.
 - Warmup mini games -> `data/audience-warmup-minigames.js` and `components/AudienceWarmupController.js`.
 - Participant selection -> `app/api/scene-zero/route.js` -> `lib/participants.js` -> `lib/showState.js`.
 - Suitcase order/content -> `lib/scene-zero/suitcaseGame.js`; route orchestration -> `app/api/scene-zero/route.js`; public state -> `lib/scene-zero/state.js`.
@@ -75,7 +76,7 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 
 - Glitch -> `lib/glitch/state.js` -> `app/api/glitch/route.js` -> `components/PublicGlitchLayer.js` / `components/GlitchOverlay.js`.
 - Robot sound and shared microphone sensitivity -> `lib/robot-sound/RobotSoundEngine.js`, `lib/robot-sound/state.js`, `components/RobotSoundControls.js`; the Scene Zero meter applies sensitivity in `components/SceneZeroController.js`; dedicated private route -> `app/sound-control/page.js` / `components/SoundControlPanel.js`.
-- Global volume -> `lib/globalVolume.js` -> `app/api/global-volume/route.js` -> media stages/controllers.
+- Global volume -> `lib/globalVolume.js` -> `app/api/global-volume/route.js` -> media stages/controllers; private floating control -> `components/ControllerGlobalVolume.js` (50% scale; drag the title with mouse/touch or move it with arrow keys).
 - Blackout -> `lib/displayBlackout.js` -> `components/DisplayBlackout.js` -> public surfaces.
 - Instagram -> `lib/instagram/InstagramController.js`; embedded UI -> `components/InstagramBrowserPanel.js`; server endpoints -> `app/api/instagram/`.
 - External-navigation safety -> `lib/externalNavigationGuard.js` and calls in `lib/showState.js`.

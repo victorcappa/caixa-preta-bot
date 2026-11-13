@@ -1,17 +1,23 @@
 import { showState } from "@/lib/showState";
 import { refreshSceneZeroLocalContext } from "@/lib/openai";
 import { closeActiveReels } from "@/lib/instagram/reelsLifecycle";
+import { audienceWarmupCurrentAffairsStore } from "@/lib/audienceWarmupCurrentAffairsStore";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET() {
-  return Response.json({ audienceWarmup: showState.snapshot().audienceWarmup });
+  const currentAffairs = await audienceWarmupCurrentAffairsStore.refresh();
+  return Response.json({ audienceWarmup: showState.snapshot().audienceWarmup, currentAffairs });
 }
 
 export async function POST(request) {
   try {
     const body = await request.json();
+    if (body.action === "refresh-current-affairs") {
+      const currentAffairs = await audienceWarmupCurrentAffairsStore.refresh({ force: true });
+      return Response.json({ message: currentAffairs.error || "ATUALIDADES ATUALIZADAS", currentAffairs });
+    }
     if (`${body.action || ""}`.startsWith("unlock-")) {
       const unlockAction = body.action.slice("unlock-".length);
       const source = ["sound-check-complete", "sound-check-level"].includes(unlockAction) && body.automatic === true

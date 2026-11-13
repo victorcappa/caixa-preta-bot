@@ -88,6 +88,8 @@
     "test:sound-control:browser": "node --no-warnings scripts/sound-control-browser-test.js",
     "test:audience-warmup": "node --no-warnings scripts/audience-warmup-test.js",
     "test:audience-warmup:transition": "node --no-warnings scripts/audience-warmup-transition-test.js",
+    "test:audience-warmup:current-affairs": "node --no-warnings scripts/audience-warmup-current-affairs-test.js",
+    "warmup:current-affairs": "node --no-warnings --env-file-if-exists=.env.local scripts/audience-warmup-current-affairs-refresh.js",
     "test:audience-sound-check:browser": "node --no-warnings scripts/audience-sound-check-browser-test.js",
     "test:audience-microphone": "node --no-warnings scripts/audience-microphone-meter-test.js",
     "test:audience-microphone:background": "node --no-warnings scripts/audience-microphone-background-browser-test.js",

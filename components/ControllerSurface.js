@@ -48,9 +48,10 @@ async function navigateProjection(path) {
   }
 }
 
-export default function ControllerSurface({ children, presentation = false }) {
+export default function ControllerSurface({ children, presentation = false, controlsHidden = false }) {
   const pathname = usePathname();
   const activeSurface = sortedControllerSurfaces.find((surface) => isControllerSurfaceActive(surface, pathname));
+  const hideControls = presentation || controlsHidden;
 
   useEffect(() => {
     if (presentation || pathname === "/pos-demo/controle" || !activeSurface?.projectionPath) {
@@ -65,9 +66,9 @@ export default function ControllerSurface({ children, presentation = false }) {
   }, [activeSurface?.autoNavigateProjection, activeSurface?.projectionPath, presentation, pathname]);
 
   return (
-    <div className={styles.surface} data-presentation={presentation}>
-      {!presentation ? <ControllerGlobalVolume /> : null}
-      {!presentation ? <nav className={styles.tabs} aria-label="Controllers cênicos">
+    <div className={styles.surface} data-presentation={hideControls}>
+      {!hideControls ? <ControllerGlobalVolume /> : null}
+      {!hideControls ? <nav className={styles.tabs} aria-label="Controllers cênicos">
         {controllerNavigationSurfaces.map((surface) => {
           const active = isControllerSurfaceActive(surface, pathname);
           return (
@@ -84,7 +85,7 @@ export default function ControllerSurface({ children, presentation = false }) {
         })}
       </nav> : null}
       <div className={styles.content}>{children}</div>
-      {!presentation && activeSurface?.sceneNumber?.startsWith("CENA") ? <SceneNotes scene={activeSurface} /> : null}
+      {!hideControls && activeSurface?.sceneNumber?.startsWith("CENA") ? <SceneNotes scene={activeSurface} /> : null}
     </div>
   );
 }

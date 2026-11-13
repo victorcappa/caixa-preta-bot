@@ -13,12 +13,16 @@ process.env.CAIXA_PRETA_SHOW_RUNTIME_DIR = path.join(directory, "runtime");
 if (child) {
   assert.deepEqual(readControllerSettings("model-3d"), { preset: "high", removeBackground: true });
   assert.deepEqual(readControllerSettings("scene-zero-video"), { file: "future.mp4", loop: true, transitionMs: 9100 });
+  assert.deepEqual(readControllerSettings("live-training-header"), { collapsed: true });
+  assert.deepEqual(readControllerSettings("post-demo-panel"), { collapsed: false });
   process.exit(0);
 }
 saveControllerSettings("model-3d", { preset: "high", confirmed: true, image: "PRIVATE_UPLOAD" });
 saveControllerSettings("scene-zero-video", { file: "future.mp4", transitionMs: 9100 });
 saveControllerSettings("model-3d", { removeBackground: true });
 saveControllerSettings("scene-zero-video", { loop: true });
+saveControllerSettings("live-training-header", { collapsed: true });
+saveControllerSettings("post-demo-panel", { collapsed: false });
 assert.throws(() => saveControllerSettings("../secret", {}));
 const file = path.join(directory, "runtime/controller-settings.json");
 assert.equal(fs.statSync(file).mode & 0o777, 0o600);

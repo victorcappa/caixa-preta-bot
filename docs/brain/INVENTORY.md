@@ -29,6 +29,12 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:post-demo:live` -> `node --no-warnings --env-file-if-exists=.env.local scripts/post-demo-live.js --live`
 - `npm run memory:sync` -> `node --no-warnings scripts/show-memory-sync.js`
 - `npm run memory:audit` -> `node --no-warnings scripts/show-memory-audit.js`
+- `npm run memory:dissertation` -> `node --no-warnings scripts/dissertation-memory-audit.js`
+- `npm run test:collective-memory` -> `node --no-warnings scripts/collective-memory-test.js`
+- `npm run test:references` -> `node --no-warnings scripts/reference-library-test.js`
+- `npm run test:references:browser` -> `node --no-warnings scripts/reference-library-browser-test.js`
+- `npm run test:references:island` -> `node --no-warnings scripts/reference-island-test.js`
+- `npm run references:assets` -> `node scripts/prepare-reference-island-assets.cjs`
 - `npm run memory:live` -> `node --no-warnings --env-file-if-exists=.env.local scripts/show-memory-live.js --live`
 - `npm run test:live-training` -> `node --no-warnings scripts/live-training-test.js`
 - `npm run test:live-training:browser` -> `node --no-warnings scripts/live-training-browser-test.js`
@@ -76,6 +82,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:public-realtime:multiwindow` -> `node --no-warnings scripts/public-realtime-multiwindow-browser-test.js`
 - `npm run test:scene-zero` -> `node --no-warnings scripts/scene-zero-test.js`
 - `npm run test:scene-zero:suitcases:browser` -> `node --no-warnings scripts/scene-zero-suitcases-browser-test.js`
+- `npm run test:scene-zero:suitcase-sounds:browser` -> `node --no-warnings scripts/scene-zero-suitcase-sounds-browser-test.js`
 - `npm run test:scene-one-sampler` -> `node --no-warnings scripts/scene-one-sampler-browser-test.js`
 - `npm run test:scene-one-audio-effects` -> `node --no-warnings scripts/scene-one-audio-effects-browser-test.js`
 - `npm run test:forca-g-sampler` -> `node --no-warnings scripts/forca-g-sampler-test.js`
@@ -86,6 +93,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:sound-control:browser` -> `node --no-warnings scripts/sound-control-browser-test.js`
 - `npm run test:audience-warmup` -> `node --no-warnings scripts/audience-warmup-test.js`
 - `npm run test:audience-warmup:transition` -> `node --no-warnings scripts/audience-warmup-transition-test.js`
+- `npm run test:audience-warmup:current-affairs` -> `node --no-warnings scripts/audience-warmup-current-affairs-test.js`
+- `npm run warmup:current-affairs` -> `node --no-warnings --env-file-if-exists=.env.local scripts/audience-warmup-current-affairs-refresh.js`
 - `npm run test:audience-sound-check:browser` -> `node --no-warnings scripts/audience-sound-check-browser-test.js`
 - `npm run test:audience-microphone` -> `node --no-warnings scripts/audience-microphone-meter-test.js`
 - `npm run test:audience-microphone:background` -> `node --no-warnings scripts/audience-microphone-background-browser-test.js`
@@ -123,6 +132,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `/queda-aviao-controller` -> `app/queda-aviao-controller/page.js`
 - `/queda-aviao/debug` -> `app/queda-aviao/debug/page.js`
 - `/queda-aviao` -> `app/queda-aviao/page.js`
+- `/referencias` -> `app/referencias/page.js`
 - `/reliability-test/public-error` -> `app/reliability-test/public-error/page.js`
 - `/sound-control` -> `app/sound-control/page.js`
 - `/tea-for-two-controller` -> `app/tea-for-two-controller/page.js`
@@ -171,6 +181,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `GET, POST /api/post-demo` -> `app/api/post-demo/route.js`
 - `GET, POST /api/projection` -> `app/api/projection/route.js`
 - `GET, POST /api/queda-aviao` -> `app/api/queda-aviao/route.js`
+- `POST /api/reference-experiment` -> `app/api/reference-experiment/route.js`
+- `GET /api/reference-island/pieta` -> `app/api/reference-island/pieta/route.js`
 - `GET, POST /api/reliability` -> `app/api/reliability/route.js`
 - `GET, POST /api/robot-sound` -> `app/api/robot-sound/route.js`
 - `GET, PUT /api/scene-notes` -> `app/api/scene-notes/route.js`
@@ -208,6 +220,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/GlitchOverlay.js`
 - `components/InstagramBrowserPanel.js`
 - `components/LiveTraining.js`
+- `components/LiveTrainingController.js`
 - `components/Model3DController.js`
 - `components/OperatorBotSettings.js`
 - `components/OperatorConsole.js`
@@ -236,7 +249,10 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/PublicOperatorLayout.js`
 - `components/PublicOperatorPanel.js`
 - `components/PublicSceneStage.js`
+- `components/ReferenceArchive.js`
+- `components/ReferenceArchiveScene.js`
 - `components/ReferenceBooksScene.js`
+- `components/ReferenceExperiment.js`
 - `components/RobotSoundControls.js`
 - `components/SceneAudioEffectsControls.js`
 - `components/SceneNotes.js`
@@ -274,6 +290,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/EditableCueController.js`
 - `components/ForcaGSamplerController.js`
 - `components/ForcaGShadersController.js`
+- `components/LiveTrainingController.js`
 - `components/Model3DController.js`
 - `components/PostDemoController.js`
 - `components/PreparedSceneController.js`
@@ -370,9 +387,11 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/audience-sound-check-browser-test.js`
 - `scripts/audience-warmup-agreements-browser-test.js`
 - `scripts/audience-warmup-browser-test.js`
+- `scripts/audience-warmup-current-affairs-test.js`
 - `scripts/audience-warmup-test.js`
 - `scripts/audience-warmup-transition-test.js`
 - `scripts/baralho-morbido-test.js`
+- `scripts/collective-memory-test.js`
 - `scripts/controller-settings-test.js`
 - `scripts/forca-g-sampler-browser-test.js`
 - `scripts/forca-g-sampler-test.js`
@@ -381,6 +400,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/internet-voice-test.js`
 - `scripts/live-training-browser-test.js`
 - `scripts/live-training-test.js`
+- `scripts/live-training-typing-browser-test.js`
+- `scripts/live-training-typing-test.js`
 - `scripts/manual-sound-check-browser-test.js`
 - `scripts/operator-preferences-browser-test.js`
 - `scripts/operator-preferences-test.js`
@@ -405,6 +426,9 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/public-composition-browser-test.js`
 - `scripts/public-realtime-browser-test.js`
 - `scripts/public-realtime-multiwindow-browser-test.js`
+- `scripts/reference-island-test.js`
+- `scripts/reference-library-browser-test.js`
+- `scripts/reference-library-test.js`
 - `scripts/research-director-test.js`
 - `scripts/robot-sound-browser-test.js`
 - `scripts/robot-sound-hot-refresh-test.js`
@@ -415,8 +439,10 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/scene-two-d-audio-effects-browser-test.js`
 - `scripts/scene-zero-lighting-test.js`
 - `scripts/scene-zero-suitcase-regression-browser-test.js`
+- `scripts/scene-zero-suitcase-sounds-browser-test.js`
 - `scripts/scene-zero-suitcases-browser-test.js`
 - `scripts/scene-zero-test.js`
+- `scripts/scene-zero-timer-shortcuts-browser-test.js`
 - `scripts/show-reliability-test.js`
 - `scripts/sound-control-browser-test.js`
 - `scripts/suitcase-director-test.js`
@@ -431,6 +457,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/tarot-references-browser-test.js`
 - `scripts/tarot-references-test.js`
 - `scripts/tarot-test.js`
+- `scripts/tarot-typing-browser-test.js`
+- `scripts/tarot-typing-test.js`
 - `scripts/tarot-vision-test.js`
 - `scripts/verdade-ou-bolo-layout-browser-test.js`
 - `scripts/videomapping-browser-test.js`
