@@ -70,6 +70,36 @@ async function selectDissertation(page) {
   assert.match(await source.getAttribute("href"), /MarcusViniciusdeMeloGarciacorrigidaPPGAC5434469\.pdf/);
 }
 
+async function archiveScope(page) {
+  return page.evaluate(() => ({
+    group: document.querySelector('[data-reference-group][aria-pressed="true"]')?.dataset.referenceGroup,
+    query: document.querySelector('[aria-label="Buscar referências"]').value,
+    topic: document.querySelector('[data-island-topic][aria-pressed="true"]')?.dataset.islandTopic,
+    gaps: document.querySelector('[data-reference-gaps]').getAttribute('aria-pressed'),
+    sources: [...document.querySelectorAll('[data-reference-id]')].map(node => node.dataset.referenceId),
+    things: document.querySelector('[data-reference-scene]')?.dataset.cabinetVisible,
+    page: document.querySelector('[aria-label="Próximas coisas"]')?.parentElement.innerText
+  }));
+}
+
+// Find an actual raycast target through its hover label, then click that geometry.
+async function pickIslandThing(page, matches) {
+  const canvas = page.locator('canvas[aria-label="Ilha holográfica das referências"]');
+  await canvas.scrollIntoViewIfNeeded();
+  const bounds = await canvas.boundingBox();
+  for (let y = .25; y < .94; y += .035) for (let x = .08; x < .94; x += .025) {
+    const point = { x: bounds.x + bounds.width * x, y: bounds.y + bounds.height * y };
+    await page.mouse.move(point.x, point.y);
+    const title = await page.locator('[data-reference-scene] aside strong').evaluateAll(nodes => nodes[0]?.textContent);
+    if (title && matches(title)) {
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
+      if (await page.locator('[data-reference-scene] aside strong').evaluateAll(nodes => nodes[0]?.textContent) !== title) continue;
+      await page.mouse.click(point.x, point.y); return title;
+    }
+  }
+  throw new Error('No matching 3D thing was reachable in the island overview.');
+}
+
 try {
   await poll(async () => {
     try { return (await fetch(`${base}/referencias`, { signal: AbortSignal.timeout(1000) })).ok; } catch { return false; }
@@ -154,7 +184,43 @@ try {
   assert(await personDetail.locator('a[href^="https://www.gamedesign.zhdk.ch/"], a[href^="https://lual.games/"]').count() >= 1,
     "A person record links to actual primary work sources.");
   await page.screenshot({ path: path.join(output, "references-human-constellation.png"), fullPage: true });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const searchedPeople = await archiveScope(page);
+  await page.locator('[data-island-object="piloto"]').click();
+  assert.equal(await page.locator('[data-reference-detail]').getAttribute('data-reference-detail'), 'objeto-piloto');
+  assert.deepEqual(await archiveScope(page), searchedPeople, 'Inspecting a model outside Pessoas preserves the category and search.');
+  await groups.first().click();
+  await page.locator('[data-reference-group="pessoas"]').click();
+  assert.equal(await page.locator('[data-reference-detail]').getAttribute('data-reference-detail'), 'pessoa-luzia-huttenmoser', 'Changing a category ends the previous inspection instead of reviving it when returning.');
+
   await page.getByLabel("Buscar referências", { exact: true }).fill("");
+  await page.getByRole('button', { name: 'Próximas coisas', exact: true }).click();
+  await page.getByRole('button', { name: 'Voltar à vista da ilha', exact: true }).click();
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const pagedPeople = await archiveScope(page);
+  const names = await page.evaluate(() => Object.fromEntries((document.querySelector('[data-reference-scene]').dataset.cabinetVisible || '').split(',').map(id => [document.querySelector(`[data-reference-id="${id}"] strong`)?.textContent, id])));
+  const beforeApproach = await canvas.screenshot();
+  const pickedPerson = await pickIslandThing(page, title => Boolean(names[title]));
+  assert.equal(await page.locator('[data-reference-detail]').getAttribute('data-reference-detail'), names[pickedPerson]);
+  assert.equal(await page.locator('[data-reference-biography]').count(), 1);
+  assert.deepEqual(await archiveScope(page), pagedPeople, 'Touching a person keeps the current category, page and displayed things.');
+  assert(!beforeApproach.equals(await canvas.screenshot()), 'Touching a reference approaches the selected thing.');
+  await page.screenshot({ path: path.join(output, 'island-person-inspection.png'), fullPage: true });
+
+  await page.getByLabel('Buscar referências', { exact: true }).fill('Luzia');
+  await page.getByRole('button', { name: 'Voltar à vista da ilha', exact: true }).click();
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const toolScope = await archiveScope(page);
+  await pickIslandThing(page, title => title === 'Chave');
+  assert.equal(await page.locator('[data-reference-detail]').getAttribute('data-reference-detail'), 'ferramenta-chave');
+  assert.deepEqual(await archiveScope(page), toolScope, 'Touching a tool only reveals its content; its action must not clear filters.');
+  await page.screenshot({ path: path.join(output, 'island-tool-inspection.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Usar esta ferramenta', exact: true }).click();
+  assert.equal(await groups.first().getAttribute('aria-pressed'), 'true', 'Using the inspected key explicitly resets the archive.');
+  assert.equal(await page.getByLabel('Buscar referências', { exact: true }).inputValue(), '');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  checks.push('Actual 3D person and tool picks approach and reveal content while preserving Pessoas, search, page and visible things; tool actions require an explicit use.');
   await groups.first().click();
   checks.push("The human constellation exposes researched works and primary links, including Luzia's academic game project.");
 
@@ -247,7 +313,7 @@ try {
   await page.locator('[data-cabinet-tool="chave"]').click();
   checks.push('As Coisas uses eight recognizable functional props, pages through tangible references, and presents factual biographies in the bot voice for all 35 people.');
 
-  const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: "reduce" });
+  const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: "reduce", hasTouch: true });
   const mobile = await mobileContext.newPage();
   observe(mobile);
   await mobile.goto(`${base}/referencias`, { waitUntil: "domcontentloaded" });
@@ -266,6 +332,12 @@ try {
   assert(stillFrame.equals(await mobileCanvas.screenshot()), "Reduced motion must freeze the 3D composition.");
   await noHorizontalOverflow(mobile);
   await mobile.screenshot({ path: path.join(output, "references-mobile-reduced-motion.png"), fullPage: true });
+  await mobile.locator('[data-reference-group="pessoas"]').tap();
+  await mobile.getByLabel('Buscar referências', { exact: true }).fill('Luzia');
+  await mobile.locator('[data-island-object="piloto"]').tap();
+  assert.equal(await mobile.locator('[data-reference-detail]').getAttribute('data-reference-detail'), 'objeto-piloto');
+  assert.equal(await mobile.locator('[data-reference-group="pessoas"]').getAttribute('aria-pressed'), 'true');
+  assert.equal(await mobile.getByLabel('Buscar referências', { exact: true }).inputValue(), 'Luzia');
   checks.push("The 390px layout keeps search, keyboard selection and source details usable with reduced motion.");
 
   const fallbackContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });

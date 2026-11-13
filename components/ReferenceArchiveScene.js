@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import styles from './ReferenceArchive.module.css';
 
-export default function ReferenceArchiveScene({ items, manifest, visibleIds, topic, selectedId, objectId, focusToken, onSelect, onObjectSelect, onTool, scope, cabinetPage, resetToken, originalMaterials, onMaterialChange, paused }) {
+export default function ReferenceArchiveScene({ items, manifest, visibleIds, topic, selectedId, focusTarget, focusToken, onSelect, onObjectSelect, onTool, scope, cabinetPage, resetToken, originalMaterials, onMaterialChange, paused }) {
   const mount = useRef(null), api = useRef(null), latest = useRef({});
   latest.current = { onSelect, onObjectSelect, onTool, paused, selectedId, visibleIds, topic, scope, cabinetPage, originalMaterials };
   const [status, setStatus] = useState('loading'), [assets, setAssets] = useState({ loaded: [], loading: [], failed: [] }), [hover, setHover] = useState(null), [display, setDisplay] = useState({ ids: [], types: [] });
@@ -19,7 +19,12 @@ export default function ReferenceArchiveScene({ items, manifest, visibleIds, top
   }, [items, manifest]);
   useEffect(() => { api.current?.select(selectedId); }, [selectedId]);
   useEffect(() => { api.current?.filter(visibleIds, topic, scope, cabinetPage); }, [visibleIds, topic, scope, cabinetPage]);
-  useEffect(() => { if (objectId && status === "ready") api.current?.focusObject(objectId); }, [objectId, focusToken, status]);
+  useEffect(() => {
+    if (!focusTarget || status !== "ready") return;
+    if (focusTarget.kind === 'model') api.current?.focusObject(focusTarget.id);
+    else if (focusTarget.kind === 'tool') api.current?.focusTool(focusTarget.id);
+    else api.current?.focusReference(focusTarget.id);
+  }, [focusTarget, focusToken, status]);
   useEffect(() => { if (status === "ready") api.current?.material(!originalMaterials); }, [originalMaterials, status]);
   useEffect(() => { if (resetToken) api.current?.home(); }, [resetToken]);
   return <div className={styles.scene} data-reference-scene={status} data-island-loaded={assets.loaded.join(',')} data-island-failed={assets.failed.join(',')} data-cabinet-visible={display.ids.join(',')} data-cabinet-types={display.types.join(',')}>
