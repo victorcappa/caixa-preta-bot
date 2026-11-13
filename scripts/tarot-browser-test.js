@@ -84,6 +84,7 @@ try{
   await operator.getByRole("link",{name:"TARÔ",exact:true}).waitFor();
   assert.equal(new URL(projection.url()).pathname,"/treinamento","opening controls must not navigate the projection");
   await post("/api/robot-sound",{settings:{typingIntervalMs:20,typingPauseMs:0,messageGapMs:0}});
+  await command("config",{config:{revealSpeed:4,sentencePauseMs:0,paragraphPauseMs:0}});
   await operator.getByRole("button",{name:"INICIAR PRÓLOGO",exact:true}).click();
   await poll(async()=>(await state()).tarot.response?.status==="presenting","A Morte starts interpretation automatically");
   const automatic=(await state()).tarot;assert.equal(automatic.currentCard.id,13);assert(automatic.response.elements.length>=5);
@@ -207,7 +208,7 @@ try{
   await projection.evaluate(()=>window.__tarotUseCard(0));
   await command("select",{cardId:0,source:"manual-camera"});
   await poll(async()=>await projection.locator('g[data-card-id="0"]').count()>0,"first counted card visible before enabling automatic analysis");
-  await command("config",{config:{autoAnalyze:true,automatic:false,floorEnabled:true,floorAfterCards:6,revealSpeed:4}});await command("camera",{automatic:true});
+  await command("config",{config:{autoAnalyze:true,automatic:false,floorEnabled:true,floorAfterCards:6,revealSpeed:4,sentencePauseMs:0,paragraphPauseMs:0}});await command("camera",{automatic:true});
   for(let id=0;id<6;id++){
     await projection.evaluate((id)=>window.__tarotUseCard(id),id);
     await poll(async()=>{const t=(await privateState()).tarot;return t.currentCard.id===id&&t.readCards.includes(id)&&t.readCards.length===id+1;},`completed reading ${id+1}/6 before the floor`,30000);

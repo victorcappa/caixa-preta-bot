@@ -63,7 +63,7 @@ showState.patchOperatorPublic({personality:{sarcasm:88,rebellion:49,curiosity:91
 showState.controlRobotSound({typingIntervalMs:83,typingPauseMs:650,messageGapMs:900,displayFont:'courier',typingVolume:.17});
 showState.setModel('gpt-5-nano');showState.setGlobalVolume(.42);
 assert.equal(showState.snapshot().model,'gpt-5.6-luna');
-showState.controlTarot('config',{config:{maxWords:113,associationIntensity:87,automatic:true}});
+showState.controlTarot('config',{config:{maxWords:113,associationIntensity:87,automatic:true,revealSpeed:1.75,sentencePauseMs:850,paragraphPauseMs:2100}});
 showState.controlTarot('visual',{visual:{matrix:.31,textSize:44}});
 showState.controlTarot('profile',{profile:{humor:19,poetry:81}});
 showState.controlTarot('instruction',{text:'Preferência privada do teste.'});
@@ -83,6 +83,7 @@ assert(showState.controlAudienceWarmup('minigame-set-duration',{gameId:minigame,
 showState.controlPlayUnlock('toggle-sound',{enabled:false});
 showState.controlGlitch('update',{preset:'normal',params:{intensity:.68}});
 const expected=extractOperatorPreferences(showState.privateSnapshot());
+assert.equal(expected.tarot.config.revealSpeed,1.75);assert.equal(expected.tarot.config.sentencePauseMs,850);assert.equal(expected.tarot.config.paragraphPauseMs,2100);
 assert.deepEqual(saved().values,expected);assert.equal(fs.statSync(path.join(directory,'operator-preferences.json')).mode&0o777,0o600);
 checks.push('current edits are written atomically before acknowledgement, including isolated post-demo timing/personality/model/font');
 const timestamp=saved().savedAt;

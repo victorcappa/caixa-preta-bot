@@ -47,7 +47,9 @@ O fundo recebe desfoque, escurecimento, verde e um campo procedural de símbolos
 - Intensidade Matrix; formato **chuva**, **constelação**, **órbitas** ou **runas**.
 - Alfabeto livre de símbolos, cor, quantidade, tamanho e brilho.
 - Velocidade, persistência dos rastros, linhas de varredura, pulsação e rotação.
-- Desfoque, escurecimento, verde, contorno, animações e velocidade de revelação do texto.
+- Desfoque, escurecimento, verde, contorno e animações.
+
+Em **Apresentação → Ritmo da escrita**, a velocidade do tarô é independente da digitação global: **1×** equivale a 60 ms por caractere (cerca de 17 letras/s), ajustável de 0,25× a 4×. A pausa padrão entre frases é **0,5 s**; entre parágrafos, **1,2 s**. As pausas não diminuem ao acelerar as letras. Um ponto final seguido de linha em branco recebe uma única pausa de parágrafo, antes da separação; aspas de fechamento e reticências terminam antes da pausa. Os controles permitem de 0 a 5 s entre frases e de 0 a 10 s entre parágrafos, persistem com as preferências do operador e são lidos durante a escrita, sem recomeçar a resposta. Um intervalo já agendado termina antes de aplicar o próximo ajuste.
 
 O campo é transparente; os rastros apagam sua própria camada. As animações respeitam `prefers-reduced-motion`. Reinícios/trocas de fonte rearmam callbacks de vídeo no tracker e na camada nítida. Perda confirmada pelo Worker limpa a geometria imediatamente; silêncio durante revalidação usa uma tolerância limitada de 750–2500 ms baseada no pico medido, evitando flashes. No sumiço, o isolamento faz um fade curto e a fala física é interrompida.
 
@@ -85,6 +87,7 @@ Uma concessão exclusiva impede duas projeções de abrirem câmeras simultânea
 
 - `npm run test:tarot`: geometria, privacidade, concessão, concorrência, cancelamento, autonomia, recuperação e catálogo/upload.
 - `npm run test:tarot:experience`: três parágrafos concisos, frases/perguntas completas na meta de palavras, rejeição de trechos incompletos e cache antigo, offsets/revelação, dupla, pausa/retomada exata, seis leituras, subconjuntos de 1, 4, 21 e 22 versos, seleção/retirada espacial, frente escolhida e encerramento.
+- `node --no-warnings scripts/tarot-typing-test.js`: ritmo próprio, pausas únicas de frase/parágrafo, aspas, reticências, decimais, limites e padrões em estados antigos. `node --no-warnings scripts/tarot-typing-browser-test.js`: controles e tempos reais em navegador/servidor isolados, com transporte do modelo simulado.
 - `npm run test:tarot:catalog`: 22 inventários e 182 âncoras; revisão visual em `/private/tmp/tarot-catalog-review/index.html`.
 - `npm run test:tarot:vision`: OpenCV real e fotos fornecidas no Chromium. Todas as 22 frentes, perspectiva/rotação/escala/luz/oclusão, reflexo saturado sintético, duas cartas, fluxo, perda/retorno; 1, 4, 21 e 22 cópias do verso real, sobreposição/perspectiva/sombra sintéticas, piso texturizado, rejeição de frentes como costas e frente revelada sobre os outros 21 versos.
 - `npm run test:tarot:browser`: produção, sessão e catálogo isolados, câmera sintética, transporte textual simulado. Inclui pausa na perda, retorno sem nova chamada, ausência de flash na lateral, leitura dupla, texto maior, rótulos removidos, Matrix editável, seis leituras e ciclo completo do chão. Inclui o botão **INTERPRETAR**, bloqueio durante input, pergunta aguardando carta, bypass de cache, envio exato da pergunta ao transporte, retorno à leitura livre e cancelamento. Confere o cursor da principal antes do boot, reabertura com histórico do tarô e ausência de publicação na principal durante leituras, chão e retorno.

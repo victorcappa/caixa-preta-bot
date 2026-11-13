@@ -7,6 +7,7 @@ import {tarotCommand} from "@/lib/tarot/client";
 import {activeElementIds,projectPoint,regionPoints,visibleElementIds} from "@/lib/tarot/geometry";
 import {center,nearby,readingCards,readingSignature} from "@/lib/tarot/floor";
 import {DEFAULT_TAROT_VISUAL} from "@/lib/tarot/state";
+import {tarotTypingDelayMs} from "@/lib/tarot/typing";
 import {useProjectionTextFit} from "@/lib/useProjectionTextFit";
 import PublicModule from "@/components/PublicModule";
 import ProjectionWindowClient from "@/components/ProjectionWindowClient";
@@ -78,10 +79,9 @@ export default function TarotTraining(){
       const char=response.text[index-1];robotSoundEngine.typing(char);
       if(index>=response.text.length){robotSoundEngine.complete();void post("presented",index);return;}
       if(Date.now()-lastReport>350){lastReport=Date.now();void post("progress",index);}
-      const settings=stateRef.current.robotSound||{};
-      timer=setTimeout(step,((settings.typingIntervalMs??60)+(/[.,!?;:\n]/.test(char)?settings.typingPauseMs||0:0))/(stateRef.current.tarot?.presentation?.revealSpeed||1));
+      timer=setTimeout(step,tarotTypingDelayMs(response.text,index,stateRef.current.tarot?.presentation));
     }
-    timer=setTimeout(step,stateRef.current.robotSound?.messageGapMs||0);
+    timer=setTimeout(step,tarotTypingDelayMs(response.text,index,stateRef.current.tarot?.presentation));
     return()=>{
       cancelled=true;clearTimeout(timer);
       // Preserve the exact local cursor when vision or a remote command interrupts.
