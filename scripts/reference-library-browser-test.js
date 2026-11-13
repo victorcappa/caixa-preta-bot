@@ -41,6 +41,7 @@ async function poll(predicate, label, timeout = 30000) {
 
 function observe(page) {
   page.on("pageerror", error => errors.push(error.message));
+  page.on('console', message => { if (message.type() === 'error' && /WebGLProgram|Shader Error|VALIDATE_STATUS|GL_INVALID/.test(message.text())) errors.push(message.text()); });
   page.on("request", request => {
     const url = new URL(request.url());
     if (url.pathname === "/api/projection" && request.method() !== "GET") projectionWrites.push(request.postData());
@@ -150,6 +151,7 @@ try {
     if ((await page.locator("[data-reference-detail]").getAttribute("data-reference-detail")) !== beforePick) { picked = true; break; }
   }
   assert(picked, "Clicking a 3D island object or source opens its corresponding record.");
+  await page.waitForFunction(() => document.querySelector('[data-reference-scene]')?.dataset.assemblyPhase === 'integrated');
   checks.push("The paused 3D archive rotates by dragging and selecting a real 3D object updates its source record.");
 
   await page.locator('[data-cabinet-tool="chave"]').click();
@@ -230,16 +232,19 @@ try {
   assert.equal(await personDetail.getAttribute('data-reference-detail'), 'pessoa-luzia-huttenmoser');
 
   await page.getByLabel("Buscar referências", { exact: true }).fill("");
-  await page.getByRole('button', { name: 'Próximas coisas', exact: true }).click();
+  await page.waitForFunction(() => document.querySelector('[data-reference-scene]')?.dataset.cabinetVisible?.split(',').length === 35);
+  assert.equal(await page.getByRole('button', { name: 'Próximas coisas', exact: true }).count(), 0, 'People are never paginated.');
   await page.getByRole('button', { name: 'Voltar à vista da ilha', exact: true }).click();
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const pagedPeople = await archiveScope(page);
+  await canvas.screenshot({ path: path.join(output, 'people-all-fragmented.png') });
   const names = await page.evaluate(() => Object.fromEntries((document.querySelector('[data-reference-scene]').dataset.cabinetVisible || '').split(',').map(id => [document.querySelector(`[data-reference-id="${id}"] strong`)?.textContent, id])));
   const beforeApproach = await canvas.screenshot();
   const pickedPerson = await pickIslandThing(page, title => Boolean(names[title]));
   assert.equal(await page.locator('[data-reference-detail]').getAttribute('data-reference-detail'), names[pickedPerson]);
   assert.equal(await page.locator('[data-reference-biography]').count(), 1);
-  assert.deepEqual(await archiveScope(page), pagedPeople, 'Touching a person keeps the current category, page and displayed things.');
+  await page.waitForFunction(id => { const scene = document.querySelector('[data-reference-scene]'); return scene?.dataset.assemblyObject === id && scene.dataset.assemblyPhase === 'integrated'; }, names[pickedPerson]);
+  assert.deepEqual(await archiveScope(page), pagedPeople, 'Touching a person keeps all 35 objects and the category in place.');
   assert(!beforeApproach.equals(await canvas.screenshot()), 'Touching a reference approaches the selected thing.');
   await page.screenshot({ path: path.join(output, 'island-person-inspection.png'), fullPage: true });
 
@@ -282,6 +287,7 @@ try {
   checks.push('The real local wreck, pilot and other models load, material view toggles, themes regroup references, trails navigate and gaps remain discoverable.');
   await page.locator('[data-island-object="pieta"]').click();
   await page.waitForFunction(() => document.querySelector('[data-reference-scene]')?.dataset.islandLoaded?.split(',').includes('pieta'), null, { timeout: 90000 });
+  await page.waitForFunction(() => document.querySelector('[data-reference-scene]')?.dataset.assemblyObject === 'objeto-pieta' && document.querySelector('[data-reference-scene]')?.dataset.assemblyPhase === 'integrated');
   assert.equal(await page.locator('[data-reference-detail]').getAttribute('data-reference-detail'), 'objeto-pieta');
   await page.screenshot({ path: path.join(output, 'island-pieta-source.png'), fullPage: true });
   checks.push('Pietà materializes only on request from the original pieta1.blend export.');
@@ -323,8 +329,8 @@ try {
   assert.equal(await page.locator('button[data-reference-group="pessoas"]').getAttribute('aria-pressed'), 'true');
   await page.waitForFunction(() => (document.querySelector('[data-reference-scene]')?.dataset.cabinetTypes || '').length > 0);
   const thingIds = (await page.locator('[data-reference-scene]').getAttribute('data-cabinet-visible')).split(',').filter(Boolean);
-  assert(thingIds.length <= 13 && thingIds.length > 0, 'The island presents readable objects, not a cloud of tiny markers.');
-  await page.getByRole('button', { name: 'Próximas coisas', exact: true }).click();
+  assert.equal(thingIds.length, peopleCount, 'All people have a simultaneous object.');
+  await page.getByRole('button', { name: 'Próximo material', exact: true }).click();
   await page.locator('[data-reference-biography]').waitFor();
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const bioBox = await page.locator('[data-reference-biography]').boundingBox();
@@ -351,7 +357,7 @@ try {
   await page.locator('[data-cabinet-tool="mala"]').click();
   assert.equal(await page.getByRole('button', { name: 'Lista', exact: true }).getAttribute('aria-pressed'), 'true');
   await page.locator('[data-cabinet-tool="chave"]').click();
-  checks.push('As Coisas uses eight recognizable functional props, pages through tangible references, and presents factual biographies in the bot voice for all 35 people.');
+  checks.push('All 35 people appear together as floating, pulsing surface fragments; selecting assembles an intact object while preserving its position and factual biography.');
 
   const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: "reduce", hasTouch: true });
   const mobile = await mobileContext.newPage();

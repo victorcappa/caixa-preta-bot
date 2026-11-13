@@ -19,6 +19,8 @@ const { referenceExperimentContext, generateReferenceExperiment } = await import
 const { POST } = await import('../app/api/reference-experiment/route.js');
 const { cabinetTools, cabinetPage, referenceThing } = await import('../lib/referenceThings.js');
 const { createReferenceThing } = await import('../lib/createReferenceThing.js');
+const { createReferenceFragments } = await import('../lib/createReferenceFragments.js');
+const { referencePeoplePosition } = await import('../lib/referenceIsland.js');
 const THREE = await import('three');
 const library = await getReferenceLibrary();
 assert.equal(library.island.models.length, 14);
@@ -42,8 +44,29 @@ for (const type of new Set([...cabinetTools.map(tool => tool.type), ...people.ma
   assert(meshes > 1, `${type}: an identifiable assembled object`);
   object.traverse(part => { part.geometry?.dispose(); [].concat(part.material || []).forEach(material => material.dispose()); });
 }
-const page = cabinetPage(library.items, people.map(person => person.id), people[0].id, 1);
-assert(page.items.length <= 13 && page.count === 3, '35 people are explored as readable groups of tangible things');
+const page = cabinetPage(library.items, people.map(person => person.id), people[0].id, 1, false, true);
+assert.equal(page.items.length, people.length, 'Every person has a simultaneously available object.');
+assert.equal(page.count, 1); assert.equal(page.page, 0);
+const positions = people.map((_, index) => referencePeoplePosition(index, people.length));
+assert.equal(new Set(positions.map(position => position.join(','))).size, people.length);
+for (const [x, y, z] of positions) assert(Math.abs(x) < 7.3 && Math.abs(z) < 7.3 && y >= 1.6);
+for (const aspect of [.65, 1.37]) {
+  const camera = new THREE.PerspectiveCamera(40, aspect, .1, 150);
+  camera.position.set(14.8, 12.3, 17.3).multiplyScalar(Math.max(1, 1.1 / aspect)); camera.lookAt(0, .15, 0); camera.updateMatrixWorld();
+  for (const position of positions) for (const x of [-.65, .65]) for (const y of [0, 1.3]) for (const z of [-.65, .65]) {
+    const screen = new THREE.Vector3(...position).add(new THREE.Vector3(x, y, z)).project(camera);
+    assert(Math.abs(screen.x) < 1 && Math.abs(screen.y) < 1, 'All 35 fragmented objects fit the initial desktop and narrow-screen camera.');
+  }
+}
+const source = createReferenceThing(THREE, 'camera');
+const fragmented = createReferenceFragments(THREE, source, { id: 'test-person', count: 256 });
+assert.equal(fragmented.particles.count, 256); assert.equal(source.visible, false);
+const matrices = fragmented.particles.instanceMatrix.array.slice();
+fragmented.update(1, .5, true); assert(fragmented.progress > 0 && fragmented.progress < 1);
+fragmented.update(2, 1, true); assert.equal(fragmented.progress, 1); assert(source.visible); assert(!fragmented.particles.visible);
+fragmented.update(3, 0, false, true); assert.equal(fragmented.progress, 0); assert(!source.visible); assert(fragmented.particles.visible);
+assert.deepEqual(fragmented.particles.instanceMatrix.array, matrices, 'The shader animates fragments without overwriting their assembled surface positions.');
+fragmented.object.traverse(node => { if (node.isInstancedMesh) node.dispose(); node.geometry?.dispose(); [].concat(node.material || []).forEach(material => material.dispose()); });
 assert.equal(referenceThing(people[0]).basis.includes('não um pertence real'), true);
 const morel = library.items.find(item => item.id === 'CP-05');
 assert.equal(morel.thing.type, 'triptychMirror');

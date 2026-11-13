@@ -42,7 +42,7 @@ export default function ReferenceArchive({ library }) {
     const item = items.find(item => item.id === id); if (!item) return;
     setInspection({ id, scope: selectionScope });
     const index = filtered.filter(item => !item.modelId).findIndex(item => item.id === id);
-    if (filtered.some(item => item.id === id)) { setSelectedId(id); if (revealPage && index >= 0) setCabinetPage(Math.floor(index / CABINET_PAGE_SIZE)); }
+    if (filtered.some(item => item.id === id)) { setSelectedId(id); if (revealPage && group !== "pessoas" && index >= 0) setCabinetPage(Math.floor(index / CABINET_PAGE_SIZE)); }
     setObjectId(item.modelId || null); setFocusTarget({ kind: item.modelId ? 'model' : 'reference', id: item.modelId || id, scope: selectionScope });
     setFocusToken(value => value + 1); revealDetail();
   }
@@ -54,7 +54,7 @@ export default function ReferenceArchive({ library }) {
   }
   function walk(id, step = 0) { const route = islandTrails.find(route => route.id === id); setInspection(null); setFocusTarget({ kind: "model", id: route.steps[step].object, scope: JSON.stringify(["all", "", route.steps[step].topic, false]) }); setTrailId(id); setTrailStep(step); setQuery(""); setGroup("all"); setGaps(false); setSelectedId(`objeto-${route.steps[step].object}`); setObjectId(route.steps[step].object); setFocusToken(value => value + 1); setTopic(route.steps[step].topic); setMode("3d"); }
   function cross(id) { setPair(current => current.includes(id) ? current.filter(value => value !== id) : current.length < 2 ? [...current, id] : current); }
-  const cabinet = getCabinetPage(items, visibleIds, selected?.id, cabinetPage, group === "all" && !topic && !query && !gaps);
+  const cabinet = getCabinetPage(items, visibleIds, selected?.id, cabinetPage, group === "all" && !topic && !query && !gaps, group === "pessoas");
   function turnPage(next) { const page = Math.max(0, Math.min(next, cabinet.count - 1)); clearInspection(); setCabinetPage(page); const candidates = filtered.filter(item => !item.modelId); if (candidates[page * CABINET_PAGE_SIZE]) setSelectedId(candidates[page * CABINET_PAGE_SIZE].id); revealDetail(); }
   function activateTool(id) {
     const tool = cabinetTools.find(tool => tool.id === id); if (!tool) return;
@@ -108,8 +108,8 @@ export default function ReferenceArchive({ library }) {
         <div className={styles.viewportHeader}><span>FIG. 01 / {mode === "3d" ? "ILHA / CAMPO DE MEMÓRIA" : mode === "books" ? "LIVROS / CAMPO DE MEMÓRIA" : "ÍNDICE DO ACERVO"}</span><span>{String(filtered.length).padStart(3, "0")} FRAGMENTOS</span></div>
         {mode === "3d" ? <>
           <ArchiveScene items={items} manifest={island} visibleIds={visibleIds} topic={topic} selectedId={selected.id} onSelect={id => chooseItem(id, false)} onObjectSelect={chooseObject} focusTarget={focusTarget?.scope === selectionScope ? focusTarget : null} focusToken={focusToken} onTool={inspectTool} scope={group} cabinetPage={cabinetPage} resetToken={resetToken} originalMaterials={originalMaterials} onMaterialChange={() => setOriginalMaterials(value => !value)} paused={paused} />
-          <div className={styles.cabinetPagination}><span>{cabinet.total} fichas · coisas em grupos de {CABINET_PAGE_SIZE}</span><div><button aria-label="Coisas anteriores" disabled={cabinet.page === 0} onClick={() => turnPage(cabinet.page - 1)}>←</button><span>{cabinet.page + 1} / {cabinet.count}</span><button aria-label="Próximas coisas" disabled={cabinet.page >= cabinet.count - 1} onClick={() => turnPage(cabinet.page + 1)}>→</button></div></div><div className={styles.sceneLegend}><span><i /> LIGAÇÃO DOCUMENTADA</span><span><i /> PONTE CURATORIAL</span></div>
-          <div className={styles.sceneControls}><span>Arraste para orbitar · roda para aproximar · clique para explorar</span><button aria-pressed={paused} onClick={() => setPaused(value => !value)}>{paused ? "Retomar movimento" : "Pausar movimento"}</button></div>
+          <div className={styles.cabinetPagination}>{group === "pessoas" ? <span>{cabinet.total} pessoas · {cabinet.items.length} objetos na ilha</span> : <><span>{cabinet.total} fichas · coisas em grupos de {CABINET_PAGE_SIZE}</span><div><button aria-label="Coisas anteriores" disabled={cabinet.page === 0} onClick={() => turnPage(cabinet.page - 1)}>←</button><span>{cabinet.page + 1} / {cabinet.count}</span><button aria-label="Próximas coisas" disabled={cabinet.page >= cabinet.count - 1} onClick={() => turnPage(cabinet.page + 1)}>→</button></div></>}</div><div className={styles.sceneLegend}><span><i /> LIGAÇÃO DOCUMENTADA</span><span><i /> PONTE CURATORIAL</span></div>
+          <div className={styles.sceneControls}><span>Toque para integrar · arraste para orbitar · roda para aproximar</span><button aria-pressed={paused} onClick={() => setPaused(value => !value)}>{paused ? "Retomar movimento" : "Pausar movimento"}</button></div>
         </> : mode === "books" ? <>
           <BooksScene items={bookItems} selectedId={selected.id} onSelect={chooseItem} paused={paused} />
           <div className={styles.sceneLegend}><span><i /> FICHA DO ACERVO</span><span><i /> REFERÊNCIA CITADA</span></div>
