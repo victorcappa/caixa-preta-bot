@@ -26,7 +26,6 @@ import {
 const DEFAULT_OPERATOR_WIDTH = 520;
 const DEFAULT_INSTAGRAM_WIDTH = 520;
 const DEFAULT_INSTAGRAM_HEIGHT = 480;
-const CYBER_PANDEMIC_PROMPT_ID = "atualidades-pandemia-cibernetica";
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -61,7 +60,6 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
   useProjectionTextFit(publicTextRef, publicMessage?.content || "", publicMessage?.id, 'bot');
   const [audienceWarmup, setAudienceWarmup] = useState(null);
   const [typedReplies, setTypedReplies] = useState({});
-  const [introMessageId, setIntroMessageId] = useState(null);
   const [input, setInput] = useState("");
   const [status, setStatus] = useState("CONNECTING");
   const [pending, setPending] = useState(false);
@@ -104,8 +102,6 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
   const typingIntervalMsRef = useRef(PUBLIC_TYPE_INTERVAL_MS);
   const typingSettingsRef = useRef({});
   const lastTypingCompletedAtRef = useRef(null);
-  const globalVolumeRef = useRef(1);
-  const audienceWarmupRef = useRef(null);
 
   const notifySceneZeroMessageTyped = useCallback((messageId) => {
     if (!messageId || notifiedTypedIdsRef.current.has(messageId)) return;
@@ -150,8 +146,6 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
     }
 
     return subscribePublicRealtime((payload) => {
-      globalVolumeRef.current = payload.state?.globalVolume ?? globalVolumeRef.current;
-      audienceWarmupRef.current = payload.state?.audienceWarmup ?? audienceWarmupRef.current;
       if (payload.event?.type === "operator-public") return;
       if (payload.event?.type === "stop-all") {
         window.dispatchEvent(new CustomEvent("caixa-preta:stopall"));
@@ -222,8 +216,6 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
   useEffect(() => robotSoundEngine.armAutoUnlock(), []);
 
   useEffect(() => robotSoundEngine.armAudioRelay(), []);
-
-  useEffect(() => { void robotSoundEngine.prepareCivilDefenseAlert?.(); }, []);
 
   useEffect(() => {
     if (!robotSound) return;
@@ -371,8 +363,8 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
     }
 
     setTypedReplies((current) => ({ ...current, [message.id]: "" }));
+    robotSoundEngine.wake();
     let index = 0;
-    let timer;
     const typeNextCharacter = () => {
       index += 1;
       setTypedReplies((current) => ({
@@ -422,33 +414,10 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
       typingTimersRef.current.set(message.id, nextTimer);
     };
 
-    const beginTyping = () => {
-      robotSoundEngine.wake();
-      const gapRemaining = concurrentTypingRef.current || lastTypingCompletedAtRef.current === null ? 0
-        : Math.max(0, lastTypingCompletedAtRef.current + robotMessageGapMs(typingSettingsRef.current) - performance.now());
-      timer = window.setTimeout(typeNextCharacter, Math.max(typingIntervalMsRef.current, gapRemaining));
-      typingTimersRef.current.set(message.id, timer);
-    };
-
-    const warmup = audienceWarmupRef.current;
-    if (message.source === "audience-warmup" && warmup?.sequence?.promptId === CYBER_PANDEMIC_PROMPT_ID
-      && warmup.display?.messageId === message.id) {
-      setIntroMessageId(message.id);
-      // Reserve the typing job while the original first alert pulse plays.
-      typingTimersRef.current.set(message.id, null);
-      const continueAfterAlert = () => {
-        if (!typingTimersRef.current.has(message.id)
-          || typingTimersRef.current.get(message.id) !== null
-          || stoppedTypingIdsRef.current.has(message.id)) return;
-        setIntroMessageId((current) => current === message.id ? null : current);
-        beginTyping();
-      };
-      void Promise.resolve(robotSoundEngine.civilDefenseAlert?.({ cueId: message.id, volumeScale: globalVolumeRef.current }))
-        .then(continueAfterAlert, continueAfterAlert);
-      return;
-    }
-
-    beginTyping();
+    const gapRemaining = concurrentTypingRef.current || lastTypingCompletedAtRef.current === null ? 0
+      : Math.max(0, lastTypingCompletedAtRef.current + robotMessageGapMs(typingSettingsRef.current) - performance.now());
+    const timer = window.setTimeout(typeNextCharacter, Math.max(typingIntervalMsRef.current, gapRemaining));
+    typingTimersRef.current.set(message.id, timer);
   }, [notifySceneZeroMessageTyped, startSelfErasure]);
 
   const drainTypingQueue = useCallback(() => {
@@ -483,7 +452,6 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
       completedTypingIdsRef.current.clear();
       lastTypingCompletedAtRef.current = null;
       notifiedTypedIdsRef.current.clear();
-      setIntroMessageId(null);
       setSelfErasingMessageId(null);
       setTypedReplies({});
     }
@@ -494,26 +462,22 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
 
     const message = publicMessage;
     if (!message && messages.length > 0) {
-      if ([...typingTimersRef.current.values()].includes(null)) robotSoundEngine.stopAll();
       for (const [messageId, timer] of typingTimersRef.current.entries()) {
         clearInterval(timer);
         stoppedTypingIdsRef.current.add(messageId);
       }
       typingTimersRef.current.clear();
       typingQueueRef.current = [];
-      setIntroMessageId(null);
       setSelfErasingMessageId(null);
       robotSoundEngine.complete();
     }
     if (message?.role === "assistant" && !seenMessageIdsRef.current.has(message.id)) {
-      if ([...typingTimersRef.current.values()].includes(null)) robotSoundEngine.stopAll();
       for (const [messageId, timer] of typingTimersRef.current.entries()) {
         clearInterval(timer);
         stoppedTypingIdsRef.current.add(messageId);
       }
       typingTimersRef.current.clear();
       typingQueueRef.current = [];
-      setIntroMessageId(null);
       setSelfErasingMessageId(null);
       seenMessageIdsRef.current.add(message.id);
       stoppedTypingIdsRef.current.delete(message.id);
@@ -566,7 +530,6 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
       for (const timer of typingTimers.values()) {
         clearInterval(timer);
       }
-      typingTimers.clear();
       typingQueueRef.current = [];
       completedTypingIds.clear();
 
@@ -587,7 +550,6 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
 
       typingTimersRef.current.clear();
       typingQueueRef.current = [];
-      setIntroMessageId(null);
       setSelfErasingMessageId(null);
       robotSoundEngine.stopAll();
       setPending(false);
@@ -814,10 +776,6 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
       : null
   );
   const warmupSilentCursor = !publicMessage && audienceWarmup?.display?.kind === "silent";
-  const alertIntroVisible = Boolean(publicMessage) && (introMessageId === publicMessage.id
-    || (audienceWarmup?.sequence?.promptId === CYBER_PANDEMIC_PROMPT_ID
-      && audienceWarmup.display?.messageId === publicMessage.id
-      && typedReplies[publicMessage.id] === undefined));
   const publicInput = (
     <form className={styles.form} onSubmit={submitMessage}>
       <span aria-hidden="true">&gt;</span>
@@ -1014,11 +972,10 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
                 className={styles.messageFrame}
                 data-emergence-cue={sceneZeroEmergenceCueForMessage(publicMessage)?.id || undefined}
                 data-emergence-phase={selfErasingMessageId === publicMessage.id ? "erasing" : undefined}
-                data-message-intro={alertIntroVisible ? "civil-defense-alert" : undefined}
                 data-warmup-effect={activeWarmupEffect || undefined}
                 key={publicMessage.id}
               >
-                {audienceWarmup?.display?.messageId === publicMessage.id && !alertIntroVisible ? (
+                {audienceWarmup?.display?.messageId === publicMessage.id ? (
                   <div className={styles.actionCue}>
                     <small>{audienceWarmup.display.actionLabel}</small>
                     {!quadrantLayout ? <AudienceWarmupTimer endsAt={audienceWarmup.display.endsAt} /> : null}
