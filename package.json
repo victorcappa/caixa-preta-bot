@@ -28,6 +28,8 @@
     "test:collective-memory": "node --no-warnings scripts/collective-memory-test.js",
     "test:references": "node --no-warnings scripts/reference-library-test.js",
     "test:references:browser": "node --no-warnings scripts/reference-library-browser-test.js",
+    "test:references:island": "node --no-warnings scripts/reference-island-test.js",
+    "references:assets": "node scripts/prepare-reference-island-assets.cjs",
     "memory:live": "node --no-warnings --env-file-if-exists=.env.local scripts/show-memory-live.js --live",
     "test:live-training": "node --no-warnings scripts/live-training-test.js",
     "test:live-training:browser": "node --no-warnings scripts/live-training-browser-test.js",

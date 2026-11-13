@@ -79,14 +79,16 @@ try {
   const page = await context.newPage();
   observe(page);
   await page.goto(`${base}/referencias`, { waitUntil: "domcontentloaded" });
-  await page.getByRole("heading", { name: "O que alimenta a caixa.", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "Uma ilha feita de memória.", exact: true }).waitFor();
   const tab = page.getByRole("navigation", { name: "Controllers cênicos" }).getByRole("link", { name: "Referências", exact: true });
   assert.equal(await tab.getAttribute("aria-current"), "page");
   await page.locator('[data-reference-scene="ready"], [data-reference-scene="unavailable"]').waitFor();
   const sceneState = await page.locator("[data-reference-scene]").getAttribute("data-reference-scene");
   assert.equal(sceneState, "ready", "Normal browser must render the 3D archive; WebGL failure is tested separately.");
-  const canvas = page.locator('canvas[aria-label="Arquivo tridimensional das referências"]');
+  const canvas = page.locator('canvas[aria-label="Ilha holográfica das referências"]');
   assert.equal(await canvas.count(), 1);
+  await page.waitForFunction(() => ['aviao-quebrado', 'piloto', 'caixa-preta', 'cadeira', 'quati', 'borboleta'].every(id => document.querySelector('[data-reference-scene]')?.dataset.islandLoaded?.split(',').includes(id)), null, { timeout: 90000 });
+  assert.equal(await page.locator('[data-reference-scene]').getAttribute('data-island-failed'), '');
   const itemCount = await page.locator("[data-reference-id]").count();
   assert(itemCount > 60, "The archive includes the actual collection rather than a few decorative samples.");
   const visibleText = await page.locator("body").innerText();
@@ -113,12 +115,12 @@ try {
   assert(!beforeDrag.equals(await canvas.screenshot()), "Dragging rotates the paused archive.");
   const beforePick = await page.locator("[data-reference-detail]").getAttribute("data-reference-detail");
   let picked = false;
-  for (const [x, y] of [[.3, .65], [.4, .7], [.6, .7], [.7, .65], [.5, .75], [.2, .55], [.8, .55], [.4, .45], [.6, .45]]) {
+  for (const [x, y] of Array.from({ length: 49 }, (_, i) => [.2 + (i % 7) * .1, .25 + Math.floor(i / 7) * .075])) {
     await page.mouse.click(bounds.x + bounds.width * x, bounds.y + bounds.height * y);
     if ((await page.locator("[data-reference-detail]").getAttribute("data-reference-detail")) !== beforePick) { picked = true; break; }
   }
-  assert(picked, "Clicking a 3D source card opens its corresponding record.");
-  checks.push("The paused 3D archive rotates by dragging and selecting a real 3D card updates its source record.");
+  assert(picked, "Clicking a 3D island object or source opens its corresponding record.");
+  checks.push("The paused 3D archive rotates by dragging and selecting a real 3D object updates its source record.");
 
   await selectDissertation(page);
   await page.screenshot({ path: path.join(output, "references-dissertation.png"), fullPage: true });
@@ -137,7 +139,7 @@ try {
   await page.getByRole("button", { name: "Lista", exact: true }).click();
   assert.equal(await page.getByRole("button", { name: "Lista", exact: true }).getAttribute("aria-pressed"), "true");
   assert.equal(await page.locator("[data-reference-id]").count(), itemCount);
-  await page.getByRole("button", { name: "Arquivo 3D", exact: true }).click();
+  await page.getByRole("button", { name: "Ilha 3D", exact: true }).click();
   await page.locator('[data-reference-scene="ready"]').waitFor();
   checks.push("Group filtering, clearing, empty search and the alternate list retain the same complete source collection.");
 
@@ -155,6 +157,63 @@ try {
   await groups.first().click();
   checks.push("The human constellation exposes researched works and primary links, including Luzia's academic game project.");
 
+  await page.locator('[data-island-object="aviao-quebrado"]').click();
+  assert.equal(await page.locator('[data-reference-detail]').getAttribute('data-reference-detail'), 'objeto-aviao-quebrado');
+  await page.getByRole('button', { name: 'Ver materiais originais', exact: true }).click();
+  assert.equal(await page.getByRole('button', { name: 'Ver como holograma', exact: true }).getAttribute('aria-pressed'), 'true');
+  await page.getByRole('button', { name: 'Ver como holograma', exact: true }).click();
+  await page.locator('[data-island-topic="falha"]').click();
+  assert(await page.locator('[data-reference-id]').count() < itemCount);
+  await page.locator('[data-island-topic="falha"]').click();
+  await page.locator('[data-island-trail="queda"]').click();
+  assert.equal(await page.locator('[data-island-trail-step]').getAttribute('data-island-trail-step'), '0');
+  await page.getByRole('button', { name: 'Próximo vestígio →', exact: true }).click();
+  assert.equal(await page.locator('[data-reference-detail]').getAttribute('data-reference-detail'), 'objeto-piloto');
+  await page.getByRole('button', { name: 'Sair do percurso', exact: true }).click();
+  await page.locator('[data-island-topic="corpo"]').click();
+  await page.locator('[data-reference-gaps]').click();
+  assert(await page.locator('[data-reference-id]').count() > 0);
+  await page.locator('[data-reference-gaps]').click();
+  await page.locator('[data-island-object="zippo"]').click();
+  await page.waitForFunction(() => document.querySelector('[data-reference-scene]')?.dataset.islandLoaded?.split(',').includes('zippo'), null, { timeout: 30000 });
+  checks.push('The real local wreck, pilot and other models load, material view toggles, themes regroup references, trails navigate and gaps remain discoverable.');
+  await page.locator('[data-island-object="pieta"]').click();
+  await page.waitForFunction(() => document.querySelector('[data-reference-scene]')?.dataset.islandLoaded?.split(',').includes('pieta'), null, { timeout: 90000 });
+  assert.equal(await page.locator('[data-reference-detail]').getAttribute('data-reference-detail'), 'objeto-pieta');
+  await page.screenshot({ path: path.join(output, 'island-pieta-source.png'), fullPage: true });
+  checks.push('Pietà materializes only on request from the original pieta1.blend export.');
+  await page.getByRole('button', { name: '＋ Adicionar ao cruzamento', exact: true }).click();
+  await page.locator('[data-island-object="caixa-preta"]').click();
+  await page.getByRole('button', { name: '＋ Adicionar ao cruzamento', exact: true }).click();
+  await page.getByRole('button', { name: 'Ver contexto das fontes', exact: true }).click();
+  await page.locator('[data-reference-experiment="preview"]').waitFor();
+  assert.match(await page.locator('[data-reference-experiment="preview"]').innerText(), /Camadas permanentes/);
+  let experimentPayload;
+  await page.route('**/api/reference-experiment', async route => {
+    const payload = route.request().postDataJSON(); experimentPayload = payload;
+    await route.fulfill({ json: { id: 'browser-experiment', kind: 'generated', text: 'Guardei o impacto. Agora vocês querem que eu guarde a paisagem inteira.', sources: [{ id: 'objeto-pieta', title: 'Pietà', status: 'Objeto cênico', sourcePath: 'public/references/island/models/pieta.glb.gz', segments: [{ title: 'Registro', text: 'Metadados públicos do modelo cênico.' }] }, { id: 'objeto-caixa-preta', title: 'Caixa-preta', status: 'Objeto cênico', sourcePath: 'public/references/island/models/caixa-preta.glb', segments: [{ title: 'Registro', text: 'Metadados públicos do arquivo da peça.' }] }], fixedContext: [{ title: 'Mapas permanentes', sources: Array(7).fill({}) }], limits: 'Provedor simulado no teste browser.' } });
+  });
+  await page.getByRole('button', { name: 'Gerar improvisação privada ↗', exact: true }).click();
+  await page.locator('[data-reference-experiment="generated"]').waitFor();
+  assert.equal(experimentPayload.action, 'generate');
+  await page.getByRole('button', { name: 'Guardar no caderno desta aba', exact: true }).click();
+  await page.getByRole('button', { name: 'Guardado no caderno', exact: true }).waitFor();
+  await page.screenshot({ path: path.join(output, 'island-private-experiment.png'), fullPage: true });
+  await page.unroute('**/api/reference-experiment');
+  await page.route('**/api/reference-experiment', async route => {
+    await new Promise(resolve => setTimeout(resolve, 600));
+    await route.fulfill({ json: { id: 'cancelled-draft', kind: 'generated', text: 'STALE_EXPERIMENT_SENTINEL', sources: [], fixedContext: [] } }).catch(() => {});
+  });
+  const inFlight = page.waitForRequest(request => request.url().endsWith('/api/reference-experiment'));
+  await page.getByRole('button', { name: 'Gerar improvisação privada ↗', exact: true }).click();
+  await inFlight;
+  await page.getByRole('button', { name: 'Retirar Pietà do cruzamento', exact: true }).click();
+  await page.waitForTimeout(750);
+  assert.equal(await page.locator('[data-reference-experiment="generated"]').count(), 0, 'Changing a source cancels the pending result rather than attaching it to another pair.');
+  assert(!await page.locator('body').innerText().then(text => text.includes('STALE_EXPERIMENT_SENTINEL')));
+  await page.unroute('**/api/reference-experiment');
+  checks.push('The private two-source laboratory previews exact context and records a mocked generation in the tab notebook without publishing to the show.');
+
   const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: "reduce" });
   const mobile = await mobileContext.newPage();
   observe(mobile);
@@ -166,7 +225,8 @@ try {
   await noHorizontalOverflow(mobile);
   await selectDissertation(mobile);
   await mobile.locator('[data-reference-scene="ready"]').waitFor();
-  const mobileCanvas = mobile.locator('canvas[aria-label="Arquivo tridimensional das referências"]');
+  await mobile.waitForFunction(() => ['aviao-quebrado', 'piloto', 'caixa-preta', 'cadeira', 'quati', 'borboleta'].every(id => document.querySelector('[data-reference-scene]')?.dataset.islandLoaded?.split(',').includes(id)), null, { timeout: 90000 });
+  const mobileCanvas = mobile.locator('canvas[aria-label="Ilha holográfica das referências"]');
   await mobile.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const stillFrame = await mobileCanvas.screenshot();
   await mobile.waitForTimeout(180);
@@ -198,6 +258,16 @@ try {
   const report = { ok: true, checks, itemCount, peopleCount, sceneState, projectionWrites, modelRequests, errors, auditRoot, output, scope: "Local isolated browser, real local source metadata and WebGL; no live model, show-session mutation or deployment." };
   await fs.writeFile(path.join(output, "report.json"), JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report, null, 2));
+} catch (error) {
+  await fs.writeFile(path.join(output, "failure.txt"), error.stack || String(error));
+  if (browser) for (const [index, context] of browser.contexts().entries()) {
+    const current = context.pages()[0];
+    if (current) {
+      await current.screenshot({ path: path.join(output, `failure-${index}.png`) }).catch(() => {});
+      await fs.writeFile(path.join(output, `failure-${index}.txt`), await current.locator('body').innerText().catch(() => 'unavailable'));
+    }
+  }
+  throw error;
 } finally {
   await browser?.close();
   await fs.writeFile(path.join(output, "server.log"), serverLog);
