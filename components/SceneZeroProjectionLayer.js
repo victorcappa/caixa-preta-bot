@@ -12,6 +12,7 @@ import {
 } from "@/data/scene-zero-gincanas";
 import { SCENE_ZERO_MOREL_BIOS_DURATION_MS, SCENE_ZERO_MOREL_BIOS_LINES, SCENE_ZERO_MOREL_BIOS_LINE_INTERVAL_MS } from "@/data/scene-zero-morel";
 import { SCENE_ZERO_SUITCASE_CUE_DURATION_MS, sceneZeroSuitcaseCueFrameAt, shouldShowSceneZeroSuitcaseCue } from "@/lib/scene-zero/suitcaseGame";
+import { sceneZeroSuitcaseResultSounds } from "@/lib/scene-zero/suitcaseSounds";
 import { AUDIENCE_WARMUP_MINIGAMES, getAudienceWarmupMinigame } from "@/data/audience-warmup-minigames";
 import { SCENE_ZERO_HANGMAN_THEMES } from "@/data/scene-zero-hangman-words";
 import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
@@ -633,15 +634,14 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup, bo
     };
   }, [hangman?.status, hangman?.timer?.startedAt]);
 
-  const hangmanResultSoundRef = useRef(null);
+  const suitcaseResultSoundsRef = useRef(new Set());
   useEffect(() => {
-    if (!["won", "lost"].includes(hangman?.status)) return;
-    const resultKey = `${hangman.sequence}:${hangman.status}`;
-    if (hangmanResultSoundRef.current === resultKey) return;
-    hangmanResultSoundRef.current = resultKey;
-    if (hangman.status === "won") robotSoundEngine.success();
-    else robotSoundEngine.error();
-  }, [hangman?.sequence, hangman?.status]);
+    for (const sound of sceneZeroSuitcaseResultSounds(sceneZero)) {
+      if (suitcaseResultSoundsRef.current.has(sound.key)) continue;
+      suitcaseResultSoundsRef.current.add(sound.key);
+      robotSoundEngine[sound.effect]();
+    }
+  }, [sceneZero]);
 
   const hangmanErrorImpactRef = useRef({ attemptKey: null, errorCount: 0 });
   useEffect(() => {
