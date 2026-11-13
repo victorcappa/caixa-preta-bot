@@ -8,6 +8,7 @@ import { cabinetTools, cabinetPage as getCabinetPage, CABINET_PAGE_SIZE, cabinet
 import ReferenceExperiment from "./ReferenceExperiment";
 
 const ArchiveScene = dynamic(() => import("./ReferenceArchiveScene"), { ssr: false });
+const BooksScene = dynamic(() => import("./ReferenceBooksScene"), { ssr: false });
 const fold = value => `${value || ""}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 const code = (item, index) => /^(CP-|E\d)/.test(item.id) ? item.id : String(index + 1).padStart(3, "0");
 
@@ -32,8 +33,10 @@ export default function ReferenceArchive({ library }) {
   const activeInspection = inspection?.scope === selectionScope ? inspection : null;
   const selected = (activeInspection?.toolId ? cabinetToolReference(activeInspection.toolId) : items.find(item => item.id === activeInspection?.id)) || filtered.find(item => item.id === selectedId) || filtered[0];
   const selectedIndex = selected ? filtered.indexOf(selected) : -1;
+  const bookItems = useMemo(() => selected && !selected.toolId && !filtered.includes(selected) ? [...filtered, selected] : filtered, [filtered, selected]);
   const relations = useMemo(() => selected && !selected.toolId ? referenceRelations(selected, items) : [], [selected, items]);
   function clearInspection() { setInspection(null); setFocusTarget(null); }
+  function switchMode(next) { if (selected?.toolId) clearInspection(); setMode(next); }
   function revealDetail() { requestAnimationFrame(() => { const detail = document.querySelector('[data-reference-detail]'); if (detail) { detail.scrollTop = 0; detail.scrollIntoView({ block: "start", behavior: "auto" }); } }); }
   function chooseItem(id, revealPage = true) {
     const item = items.find(item => item.id === id); if (!item) return;
@@ -89,7 +92,7 @@ export default function ReferenceArchive({ library }) {
 
     <div className={styles.toolbar}>
       <label className={styles.search}><span aria-hidden="true">⌕</span><input aria-label="Buscar referências" placeholder="Buscar uma ideia, pessoa ou material" value={query} onChange={event => { clearInspection(); setQuery(event.target.value); setCabinetPage(0); }} />{query && <button onClick={() => { clearInspection(); setQuery(""); setCabinetPage(0); }} aria-label="Limpar busca">×</button>}</label>
-      <div className={styles.modeSwitch} aria-label="Visualização"><button aria-pressed={mode === "3d"} onClick={() => setMode("3d")}>Ilha 3D</button><button aria-pressed={mode === "list"} onClick={() => setMode("list")}>Lista</button></div>
+      <div className={styles.modeSwitch} aria-label="Visualização"><button aria-pressed={mode === "3d"} onClick={() => switchMode("3d")}>Ilha 3D</button><button aria-pressed={mode === "books"} onClick={() => switchMode("books")}>Livros 3D</button><button aria-pressed={mode === "list"} onClick={() => switchMode("list")}>Lista</button></div>
     </div>
     <div className={styles.filters} aria-label="Filtrar acervo">
       <button data-reference-group="all" aria-pressed={group === "all"} onClick={() => { clearInspection(); setGroup("all"); setCabinetPage(0); }}>Tudo <span>{items.length}</span></button>
@@ -100,13 +103,17 @@ export default function ReferenceArchive({ library }) {
     <section className={styles.trails} aria-label="Percursos da ilha"><span>PERCURSOS CURATORIAIS</span><div>{islandTrails.map(route => <button key={route.id} data-island-trail={route.id} aria-pressed={trailId === route.id} onClick={() => walk(route.id)}>{route.label} <b>↗</b></button>)}</div>{trail && <article data-island-trail-step={trailStep}><p><span>0{trailStep + 1} / 0{trail.steps.length}</span>{trail.steps[trailStep].text}</p><div><button onClick={() => setTrailId(null)}>Sair do percurso</button><button disabled={trailStep === 0} onClick={() => walk(trail.id, trailStep - 1)}>← Anterior</button><button disabled={trailStep === trail.steps.length - 1} onClick={() => walk(trail.id, trailStep + 1)}>Próximo vestígio →</button></div></article>}</section>
     {mode === "3d" && <div className={styles.objectBar} aria-label="Objetos cênicos da ilha"><span>MATERIALIZAR</span>{island.models.map(model => <button key={model.id} data-island-object={model.id} aria-pressed={objectId === model.id} title={`${model.label} · ${model.initial ? "presente na ilha" : "carrega sob demanda"}`} onClick={() => chooseObject(model.id)}>{model.label}{!model.initial && <small>＋</small>}</button>)}</div>}
 
-    {selected ? <div className={`${styles.exhibition} ${mode === "list" ? styles.listMode : ""}`}>
+    {selected ? <div className={`${styles.exhibition} ${mode === "books" ? styles.booksMode : mode === "list" ? styles.listMode : ""}`}>
       <section className={styles.viewport} aria-label="Explorar acervo">
-        <div className={styles.viewportHeader}><span>FIG. 01 / {mode === "3d" ? "ILHA / CAMPO DE MEMÓRIA" : "ÍNDICE DO ACERVO"}</span><span>{String(filtered.length).padStart(3, "0")} FRAGMENTOS</span></div>
+        <div className={styles.viewportHeader}><span>FIG. 01 / {mode === "3d" ? "ILHA / CAMPO DE MEMÓRIA" : mode === "books" ? "LIVROS / CAMPO DE MEMÓRIA" : "ÍNDICE DO ACERVO"}</span><span>{String(filtered.length).padStart(3, "0")} FRAGMENTOS</span></div>
         {mode === "3d" ? <>
           <ArchiveScene items={items} manifest={island} visibleIds={visibleIds} topic={topic} selectedId={selected.id} onSelect={id => chooseItem(id, false)} onObjectSelect={chooseObject} focusTarget={focusTarget?.scope === selectionScope ? focusTarget : null} focusToken={focusToken} onTool={inspectTool} scope={group} cabinetPage={cabinetPage} resetToken={resetToken} originalMaterials={originalMaterials} onMaterialChange={() => setOriginalMaterials(value => !value)} paused={paused} />
           <div className={styles.cabinetPagination}><span>{cabinet.total} fichas · coisas em grupos de {CABINET_PAGE_SIZE}</span><div><button aria-label="Coisas anteriores" disabled={cabinet.page === 0} onClick={() => turnPage(cabinet.page - 1)}>←</button><span>{cabinet.page + 1} / {cabinet.count}</span><button aria-label="Próximas coisas" disabled={cabinet.page >= cabinet.count - 1} onClick={() => turnPage(cabinet.page + 1)}>→</button></div></div><div className={styles.sceneLegend}><span><i /> LIGAÇÃO DOCUMENTADA</span><span><i /> PONTE CURATORIAL</span></div>
           <div className={styles.sceneControls}><span>Arraste para orbitar · roda para aproximar · clique para explorar</span><button aria-pressed={paused} onClick={() => setPaused(value => !value)}>{paused ? "Retomar movimento" : "Pausar movimento"}</button></div>
+        </> : mode === "books" ? <>
+          <BooksScene items={bookItems} selectedId={selected.id} onSelect={chooseItem} paused={paused} />
+          <div className={styles.sceneLegend}><span><i /> FICHA DO ACERVO</span><span><i /> REFERÊNCIA CITADA</span></div>
+          <div className={styles.sceneControls}><span>Arraste para girar · clique para abrir</span><button aria-pressed={paused} onClick={() => setPaused(value => !value)}>{paused ? "Retomar movimento" : "Pausar movimento"}</button></div>
         </> : <div className={styles.indexList}>
           {filtered.map((item, index) => <button key={item.id} data-reference-id={item.id} aria-pressed={selected.id === item.id} onClick={() => chooseItem(item.id)}><span>{code(item, index)}</span><div><strong>{item.title}</strong><small>{item.author || item.kind} {item.year ? ` / ${item.year}` : ""}</small></div><em>{item.statusLabel}</em><b aria-hidden="true">↗</b></button>)}
         </div>}
@@ -136,7 +143,7 @@ export default function ReferenceArchive({ library }) {
     </div> : <div className={styles.empty}><span>∅</span><h2>Nenhum fragmento encontrado.</h2><p>Tente outro termo ou abra o acervo inteiro.</p><button onClick={() => { clearInspection(); setQuery(""); setGroup("all"); setTopic(null); setGaps(false); }}>Ver todas as referências</button></div>}
 
     <section className={styles.cabinetTools} aria-label="As coisas e seus outros usos"><div><span>CENA 3 / AS COISAS</span><p>Ferramentas com a função ligeiramente fora do lugar.</p></div><div className={styles.cabinetToolButtons}>{cabinetTools.map(tool => <button key={tool.id} data-cabinet-tool={tool.id} aria-label={`${tool.label}: ${tool.strangeUse}`} onClick={() => activateTool(tool.id)}><strong>{tool.label}</strong><small>{tool.strangeUse}</small></button>)}</div>{toolNote && <p className={styles.toolNote} role="status"><strong>{toolNote.label}.</strong> Servia para {toolNote.ordinaryUse.charAt(0).toLowerCase() + toolNote.ordinaryUse.slice(1)} Agora: {toolNote.strangeUse}</p>}</section>
-    {mode === "3d" && filtered.length > 0 && <section className={styles.shelf} aria-label="Materiais do arquivo"><div className={styles.shelfHeading}><span>ESCOLHA UM FRAGMENTO</span><span>← DESLIZE PARA EXPLORAR →</span></div><div className={styles.shelfItems}>{filtered.map((item, index) => <button data-reference-id={item.id} key={item.id} aria-pressed={selected.id === item.id} onClick={() => chooseItem(item.id)}><span>{code(item, index)}<i>{item.status === "cited" ? "○" : "●"}</i></span><strong>{item.title}</strong><small>{item.author || item.kind}</small></button>)}</div></section>}
+    {mode !== "list" && filtered.length > 0 && <section className={styles.shelf} aria-label="Materiais do arquivo"><div className={styles.shelfHeading}><span>ESCOLHA UM FRAGMENTO</span><span>← DESLIZE PARA EXPLORAR →</span></div><div className={styles.shelfItems}>{filtered.map((item, index) => <button data-reference-id={item.id} key={item.id} aria-pressed={selected.id === item.id} onClick={() => chooseItem(item.id)}><span>{code(item, index)}<i>{item.status === "cited" ? "○" : "●"}</i></span><strong>{item.title}</strong><small>{item.author || item.kind}</small></button>)}</div></section>}
     <ReferenceExperiment items={items} ids={pair} onRemove={cross} />
     <footer className={styles.footer}><p><span>●</span> Transparência de memória</p><p>Texto disponível ≠ obra inteira consultada. As fichas distinguem texto integral, recortes e citações. O repertório inspira a cena; as fontes ficam neste arquivo.</p></footer>
   </main>;

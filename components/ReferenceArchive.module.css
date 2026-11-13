@@ -23,6 +23,9 @@
 .modeSwitch { display:flex; gap:3px; flex-shrink:0; background:#131a13; padding:3px; border:1px solid var(--line); }
 .modeSwitch button { font:11px "Courier New",monospace; color:var(--muted); border:0; background:none; padding:9px 14px; }
 .modeSwitch button[aria-pressed="true"] { background:var(--paper); color:#10170d; }
+.booksMode .viewport { background:radial-gradient(ellipse at 50% 58%,#1b2d1c66,transparent 65%),#050907; min-height:590px; }
+.booksMode .scene { min-height:490px; }
+@media (max-width:720px) { .booksMode .viewport { min-height:500px; } .booksMode .scene { min-height:370px; } }
 .filters { display:flex; gap:8px; padding:17px 0 22px; flex-wrap:wrap; }
 .filters button { display:flex; align-items:center; gap:10px; padding:7px 11px; background:none; color:#a9b5a1; border:1px solid transparent; font-size:11px; }
 .filters button>span { font:10px "Courier New",monospace; opacity:.65; }

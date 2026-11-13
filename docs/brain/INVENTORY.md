@@ -236,6 +236,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/PublicOperatorLayout.js`
 - `components/PublicOperatorPanel.js`
 - `components/PublicSceneStage.js`
+- `components/ReferenceBooksScene.js`
 - `components/RobotSoundControls.js`
 - `components/SceneAudioEffectsControls.js`
 - `components/SceneNotes.js`
