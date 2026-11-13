@@ -13,7 +13,6 @@ import { isSceneZeroFinalSuitcaseInstructionReady, nextSceneZeroSuitcase } from 
 import { SCENE_ZERO_HANGMAN_WORDS, isSceneZeroHangmanWordEligible } from "@/data/scene-zero-hangman-words";
 import { PLAY_UNLOCK_CONFIG } from "@/data/scene-zero-unlock";
 import { audienceWarmupResponseOptions } from "@/data/audience-warmup-reactions";
-import { AUDIENCE_WARMUP_PROMPTS } from "@/data/audience-warmup-prompts";
 import styles from "./SceneZeroController.module.css";
 import { useControllerSettings } from "@/lib/useControllerSettings";
 import { createSettingsSaveQueue } from "@/lib/settingsSaveQueue";
@@ -520,10 +519,10 @@ export default function SceneZeroController() {
       }
       if (event.key === "ArrowUp" || event.key === "ArrowDown") {
         const warmup = snapshot.audienceWarmup;
-        const prompt = AUDIENCE_WARMUP_PROMPTS.find((candidate) => candidate.id === warmup?.sequence?.promptId);
-        if (warmup?.phase !== "questions" || !prompt) return;
+        const sequence = warmup?.sequence;
+        if (warmup?.phase !== "questions" || !sequence?.promptId) return;
         const kind = event.key === "ArrowUp" ? "many" : "few";
-        const option = audienceWarmupResponseOptions(prompt.action).find((response) => response.kind === kind);
+        const option = audienceWarmupResponseOptions(sequence.action).find((response) => response.kind === kind);
         if (!option) return;
         event.preventDefault();
         warmupAction("record-response", option);
@@ -918,9 +917,9 @@ export default function SceneZeroController() {
   const sceneZero = snapshot.sceneZero || {};
   const audienceWarmup = snapshot.audienceWarmup || {};
   const manualMode = Boolean(audienceWarmup.manualMode);
-  const activeWarmupPrompt = AUDIENCE_WARMUP_PROMPTS.find((prompt) => prompt.id === audienceWarmup.sequence?.promptId) || null;
-  const responseOptions = audienceWarmupResponseOptions(activeWarmupPrompt?.action);
-  const reactionControlsActive = audienceWarmup.phase === "questions" && Boolean(activeWarmupPrompt);
+  const activeWarmupSequence = audienceWarmup.sequence;
+  const responseOptions = audienceWarmupResponseOptions(activeWarmupSequence?.action);
+  const reactionControlsActive = audienceWarmup.phase === "questions" && Boolean(activeWarmupSequence?.promptId);
   const unlockStatusLabel = sceneZero.unlock?.status === "BOOT_FAILED"
     ? "AGUARDANDO INÍCIO MANUAL"
     : (sceneZero.unlock?.status || "STANDBY").replaceAll("_", " ");
@@ -1145,8 +1144,8 @@ export default function SceneZeroController() {
           <small>RESPOSTA DESTA PERGUNTA · ↑ MUITOS · ↓ POUCOS</small>
           {[...responseOptions].reverse().map((option) => (
             <button
-              aria-pressed={audienceWarmup.currentResponse?.promptId === activeWarmupPrompt?.id && audienceWarmup.currentResponse?.kind === option.kind}
-              className={audienceWarmup.currentResponse?.promptId === activeWarmupPrompt?.id && audienceWarmup.currentResponse?.kind === option.kind ? styles.selectedReaction : ""}
+              aria-pressed={audienceWarmup.currentResponse?.promptId === activeWarmupSequence?.promptId && audienceWarmup.currentResponse?.kind === option.kind}
+              className={audienceWarmup.currentResponse?.promptId === activeWarmupSequence?.promptId && audienceWarmup.currentResponse?.kind === option.kind ? styles.selectedReaction : ""}
               data-kind={option.kind}
               disabled={Boolean(pending) || !reactionControlsActive}
               key={option.kind}
