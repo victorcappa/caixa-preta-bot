@@ -6,6 +6,8 @@ No controle, escreva e pressione Enter ou **ENVIAR**. Shift+Enter quebra a linha
 
 A lateral privada tem os mesmos onze parâmetros de personalidade do **Operator** e da seção **Personalidade e contexto** do **Tarô**: sarcasmo, rebeldia, curiosidade, verbosidade, humor, provocação, densidade filosófica, associação livre, crítica social, linguagem poética e rigor analítico. Alterar em qualquer uma dessas telas espelha os valores nas demais e orienta as próximas gerações, incluindo alternativas. Não reinicia uma fala em andamento. O modelo, a fonte e o ritmo de digitação também usam o estado global já ajustado no Operator. Configurações próprias de cartas, câmera e limites de leitura continuam específicas do Tarô.
 
+A escrita do treino ao vivo conserva a velocidade global das letras e faz uma pausa leve de **180 ms na pontuação** e **600 ms entre parágrafos**, tanto no controle como na projeção. Pausas maiores já escolhidas no Operator são respeitadas. A pausa ocorre antes do próximo caractere visível; pontos, aspas e linhas em branco recebem uma única pausa de parágrafo, mesmo quando chegam em partes pelo streaming. O histórico concluído reaparece imediatamente ao recarregar.
+
 As três avaliações salvam imediatamente em `data/training-examples.json`, sem exigir correção escrita. Requalificar uma resposta atualiza o mesmo exemplo. Esses exemplos também aparecem no Treino existente. PERFEITO fornece uma direção aprovada; QUASE e RUIM orientam ajustes sem recomendar como preferida uma resposta negativa que não recebeu correção. Isso calibra o contexto das próximas gerações; não altera os pesos do modelo.
 
 ## Repertório
@@ -34,6 +36,7 @@ Uma falha mantém o texto no campo de envio. Repetir o envio reutiliza o identif
 
 ## Verificação
 
+- `node --no-warnings scripts/live-training-typing-test.js` e `node --no-warnings scripts/live-training-typing-browser-test.js`: pausas leves, parágrafo único com streaming dividido, velocidade preservada e histórico sem repetição da animação; navegador e provedor isolados.
 - `npm run test:live-training`: fixtures temporárias; feedback/upsert, contexto, alternativas, separação pública/privada, cancelamento e recuperação.
 - `npm run test:live-training:browser`: build em cópia isolada, dados de treino descartáveis e porta 3325; provedor interceptado sem chamadas reais. Verifica navegação, digitação, dois clientes, avaliações, alternativas públicas, reload, reconciliação sem SSE, falha/reenvio, STOP ALL e trecho da página 32 no pedido que chegaria ao provedor. Recusa porta ocupada e encerra somente o servidor criado pelo teste.
 - `npm run memory:live`: cinco gerações reais pelo mesmo adaptador do treino, numa sessão descartável. Envia bases e trechos do acervo ao provedor configurado e usa `OPENAI_API_KEY` de `.env.local`. Rodar com autorização para esse envio; grava perguntas/respostas e lacunas em JSON temporário. É uma amostra com revisão humana, não uma garantia universal de memória.

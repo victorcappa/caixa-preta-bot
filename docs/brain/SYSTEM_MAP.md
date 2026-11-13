@@ -17,6 +17,7 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 - Revealed Operator / private conversation / personality -> `OPERATOR_PUBLICO.md`, `app/api/operator-public/route.js`, `lib/operatorPublic.js`, and `lib/showState.js`.
 - Right-menu launcher -> `components/OperatorPublicLauncher.js` in `components/SceneZeroController.js`; private controls/monitor -> `components/PublicOperatorControls.js` and `components/OperatorLivePreview.js`.
 - LIVE reply pacing -> `components/OperatorTypedReply.js`, using private `robotSound` typing speed/punctuation pause; completed history is restored immediately.
+- Live training punctuation/paragraph holds -> `lib/liveTrainingTyping.js`, passed to `components/OperatorTypedReply.js`; letters retain shared speed, streamed blank lines receive one hold.
 - Training conversation/feedback -> `components/TrainingConsole.js`, `app/api/training/`, and `lib/training.js`; visible composer sends by Enter or button and preserves the draft after errors.
 - Live training -> `components/LiveTraining.js`, `/treino-ao-vivo/controle`, `/treino-ao-vivo`, `/api/live-training`; state -> `lib/liveTraining.js`; repertoire -> `lib/liveTrainingContext.js`; shared 11-parameter panel -> `PublicOperatorControls.js`, `lib/operatorPublic.js`, `/api/operator-public`. Operation: `docs/TREINO_AO_VIVO.md`.
 - Editable public conversation/sliders reuse `components/PublicOperatorControls.js` with `publicSurface`; private operational commands remain outside the projection.

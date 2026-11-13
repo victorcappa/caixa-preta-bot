@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { subscribePublicRealtime } from "@/lib/publicRealtime";
+import { liveTrainingTypingDelayMs } from "@/lib/liveTrainingTyping";
 import OperatorTypedReply from "./OperatorTypedReply";
 import ProjectionWindowClient from "./ProjectionWindowClient";
 import PublicOperatorControls from "./PublicOperatorControls";
@@ -102,7 +103,7 @@ export default function LiveTraining({ controller = false }) {
       {!channel.messages.length ? <p className={styles.empty} aria-hidden="true"><span>_</span></p> : null}
       {channel.messages.map(message => <article key={message.id} data-message-id={message.id} data-role={message.role} className={styles.message}>
         <small>{message.role === "user" ? "VOCÊ" : message.kind === "alternative" ? "CAIXA · ALTERNATIVA" : "CAIXA PRETA"}</small>
-        {message.role === "assistant" ? <OperatorTypedReply message={message} settings={settings}
+        {message.role === "assistant" ? <OperatorTypedReply message={message} settings={settings} typingDelay={liveTrainingTypingDelayMs}
           animate={!baseline.current?.has(message.id)} onProgress={scroll} /> : <p>{message.content}</p>}
         {message.status === "failed" || message.status === "cancelled" ? <span className={styles.interrupted}>Resposta interrompida.</span> : null}
         {controller && message.role === "assistant" ? <div className={styles.feedback} aria-label="Avaliar resposta">
