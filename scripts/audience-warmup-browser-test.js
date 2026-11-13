@@ -388,8 +388,8 @@ try {
   assert.equal(state.audienceWarmup.minigame.timer.remainingSeconds, paused + 5);
   if (await sceneWarmupToggle.getAttribute("aria-expanded") !== "true") await sceneWarmupToggle.click();
   await sceneOperator.waitForFunction(() => document.querySelector('[aria-label="Minigame em dupla"] p')?.textContent?.startsWith("ESTADO: PAUSED ·"));
-  await sceneOperator.keyboard.press("ArrowRight");
-  await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "running", "PISCADA retomada pela seta direita");
+  await sceneOperator.keyboard.press("Shift+ArrowRight");
+  await waitFor(context.request, (candidate) => candidate.audienceWarmup.minigame.status === "running", "PISCADA retomada por Shift + seta direita");
   await post(context.request, "minigame-end");
   state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.phase === "complete", "fim do aquecimento depois da PISCADA", 20000);
   assert(state.audienceWarmup.history.some((entry) => entry.text === AUDIENCE_WARMUP_MINIGAME_RESULT_COMMENTS.piscada));
