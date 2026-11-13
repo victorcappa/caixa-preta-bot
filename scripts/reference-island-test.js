@@ -30,6 +30,8 @@ assert.equal(people.length, 35);
 for (const person of people) {
   assert(person.biography && person.biography.length > 180 && person.biography.length < 700, `${person.title}: brief authored biography`);
   assert(person.objectType && person.thing.type === person.objectType);
+  assert(person.objectReason?.length > 80 && person.thing.playLink === person.objectReason, `${person.title}: the object has an individual dramaturgical reason`);
+  assert.notEqual(person.objectType, 'mirror', 'The generic mirror must not stand in for people without a specific association.');
   assert(person.sources.length > 0, `${person.title}: factual provenance stays accessible`);
 }
 for (const type of new Set([...cabinetTools.map(tool => tool.type), ...people.map(person => person.objectType)])) {
@@ -43,6 +45,13 @@ for (const type of new Set([...cabinetTools.map(tool => tool.type), ...people.ma
 const page = cabinetPage(library.items, people.map(person => person.id), people[0].id, 1);
 assert(page.items.length <= 13 && page.count === 3, '35 people are explored as readable groups of tangible things');
 assert.equal(referenceThing(people[0]).basis.includes('não um pertence real'), true);
+const morel = library.items.find(item => item.id === 'CP-05');
+assert.equal(morel.thing.type, 'triptychMirror');
+assert(morel.sources.some(source => source.url.includes('ieturolenses.org')));
+const mirror = createReferenceThing(THREE, morel.thing.type);
+let panels = 0; mirror.traverse(node => { if (node.userData.mirrorPanel) panels++; });
+assert.equal(panels, 3, 'The Morel mirror has three physical panels.');
+mirror.traverse(node => { node.geometry?.dispose(); [].concat(node.material || []).forEach(material => material.dispose()); });
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 for (const model of library.island.models) {
   const file = path.resolve(root, model.storagePath || `public${model.url}`);

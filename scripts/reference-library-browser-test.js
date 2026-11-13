@@ -216,13 +216,18 @@ try {
   checks.push('The original 3D books remain available beside the island and list, retaining search, Pessoas and selected material while releasing each prior canvas.');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-  const searchedPeople = await archiveScope(page);
-  await page.locator('[data-island-object="piloto"]').click();
-  assert.equal(await page.locator('[data-reference-detail]').getAttribute('data-reference-detail'), 'objeto-piloto');
-  assert.deepEqual(await archiveScope(page), searchedPeople, 'Inspecting a model outside Pessoas preserves the category and search.');
+  assert.equal(await page.locator('[data-reference-group="pessoas"]').getAttribute('aria-pressed'), 'true');
+  assert.equal(await page.locator('[data-island-object]').count(), 0, 'Pessoas offers no unrelated scenic objects.');
+  assert.equal(await page.locator('[data-cabinet-tool]').count(), 0, 'Pessoas offers no global cabinet tools.');
+  assert.equal(await page.locator('[data-reference-scene]').getAttribute('data-island-tools'), '');
+  assert.equal(await page.locator('[data-reference-scene]').getAttribute('data-island-models'), '');
+  assert((await page.locator('[data-reference-scene]').getAttribute('data-cabinet-visible')).split(',').every(id => id.startsWith('pessoa-')));
   await groups.first().click();
+  assert.equal(await page.locator('[data-cabinet-tool]').count(), 8);
   await page.locator('[data-reference-group="pessoas"]').click();
-  assert.equal(await page.locator('[data-reference-detail]').getAttribute('data-reference-detail'), 'pessoa-luzia-huttenmoser', 'Changing a category ends the previous inspection instead of reviving it when returning.');
+  await page.getByRole('button', { name: 'Voltar à vista da ilha', exact: true }).click();
+  assert.equal(await page.locator('[data-reference-scene]').getAttribute('data-island-models'), '', 'Returning home must not revive hidden model labels.');
+  assert.equal(await personDetail.getAttribute('data-reference-detail'), 'pessoa-luzia-huttenmoser');
 
   await page.getByLabel("Buscar referências", { exact: true }).fill("");
   await page.getByRole('button', { name: 'Próximas coisas', exact: true }).click();
@@ -241,6 +246,7 @@ try {
   await page.getByLabel('Buscar referências', { exact: true }).fill('Luzia');
   await page.getByRole('button', { name: 'Voltar à vista da ilha', exact: true }).click();
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  await groups.first().click();
   const toolScope = await archiveScope(page);
   await pickIslandThing(page, title => title === 'Chave');
   assert.equal(await page.locator('[data-reference-detail]').getAttribute('data-reference-detail'), 'ferramenta-chave');
@@ -250,7 +256,7 @@ try {
   assert.equal(await groups.first().getAttribute('aria-pressed'), 'true', 'Using the inspected key explicitly resets the archive.');
   assert.equal(await page.getByLabel('Buscar referências', { exact: true }).inputValue(), '');
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  checks.push('Actual 3D person and tool picks approach and reveal content while preserving Pessoas, search, page and visible things; tool actions require an explicit use.');
+  checks.push('Pessoas contains only person objects; scenic layers and global tools return in Tudo. Person picks retain the filter and page, and tools require explicit use.');
   await groups.first().click();
   checks.push("The human constellation exposes researched works and primary links, including Luzia's academic game project.");
 
@@ -324,6 +330,7 @@ try {
   const bioBox = await page.locator('[data-reference-biography]').boundingBox();
   assert(bioBox && bioBox.y >= 0 && bioBox.y + bioBox.height <= page.viewportSize().height, 'Opening or paging a biography reveals its beginning rather than retaining an old scroll position.');
   await page.screenshot({ path: path.join(output, 'as-coisas-biography.png'), fullPage: true });
+  await groups.first().click();
   await page.locator('[data-cabinet-tool="guarda-chuva"]').click();
   assert.equal(await page.locator('[data-reference-gaps]').getAttribute('aria-pressed'), 'true');
   await page.locator('[data-cabinet-tool="chave"]').click();
@@ -333,6 +340,9 @@ try {
   const beforeMirror = await page.locator('[data-reference-detail]').getAttribute('data-reference-detail');
   await page.locator('[data-cabinet-tool="espelho"]').click();
   assert.notEqual(await page.locator('[data-reference-detail]').getAttribute('data-reference-detail'), beforeMirror);
+  assert.equal(await page.locator('[data-reference-detail]').getAttribute('data-reference-detail'), 'CP-05');
+  assert.match(await page.locator('[data-reference-detail]').innerText(), /Espelho de três faces/);
+  assert.equal(await page.locator('[data-reference-detail] a[href*="ieturolenses.org"]').count(), 1);
   await page.locator('[data-cabinet-tool="lanterna"]').click();
   assert.equal(await page.getByRole('button', { name: 'Ver como holograma', exact: true }).getAttribute('aria-pressed'), 'true');
   await page.locator('[data-cabinet-tool="lanterna"]').click();
@@ -369,10 +379,13 @@ try {
   await mobile.screenshot({ path: path.join(output, "references-mobile-reduced-motion.png"), fullPage: true });
   await mobile.locator('[data-reference-group="pessoas"]').tap();
   await mobile.getByLabel('Buscar referências', { exact: true }).fill('Luzia');
-  await mobile.locator('[data-island-object="piloto"]').tap();
-  assert.equal(await mobile.locator('[data-reference-detail]').getAttribute('data-reference-detail'), 'objeto-piloto');
+  await mobile.locator('[data-reference-id="pessoa-luzia-huttenmoser"]').tap();
+  assert.equal(await mobile.locator('[data-reference-detail]').getAttribute('data-reference-detail'), 'pessoa-luzia-huttenmoser');
   assert.equal(await mobile.locator('[data-reference-group="pessoas"]').getAttribute('aria-pressed'), 'true');
   assert.equal(await mobile.getByLabel('Buscar referências', { exact: true }).inputValue(), 'Luzia');
+  assert.equal(await mobile.locator('[data-island-object], [data-cabinet-tool]').count(), 0);
+  await mobile.screenshot({ path: path.join(output, 'references-people-only-mobile.png'), fullPage: true });
+
   checks.push("The 390px layout keeps search, keyboard selection and source details usable with reduced motion.");
 
   const fallbackContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });

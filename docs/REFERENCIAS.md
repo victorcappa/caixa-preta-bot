@@ -47,7 +47,7 @@ A Cena 3 do texto local (páginas 13–16) fornece a referência: malas abertas,
 
 Os marcadores luminosos das fichas foram substituídos por objetos com volume, silhueta, cor e nome: livro, câmera, espelho, telefone, mala, chave inglesa, tesoura, funil, lupa, martelo, controle, fonógrafo, guarda-chuva, chave, lanterna e fita cassete. São geometrias novas em `lib/createReferenceThing.js`; os 14 modelos locais permanecem preservados. Estrelas e linhas são apenas ambientação, sem representar fichas selecionáveis.
 
-O gabinete tem oito ferramentas grandes, com ações distintas, também disponíveis em botões acessíveis:
+Fora do recorte **Pessoas**, o gabinete tem oito ferramentas grandes, com ações distintas, também disponíveis em botões acessíveis:
 
 | Coisa | Uso deslocado na interface |
 | --- | --- |
@@ -55,16 +55,22 @@ O gabinete tem oito ferramentas grandes, com ações distintas, também disponí
 | Guarda-chuva | Reúne as lacunas da pesquisa. |
 | Tesoura | Recorta o acervo pela afinidade da ficha aberta. |
 | Martelo | Escolhe dois materiais com poucas afinidades em comum para o laboratório; não gera uma fala automaticamente. |
-| Espelho | Abre uma referência relacionada no lugar da atual. |
+| Espelho de três faces | Abre a ficha de Morel e sua ligação documentada com o espelho. |
 | Chave | Reabre todo o acervo e retorna à vista da ilha. |
 | Mala | Despeja a ilha na visualização em lista. |
 | Lanterna | Alterna holograma e materiais originais dos modelos. |
 
 `lib/referenceThings.js` define esses usos e a representação curatorial das fichas. A vista geral aproxima a ficha aberta e até cinco relações; grupos e filtros apresentam até doze coisas por página, com a ficha selecionada mantida quando necessário. Os controles **Coisas anteriores / Próximas coisas** percorrem o conjunto. Tocar em qualquer coisa da ilha apenas aproxima a câmera e abre sua ficha, preservando categoria, busca, afinidade, lacunas e página; os objetos já visíveis permanecem em suas posições. Isso também vale para modelos fora do filtro e para ferramentas. A ação de uma ferramenta é executada por **Usar esta ferramenta**, na ficha, ou pelos botões acessíveis do gabinete. Passar sobre um objeto revela seu nome e uso, ou a biografia quando se trata de uma pessoa. A lista e a busca continuam cobrindo o acervo completo.
 
+**Pessoas** exibe somente as representações das pessoas da página. Oculta ferramentas gerais, modelos cênicos, seus rótulos, escombros e sóis, assim como os respectivos atalhos. Essas camadas retornam ao sair do recorte. A seleção por raio verifica também a visibilidade dos ancestrais de cada malha, para que um objeto oculto não intercepte o toque. A base da ilha permanece como ambiente.
+
+O espelho tem três painéis e está associado a `CP-05`, sobre Morel. A ligação foi conferida na [entrevista de Bioy Casares a Miguel Losada, publicada pela Revista Turia](https://www.ieturolenses.org/revista_turia/index.php/actualidad_turia/adolfo-bioy-casares-la-invencion-de-lo-fatastico-cotidiano). A fonte fica acessível na ficha; o objeto 3D é uma releitura curatorial.
+
 `data/reference-biographies.json` contém **35 biografias breves e autorais na voz da Caixa**, baseadas nas fichas públicas já verificadas. Descrevem papéis, práticas e trabalhos, com comentários da personagem. As fontes e limitações ficam junto de cada ficha; créditos parciais de Diego Di Mira e Ricardo Kenji não foram completados por suposição, e o crédito incerto de Felipe Cruz em outra obra não foi promovido a fato biográfico. Objetos associados a pessoas são escolhas curatoriais, não pertences reais ou retratos psicológicos.
 
 As biografias só são apresentadas no acervo. Não entram nos motivos de `lib/collectiveMemory.js`, no prompt permanente nem espontaneamente na interação pública. A escrita dessas fichas não usa uma chamada automática ao modelo.
+
+Cada uma das 35 pessoas tem também um `objectReason`: uma razão individual para o objeto, aproximando práticas e obras verificadas dos motivos da dramaturgia. Por exemplo, câmera e escaneamento para Victor, fonógrafo e registro sonoro para Matheus, controle e obediência para Luzia, chave inglesa e trabalho técnico para Marcus. Esses vínculos visuais também ficam no acervo. Os espelhos genéricos antes atribuídos a pessoas foram retirados; a forma de três faces está ligada a Morel.
 
 ## Relações, percursos, lacunas e cruzamentos
 
