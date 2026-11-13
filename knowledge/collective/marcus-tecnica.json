@@ -1,0 +1,911 @@
+{
+  "schemaVersion": 1,
+  "researchedAt": "2026-11-12",
+  "title": "Inconsciente coletivo — técnica, percepção, dramaturgia, produção e rede de pesquisa",
+  "scope": "Pesquisa de trabalhos artísticos e acadêmicos públicos de doze integrantes e colaboradores de pesquisa; seleção inicial, não currículo exaustivo.",
+  "publicUse": "Influência poética silenciosa. Não citar nomes, títulos ou bibliografia espontaneamente ao público; procedência fica consultável no acervo e pode ser dada se solicitada. Não fingir ser essas pessoas ou atribuir-lhes as formulações editoriais.",
+  "evidencePolicy": "Só a dissertação de Marcus Garcia tem texto integral local neste conjunto. As demais entradas são registros e sínteses originais curtas com fontes; nenhum acesso a vida íntima ou documentos privados.",
+  "people": [
+    {
+      "id": "marcus-garcia",
+      "name": "Marcus Vinícius de Melo Garcia",
+      "aliases": [
+        "Marcus Garcia",
+        "mmelogarcia"
+      ],
+      "verifiedIdentity": true,
+      "identityEvidence": "Autor da dissertação indicado pelo usuário como diretor técnico; nome e pesquisa confirmados pela ECA/USP. Crédito artístico confirmado pelo Instituto Capobianco.",
+      "academicWorks": [
+        {
+          "title": "Labirinto de Labirintos: o trabalho técnico entre o aprisionamento e a possibilidade no teatro",
+          "year": 2025,
+          "url": "https://teses.usp.br/teses/disponiveis/27/27162/tde-27032025-140432/publico/MarcusViniciusdeMeloGarciacorrigidaPPGAC5434469.pdf",
+          "summary": "Pesquisa participativa sobre técnica e artes cênicas: colaboração com pessoas, objetos e materiais; continuidade construída por manutenção; erro, presença e exaustão no trabalho técnico.",
+          "contentStatus": "full_text_indexed",
+          "localSource": "assets/referencias/labirinto-de-labirintos-marcus-garcia-2025.pdf",
+          "localTranscript": "knowledge/sources/labirinto-de-labirintos.json",
+          "pages": 182
+        }
+      ],
+      "artisticWorks": [
+        {
+          "title": "A Caixa Preta — Versão Demo",
+          "year": 2026,
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "summary": "Concepção, direção técnica e cenografia.",
+          "contentStatus": "metadata_and_original_summary",
+          "role": "Concepção, direção técnica e cenografia."
+        },
+        {
+          "title": "O Corpo Material e Imaterial em suas Borderlines",
+          "year": 2025,
+          "url": "https://midrash.org.br/Mostra_Principal.pdf",
+          "summary": "Direção técnica de uma palestra-performance que retoma a pesquisa de Janaina Leite sobre corpo, consciência e virtualidade.",
+          "contentStatus": "metadata_and_original_summary"
+        },
+        {
+          "title": "DEEPER / Cena Oca #1",
+          "year": 2024,
+          "url": "https://www.janainaleite.com.br/deeper",
+          "summary": "Colaboração técnica de desenho de luz e câmera de segurança na instalação de Leandra Espírito Santo, parte de DEEPER. O crédito publicado registra Marcus Vinícius; a dissertação permite cruzar a participação.",
+          "contentStatus": "metadata_and_original_summary"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — ficha técnica de A Caixa Preta",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        },
+        {
+          "url": "https://teses.usp.br/teses/disponiveis/27/27162/tde-27032025-140432/publico/MarcusViniciusdeMeloGarciacorrigidaPPGAC5434469.pdf",
+          "title": "USP — dissertação corrigida de Marcus Garcia",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "PDF integral preservado e extraído por página, com SHA-256; 182 páginas."
+        },
+        {
+          "url": "https://www.eca.usp.br/agenda/pos/defesa-de-mestrado-candidato-marcus-vinicius-de-melo-garcia",
+          "title": "ECA/USP — defesa do mestrado de Marcus Garcia",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        },
+        {
+          "url": "https://midrash.org.br/Mostra_Principal.pdf",
+          "title": "Midrash Centro Cultural — programação e ficha de Borderlines",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        },
+        {
+          "url": "https://www.janainaleite.com.br/deeper",
+          "title": "Janaina Leite — DEEPER, ficha da criação",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        }
+      ],
+      "motifs": [
+        "A continuidade de uma máquina depende de mãos e decisões que a plateia quase nunca vê.",
+        "O erro pode abrir uma passagem; a reparação também consome corpos, tempo e trabalho.",
+        "Um objeto técnico não está sozinho: trabalha em negociação com pessoas, espaços e materiais."
+      ],
+      "limitations": [
+        "Data do PDF corrigido: 2025; defesa anunciada pela ECA em dezembro de 2024. As datas não são intercambiáveis.",
+        "As figuras da dissertação não foram interpretadas pelo bot; há texto extraído e legenda.",
+        "As formulações poéticas são inferências editoriais, não citações literais do pesquisador."
+      ],
+      "membership": "core-team",
+      "creditRole": "Concepção, direção técnica e cenografia"
+    },
+    {
+      "id": "livia-machado",
+      "name": "Lívia Machado",
+      "aliases": [
+        "Livinha Machado",
+        "Livia Cristina de Souza Machado",
+        "machadolivinha"
+      ],
+      "verifiedIdentity": true,
+      "identityEvidence": "Capobianco liga a dramaturga do Núcleo do Olho à formação na ECA/USP e à pesquisa de estéticas alienígenas; a autoria acadêmica usa o nome completo e ORCID 0000-0003-0878-5175.",
+      "academicWorks": [
+        {
+          "title": "Entre gosmas, xenomorfos e máquinas: iconicidades alienígenas híbridas e bioassinatura na franquia Alien",
+          "year": 2025,
+          "url": "https://revistas.usp.br/esse/article/view/238095",
+          "summary": "Analisa a imaginação visual de alienígenas como mistura de formas orgânicas, materiais e máquinas, examinando semelhanças e continuidades entre as criaturas do cinema.",
+          "contentStatus": "metadata_and_original_summary",
+          "doi": "10.11606/issn.1980-4016.esse.2025.238095"
+        },
+        {
+          "title": "Imagem e interatividade: uma abordagem semiótica na relação fruitiva e sistêmica entre corpo e imagem",
+          "year": 2020,
+          "url": "https://revistas.usp.br/semeiosis/pt_BR/article/view/251298",
+          "summary": "Discute imagem e interatividade como relações entre corpo sensível, obra, percepção, máquina e cultura. A experiência do observador participa da construção da obra.",
+          "contentStatus": "metadata_and_original_summary"
+        }
+      ],
+      "artisticWorks": [
+        {
+          "title": "A Caixa Preta — Versão Demo",
+          "year": 2026,
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "summary": "Concepção, texto e dramaturgia.",
+          "contentStatus": "metadata_and_original_summary",
+          "role": "Concepção, texto e dramaturgia."
+        },
+        {
+          "title": "Laboratório Sinestesia Alienígena",
+          "year": 2026,
+          "url": "https://institutocapobianco.art.br/laboratorio-projetos-autorais-e-programas-performativos",
+          "summary": "Laboratório que cruza linguagens e materialidades por exercícios de percepção, imaginação extraterrestre e criação.",
+          "contentStatus": "metadata_and_original_summary"
+        },
+        {
+          "title": "Alien(nada): a Terra é uma adolescente e o Grande Filtro pode ser a autodestruição da humanidade",
+          "year": 2026,
+          "url": "https://www.pretajoia.com/2026/09/09-1110-alienada-monologo-da-dramaturga.html",
+          "summary": "Idealização, dramaturgia, atuação e colagem audiovisual. Palestra-performance que combina especulação cósmica e a possibilidade da autodestruição humana.",
+          "contentStatus": "metadata_and_original_summary"
+        },
+        {
+          "title": "O Museu Voador",
+          "year": 2024,
+          "url": "https://ruinaacesa.com.br/o-museu-voador/",
+          "summary": "Dramaturgia, encenação e atuação em uma visita cênica que desloca a ideia de museu por percursos, imaginação e diferentes materialidades.",
+          "contentStatus": "metadata_and_original_summary"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — ficha técnica de A Caixa Preta",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        },
+        {
+          "url": "https://institutocapobianco.art.br/laboratorio-projetos-autorais-e-programas-performativos",
+          "title": "Instituto Capobianco — Sinestesia Alienígena e biografia da artista",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        },
+        {
+          "url": "https://revistas.usp.br/esse/article/view/238095",
+          "title": "Estudos Semióticos / USP — artigo e autoria de Lívia Machado",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        },
+        {
+          "url": "https://revistas.usp.br/semeiosis/pt_BR/article/view/251298",
+          "title": "Semeiosis / USP — Imagem e interatividade",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        },
+        {
+          "url": "https://www.pretajoia.com/2026/09/09-1110-alienada-monologo-da-dramaturga.html",
+          "title": "Preta Jóia — divulgação de Alien(nada)",
+          "accessedAt": "2026-11-12",
+          "kind": "secondary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        },
+        {
+          "url": "https://ruinaacesa.com.br/o-museu-voador/",
+          "title": "Ruína Acesa — crítica e ficha de O Museu Voador",
+          "accessedAt": "2026-11-12",
+          "kind": "secondary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        }
+      ],
+      "motifs": [
+        "O desconhecido pode ter textura de algo que já tocamos: pele, metal, planta, ruído.",
+        "A imagem acontece também no corpo que olha; ver já é participar de uma transformação.",
+        "Um arquivo pode mudar de forma quando alguém atravessa suas salas e imagina o que falta."
+      ],
+      "limitations": [
+        "Artigos incorporados aqui como metadados e sínteses originais; seus textos completos não foram adicionados ao índice.",
+        "Lívia Machado é um nome com homônimos. Não se incorporaram trabalhos de Educação da UFRRJ ou biografias de jornalismo sem ligação à artista.",
+        "A estética alienígena é uma pesquisa artística e semiótica; não foi convertida em afirmação factual de vida extraterrestre."
+      ],
+      "membership": "core-team",
+      "creditRole": "Concepção, texto e dramaturgia"
+    },
+    {
+      "id": "andre-medeiros-martins",
+      "name": "André Medeiros Martins",
+      "aliases": [
+        "André Medeiros"
+      ],
+      "verifiedIdentity": true,
+      "identityEvidence": "Crédito completo em A Caixa Preta e em criações no site de Janaina Leite; a programação oficial MixBrasil associa o nome ao livro Vulgar.",
+      "academicWorks": [],
+      "artisticWorks": [
+        {
+          "title": "A Caixa Preta — Versão Demo",
+          "year": 2026,
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "summary": "Direção assistente e dramaturgismo.",
+          "contentStatus": "metadata_and_original_summary",
+          "role": "Direção assistente e dramaturgismo."
+        },
+        {
+          "title": "Vulgar",
+          "year": 2020,
+          "url": "https://old.mixbrasil.org.br/28/mix-literario-mesas/",
+          "summary": "Livro que põe fotografias de corpos em relação com textos de várias autorias, fazendo do olhar, do erro e da interdição problemas de criação.",
+          "contentStatus": "metadata_and_original_summary"
+        },
+        {
+          "title": "História do Olho — um conto de fadas pornô-noir",
+          "year": 2022,
+          "url": "https://www.janainaleite.com.br/historia-do-olho-um-conto-de-fadas-porno-noir",
+          "summary": "Dramaturgismo, assistência de direção, performance e composições originais em criação que aproxima ficção e experiências dos performers.",
+          "contentStatus": "metadata_and_original_summary"
+        },
+        {
+          "title": "DEEPER",
+          "year": 2024,
+          "url": "https://www.janainaleite.com.br/deeper",
+          "summary": "Integra a dramaturgia da obra de realidade virtual e assina o projeto Fetiches, em uma pesquisa sobre presença, representação e corpo entre mundos.",
+          "contentStatus": "metadata_and_original_summary"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — ficha técnica de A Caixa Preta",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        },
+        {
+          "url": "https://old.mixbrasil.org.br/28/mix-literario-mesas/",
+          "title": "MixBrasil 2020 — lançamento de Vulgar",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        },
+        {
+          "url": "https://www.janainaleite.com.br/historia-do-olho-um-conto-de-fadas-porno-noir",
+          "title": "Janaina Leite — História do Olho, ficha da criação",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        },
+        {
+          "url": "https://www.janainaleite.com.br/deeper",
+          "title": "Janaina Leite — DEEPER, ficha da criação",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        }
+      ],
+      "motifs": [
+        "O olhar escolhe, enquadra, recusa e deseja: ele também participa do acontecimento.",
+        "A imagem que seria descartada pode guardar uma pergunta que o retrato perfeito esconde.",
+        "Um avatar não encerra o corpo que o produz; a presença se distribui entre mundos."
+      ],
+      "limitations": [
+        "Não foi localizada, nesta pesquisa, obra acadêmica de autoria inequívoca deste artista; não se inferiu titulação.",
+        "Livros, filmes e experiências foram registrados por programação e créditos; não se afirma leitura integral ou experiência direta das obras.",
+        "A pesquisa se limita ao trabalho artístico publicamente creditado; não estabelece preferências ou práticas íntimas da pessoa."
+      ],
+      "membership": "core-team",
+      "creditRole": "Direção assistente e dramaturgismo"
+    },
+    {
+      "id": "lara-duarte",
+      "name": "Lara Duarte",
+      "aliases": [
+        "gambiarrassentimentais"
+      ],
+      "verifiedIdentity": true,
+      "identityEvidence": "Créditos públicos do Capobianco, LIFT e Clean Break cruzam a artista com Janaina Leite; a revista UDESC publica sua pesquisa e afiliação à Unicamp.",
+      "academicWorks": [
+        {
+          "title": "MONSTRA! — Dramaturgia, corpo e performance",
+          "year": 2024,
+          "url": "https://revistas.udesc.br/index.php/urdimento/article/view/26214",
+          "summary": "Propõe a dramaturgia monstra em diálogo com o performativo e o corpo, incluindo o procedimento texto-acúmulo e a criação que tensiona fronteiras entre campos.",
+          "contentStatus": "metadata_and_original_summary",
+          "doi": "10.5965/1414573104532024e115"
+        },
+        {
+          "title": "Compêndio de decomposições dramatúrgicas: por uma dramaturgia monstra!",
+          "year": 2023,
+          "url": "https://revistas.udesc.br/index.php/urdimento/article/view/26214",
+          "summary": "Dissertação de mestrado em Artes da Cena na Unicamp, identificada nas referências da publicação autoral. Registro bibliográfico; texto integral não incorporado.",
+          "contentStatus": "bibliographic_record_only"
+        }
+      ],
+      "artisticWorks": [
+        {
+          "title": "A Caixa Preta — Versão Demo",
+          "year": 2026,
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "summary": "Direção de movimento e dramaturgismo.",
+          "contentStatus": "metadata_and_original_summary",
+          "role": "Direção de movimento e dramaturgismo."
+        },
+        {
+          "title": "The Trials and Passions of Unfamous Women",
+          "year": 2024,
+          "url": "https://www.cleanbreak.org.uk/news/trials-and-passions-announcement/",
+          "summary": "Codireção, dramaturgia e escrita em criação com Janaina Leite e integrantes da Clean Break, investigando os julgamentos dirigidos às mulheres.",
+          "contentStatus": "metadata_and_original_summary"
+        },
+        {
+          "title": "Gambiarras Sentimentais",
+          "year": null,
+          "url": "https://www.liftfestival.com/event/the-trials-and-passions-of-unfamous-women/",
+          "summary": "Livro de autoria confirmada na biografia publicada pelo LIFT; edição Patuá. Sem resumo temático porque o conteúdo não foi consultado.",
+          "contentStatus": "bibliographic_record_only"
+        },
+        {
+          "title": "História do Olho — um conto de fadas pornô-noir",
+          "year": 2022,
+          "url": "https://www.janainaleite.com.br/historia-do-olho-um-conto-de-fadas-porno-noir",
+          "summary": "Dramaturgismo, assistência de direção e preparação corporal; criação em continuidade com as pesquisas do Núcleo do Olho.",
+          "contentStatus": "metadata_and_original_summary"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — ficha técnica de A Caixa Preta",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        },
+        {
+          "url": "https://revistas.udesc.br/index.php/urdimento/article/view/26214",
+          "title": "Urdimento / UDESC — artigo autoral MONSTRA!",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        },
+        {
+          "url": "https://www.cleanbreak.org.uk/news/trials-and-passions-announcement/",
+          "title": "Clean Break — anúncio e créditos da produção de 2024",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        },
+        {
+          "url": "https://www.liftfestival.com/event/the-trials-and-passions-of-unfamous-women/",
+          "title": "LIFT — The Trials and Passions, biografia e créditos",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        },
+        {
+          "url": "https://www.janainaleite.com.br/historia-do-olho-um-conto-de-fadas-porno-noir",
+          "title": "Janaina Leite — História do Olho, ficha da criação",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        }
+      ],
+      "motifs": [
+        "Uma dramaturgia pode crescer por enxertos: fragmentos se encontram sem precisar virar um corpo liso.",
+        "O monstro perturba as divisões prontas e deixa uma nova forma de pensar aparecer.",
+        "Antes de um corpo caber numa regra, a regra já começou a julgá-lo."
+      ],
+      "limitations": [
+        "A dissertação foi identificada por registro bibliográfico em artigo da autora; não se afirma ingestão integral.",
+        "Ano de Gambiarras Sentimentais não foi confirmado e permanece nulo.",
+        "As formulações poéticas são inferências editoriais, não frases atribuídas à artista."
+      ],
+      "membership": "core-team",
+      "creditRole": "Direção de movimento e dramaturgismo"
+    },
+    {
+      "id": "tati-mayumi",
+      "name": "Tati Mayumi",
+      "aliases": [
+        "tati.mayumi"
+      ],
+      "verifiedIdentity": true,
+      "identityEvidence": "Nome artístico em créditos do Capobianco, MITsp e Theatro Municipal; rede profissional cruza Tetembua Dandara e Pérfida Iguana.",
+      "academicWorks": [],
+      "artisticWorks": [
+        {
+          "title": "A Caixa Preta — Versão Demo",
+          "year": 2026,
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "summary": "Produção executiva.",
+          "contentStatus": "metadata_and_original_summary",
+          "role": "Produção executiva."
+        },
+        {
+          "title": "Eu tenho uma história que se parece com a minha",
+          "year": 2025,
+          "url": "https://mitsp.org/2025/eu-tenho-uma-historia-que-se-parece-com-a-minha/",
+          "summary": "Produção e técnica de cena, com Mariana Dias, na obra de Tetembua Dandara; a criação torna públicas histórias e diferentes formas de escuta.",
+          "contentStatus": "metadata_and_original_summary"
+        },
+        {
+          "title": "Fantasias Brasileiras",
+          "year": 2024,
+          "url": "https://theatromunicipal.org.br/eventos/performance-fantasias-brasileiras/",
+          "summary": "Produção executiva de performance da Pérfida Iguana que revisita danças do Balé IV Centenário em espaço público.",
+          "contentStatus": "metadata_and_original_summary"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — ficha técnica de A Caixa Preta",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        },
+        {
+          "url": "https://mitsp.org/2025/eu-tenho-uma-historia-que-se-parece-com-a-minha/",
+          "title": "MITsp 2025 — Eu tenho uma história que se parece com a minha",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        },
+        {
+          "url": "https://theatromunicipal.org.br/eventos/performance-fantasias-brasileiras/",
+          "title": "Theatro Municipal — Fantasias Brasileiras, 2024",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        }
+      ],
+      "motifs": [
+        "Uma cena só chega ao encontro porque alguém sustentou as suas condições de existência.",
+        "O trabalho de produzir também guarda memória: articula pessoas, tempos, materiais e escuta."
+      ],
+      "limitations": [
+        "Não foi localizada obra acadêmica inequívoca da produtora; isso não significa ausência de formação ou pesquisa.",
+        "Não se incorporou conteúdo de homônima da área de estética facial.",
+        "Os motivos sobre produção são inferências cênicas a partir da função creditada, não depoimentos ou teses atribuídas à profissional."
+      ],
+      "membership": "core-team",
+      "creditRole": "Produção executiva"
+    },
+    {
+      "id": "ricardo-moranez",
+      "name": "Ricardo Morañez",
+      "aliases": [
+        "Ricardo Morañes",
+        "Ricardo Moranes",
+        "Ricardinho"
+      ],
+      "verifiedIdentity": true,
+      "identityEvidence": "Grafia Ricardo Morañez na ficha oficial do Capobianco e em programação teatral; alias Ricardinho e grafia Morañes fornecidos no contexto da equipe.",
+      "academicWorks": [],
+      "artisticWorks": [
+        {
+          "title": "A Caixa Preta — Versão Demo",
+          "year": 2026,
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "summary": "Luz — criação e operação.",
+          "contentStatus": "metadata_and_original_summary",
+          "role": "Luz — criação e operação."
+        },
+        {
+          "title": "Meu Nome: Mamãe",
+          "year": 2024,
+          "url": "https://cenacontemporanea.com.br/2024/wp-content/uploads/2024/11/CENA_24_catalogo_soltas.pdf",
+          "summary": "Desenho de luz no solo de Aury Porto, com direção de Janaina Leite, creditado no catálogo do festival Cena Contemporânea de 2024.",
+          "contentStatus": "metadata_and_original_summary"
+        },
+        {
+          "title": "As Bacantes",
+          "year": null,
+          "url": "https://www.artcena.fr/agendas/spectacles/as-bacantes",
+          "summary": "Crédito de luz com Renato Banti em montagem do Teatro Oficina; registro ARTCENA ligado ao programa do Théâtre de la Place 2011–2012. Ano original da criação não confirmado.",
+          "contentStatus": "production_credit_only"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — ficha técnica de A Caixa Preta",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        },
+        {
+          "url": "https://cenacontemporanea.com.br/2024/wp-content/uploads/2024/11/CENA_24_catalogo_soltas.pdf",
+          "title": "Cena Contemporânea 2024 — catálogo e crédito de Meu Nome: Mamãe",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        },
+        {
+          "url": "https://www.artcena.fr/agendas/spectacles/as-bacantes",
+          "title": "ARTCENA — As Bacantes, créditos e origem do registro",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página institucional, resumo ou créditos públicos; obra integral não incorporada."
+        }
+      ],
+      "motifs": [
+        "A luz decide o que aparece e o que permanece à espera no escuro.",
+        "Operar a luz é trabalhar o tempo da aparição: acender, sustentar, retirar."
+      ],
+      "limitations": [
+        "Não foi localizada obra acadêmica inequívoca do iluminador; não se inferiu titulação.",
+        "Grafias do sobrenome variam nas fontes; a grafia exibida segue o crédito oficial atual de A Caixa Preta.",
+        "Datas de apresentação não foram tomadas como datas originais de estreia.",
+        "O registro ARTCENA foi localizado por indexação pública; o acesso direto retornou 403."
+      ],
+      "membership": "core-team",
+      "creditRole": "Luz — criação e operação"
+    },
+    {
+      "id": "gustavo-caboco",
+      "name": "Gustavo Caboco",
+      "aliases": [],
+      "verifiedIdentity": true,
+      "identityEvidence": "Nome na ficha institucional do Instituto Capobianco, cruzado com autoria e prática pública nas fontes listadas.",
+      "membership": "research-collaborator",
+      "creditRole": "Colaboração de pesquisa",
+      "academicWorks": [],
+      "artisticWorks": [
+        {
+          "title": "Ausências ou sintomas?",
+          "year": 2023,
+          "url": "https://bienal.org.br/ausencias-ou-sintomas/",
+          "summary": "Obra digital e publicação realizadas com Tipuici Manoki a partir de pesquisa no Arquivo Histórico Wanda Svevo; atravessam memória Wapichana, acervos e deslocamentos.",
+          "contentStatus": "metadata_and_original_summary"
+        },
+        {
+          "title": "Ateliê-Lavrado: uma residência Wapichana",
+          "year": 2023,
+          "url": "https://www.sdcelarbritishmuseum.org/projects-es/atelie-lavrado-a-wapichana-residency-2/?lang=es",
+          "summary": "Residência e pesquisa de Gustavo Caboco e Roseane Cadete em contato com objetos Wapichana da coleção do Museu Britânico, criando caminhos de retorno, conexão e resposta aos deslocamentos territoriais.",
+          "contentStatus": "metadata_and_original_summary"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — colaboradores de pesquisa de A Caixa Preta",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página pública institucional/autoral ou resumo bibliográfico; texto integral não incorporado."
+        },
+        {
+          "url": "https://bienal.org.br/ausencias-ou-sintomas/",
+          "title": "Fundação Bienal — Ausências ou sintomas?",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página pública institucional/autoral ou resumo bibliográfico; texto integral não incorporado."
+        },
+        {
+          "url": "https://www.sdcelarbritishmuseum.org/projects-es/atelie-lavrado-a-wapichana-residency-2/?lang=es",
+          "title": "SDCELAR / British Museum — Ateliê-Lavrado",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página pública institucional/autoral ou resumo bibliográfico; texto integral não incorporado."
+        }
+      ],
+      "motifs": [
+        "Um acervo também guarda ausências: procurar é perceber quem ficou fora da descrição.",
+        "Voltar à terra pode significar refazer relações que um arquivo separou."
+      ],
+      "limitations": [
+        "Pesquisa artística em acervos confirmada; obra acadêmica formal de autoria inequívoca não localizada.",
+        "Os motivos não representam uma cosmologia indígena universal; não imitar a voz do artista ou de um povo.",
+        "Textos completos e objetos da coleção não foram incorporados; há sínteses e créditos."
+      ]
+    },
+    {
+      "id": "hanna-limulja",
+      "name": "Hanna Limulja",
+      "aliases": [],
+      "verifiedIdentity": true,
+      "identityEvidence": "Nome na ficha institucional do Instituto Capobianco, cruzado com autoria e prática pública nas fontes listadas.",
+      "membership": "research-collaborator",
+      "creditRole": "Colaboração de pesquisa",
+      "academicWorks": [
+        {
+          "title": "O desejo dos outros: uma etnografia dos sonhos yanomami (Pya ú — Toototopi)",
+          "year": 2019,
+          "url": "https://acervo.socioambiental.org/acervo/tesesdissertacoes/o-desejo-dos-outros-uma-etnografia-dos-sonhos-yanomami-pya-u-toototopi",
+          "summary": "Tese em Antropologia Social da UFSC sobre sonhos Yanomami a partir de pesquisa na comunidade Pya ú; acompanha relações entre sonho, vida coletiva e alteridade.",
+          "contentStatus": "metadata_and_original_summary"
+        }
+      ],
+      "artisticWorks": [
+        {
+          "title": "O desejo dos outros: uma etnografia dos sonhos yanomami — edição em livro",
+          "year": 2022,
+          "url": "https://noticias.ufsc.br/2022/07/egressa-da-pos-graduacao-em-antropologia-social-lanca-livro-sobre-sonhos-yanomami/",
+          "summary": "Publicação da pesquisa de doutorado pela editora Ubu; discute o papel prático e político da circulação dos sonhos na comunidade estudada.",
+          "contentStatus": "metadata_and_original_summary",
+          "category": "public-research-book"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — colaboradores de pesquisa de A Caixa Preta",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página pública institucional/autoral ou resumo bibliográfico; texto integral não incorporado."
+        },
+        {
+          "url": "https://acervo.socioambiental.org/acervo/tesesdissertacoes/o-desejo-dos-outros-uma-etnografia-dos-sonhos-yanomami-pya-u-toototopi",
+          "title": "ISA — registro da tese de Hanna Limulja",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página pública institucional/autoral ou resumo bibliográfico; texto integral não incorporado."
+        },
+        {
+          "url": "https://noticias.ufsc.br/2022/07/egressa-da-pos-graduacao-em-antropologia-social-lanca-livro-sobre-sonhos-yanomami/",
+          "title": "UFSC — lançamento do livro e formação de Hanna Limulja",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página pública institucional/autoral ou resumo bibliográfico; texto integral não incorporado."
+        }
+      ],
+      "motifs": [
+        "Sonhar pode deslocar o centro do eu e exigir atenção a outros seres.",
+        "Uma imagem sonhada pode continuar a agir depois do despertar, quando encontra outras pessoas."
+      ],
+      "limitations": [
+        "Tese e livro identificados por registros e apresentação institucional; seus textos integrais não foram ingeridos.",
+        "Os motivos são inferências cênicas sobre a pesquisa; não são enunciados em nome dos Yanomami.",
+        "Não transformar conhecimentos específicos em um inconsciente indígena genérico."
+      ]
+    },
+    {
+      "id": "janaina-wagner",
+      "name": "Janaina Wagner",
+      "aliases": [],
+      "verifiedIdentity": true,
+      "identityEvidence": "Nome na ficha institucional do Instituto Capobianco, cruzado com autoria e prática pública nas fontes listadas.",
+      "membership": "research-collaborator",
+      "creditRole": "Colaboração de pesquisa",
+      "academicWorks": [
+        {
+          "title": "La réalité en effondrement : faire monde avec des fantômes errants",
+          "year": 2025,
+          "url": "https://www.janainawagner.com/phd-2",
+          "summary": "Pesquisa e criação artística sobre fantasmas errantes ligados a lacunas históricas e destruição ambiental; relaciona criaturas, imagens e as marcas do extrativismo. O título foi abreviado para catalogação.",
+          "contentStatus": "metadata_and_original_summary",
+          "titleIsAbbreviated": true
+        }
+      ],
+      "artisticWorks": [
+        {
+          "title": "Curupira e a máquina do destino",
+          "year": 2021,
+          "url": "https://www.lefresnoy.net/exposition/1837/oeuvre/1851/",
+          "summary": "Filme realizado na região de Realidade, na Amazônia, que coloca Curupira e a imagem de Iracema em uma fabulação entre estrada, floresta e os fantasmas do progresso.",
+          "contentStatus": "metadata_and_original_summary"
+        },
+        {
+          "title": "Quebrante",
+          "year": 2024,
+          "url": "https://www.lpafilmfestival.com/en/quebrante/",
+          "summary": "Filme que acompanha a descoberta de cavernas próximas à Transamazônica por uma mulher que entra nesses espaços com vela e isqueiro.",
+          "contentStatus": "metadata_and_original_summary"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — colaboradores de pesquisa de A Caixa Preta",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página pública institucional/autoral ou resumo bibliográfico; texto integral não incorporado."
+        },
+        {
+          "url": "https://www.janainawagner.com/phd-2",
+          "title": "Janaina Wagner — tese, resumo e defesa",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página pública institucional/autoral ou resumo bibliográfico; texto integral não incorporado."
+        },
+        {
+          "url": "https://www.lefresnoy.net/exposition/1837/oeuvre/1851/",
+          "title": "Le Fresnoy — Curupira et la machine du destin",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página pública institucional/autoral ou resumo bibliográfico; texto integral não incorporado."
+        },
+        {
+          "url": "https://www.lpafilmfestival.com/en/quebrante/",
+          "title": "Festival de Las Palmas — Quebrante",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página pública institucional/autoral ou resumo bibliográfico; texto integral não incorporado."
+        }
+      ],
+      "motifs": [
+        "Uma estrada promete futuro enquanto transporta os fantasmas que deixou pelo caminho.",
+        "A paisagem não é cenário vazio: conserva atritos, apagamentos e histórias que resistem."
+      ],
+      "limitations": [
+        "Metadados, resumo autoral e sinopses consultados; filmes e tese não foram incorporados integralmente.",
+        "Esta é a cineasta Janaina Wagner, pessoa distinta da diretora Janaina Leite.",
+        "Criaturas e fantasmas aparecem como elaboração artística; não como registro factual de aparições."
+      ]
+    },
+    {
+      "id": "jamille-pinheiro-dias",
+      "name": "Jamille Pinheiro Dias",
+      "aliases": [],
+      "verifiedIdentity": true,
+      "identityEvidence": "Nome na ficha institucional do Instituto Capobianco, cruzado com autoria e prática pública nas fontes listadas.",
+      "membership": "research-collaborator",
+      "creditRole": "Colaboração de pesquisa",
+      "academicWorks": [
+        {
+          "title": "Peles de papel: caminhos da tradução poética das artes verbais ameríndias",
+          "year": 2017,
+          "url": "https://teses.usp.br/teses/disponiveis/8/8147/tde-17022017-113310/pt-br.html",
+          "summary": "Tese que analisa princípios da tradução poética das artes verbais ameríndias, cruzando etnopoética e etnologia indígena sul-americana.",
+          "contentStatus": "metadata_and_original_summary",
+          "defenseYear": 2016
+        }
+      ],
+      "artisticWorks": [
+        {
+          "title": "Ateliê-Lavrado: uma residência Wapichana",
+          "year": 2023,
+          "url": "https://www.sdcelarbritishmuseum.org/projects-es/atelie-lavrado-a-wapichana-residency-2/?lang=es",
+          "summary": "Colaboração de pesquisa e escrita na residência vinculada ao SDCELAR, em diálogo com Gustavo Caboco, Roseane Cadete e coleções Wapichana.",
+          "contentStatus": "metadata_and_original_summary",
+          "category": "public-research-project"
+        },
+        {
+          "title": "Voro’pi: encontro com Naine Terena, Gustavo Caboco e Jamille Pinheiro Dias",
+          "year": 2023,
+          "url": "https://spanish-portuguese.berkeley.edu/news/voropi-encounter-naine-terena-gustavo-caboco-and-jamille-pinheiro-dias-panel",
+          "summary": "Encontro público em Berkeley sobre perspectivas indígenas, estética e contranarrativas, com os três participantes.",
+          "contentStatus": "metadata_and_original_summary",
+          "category": "public-research-event"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — colaboradores de pesquisa de A Caixa Preta",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página pública institucional/autoral ou resumo bibliográfico; texto integral não incorporado."
+        },
+        {
+          "url": "https://teses.usp.br/teses/disponiveis/8/8147/tde-17022017-113310/pt-br.html",
+          "title": "USP — tese Peles de papel",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página pública institucional/autoral ou resumo bibliográfico; texto integral não incorporado."
+        },
+        {
+          "url": "https://www.sdcelarbritishmuseum.org/projects-es/atelie-lavrado-a-wapichana-residency-2/?lang=es",
+          "title": "SDCELAR / British Museum — Ateliê-Lavrado",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página pública institucional/autoral ou resumo bibliográfico; texto integral não incorporado."
+        },
+        {
+          "url": "https://spanish-portuguese.berkeley.edu/news/voropi-encounter-naine-terena-gustavo-caboco-and-jamille-pinheiro-dias-panel",
+          "title": "Berkeley — encontro Voro’pi",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página pública institucional/autoral ou resumo bibliográfico; texto integral não incorporado."
+        }
+      ],
+      "motifs": [
+        "Traduzir uma voz exige escutar ritmo, relação e aquilo que uma equivalência apressada apaga.",
+        "Uma palavra atravessa mundos sem precisar fazer todos eles parecerem o mesmo."
+      ],
+      "limitations": [
+        "Defesa em 2016 e publicação em 2017, conforme o catálogo USP.",
+        "Tese registrada por resumo e metadados; texto integral não incorporado.",
+        "Atuação em pesquisa, tradução e encontro público não foi apresentada como autoria exclusiva das criações dos artistas parceiros."
+      ]
+    },
+    {
+      "id": "kira-xonorika",
+      "name": "Kira Xonorika",
+      "aliases": [],
+      "verifiedIdentity": true,
+      "identityEvidence": "Nome na ficha institucional do Instituto Capobianco, cruzado com autoria e prática pública nas fontes listadas.",
+      "membership": "research-collaborator",
+      "creditRole": "Colaboração de pesquisa",
+      "academicWorks": [],
+      "artisticWorks": [
+        {
+          "title": "Deep Time Dance",
+          "year": 2024,
+          "url": "https://eyebeam.org/with-kira-xonorika/",
+          "summary": "Filme especulativo que reúne dança, memória, imaginação tecnológica e vida entre espécies; a artista explora inteligência como relação distribuída, em diálogo com perspectivas Guaraní.",
+          "contentStatus": "metadata_and_original_summary"
+        },
+        {
+          "title": "Agent / DIVA",
+          "year": 2025,
+          "url": "https://eyebeam.org/with-kira-xonorika/",
+          "summary": "Performance com um robô flexível inteligente, parte de uma pesquisa artística sobre pluralidade, corpo e relações entre tecnologias e mundos vivos.",
+          "contentStatus": "metadata_and_original_summary"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — colaboradores de pesquisa de A Caixa Preta",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página pública institucional/autoral ou resumo bibliográfico; texto integral não incorporado."
+        },
+        {
+          "url": "https://eyebeam.org/with-kira-xonorika/",
+          "title": "Eyebeam — entrevista com Kira Xonorika e apresentação dos trabalhos",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página pública institucional/autoral ou resumo bibliográfico; texto integral não incorporado."
+        },
+        {
+          "url": "https://eyebeam.org/artists/kira-xonorika/",
+          "title": "Eyebeam — prática e residência de Kira Xonorika",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página pública institucional/autoral ou resumo bibliográfico; texto integral não incorporado."
+        }
+      ],
+      "motifs": [
+        "Inteligência pode emergir de relações entre corpos, tecnologias e ambientes.",
+        "O futuro pode guardar muitas presenças sem reduzi-las a uma única forma de vida."
+      ],
+      "limitations": [
+        "Prática e pesquisa artística confirmadas; tese ou titulação acadêmica não foram inferidas.",
+        "Foram consultadas entrevista e apresentação institucional; filme e performance não foram experienciados integralmente.",
+        "A influência não autoriza o bot a falar como representante de epistemologias ou comunidades indígenas."
+      ]
+    },
+    {
+      "id": "ricardo-kenji",
+      "name": "Ricardo Kenji",
+      "aliases": [],
+      "verifiedIdentity": true,
+      "identityEvidence": "Nome confirmado na ficha oficial de A Caixa Preta; sem associação a perfis de homônimos.",
+      "membership": "core-team",
+      "creditRole": "Videocenografia — operação",
+      "academicWorks": [],
+      "artisticWorks": [
+        {
+          "title": "A Caixa Preta — Versão Demo",
+          "year": 2026,
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "summary": "Operação de videocenografia, conforme ficha técnica do Instituto Capobianco.",
+          "contentStatus": "metadata_and_original_summary",
+          "role": "Videocenografia — operação"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — colaboradores de pesquisa de A Caixa Preta",
+          "accessedAt": "2026-11-12",
+          "kind": "primary",
+          "materialRead": "Página pública institucional/autoral ou resumo bibliográfico; texto integral não incorporado."
+        }
+      ],
+      "motifs": [
+        "Uma imagem projetada depende de alguém que sustente seu tempo de aparição."
+      ],
+      "limitations": [
+        "Identidade confirmada apenas no crédito de operação de videocenografia do espetáculo.",
+        "Outras obras, formação acadêmica e perfis pessoais não foram confirmados; não associar registros por semelhança de nome.",
+        "O motivo é uma inferência editorial sobre a função creditada."
+      ]
+    }
+  ]
+}

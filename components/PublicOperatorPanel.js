@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import { PERSONALITY_PARAMETERS, createOperatorPublicState } from "@/lib/operatorPublic";
+import { PERSONALITY_PARAMETERS, EXPRESSION_PARAMETERS, createOperatorPublicState } from "@/lib/operatorPublic";
 import styles from "./PublicOperator.module.css";
 import PublicModule from "./PublicModule";
 import OperatorTypedReply from "./OperatorTypedReply";
 
-export default function PublicOperatorPanel({ channel = createOperatorPublicState(), privateControls = null, connection = "connecting", publicSurface = false, parametersOnly = false, typingSettings, initialMessageIds }) {
+export default function PublicOperatorPanel({ channel = createOperatorPublicState(), privateControls = null, connection = "connecting", publicSurface = false, parametersOnly = false, parameterTitle = "PERSONALIDADE DO BOT", profile = null, typingSettings, initialMessageIds }) {
   const history = useRef(null);
   const follow = useRef(true);
   const followHistory = useCallback(() => {
@@ -15,7 +15,7 @@ export default function PublicOperatorPanel({ channel = createOperatorPublicStat
   useEffect(followHistory, [channel.messages, followHistory]);
   const parameters = (
     <PublicModule as="section" id="operator-personality" disabled={!publicSurface} className={styles.personality} aria-label="Parâmetros de personalidade">
-      <h3>{parametersOnly ? "PERSONALIDADE DO BOT" : "PERSONALITY PARAMETERS"}</h3>
+      <h3>{parametersOnly ? parameterTitle : "PERSONALITY PARAMETERS"}</h3>
       {PERSONALITY_PARAMETERS.map(({ id, label }) => (
         <div className={styles.parameter} key={id}>
           <label htmlFor={`${privateControls && !publicSurface ? "private" : "public"}-${id}`}>{label}<output>{channel.personality[id]}%</output></label>
@@ -29,6 +29,19 @@ export default function PublicOperatorPanel({ channel = createOperatorPublicStat
           </div>
         </div>
       ))}
+      {parametersOnly && profile && privateControls ? <>
+        {EXPRESSION_PARAMETERS.map(({ id, label }) => <div className={styles.parameter} key={id}>
+          <label htmlFor={`expression-${id}`}>{label}<output>{profile[id] ?? 50}%</output></label>
+          <div className={styles.sliderRow}>
+            <button type="button" aria-label={`Diminuir ${label}`} onClick={() => privateControls.profile(id, (profile[id] ?? 50) - 5)}>−</button>
+            <input id={`expression-${id}`} type="range" min="0" max="100" step="1" aria-label={label}
+              style={{ "--parameter-percent": `${profile[id] ?? 50}%` }} value={profile[id] ?? 50}
+              onChange={event => privateControls.profile(id, Number(event.target.value))} />
+            <button type="button" aria-label={`Aumentar ${label}`} onClick={() => privateControls.profile(id, (profile[id] ?? 50) + 5)}>+</button>
+          </div>
+        </div>)}
+        <button type="button" onClick={() => privateControls.profile(null)}>RESTAURAR PERFIL</button>
+      </> : null}
     </PublicModule>
   );
   if (parametersOnly) return parameters;

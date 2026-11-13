@@ -8,6 +8,36 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 
 ## Package scripts
 
+- `npm run point-cloud:prepare` -> `node --no-warnings scripts/prepare-post-demo-point-cloud.js`
+- `npm run test:post-demo:point-cloud` -> `node --no-warnings scripts/post-demo-point-cloud-test.js`
+- `npm run test:post-demo:point-cloud:watch` -> `node --no-warnings scripts/post-demo-point-cloud-watch-test.js`
+- `npm run test:post-demo:point-cloud:watch:browser` -> `node --no-warnings scripts/post-demo-point-cloud-watch-browser-test.js`
+- `npm run test:post-demo:point-cloud:browser` -> `node --no-warnings scripts/post-demo-point-cloud-browser-test.js`
+- `npm run test:post-demo:point-cloud:animation` -> `node --no-warnings scripts/post-demo-point-cloud-browser-test.js --animation`
+- `npm run test:post-demo:point-cloud:controls` -> `node --no-warnings scripts/post-demo-point-cloud-browser-test.js --controls --animation`
+- `npm run test:post-demo:point-cloud:motion` -> `node --no-warnings scripts/post-demo-point-cloud-motion-test.js`
+- `npm run test:post-demo:layout` -> `node --no-warnings scripts/post-demo-layout-test.js`
+- `npm run test:post-demo:opening` -> `node --no-warnings scripts/post-demo-opening-test.js`
+- `npm run test:post-demo:audio-source` -> `node --no-warnings scripts/post-demo-audio-source-test.js`
+- `npm run test:post-demo:layout:browser` -> `node --no-warnings scripts/post-demo-point-cloud-browser-test.js --layout`
+- `npm run test:post-demo:cycle` -> `node --no-warnings scripts/post-demo-cycle-test.js`
+- `npm run test:post-demo:combined` -> `node --no-warnings scripts/post-demo-cycle-test.js --combined`
+- `npm run test:post-demo:cycle:live` -> `node --no-warnings --env-file-if-exists=.env.local scripts/post-demo-cycle-test.js --live`
+- `npm run test:controller-settings` -> `node --no-warnings scripts/controller-settings-test.js`
+- `npm run test:post-demo` -> `node --no-warnings scripts/post-demo-test.js`
+- `npm run test:post-demo:browser` -> `node --no-warnings scripts/post-demo-browser-test.js`
+- `npm run test:post-demo:live` -> `node --no-warnings --env-file-if-exists=.env.local scripts/post-demo-live.js --live`
+- `npm run memory:sync` -> `node --no-warnings scripts/show-memory-sync.js`
+- `npm run memory:audit` -> `node --no-warnings scripts/show-memory-audit.js`
+- `npm run memory:dissertation` -> `node --no-warnings scripts/dissertation-memory-audit.js`
+- `npm run test:collective-memory` -> `node --no-warnings scripts/collective-memory-test.js`
+- `npm run test:references` -> `node --no-warnings scripts/reference-library-test.js`
+- `npm run test:references:browser` -> `node --no-warnings scripts/reference-library-browser-test.js`
+- `npm run test:references:island` -> `node --no-warnings scripts/reference-island-test.js`
+- `npm run references:assets` -> `node scripts/prepare-reference-island-assets.cjs`
+- `npm run memory:live` -> `node --no-warnings --env-file-if-exists=.env.local scripts/show-memory-live.js --live`
+- `npm run test:live-training` -> `node --no-warnings scripts/live-training-test.js`
+- `npm run test:live-training:browser` -> `node --no-warnings scripts/live-training-browser-test.js`
 - `npm run test:modelo-3d` -> `node scripts/model-3d-test.cjs`
 - `npm run test:modelo-3d:local` -> `node scripts/model-3d-local-smoke.cjs`
 - `npm run test:modelo-3d:browser` -> `node scripts/model-3d-browser-test.cjs`
@@ -49,8 +79,10 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:instagram:readonly` -> `node --no-warnings --env-file-if-exists=.env.local scripts/instagram-readonly-audit.js --live`
 - `npm run test:scene-zero:e2e` -> `node --no-warnings scripts/full-show-audit.js`
 - `npm run test:public-realtime:browser` -> `node --no-warnings scripts/public-realtime-browser-test.js`
+- `npm run test:public-realtime:multiwindow` -> `node --no-warnings scripts/public-realtime-multiwindow-browser-test.js`
 - `npm run test:scene-zero` -> `node --no-warnings scripts/scene-zero-test.js`
 - `npm run test:scene-zero:suitcases:browser` -> `node --no-warnings scripts/scene-zero-suitcases-browser-test.js`
+- `npm run test:scene-zero:suitcase-sounds:browser` -> `node --no-warnings scripts/scene-zero-suitcase-sounds-browser-test.js`
 - `npm run test:scene-one-sampler` -> `node --no-warnings scripts/scene-one-sampler-browser-test.js`
 - `npm run test:scene-one-audio-effects` -> `node --no-warnings scripts/scene-one-audio-effects-browser-test.js`
 - `npm run test:forca-g-sampler` -> `node --no-warnings scripts/forca-g-sampler-test.js`
@@ -61,6 +93,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `npm run test:sound-control:browser` -> `node --no-warnings scripts/sound-control-browser-test.js`
 - `npm run test:audience-warmup` -> `node --no-warnings scripts/audience-warmup-test.js`
 - `npm run test:audience-warmup:transition` -> `node --no-warnings scripts/audience-warmup-transition-test.js`
+- `npm run test:audience-warmup:current-affairs` -> `node --no-warnings scripts/audience-warmup-current-affairs-test.js`
+- `npm run warmup:current-affairs` -> `node --no-warnings --env-file-if-exists=.env.local scripts/audience-warmup-current-affairs-refresh.js`
 - `npm run test:audience-sound-check:browser` -> `node --no-warnings scripts/audience-sound-check-browser-test.js`
 - `npm run test:audience-microphone` -> `node --no-warnings scripts/audience-microphone-meter-test.js`
 - `npm run test:audience-microphone:background` -> `node --no-warnings scripts/audience-microphone-background-browser-test.js`
@@ -93,9 +127,12 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `/` -> `app/page.js`
 - `/piloto-videogame-controller` -> `app/piloto-videogame-controller/page.js`
 - `/piloto-videogame` -> `app/piloto-videogame/page.js`
+- `/pos-demo/controle` -> `app/pos-demo/controle/page.js`
+- `/pos-demo` -> `app/pos-demo/page.js`
 - `/queda-aviao-controller` -> `app/queda-aviao-controller/page.js`
 - `/queda-aviao/debug` -> `app/queda-aviao/debug/page.js`
 - `/queda-aviao` -> `app/queda-aviao/page.js`
+- `/referencias` -> `app/referencias/page.js`
 - `/reliability-test/public-error` -> `app/reliability-test/public-error/page.js`
 - `/sound-control` -> `app/sound-control/page.js`
 - `/tea-for-two-controller` -> `app/tea-for-two-controller/page.js`
@@ -106,6 +143,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `/transicao-psicodelica` -> `app/transicao-psicodelica/page.js`
 - `/treinamento/controle` -> `app/treinamento/controle/page.js`
 - `/treinamento` -> `app/treinamento/page.js`
+- `/treino-ao-vivo/controle` -> `app/treino-ao-vivo/controle/page.js`
+- `/treino-ao-vivo` -> `app/treino-ao-vivo/page.js`
 - `/treino` -> `app/treino/page.js`
 - `/videomapping-controller` -> `app/videomapping-controller/page.js`
 - `/videomapping` -> `app/videomapping/page.js`
@@ -117,6 +156,7 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `POST /api/chat` -> `app/api/chat/route.js`
 - `POST /api/controller-cues/play` -> `app/api/controller-cues/play/route.js`
 - `GET, PUT, POST /api/controller-cues` -> `app/api/controller-cues/route.js`
+- `GET, POST /api/controller-settings` -> `app/api/controller-settings/route.js`
 - `GET /api/events` -> `app/api/events/route.js`
 - `GET, PUT, POST /api/forca-g-sampler` -> `app/api/forca-g-sampler/route.js`
 - `GET /api/game-assets` -> `app/api/game-assets/route.js`
@@ -129,14 +169,20 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `POST /api/instagram/panel` -> `app/api/instagram/panel/route.js`
 - `POST /api/instagram/password` -> `app/api/instagram/password/route.js`
 - `GET /api/instagram/stream` -> `app/api/instagram/stream/route.js`
+- `GET, POST /api/live-training` -> `app/api/live-training/route.js`
 - `GET /api/modelo-3d/[id]/[asset]` -> `app/api/modelo-3d/[id]/[asset]/route.js`
 - `GET, POST /api/modelo-3d` -> `app/api/modelo-3d/route.js`
 - `GET, POST /api/operator-preferences` -> `app/api/operator-preferences/route.js`
-- `POST /api/operator-public` -> `app/api/operator-public/route.js`
+- `GET, POST /api/operator-public` -> `app/api/operator-public/route.js`
 - `POST /api/operator` -> `app/api/operator/route.js`
 - `POST /api/performance/interaction` -> `app/api/performance/interaction/route.js`
+- `GET /api/post-demo/point-cloud/[id]` -> `app/api/post-demo/point-cloud/[id]/route.js`
+- `POST /api/post-demo/point-cloud` -> `app/api/post-demo/point-cloud/route.js`
+- `GET, POST /api/post-demo` -> `app/api/post-demo/route.js`
 - `GET, POST /api/projection` -> `app/api/projection/route.js`
 - `GET, POST /api/queda-aviao` -> `app/api/queda-aviao/route.js`
+- `POST /api/reference-experiment` -> `app/api/reference-experiment/route.js`
+- `GET /api/reference-island/pieta` -> `app/api/reference-island/pieta/route.js`
 - `GET, POST /api/reliability` -> `app/api/reliability/route.js`
 - `GET, POST /api/robot-sound` -> `app/api/robot-sound/route.js`
 - `GET, PUT /api/scene-notes` -> `app/api/scene-notes/route.js`
@@ -173,6 +219,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/ForcaGShadersController.js`
 - `components/GlitchOverlay.js`
 - `components/InstagramBrowserPanel.js`
+- `components/LiveTraining.js`
+- `components/LiveTrainingController.js`
 - `components/Model3DController.js`
 - `components/OperatorBotSettings.js`
 - `components/OperatorConsole.js`
@@ -181,6 +229,13 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/OperatorPublicLauncher.js`
 - `components/OperatorTypedReply.js`
 - `components/PerformanceLayer.js`
+- `components/PostDemo.js`
+- `components/PostDemoCardImage.js`
+- `components/PostDemoController.js`
+- `components/PostDemoLayoutFrame.js`
+- `components/PostDemoParameters.js`
+- `components/PostDemoPointCloud.js`
+- `components/PostDemoPointCloudControls.js`
 - `components/PreparedSceneController.js`
 - `components/ProjectionMenu.js`
 - `components/ProjectionOperatorSurface.js`
@@ -194,6 +249,10 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/PublicOperatorLayout.js`
 - `components/PublicOperatorPanel.js`
 - `components/PublicSceneStage.js`
+- `components/ReferenceArchive.js`
+- `components/ReferenceArchiveScene.js`
+- `components/ReferenceBooksScene.js`
+- `components/ReferenceExperiment.js`
 - `components/RobotSoundControls.js`
 - `components/SceneAudioEffectsControls.js`
 - `components/SceneNotes.js`
@@ -231,7 +290,9 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `components/EditableCueController.js`
 - `components/ForcaGSamplerController.js`
 - `components/ForcaGShadersController.js`
+- `components/LiveTrainingController.js`
 - `components/Model3DController.js`
+- `components/PostDemoController.js`
 - `components/PreparedSceneController.js`
 - `components/SceneZeroController.js`
 - `lib/controllerSurfaces.js`
@@ -260,7 +321,12 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `CAIXA_PRETA_OPENAI_AUDIT_MOCK`
 - `CAIXA_PRETA_OPERATOR_AUDIT_ROOT`
 - `CAIXA_PRETA_OPERATOR_MOCK`
+- `CAIXA_PRETA_PDF_PYTHON`
 - `CAIXA_PRETA_PERFORMATIVE_RESEARCH`
+- `CAIXA_PRETA_POINT_CLOUD_CONVERTER`
+- `CAIXA_PRETA_POINT_CLOUD_MODEL_SOURCE`
+- `CAIXA_PRETA_POINT_CLOUD_TOOLCHAIN`
+- `CAIXA_PRETA_POST_DEMO_CYCLE_FIXTURE`
 - `CAIXA_PRETA_RELIABILITY_TESTS`
 - `CAIXA_PRETA_RESEARCH_BUDGET`
 - `CAIXA_PRETA_RESEARCH_ENABLED`
@@ -274,6 +340,9 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `CAIXA_PRETA_URL`
 - `CAIXA_PRETA_VOICE_GUIDE_PATH`
 - `CAIXA_PRETA_WEB_SEARCH`
+- `CLOUD_TEST_CONVERSIONS`
+- `CLOUD_TEST_FAILURE`
+- `CLOUD_TEST_REAL_CONVERTER`
 - `INSTAGRAM_COMMENT_TYPE_DELAY_MS`
 - `INSTAGRAM_EMBEDDED`
 - `INSTAGRAM_ENABLED`
@@ -318,14 +387,21 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/audience-sound-check-browser-test.js`
 - `scripts/audience-warmup-agreements-browser-test.js`
 - `scripts/audience-warmup-browser-test.js`
+- `scripts/audience-warmup-current-affairs-test.js`
 - `scripts/audience-warmup-test.js`
 - `scripts/audience-warmup-transition-test.js`
 - `scripts/baralho-morbido-test.js`
+- `scripts/collective-memory-test.js`
+- `scripts/controller-settings-test.js`
 - `scripts/forca-g-sampler-browser-test.js`
 - `scripts/forca-g-sampler-test.js`
 - `scripts/game-director-test.js`
 - `scripts/instagram-controller-test.js`
 - `scripts/internet-voice-test.js`
+- `scripts/live-training-browser-test.js`
+- `scripts/live-training-test.js`
+- `scripts/live-training-typing-browser-test.js`
+- `scripts/live-training-typing-test.js`
 - `scripts/manual-sound-check-browser-test.js`
 - `scripts/operator-preferences-browser-test.js`
 - `scripts/operator-preferences-test.js`
@@ -336,8 +412,23 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/participant-pool-test.js`
 - `scripts/performance-system-test.js`
 - `scripts/play-unlock-browser-test.js`
+- `scripts/post-demo-audio-source-test.js`
+- `scripts/post-demo-browser-test.js`
+- `scripts/post-demo-cycle-test.js`
+- `scripts/post-demo-layout-test.js`
+- `scripts/post-demo-opening-test.js`
+- `scripts/post-demo-point-cloud-browser-test.js`
+- `scripts/post-demo-point-cloud-motion-test.js`
+- `scripts/post-demo-point-cloud-test.js`
+- `scripts/post-demo-point-cloud-watch-browser-test.js`
+- `scripts/post-demo-point-cloud-watch-test.js`
+- `scripts/post-demo-test.js`
 - `scripts/public-composition-browser-test.js`
 - `scripts/public-realtime-browser-test.js`
+- `scripts/public-realtime-multiwindow-browser-test.js`
+- `scripts/reference-island-test.js`
+- `scripts/reference-library-browser-test.js`
+- `scripts/reference-library-test.js`
 - `scripts/research-director-test.js`
 - `scripts/robot-sound-browser-test.js`
 - `scripts/robot-sound-hot-refresh-test.js`
@@ -348,8 +439,10 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/scene-two-d-audio-effects-browser-test.js`
 - `scripts/scene-zero-lighting-test.js`
 - `scripts/scene-zero-suitcase-regression-browser-test.js`
+- `scripts/scene-zero-suitcase-sounds-browser-test.js`
 - `scripts/scene-zero-suitcases-browser-test.js`
 - `scripts/scene-zero-test.js`
+- `scripts/scene-zero-timer-shortcuts-browser-test.js`
 - `scripts/show-reliability-test.js`
 - `scripts/sound-control-browser-test.js`
 - `scripts/suitcase-director-test.js`
@@ -364,6 +457,8 @@ For task routing, prefer `AGENTS.md` and `docs/brain/SYSTEM_MAP.md`. Do not read
 - `scripts/tarot-references-browser-test.js`
 - `scripts/tarot-references-test.js`
 - `scripts/tarot-test.js`
+- `scripts/tarot-typing-browser-test.js`
+- `scripts/tarot-typing-test.js`
 - `scripts/tarot-vision-test.js`
 - `scripts/verdade-ou-bolo-layout-browser-test.js`
 - `scripts/videomapping-browser-test.js`

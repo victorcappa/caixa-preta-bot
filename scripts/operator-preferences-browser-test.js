@@ -15,7 +15,7 @@ async function start(){server=spawn(process.execPath,['node_modules/next/dist/bi
 async function stop(){if(server&&!server.exitCode){const target=server;const ended=new Promise(r=>target.once('exit',r));target.kill('SIGTERM');const timeout=setTimeout(()=>target.kill('SIGKILL'),5000);await ended;clearTimeout(timeout);}server=null;}
 const get=async route=>{const r=await fetch(base+route);assert(r.ok,route);return r.json();};
 const post=async(route,body,status=200)=>{const r=await fetch(base+route,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await r.json();assert.equal(r.status,status,JSON.stringify(data));return data;};
-const preferences=async()=>{const s=await get('/api/state'),t=await get('/api/tarot');return extractOperatorPreferences({...s,tarot:t.tarot});};
+const preferences=async()=>{const s=await get('/api/state'),t=await get('/api/tarot'),p=await get('/api/post-demo');return extractOperatorPreferences({...s,tarot:t.tarot,postDemo:p.postDemo});};
 try{
  await start();let t=await get('/api/tarot');const sessionId=t.sessionId,command=(action,data={})=>post('/api/tarot',{sessionId,action,...data});
  await post('/api/operator-public',{action:'patch',personality:{sarcasm:84,rebellion:37,curiosity:92,verbosity:58}});
@@ -32,13 +32,39 @@ try{
  await post('/api/operator-preferences',{action:'save-current',sessionId:'stale'},409);
  const cross=await fetch(base+'/api/operator-preferences',{method:'POST',headers:{'Content-Type':'application/json',origin:'https://invalid.example'},body:JSON.stringify({action:'save-current',sessionId})});assert.equal(cross.status,403);
  browser=await chromium.launch({headless:true});const page=await browser.newPage({viewport:{width:1440,height:1000}});page.on('pageerror',e=>errors.push(e.message));
+ await page.route('**/api/modelo-3d*',route=>route.fulfill({json:route.request().url().includes('diagnostico')?{ready:false,checks:[]}:{tasks:[]}}));
+ await page.goto(base+'/modelo-3d');
+ await poll(async()=>await page.getByLabel('Qualidade').isEnabled(),'controller settings loaded');
+ await page.getByLabel('Qualidade').selectOption('high');
+ await page.getByLabel('Remover o fundo da imagem antes de gerar',{exact:true}).check();
+ await page.goto('about:blank');
+ await poll(async()=>{const r=await get('/api/controller-settings?scope=model-3d');return r.settings.preset==='high'&&r.settings.removeBackground;},'last UI edits flushed on navigation');
+ const modelChoices=(await get('/api/controller-settings?scope=model-3d')).settings;
+ await page.goto(base+'/queda-aviao-controller');
+ await page.getByText('CONFIGURAR SAMPLES / ATALHOS',{exact:true}).click();
+ await page.getByLabel('Nome do botão',{exact:true}).fill('SAMPLE PERSISTENTE');
+ await page.getByLabel('Duração em ms',{exact:true}).fill('12300');
+ await page.getByRole('slider',{name:'Volume SAMPLE PERSISTENTE',exact:true}).fill('0.35');
+ await page.goto('about:blank');
+ await poll(async()=>{const c=(await get('/api/controller-cues?id=queda-aviao-sampler')).config.cues;return c.some(v=>v.label==='SAMPLE PERSISTENTE'&&v.durationMs===12300&&v.volume===.35);},'cue editor and runtime volume autosave without Save');
+ const savedCue=(await get('/api/controller-cues?id=queda-aviao-sampler')).config.cues.find(v=>v.label==='SAMPLE PERSISTENTE');
+ checks.push('UI options and cue label/duration/volume autosave on navigation without clicking Save');
  await page.goto(base+'/operator');await page.getByRole('status',{name:'Salvamento dos parâmetros'}).getByText(/Ajustes salvos automaticamente/).waitFor();await page.screenshot({path:output+'/operator-saved.png'});
  await command('reset');assert.deepEqual(await preferences(),expected);
  await post('/api/show-session',{action:'new'});assert.deepEqual(await preferences(),expected);t=await get('/api/tarot');assert.equal(t.history.length,0);assert.equal(t.tarot.active,false);
  checks.push('rendered operator status confirms persistence; Tarot reset and a new presentation keep every current setting');
  await page.goto('about:blank');await stop();await start();assert.deepEqual(await preferences(),expected);
+ assert.deepEqual((await get('/api/controller-settings?scope=model-3d')).settings,modelChoices);
+ assert.deepEqual((await get('/api/controller-cues?id=queda-aviao-sampler')).config.cues.find(v=>v.id===savedCue.id),savedCue);
+ const clean=await browser.newContext({viewport:{width:1440,height:1000}}),cleanPage=await clean.newPage();
+ await cleanPage.route('**/api/modelo-3d*',route=>route.fulfill({json:route.request().url().includes('diagnostico')?{ready:false,checks:[]}:{tasks:[]}}));
+ await cleanPage.goto(base+'/modelo-3d');
+ await poll(async()=>await cleanPage.getByLabel('Qualidade').inputValue()==='high','new browser loads server choices');
+ assert(await cleanPage.getByLabel('Remover o fundo da imagem antes de gerar',{exact:true}).isChecked());
+ assert.equal(await cleanPage.getByLabel('Autorizar esta geração no RunPod, com cobrança de GPU na conta configurada.',{exact:true}).isChecked(),false);
+ await clean.close();checks.push('new browser and restarted process keep chosen UI options and cue settings; no automatic generation');
  const fresh=await get('/api/tarot');assert.equal(fresh.tarot.active,false);assert.equal(fresh.tarot.camera.enabled,false);assert.equal(fresh.tarot.hallucination.run.status,'stopped');assert.deepEqual(fresh.tarot.hallucination.seenCards,[]);
  await page.goto(base+'/treinamento/controle');await page.getByRole('status',{name:'Salvamento dos parâmetros'}).getByText(/Ajustes salvos automaticamente/).waitFor();await page.screenshot({path:output+'/tarot-after-restart.png'});
  checks.push('a stopped/restarted production process restores settings automatically without resuming history, timers, camera or effects');
  assert.deepEqual(errors,[]);await fs.writeFile(path.join(output,'report.json'),JSON.stringify({ok:true,checks},null,2));console.log(JSON.stringify({ok:true,checks,output},null,2));
-}finally{await browser?.close();await stop();await fs.writeFile(path.join(output,'server.log'),log);}
+}catch(error){for(const context of browser?.contexts()||[])for(const page of context.pages())await page.screenshot({path:path.join(output,'failure.png')}).catch(()=>{});console.log('Evidence:',output);throw error;}finally{await browser?.close();await stop();await fs.writeFile(path.join(output,'server.log'),log);}

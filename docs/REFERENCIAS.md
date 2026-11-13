@@ -1,0 +1,95 @@
+# Referências e inconsciente coletivo
+
+A aba **Referências** abre `/referencias`, uma superfície de consulta do acervo. Não registra janela pública, não navega a projeção e não dispara falas ou ações de cena. Há três visualizações: **Ilha 3D**, **Livros 3D** e **Lista**. Livros 3D recupera a composição original, com livro em destaque e fichas em órbita, em `components/ReferenceBooksScene.js`; arrastar gira o conjunto e tocar numa ficha abre seu material. A ilha holográfica permite orbitar, aproximar, selecionar objetos e explorar os materiais. As visualizações compartilham seleção, busca e filtros; a lista e os fragmentos continuam acessíveis sem WebGL. O movimento respeita a preferência de movimento reduzido e pode ser pausado.
+
+Cada ficha distingue texto integral extraído, mapa permanente, texto de cena, recorte local e fonte apenas citada. Mostra a procedência, um trecho curto e a ligação original quando disponível. O catálogo é derivado das fontes explícitas de `lib/showMemory.js` e da pesquisa pública em `knowledge/collective/`; não publica notas privadas, exemplos de treino, conversas da apresentação ou dados dos participantes. Nenhum diretório privado é varrido.
+
+## Dissertação de Marcus Garcia
+
+**Labirinto de Labirintos: o trabalho técnico entre o aprisionamento e a possibilidade no teatro**, Marcus Vinícius de Melo Garcia, ECA/USP, versão corrigida de 2025, orientação de Cibele Forjaz Simões. O PDF original tem **182 páginas** e está preservado em `assets/referencias/`; a extração integral por página está em `knowledge/sources/labirinto-de-labirintos.json`. Há verificação do SHA-256 do original e do texto; figuras não foram interpretadas pelo bot. O número da página é a posição no PDF.
+
+Fonte: [Biblioteca de Teses e Dissertações da USP](https://teses.usp.br/teses/disponiveis/27/27162/tde-27032025-140432/publico/MarcusViniciusdeMeloGarciacorrigidaPPGAC5434469.pdf). A autorização de reprodução para estudo e pesquisa com atribuição consta na terceira página. A procedência é mantida no acervo; o bot não transforma isso em citações espontâneas ao público. Os filtros específicos do Tarô continuam separados da recuperação textual geral.
+
+Para substituir o PDF, executar `npm run memory:sync`, `npm run memory:audit` e `npm run memory:dissertation`. O runtime usa JSON e não depende de Python; a extração utiliza o Python/PyMuPDF já documentado em `docs/TREINO_AO_VIVO.md`.
+
+## Pessoas, obras e influência silenciosa
+
+A pesquisa pública parte da [ficha técnica do Instituto Capobianco](https://institutocapobianco.art.br/a-caixa-preta-versao-demo), conferida em **12/11/2026**. São **35 pessoas** do núcleo de criação, elenco/equipe e rede de colaboradores de pesquisa, com vínculos separados por `membership` e papéis por `creditRole`. A entidade creditada como **Molde** é registrada à parte e não contada como pessoa. A lista de participantes usada pelos sorteios não define este acervo.
+
+Os três JSONs em `knowledge/collective/` registram trabalhos acadêmicos, artísticos e práticas de pesquisa, fontes públicas, datas de consulta, cobertura e limites. Grafias alternativas são preservadas como aliases quando verificadas. Não encontrar uma publicação acadêmica significa **não localizada nesta pesquisa**, nunca ausência de produção. Um crédito ou resumo público consultado não equivale a ler uma tese, assistir a uma performance ou incorporar uma obra integral. A dissertação de Marcus tem ingestão integral separada; as demais pesquisas têm a cobertura indicada em cada ficha.
+
+`lib/collectiveMemory.js` converte os motivos editoriais dessas fichas em uma camada permanente de associação no prompt compartilhado da personagem. Esta camada não contém os currículos, títulos, nomes ou URLs das fichas. Os motivos são inferências editoriais sobre práticas públicas, não citações, traços psicológicos ou acesso à vida pessoal. A dramaturgia, a direção cênica e o acontecimento presente mantêm prioridade.
+
+O bot deve transformar essa matéria em sua própria voz: imagem, ritmo, humor, atenção ao corpo, ao objeto, ao arquivo e ao trabalho. Não anuncia a influência nem recita referências espontaneamente. Pode responder com atribuição e limites quando alguém pede explicitamente informações sobre uma pessoa, obra ou fonte. O sistema não altera os pesos do modelo; fornece contexto para suas próximas gerações. Os JSONs invalidam o cache quando mudam; mudanças no código exigem rebuild/restart em produção.
+
+## Ilha holográfica e objetos da peça
+
+O terreno, o mar em grade e pequenos fragmentos cênicos são uma composição original da interface. **Treze GLBs** foram copiados byte a byte de `../modelos-3d/AR/`, na pasta Caixa Preta indicada pelo usuário: avião quebrado, piloto, caixa-preta, cadeira, quati, borboleta, Zippo, cigarro, óculos, medalha, braço, perna e rã. O piloto e a cadeira usam as versões otimizadas já existentes nessa pasta, sem nova simplificação. A apresentação permite alternar entre holograma e materiais originais. Os arquivos originais permanecem intactos.
+
+Dois sóis cênicos atravessam o espaço em trajetórias fechadas de 144 e 192 segundos, em alturas diferentes. Um tem superfície luminosa e coroa; o outro conserva a cor com transparência, brilho de contorno, varreduras, granulação e pequenas falhas de projeção calculadas no shader, sem malha de linhas sobre a esfera. Ambos fazem fades de seis segundos entre amarelo, laranja, vermelho, verde e azul, com fases distintas e saturação preservada. A animação compartilha **Pausar movimento** e a preferência de movimento reduzido da ilha. Os sóis são ambientação, não fichas do acervo; o holograma solar permanece ao alternar os materiais dos modelos. Implementação: `lib/createReferenceSuns.js`, com campos de holograma compartilhados em `lib/referenceHologram.js`. A superfície e a parte inferior da ilha recebem esse mesmo tratamento: transparência, varreduras e falhas suaves modulam a iluminação e as cores existentes. A malha triangular desenhada sobre o terreno foi retirada; a grade do mar permanece como ambiente. Todos esses efeitos usam o relógio pausável da ilha e respeitam movimento reduzido.
+
+A **Pietà** é o décimo quarto objeto, exportada especificamente de `../pieta1.blend`, objeto `3DModel`; não usa um modelo de catálogo. Sua superfície mantém 950.347 polígonos, triangulados em 950.437 triângulos na exportação, com materiais/texturas. O GLB tem aproximadamente 101 MiB descomprimido, transferidos em gzip sem perda (~48 MiB), e é admitido automaticamente em **Tudo**, junto aos demais modelos. Em outros recortes, carregam os modelos correspondentes ao filtro ou escolhidos explicitamente. A rota `app/api/reference-island/pieta/route.js` serve apenas esse arquivo estático permitido. A admissão é sequencial para limitar decodificações concorrentes; **Tudo** solicita os 14 modelos, incluindo a Pietà. Falhas ficam visíveis com possibilidade de nova seleção. Os decodificadores Draco estão servidos localmente, sem CDN.
+
+`public/references/island/manifest.json` registra origem relativa, SHA-256, tamanho, geometria, posição original, tema curatorial e indicação original de bootstrap. A distribuição visual atual e a admissão completa de Tudo são definidas em `lib/referenceIsland.js` e `lib/createReferenceIsland.js`. As fichas dos objetos dizem explicitamente que geometria visual não é texto consultado pelo bot. A autoria dos modelos não é inferida de sua posição junto a uma pessoa ou referência.
+
+Para recopiá-los: `node scripts/prepare-reference-island-assets.cjs`. Para atualizar também a escultura, exporte com Blender em modo seguro:
+
+```sh
+/Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --disable-autoexec --python scripts/export-reference-island-pieta.py -- /private/tmp/pieta-ilha.glb
+node scripts/prepare-reference-island-assets.cjs --pieta-glb /private/tmp/pieta-ilha.glb
+```
+
+O exportador lê a origem e grava somente o GLB/JSON de saída. A preparação exige que a contagem triangulada do GLB corresponda à origem e conserva seus hashes. O script sem `--pieta-glb` mantém a escultura preparada e verifica seu gzip. O funcionamento da ilha não depende das pastas externas depois da preparação.
+
+## As coisas: forma, função e pessoa
+
+A Cena 3 do texto local (páginas 13–16) fornece a referência: malas abertas, objetos que remetem a pessoas, gabinete de curiosidades, usos fora do uso e o fonógrafo como permanência de uma voz. A interface retoma essa lógica sem afirmar que suas novas ferramentas já fazem parte da encenação.
+
+Os marcadores luminosos das fichas foram substituídos por objetos com volume, silhueta, cor e nome: livro, câmera, espelho, telefone, mala, chave inglesa, tesoura, funil, lupa, martelo, controle, fonógrafo, guarda-chuva, chave, lanterna e fita cassete. São geometrias novas em `lib/createReferenceThing.js`; os 14 modelos locais permanecem preservados. Estrelas e linhas são apenas ambientação, sem representar fichas selecionáveis.
+
+Em **Tudo**, o gabinete tem oito ferramentas grandes, com ações distintas, também disponíveis em botões acessíveis:
+
+| Coisa | Uso deslocado na interface |
+| --- | --- |
+| Fonógrafo | Abre as pessoas e percorre suas biografias. |
+| Guarda-chuva | Reúne as lacunas da pesquisa. |
+| Tesoura | Recorta o acervo pela afinidade da ficha aberta. |
+| Martelo | Escolhe dois materiais com poucas afinidades em comum para o laboratório; não gera uma fala automaticamente. |
+| Espelho de três faces | Abre a ficha de Morel e sua ligação documentada com o espelho. |
+| Chave | Reabre todo o acervo e retorna à vista da ilha. |
+| Mala | Despeja a ilha na visualização em lista. |
+| Lanterna | Alterna holograma e materiais originais dos modelos. |
+
+`lib/referenceThings.js` define esses usos e a representação curatorial das fichas. **Tudo apresenta os 197 registros**, sem resumo por vizinhança e sem paginação: 183 representações de referências e os 14 modelos cênicos. Os demais filtros também apresentam todos os materiais correspondentes. O terreno, a grade, o enquadramento e a posição dos sóis acompanham a expansão da ilha. Os modelos e ferramentas ocupam um núcleo separado das referências, com posições fixas ao selecionar. Tocar integra os fragmentos, aproxima a câmera e abre a ficha, preservando categoria e busca. Ferramentas executam sua ação por **Usar esta ferramenta**, na ficha, ou pelos botões do gabinete.
+
+**Pessoas** exibe simultaneamente as 35 representações, ou todas as correspondentes à busca e afinidade ativas. Os nomes aparecem na seleção e no hover para manter a leitura do conjunto. O enquadramento inicial se adapta à largura da tela. Oculta ferramentas gerais, modelos cênicos, seus rótulos, escombros e sóis, assim como os respectivos atalhos. Essas camadas retornam ao sair do recorte. A seleção por raio verifica também a visibilidade dos ancestrais de cada malha, para que um objeto oculto não intercepte o toque. A base da ilha permanece como ambiente.
+
+Os objetos das referências, as ferramentas e os modelos cênicos começam como fragmentos coloridos amostrados de suas superfícies, com flutuação e pulso. `lib/createReferenceFragments.js` usa instâncias de pequenos volumes e animação no shader. Os fragmentos têm largura de 1,9–3,7% do tamanho normalizado do objeto, com 1.700 instâncias por referência/ferramenta e 3.000 por modelo cênico. O detalhe diminui na visão distante do atlas e retorna ao aproximar. Ao tocar, os fragmentos convergem e cedem lugar à geometria original; ao selecionar outro objeto, o anterior volta a se fragmentar. A integração dura cerca de 1,15 segundo de animação e funciona mesmo com o movimento ambiente pausado. Com movimento reduzido, a resposta ao toque é imediata. Livros 3D conserva sua composição original. Os arquivos e as geometrias dos modelos locais permanecem intactos.
+
+O toque usa as posições animadas dos fragmentos, com tolerância em pixels; caixas amplas são apenas uma triagem espacial. Objetos integrados usam sua malha real. O fragmento mais próximo do ponto de toque tem prioridade, e rótulos só servem de alternativa quando não há geometria sob o cursor. Implementação: `lib/referencePicking.js` e `lib/createReferenceFragments.js`.
+
+O espelho tem três painéis e está associado a `CP-05`, sobre Morel. A ligação foi conferida na [entrevista de Bioy Casares a Miguel Losada, publicada pela Revista Turia](https://www.ieturolenses.org/revista_turia/index.php/actualidad_turia/adolfo-bioy-casares-la-invencion-de-lo-fatastico-cotidiano). A fonte fica acessível na ficha; o objeto 3D é uma releitura curatorial.
+
+`data/reference-biographies.json` contém **35 biografias breves e autorais na voz da Caixa**, baseadas nas fichas públicas já verificadas. Descrevem papéis, práticas e trabalhos, com comentários da personagem. As fontes e limitações ficam junto de cada ficha; créditos parciais de Diego Di Mira e Ricardo Kenji não foram completados por suposição, e o crédito incerto de Felipe Cruz em outra obra não foi promovido a fato biográfico. Objetos associados a pessoas são escolhas curatoriais, não pertences reais ou retratos psicológicos.
+
+As biografias só são apresentadas no acervo. Não entram nos motivos de `lib/collectiveMemory.js`, no prompt permanente nem espontaneamente na interação pública. A escrita dessas fichas não usa uma chamada automática ao modelo.
+
+Cada uma das 35 pessoas tem também um `objectReason`: uma razão individual para o objeto, aproximando práticas e obras verificadas dos motivos da dramaturgia. Por exemplo, câmera e escaneamento para Victor, fonógrafo e registro sonoro para Matheus, controle e obediência para Luzia, chave inglesa e trabalho técnico para Marcus. Esses vínculos visuais também ficam no acervo. Os espelhos genéricos antes atribuídos a pessoas foram retirados; a forma de três faces está ligada a Morel.
+
+## Relações, percursos, lacunas e cruzamentos
+
+`lib/referenceIsland.js` define sete afinidades: memória, corpo, falha, duplo, trabalho, jogo e travessia. São leituras curatoriais calculadas a partir de títulos, resumos, motivos e tags, não diagnóstico das pessoas nem prova de influência entre artistas. Selecionar um tema muda as coisas abertas na ilha. Ligações já registradas pelo catálogo aparecem contínuas; aproximações curatoriais são identificadas como tais e aparecem tracejadas. As fichas permitem percorrer ambas. Três trajetos editoriais — **Depois da queda**, **Mãos da máquina**, **Habitantes e duplos** — conduzem o olhar entre objetos e temas. **Lacunas** filtra pesquisas parciais ou limites de verificação; não encontrar uma publicação não prova ausência de produção.
+
+O laboratório abaixo da ilha recebe dois materiais escolhidos nas fichas. **Ver contexto das fontes** recupera trechos sem consultar um modelo. **Gerar improvisação privada** faz uma chamada ao modelo configurado, somente após o clique; não publica na conversa, não altera `showState`, cenas, projeções, notas ou treinos. Sem provedor configurado ou após falha, aparece um erro explícito. Não há resposta simulada apresentada como geração real, busca externa, ferramentas ou reenvio automático.
+
+`lib/referenceExperiment.js` limita a consulta aos IDs do catálogo e preserva os trechos, páginas e hashes efetivamente fornecidos, além da procedência das sete bases permanentes e dos três arquivos da influência coletiva. O resultado revela esse **contexto enviado**, não o raciocínio interno do modelo nem uma medição causal de influência. O registro diz respeito aos experimentos desta aba; não é um histórico de todas as gerações da apresentação. Fontes só citadas fornecem seus registros bibliográficos; um objeto 3D fornece apenas descrição/metadados, sem alegar visão computacional. **Guardar no caderno desta aba** conserva até oito experimentos no `sessionStorage` local; não altera o acervo compartilhado. O caderno pode ser esvaziado pela própria interface.
+
+## Verificação
+
+- `npm run test:collective-memory`: cobertura das 35 pessoas, integridade das fontes, motivos no prompt dos modos, separação de biografias e dados privados, atualização de cache em fixture descartável.
+- `npm run test:references`: catálogo completo, proveniência e contagens coerentes com o índice real; fontes citadas não são apresentadas como textos integrais.
+- `npm run memory:dissertation`: todas as páginas, hashes, recuperação por assunto, atribuição interna, filtro do Tarô e rejeição de original alterado.
+- `npm run test:references:island`: cópias/hashes dos 14 modelos, triangulação da Pietà, oito ferramentas com usos distintos, 35 biografias e suas representações, seleção de fragmentos e malhas, atlas completo, afinidades e relações, percursos, contexto do experimento, modelo simulado e limites das ações privadas.
+- `npm run test:references:browser`: build em cópia isolada e porta 3339, navegação/busca/seleção/filtros, alternância entre Ilha 3D/Livros 3D/Lista com seleção compartilhada, Tudo completo, 35 pessoas simultâneas, integração ao toque, cliques 3D preservando Pessoas e busca, inspeção de ferramentas antes do uso explícito, 14 modelos reais incluindo a Pietà, materiais originais/holograma, afinidades, percursos, lacunas, laboratório com provedor simulado e caderno, desktop/mobile, movimento reduzido, ausência de WebGL e ausência de comandos de projeção ou geração pública. Não toca o servidor da apresentação.
+
+Essas verificações não provam a qualidade de uma resposta de modelo real, a apresentação física ou uma implantação em produção. A regra de influência silenciosa foi implementada no contexto; comportamento efetivo exige ensaio e revisão das falas geradas.

@@ -1,0 +1,5 @@
+# Preserve imported research PDFs byte-for-byte and keep diffs textual elsewhere.
+assets/referencias/*.pdf binary
+
+public/references/island/models/*.glb binary
+public/references/island/models/*.gz binary

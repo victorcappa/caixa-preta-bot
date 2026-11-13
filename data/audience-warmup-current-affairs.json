@@ -1,0 +1,63 @@
+{
+  "week": "2026-11-09",
+  "updatedAt": "2026-11-12T22:10:49Z",
+  "items": [
+    {
+      "id": "sp-temporais",
+      "region": "sao_paulo",
+      "title": "São Paulo mobiliza gabinete de crise para temporais",
+      "eventDate": "2026-11-05",
+      "fact": "Em 5 de novembro, a Defesa Civil paulista ativou um gabinete de crise remoto para os temporais previstos de 5 a 7 de novembro.",
+      "theme": "acidente_protocolo",
+      "importance": 4,
+      "relevance": "Conecta alerta, protocolo e vulnerabilidade dos corpos diante de uma catástrofe; retoma as instruções de emergência da peça.",
+      "source": {
+        "title": "Agência SP / Defesa Civil — gabinete de crise para temporais",
+        "url": "https://www.agenciasp.sp.gov.br/defesa-civil/defesa-civil-de-sp-renova-alerta-de-temporais-e-ativa-gabinete-de-crise-remoto/",
+        "publishedAt": "2026-11-05"
+      },
+      "text": "QUEM JÁ RECEBEU ALERTA DE EMERGÊNCIA NO CELULAR LEVANTA A MÃO.",
+      "action": "hand",
+      "interactionType": "confession",
+      "tags": ["alerta", "protocolo", "acidente"]
+    },
+    {
+      "id": "brasil-ia-educacao",
+      "region": "brasil",
+      "title": "Brasil estabelece diretrizes para IA na educação",
+      "eventDate": "2026-11-10",
+      "fact": "Em 10 de novembro, o governo federal anunciou diretrizes para orientar o uso responsável de inteligência artificial na educação.",
+      "theme": "ia_duplicacao",
+      "importance": 4,
+      "relevance": "Liga a caixa preta da IA à delegação de pensamento, à autoria e à reprodução de registros e vozes humanas.",
+      "source": {
+        "title": "Secom — diretrizes para uso responsável da IA na educação",
+        "url": "https://www.gov.br/secom/pt-br/acompanhe-a-secom/noticias/2026/11/governo-federal-estabelece-diretrizes-para-uso-responsavel-da-ia-na-educacao",
+        "publishedAt": "2026-11-10"
+      },
+      "text": "QUEM JÁ ENTREGOU UM TEXTO ESCRITO POR INTELIGÊNCIA ARTIFICIAL CRUZA OS BRAÇOS.",
+      "action": "pose",
+      "interactionType": "confession",
+      "tags": ["IA", "autoria", "duplicação"]
+    },
+    {
+      "id": "mundo-calor-omm",
+      "region": "mundo",
+      "title": "OMM aponta 2026 entre os quatro anos mais quentes",
+      "eventDate": "2026-11-09",
+      "fact": "O boletim da Organização Meteorológica Mundial publicado em 9 de novembro indica que 2026 estará entre os quatro anos mais quentes já registrados.",
+      "theme": "clima_sobrevivencia",
+      "importance": 5,
+      "relevance": "Aproxima o calor que ameaça os corpos e a Terra dos Dois Sóis dos registros científicos de um mundo em transformação.",
+      "source": {
+        "title": "OMM — State of the Climate Update for COP31",
+        "url": "https://wmo.int/resources/publication-series/state-of-climate-update-cop/state-of-climate-update-cop31",
+        "publishedAt": "2026-11-09"
+      },
+      "text": "QUEM JÁ PERDEU O SONO POR CAUSA DO CALOR FECHA OS OLHOS.",
+      "action": "eyes",
+      "interactionType": "confession",
+      "tags": ["calor", "corpo", "sobrevivência"]
+    }
+  ]
+}

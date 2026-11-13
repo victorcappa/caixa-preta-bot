@@ -3,6 +3,15 @@ const assert = require("node:assert/strict");
 async function main() {
   const sound = await import("../lib/robot-sound/state.js");
   const engineModule = await import("../lib/robot-sound/RobotSoundEngine.js");
+  const shared = engineModule.robotSoundEngine, sharedSettings = shared.settings;
+  const contextBefore = shared.context, outputMarker = { state: "running" };
+  shared.context = outputMarker; shared.typing = () => {}; shared.handleRelayMessage = () => {};
+  const refreshedEngine = await import("../lib/robot-sound/RobotSoundEngine.js?typing-volume-refresh");
+  assert.equal(refreshedEngine.robotSoundEngine, shared, "sound refresh preserves the existing output instance");
+  assert.equal(shared.context, outputMarker); assert.equal(shared.settings, sharedSettings);
+  assert.equal(shared.typing, refreshedEngine.RobotSoundEngine.prototype.typing);
+  assert.equal(shared.handleRelayMessage, refreshedEngine.RobotSoundEngine.prototype.handleRelayMessage);
+  shared.context = contextBefore;
   const glitch = await import("../lib/glitch/state.js");
   const unlock = await import("../data/scene-zero-unlock.js");
 
@@ -119,6 +128,84 @@ async function main() {
   assert.notEqual(system95Blip.pitch, robotClick.pitch);
   assert.notEqual(system95Blip.pitch, system95Blip.toPitch);
   assert.equal(system95Blip.destination, engine.typingGain);
+
+  function typingFixture(soundStyle) {
+    const instance = new engineModule.RobotSoundEngine();
+    const voices = [];
+    instance.setSettings({ ...instance.settings, soundStyle, soundStyleVersion: sound.ROBOT_SOUND_STYLE_VERSION, typingFrequency: 1 });
+    const savedSettings = { ...instance.settings };
+    Object.freeze(instance.settings);
+    instance.canPlay = () => true;
+    instance.typingGain = { id: "fixture-typing-gain" };
+    instance.click = instance.computerBlip = (options) => voices.push(options);
+    instance.masterGain = { gain: { setTargetAtTime() { assert.fail("typing não deve alterar o ganho mestre"); } } };
+    instance.setSettings = () => assert.fail("o volume de uma fala não deve virar uma preferência salva");
+    return { instance, voices, savedSettings };
+  }
+
+  for (const style of ["robot", "system95"]) {
+    const { instance, voices, savedSettings } = typingFixture(style);
+    instance.typing("A", { force: true, localOnly: true });
+    const fullLevel = voices.at(-1).level;
+    instance.typing("A", { force: true, localOnly: true, volumeScale: .25 });
+    assert.equal(voices.at(-1).level, fullLevel * .25, `${style}: escala apenas o nível desta voz`);
+    for (const volumeScale of [2, NaN, Infinity]) {
+      instance.typing("A", { force: true, localOnly: true, volumeScale });
+      assert.equal(voices.at(-1).level, fullLevel, `${style}: limita valores altos e usa 1 para não finitos`);
+    }
+    const beforeMute = voices.length;
+    let gateCalls = 0, relayCalls = 0;
+    instance.canPlay = () => { gateCalls += 1; return true; };
+    instance.relayEffect = () => { relayCalls += 1; return false; };
+    instance.typing("A", { force: true, volumeScale: 0 });
+    instance.typing("A", { force: true, volumeScale: -1 });
+    assert.equal(voices.length, beforeMute);
+    assert.equal(gateCalls, 0, `${style}: mudo não chega a criar vozes`);
+    assert.equal(relayCalls, 0, `${style}: mudo não envia eventos de áudio`);
+    instance.canPlay = () => false;
+    instance.typing("A", { force: true, localOnly: true, volumeScale: .25 });
+    assert.equal(voices.length, beforeMute, `${style}: preserva o bloqueio local canPlay`);
+    assert.deepEqual(instance.settings, savedSettings);
+
+    const glitchFixture = typingFixture(style), scheduled = [];
+    glitchFixture.instance.glitch = { active: true, intensity: 1 };
+    glitchFixture.instance.scheduleTimer = (callback, delay, kind) => scheduled.push({ callback, delay, kind });
+    glitchFixture.instance.relayEffect = () => assert.fail("repetição recebida pelo sink deve permanecer local");
+    Math.random = () => .15;
+    glitchFixture.instance.typing("A", { force: true, localOnly: true, volumeScale: .25 });
+    assert.equal(scheduled.length, 1);
+    assert.equal(scheduled[0].kind, "glitch");
+    scheduled[0].callback();
+    assert.equal(glitchFixture.voices.length, 2);
+    assert.equal(glitchFixture.voices[1].level, glitchFixture.voices[0].level, `${style}: repetição glitch preserva a escala`);
+    assert.deepEqual(glitchFixture.instance.settings, glitchFixture.savedSettings);
+    Math.random = () => 0;
+  }
+
+  const scaledRelayMessages = [];
+  const scaledRelaySource = new engineModule.RobotSoundEngine();
+  scaledRelaySource.relayChannel = { postMessage: (message) => scaledRelayMessages.push(message) };
+  scaledRelaySource.relaySinks.set("scaled-sink", Date.now());
+  scaledRelaySource.canPlay = () => false;
+  scaledRelaySource.click = scaledRelaySource.computerBlip = () => assert.fail("a origem não deve tocar áudio encaminhado");
+  const sourceSettings = { ...scaledRelaySource.settings };
+  scaledRelaySource.typing("A", { force: true, volumeScale: .25 });
+  scaledRelaySource.typing("A", { force: true, volumeScale: 0 });
+  assert.equal(scaledRelayMessages.length, 1, "encaminha uma vez e suprime a fala muda mesmo sem áudio local");
+  assert.equal(scaledRelayMessages[0].volumeScale, .25);
+  assert.equal(scaledRelayMessages[0].force, true);
+  assert.deepEqual(scaledRelaySource.settings, sourceSettings);
+  const { instance: scaledSink, voices: scaledSinkVoices, savedSettings: sinkSettings } = typingFixture("system95");
+  scaledSink.relaySinkId = "scaled-sink";
+  scaledSink.relaySinkUsers = 1;
+  scaledSink.context = { state: "running" };
+  scaledSink.relayEffect = () => assert.fail("o sink não deve reenviar a digitação recebida");
+  scaledSink.typing("A", { force: true, localOnly: true });
+  const sinkFullLevel = scaledSinkVoices[0].level;
+  scaledSink.handleRelayMessage(scaledRelayMessages[0]);
+  assert.equal(scaledSinkVoices.length, 2);
+  assert.equal(scaledSinkVoices[1].level, sinkFullLevel * .25, "o sink aplica a escala recebida uma única vez");
+  assert.deepEqual(scaledSink.settings, sinkSettings);
 
   const system95Effects = [];
   engine.system95Sequence = (notes, options) => system95Effects.push({ notes, options });

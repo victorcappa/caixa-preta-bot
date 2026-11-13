@@ -12,6 +12,7 @@ import {
 } from "@/data/scene-zero-gincanas";
 import { SCENE_ZERO_MOREL_BIOS_DURATION_MS, SCENE_ZERO_MOREL_BIOS_LINES, SCENE_ZERO_MOREL_BIOS_LINE_INTERVAL_MS } from "@/data/scene-zero-morel";
 import { SCENE_ZERO_SUITCASE_CUE_DURATION_MS, sceneZeroSuitcaseCueFrameAt, shouldShowSceneZeroSuitcaseCue } from "@/lib/scene-zero/suitcaseGame";
+import { sceneZeroSuitcaseResultSounds } from "@/lib/scene-zero/suitcaseSounds";
 import { AUDIENCE_WARMUP_MINIGAMES, getAudienceWarmupMinigame } from "@/data/audience-warmup-minigames";
 import { SCENE_ZERO_HANGMAN_THEMES } from "@/data/scene-zero-hangman-words";
 import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
@@ -471,7 +472,7 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup, bo
   const suitcaseCueFrame = sceneZeroSuitcaseCueFrameAt(suitcaseSelectionAge, sceneZero?.suitcaseGame?.currentSuitcase);
   const suitcaseCuePhase = sceneZero?.suitcaseGame?.cuePhase || "idle";
   const suitcaseChoice = sceneZero?.suitcaseGame?.choice || {};
-  const preDrawHangman = suitcaseChoice.targetSuitcase === 3
+  const preDrawHangman = suitcaseChoice.targetSuitcase === 1
     && ["challenge_preparing", "challenge_instruction", "challenge_ready", "challenge", "challenge_result", "challenge_complete"].includes(suitcaseChoice.status);
   const manualSuitcaseCue = ["drawing", "selected", "open"].includes(suitcaseCuePhase);
   const showSuitcaseSelection = shouldShowSceneZeroSuitcaseCue(sceneZero?.suitcaseGame, now, publicMessage) && !showTimer;
@@ -484,13 +485,13 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup, bo
   const physicalSeconds = timerSeconds(gincanaTimer, now);
   const physicalUrgent = gincanaTimer?.status === "running" && physicalSeconds <= 3;
   const showHangman = Boolean(
-    (sceneZero?.suitcaseGame?.currentSuitcase === 3 || preDrawHangman)
+    (sceneZero?.suitcaseGame?.currentSuitcase === 1 || preDrawHangman)
     && hangman?.activity
     && hangman.status === "active"
     && (preDrawHangman || suitcaseCuePhase === "complete" || suitcaseSelectionAge >= SCENE_ZERO_SUITCASE_CUE_DURATION_MS)
   );
   const themeDraw = hangman.themeDraw || {};
-  const showHangmanThemeDraw = (sceneZero?.suitcaseGame?.currentSuitcase === 3 || preDrawHangman)
+  const showHangmanThemeDraw = (sceneZero?.suitcaseGame?.currentSuitcase === 1 || preDrawHangman)
     && publicMessage?.source !== "scene-zero-hangman-instruction"
     && (themeDraw.status === "drawing" || themeDraw.status === "selected" && hangman.status === "ready");
   const themeDrawElapsed = Math.max(0, now - Date.parse(themeDraw.startedAt || now));
@@ -498,7 +499,7 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup, bo
   const hangmanSeconds = timerSeconds(hangman?.timer, now);
   const morelBiosAge = now - Date.parse(morelBios?.startedAt || "");
   const showMorelBios = Boolean(
-    sceneZero?.suitcaseGame?.currentSuitcase === 1
+    sceneZero?.suitcaseGame?.currentSuitcase === 3
     && morelBios?.status === "running"
     && morelBiosAge >= 0
   );
@@ -633,15 +634,14 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup, bo
     };
   }, [hangman?.status, hangman?.timer?.startedAt]);
 
-  const hangmanResultSoundRef = useRef(null);
+  const suitcaseResultSoundsRef = useRef(new Set());
   useEffect(() => {
-    if (!["won", "lost"].includes(hangman?.status)) return;
-    const resultKey = `${hangman.sequence}:${hangman.status}`;
-    if (hangmanResultSoundRef.current === resultKey) return;
-    hangmanResultSoundRef.current = resultKey;
-    if (hangman.status === "won") robotSoundEngine.success();
-    else robotSoundEngine.error();
-  }, [hangman?.sequence, hangman?.status]);
+    for (const sound of sceneZeroSuitcaseResultSounds(sceneZero)) {
+      if (suitcaseResultSoundsRef.current.has(sound.key)) continue;
+      suitcaseResultSoundsRef.current.add(sound.key);
+      robotSoundEngine[sound.effect]();
+    }
+  }, [sceneZero]);
 
   const hangmanErrorImpactRef = useRef({ attemptKey: null, errorCount: 0 });
   useEffect(() => {
@@ -688,8 +688,8 @@ export default function SceneZeroProjectionLayer({ sceneZero, audienceWarmup, bo
         </div>
       ) : null}
       {showPhysicalChallenge ? (
-        <section className={`${styles.physicalChallengeOverlay} ${physicalUrgent ? styles.physicalChallengeUrgent : ""}`} aria-label="Desafio das bexigas da Mala Centro" aria-live="assertive">
-          <header><span>MALA CENTRO</span><b>BEXIGAS E CHAVE</b></header>
+        <section className={`${styles.physicalChallengeOverlay} ${physicalUrgent ? styles.physicalChallengeUrgent : ""}`} aria-label="Desafio das bexigas da Mala 2" aria-live="assertive">
+          <header><span>MALA 2</span><b>BEXIGAS E CHAVE</b></header>
           <div className={styles.physicalChallengeBody}>
             <div className={styles.physicalChallengeSteps}>
               <article data-active="true">

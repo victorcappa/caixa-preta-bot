@@ -14,6 +14,7 @@ import { robotSoundEngine } from "@/lib/robot-sound/RobotSoundEngine";
 import { ROBOT_DISPLAY_FONT_DEFAULT, robotTypingIntervalMs, robotTypingDelayMs, robotMessageGapMs } from "@/lib/robot-sound/state";
 import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import { isMainProjectionMessage } from "@/lib/publicText";
+import { isSceneZeroSuitcaseResultMessage } from "@/lib/scene-zero/suitcaseSounds";
 import { useProjectionTextFit } from "@/lib/useProjectionTextFit";
 import PublicModule from "./PublicModule";
 import { PUBLIC_LAYOUT_CHANGE_EVENT, PUBLIC_LAYOUTS } from "@/lib/projectionScreens";
@@ -363,7 +364,6 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
 
     setTypedReplies((current) => ({ ...current, [message.id]: "" }));
     robotSoundEngine.wake();
-    if (message.source?.startsWith("scene-zero-hangman-retry:")) robotSoundEngine.impact();
     let index = 0;
     const typeNextCharacter = () => {
       index += 1;
@@ -391,14 +391,14 @@ export default function Chat({ initialPublicLayout = PUBLIC_LAYOUTS.principal })
         const suitcaseRetryMessage = message.source?.startsWith("scene-zero-gincana-retry:")
           || message.source?.startsWith("scene-zero-hangman-retry:");
         if (message.source === "audience-warmup-agreements:attention") robotSoundEngine.attention();
-        else if (message.source?.startsWith("scene-zero-hangman-retry:")) {
-          // O impacto desta falha toca assim que o quadro vermelho entra.
+        else if (isSceneZeroSuitcaseResultMessage(message)) {
+          // O resultado já toca na projeção assim que o estado da mala muda.
         }
         else if (message.source === "scene-zero-gincana-start") {
           // O início já usa o efeito gameStart sincronizado ao cronômetro.
         }
         else if (message.source === "audience-warmup-agreements:failure" || message.source?.endsWith(":failure")) robotSoundEngine.error();
-        else if (!message.source?.startsWith("scene-zero-hangman-result:")) robotSoundEngine.success();
+        else robotSoundEngine.success();
         if (
           suitcaseFlowMessage
           || suitcaseRetryMessage

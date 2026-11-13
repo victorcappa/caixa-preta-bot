@@ -139,6 +139,8 @@ try {
   sceneOperator.on("pageerror", (error) => pageErrors.push(error.message));
   await sceneOperator.setViewportSize({ width: 1440, height: 1000 });
   await sceneOperator.goto(`${BASE_URL}/cena-0-controller`, { waitUntil: "domcontentloaded" });
+  // The floating notes can cover the response buttons; close them through the normal UI.
+  await sceneOperator.locator('aside[aria-label="Anotações de CENA 0"]').getByRole("button", { name: /MINIMIZAR/ }).click();
   const sceneWarmupToggle = sceneOperator.locator("#scene-zero-unlock").getByRole("button", { name: /ESQUENTAR PÚBLICO/ });
   await sceneWarmupToggle.waitFor();
   await sceneWarmupToggle.click();
@@ -218,6 +220,51 @@ try {
   await sceneOperator.waitForFunction(() => document.querySelector('section[aria-label="Resposta da pergunta atual"] button[aria-pressed="true"]')?.textContent?.startsWith("MUITOS"));
   assert.equal(state.audienceWarmup.responseHistory.at(-1).promptId, promptBeforeReaction);
 
+  const newsPromptId = "atualidades-pandemia-cibernetica";
+  const manualModeBeforeNews = state.audienceWarmup.manualMode;
+  await post(context.request, "set-manual-mode", { manualMode: true });
+  await post(context.request, "trigger-prompt", { promptId: newsPromptId });
+  state = await snapshot(context.request);
+  assert.equal(state.audienceWarmup.sequence.promptId, newsPromptId);
+  assert.equal(state.audienceWarmup.sequence.category, "atualidades");
+  await display.getByText(state.publicMessage.content, { exact: true }).waitFor();
+  const newsManyButton = responseControls.getByRole("button", { name: "MUITOS LEVANTARAM A MÃO", exact: true });
+  const newsFewButton = responseControls.getByRole("button", { name: "POUCOS LEVANTARAM A MÃO", exact: true });
+  await newsManyButton.waitFor();
+  await newsFewButton.waitFor();
+  assert.equal(await newsManyButton.isEnabled(), true, "atualidades deve habilitar o registro de MUITOS");
+  assert.equal(await newsFewButton.isEnabled(), true, "atualidades deve habilitar o registro de POUCOS");
+  await newsFewButton.click();
+  state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.currentResponse?.promptId === newsPromptId
+    && candidate.audienceWarmup.currentResponse.kind === "few", "botão POUCOS na pergunta de atualidades");
+  await sceneOperator.waitForFunction(() => document.querySelector('section[aria-label="Resposta da pergunta atual"] button[data-kind="many"]')?.disabled === false);
+  await sceneOperator.keyboard.press("ArrowUp");
+  state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.currentResponse?.promptId === newsPromptId
+    && candidate.audienceWarmup.currentResponse.kind === "many", "seta para cima na pergunta de atualidades");
+  await sceneOperator.waitForFunction(() => document.querySelector('section[aria-label="Resposta da pergunta atual"] button[data-kind="few"]')?.disabled === false);
+  await sceneOperator.keyboard.press("ArrowDown");
+  state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.currentResponse?.promptId === newsPromptId
+    && candidate.audienceWarmup.currentResponse.kind === "few", "seta para baixo na pergunta de atualidades");
+  await sceneOperator.waitForFunction(() => document.querySelector('section[aria-label="Resposta da pergunta atual"] button[data-kind="few"][aria-pressed="true"]')?.disabled === false);
+  await sceneOperator.keyboard.press("ArrowRight");
+  state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.reaction?.response?.promptId === newsPromptId,
+    "reação à pergunta de atualidades");
+  assert.equal(state.audienceWarmup.sequence.promptId, newsPromptId, "a reação deve manter a pergunta até o avanço manual");
+  assert.equal(state.audienceWarmup.reaction.kind, "few");
+  await waitFor(context.request, (candidate) => candidate.audienceWarmup.pendingAdvance?.kind === "draw-and-publish"
+    && Date.parse(candidate.audienceWarmup.pendingAdvance.dueAt) <= Date.now(), "fim da leitura da reação de atualidades");
+  await sceneOperator.keyboard.press("ArrowRight");
+  state = await waitFor(context.request, (candidate) => candidate.audienceWarmup.sequence?.promptId !== newsPromptId
+    && candidate.audienceWarmup.sequence?.category !== "atualidades"
+    && candidate.publicMessage?.content === candidate.audienceWarmup.preview, "pergunta fixa depois de atualidades");
+  assert.match(state.audienceWarmup.sequence.promptId, /^provocative-/);
+  await sceneOperator.waitForFunction(() => {
+    const buttons = [...document.querySelectorAll('section[aria-label="Resposta da pergunta atual"] button')];
+    return buttons.length === 2 && buttons.every((button) => !button.disabled && button.getAttribute("aria-pressed") === "false");
+  });
+  await post(context.request, "set-manual-mode", { manualMode: manualModeBeforeNews });
+  state = await snapshot(context.request);
+
   const literalCases = [
     ["public-07", "QUEM VOTOU NO LULA FICA DE PÉ."],
     ["exposed-08", "QUEM VOTOU NO BOLSONARO CRUZA OS BRAÇOS."],
@@ -225,7 +272,7 @@ try {
     ["provocative-07", "QUEM TRANSOU ESTA SEMANA LEVANTA, DÁ UMA VOLTINHA E SENTA."],
     ["provocative-04", "QUEM JÁ CHEIROU COCAÍNA TOCA NO NARIZ."]
   ];
-  let expectedQuestionProgress = progressBeforeReaction;
+  let expectedQuestionProgress = state.sceneZero.unlock.progress;
   for (const [promptId, expectedText] of literalCases) {
     const wasAlreadyScored = (await snapshot(context.request)).sceneZero.unlock.scoredActionIds.includes(promptId);
     await post(context.request, "trigger-prompt", { promptId });

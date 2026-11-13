@@ -8,7 +8,7 @@ export async function prepareOperatorAudit() {
   const root = process.cwd();
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), "caixa-operator-audit-"));
   for (const item of ["app", "components", "lib", "prompts", "data", "knowledge", "public", "scripts",
-    "package.json", "package-lock.json", "next.config.js", "jsconfig.json", "eslint.config.mjs"]) {
+    "package.json", "package-lock.json", "next.config.js", "jsconfig.json", "eslint.config.mjs", "Texto caixa preta.pdf"]) {
     await fs.cp(path.join(root, item), path.join(directory, item), { recursive: true });
   }
   for (const item of ["assets", "node_modules"]) await fs.symlink(path.join(root, item), path.join(directory, item));

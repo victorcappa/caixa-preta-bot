@@ -1,5 +1,7 @@
 .control {
   position: fixed;
+  transform: scale(.5);
+  transform-origin: top right;
   z-index: 200;
   top: 7px;
   right: 10px;
@@ -17,7 +19,7 @@
   font-family: "Courier New", Courier, monospace;
 }
 
-.control button {
+.mute {
   min-height: 36px;
   border: 1px solid var(--green-soft);
   background: #000;
@@ -27,8 +29,22 @@
   font-size: .68rem;
 }
 
-.control label { display: grid; grid-template-columns: 1fr auto; gap: 3px 8px; min-width: 0; }
-.control span { font-size: .67rem; white-space: nowrap; }
+.volumeField { display: grid; grid-template-columns: 1fr auto; gap: 3px 8px; min-width: 0; }
+.dragHandle {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: .67rem;
+  text-align: left;
+  white-space: nowrap;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.dragHandle[data-dragging="true"] { cursor: grabbing; }
+.dragHandle:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
 .control small { color: var(--green-dim); font-size: .52rem; }
 .control strong { color: #fff; font-size: .72rem; }
 .control input { grid-column: 1 / -1; width: 100%; accent-color: var(--green); }

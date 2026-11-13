@@ -1,0 +1,27 @@
+{
+  "id": "pieta",
+  "label": "Pietà",
+  "topic": "corpo",
+  "size": 3.2,
+  "position": [
+    0,
+    0,
+    -5
+  ],
+  "rotation": -0.3,
+  "initial": false,
+  "url": "/api/reference-island/pieta",
+  "storagePath": "public/references/island/models/pieta.glb.gz",
+  "source": "../pieta1.blend",
+  "sourceSha256": "ae8e63f949233c503fa43a7456d22cdf4bfc4d1c95ed37e1522f022e6720c159",
+  "sourceVertices": 2850526,
+  "sourcePolygons": 950347,
+  "sourceTriangles": 950437,
+  "bytes": 105726440,
+  "transferBytes": 50534496,
+  "sha256": "638f86fd4a737d18d94ec54b823f918d0493d9d3795ef9b68ac8f4bbe1748752",
+  "fileSha256": "eef5ed31b16c6fff25f267f861e8175a62438b1199768b2712bd135a6eb53ca9",
+  "triangles": 950437,
+  "extensions": [],
+  "provenance": "Exportada do objeto 3DModel de pieta1.blend, sem decimar a malha, com materiais e texturas. Arquivo GLB em gzip sem perda; carregamento somente sob demanda."
+}

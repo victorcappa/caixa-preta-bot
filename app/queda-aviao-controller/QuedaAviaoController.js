@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { subscribePublicRealtime } from "@/lib/publicRealtime";
 import EditableCueController from "@/components/EditableCueController";
 import SceneAudioEffectsControls from "@/components/SceneAudioEffectsControls";
 import {
@@ -63,15 +64,9 @@ export default function QuedaAviaoController() {
       .then((data) => setPlayback(data || INITIAL_STATE))
       .catch(() => setConnection("DISCONNECTED"));
 
-    const events = new EventSource("/api/events?client=queda-aviao-controller");
-    events.onopen = () => setConnection("CONNECTED");
-    events.onerror = () => setConnection("DISCONNECTED");
-    events.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
+    return subscribePublicRealtime((payload) => {
       setPlayback(payload.state?.quedaAviao || INITIAL_STATE);
-    };
-
-    return () => events.close();
+    }, (status) => setConnection(status === "connected" ? "CONNECTED" : "DISCONNECTED"));
   }, []);
 
   const segments = playback.segments || [];

@@ -10,10 +10,10 @@ export const SCENE_ZERO_HANGMAN_WORDS = [
   { id: "hangman-09", text: "PASSAGEIRO", category: "corpo" },
   { id: "hangman-10", text: "QUEDA", category: "acidente" },
   { id: "hangman-11", text: "CAIXA PRETA", category: "arquivo" },
-  { id: "hangman-12", text: "FORÇA G", category: "força G" },
+  { id: "hangman-12", text: "FORÇA G", category: "aviação" },
   { id: "hangman-13", text: "AEROPORTO", category: "aviação" },
   { id: "hangman-14", text: "SOBREVIVENTE", category: "corpo" },
-  { id: "hangman-15", text: "ACIDENTE", category: "acidente" },
+  { id: "hangman-15", text: "ACIDENTE", category: "aviação" },
   { id: "hangman-16", text: "INVESTIGAÇÃO", category: "arquivo" },
   { id: "hangman-17", text: "PÂNICO", category: "medo" },
   { id: "hangman-18", text: "TRAJETÓRIA", category: "aviação" },
@@ -25,11 +25,18 @@ export const SCENE_ZERO_HANGMAN_WORDS = [
   { id: "hangman-24", text: "MEMÓRIA", category: "arquivo" }
 ];
 
-export const SCENE_ZERO_HANGMAN_THEMES = [...new Set(SCENE_ZERO_HANGMAN_WORDS.map((entry) => entry.category))];
+export const SCENE_ZERO_HANGMAN_THEMES = [...new Set(SCENE_ZERO_HANGMAN_WORDS.filter(isSceneZeroHangmanWordEligible).map((entry) => entry.category))];
 
 export const SCENE_ZERO_HANGMAN_MAX_ERRORS = 4;
 export const SCENE_ZERO_HANGMAN_INSTRUCTION = "ESCOLHA UMA LETRA E DIGA EM VOZ ALTA. O OPERADOR VAI REGISTRAR SUA ESCOLHA.";
 
+export function isSceneZeroHangmanWordEligible(entry) {
+  const normalize = (value) => `${value || ""}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const word = normalize(entry?.text);
+  const category = normalize(entry?.category);
+  return Boolean(word && category && word !== category);
+}
+
 export function getSceneZeroHangmanWord(wordId) {
-  return SCENE_ZERO_HANGMAN_WORDS.find((entry) => entry.id === wordId) || null;
+  return SCENE_ZERO_HANGMAN_WORDS.find((entry) => entry.id === wordId && isSceneZeroHangmanWordEligible(entry)) || null;
 }

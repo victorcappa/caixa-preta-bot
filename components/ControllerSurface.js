@@ -21,8 +21,8 @@ async function navigateProjection(path) {
     const response = await fetch("/api/projection", { cache: "no-store" });
     const data = await response.json();
     const projection = data.projection || {};
-    const windows = Object.values(projection.windows || {});
-    const active = projection.windows?.[projection.activeProjectionWindowId];
+    const windows = Object.values(projection.windows || {}).filter(window => window.currentPath?.split("?")[0] !== "/pos-demo/controle");
+    const active = windows.find(window => window.id === projection.activeProjectionWindowId);
     const connectedWindow = active?.connected
       ? active
       : windows
@@ -48,12 +48,13 @@ async function navigateProjection(path) {
   }
 }
 
-export default function ControllerSurface({ children }) {
+export default function ControllerSurface({ children, presentation = false, controlsHidden = false }) {
   const pathname = usePathname();
   const activeSurface = sortedControllerSurfaces.find((surface) => isControllerSurfaceActive(surface, pathname));
+  const hideControls = presentation || controlsHidden;
 
   useEffect(() => {
-    if (!activeSurface?.projectionPath) {
+    if (presentation || pathname === "/pos-demo/controle" || !activeSurface?.projectionPath) {
       return;
     }
 
@@ -62,12 +63,12 @@ export default function ControllerSurface({ children }) {
     }
 
     navigateProjection(activeSurface.projectionPath);
-  }, [activeSurface?.autoNavigateProjection, activeSurface?.projectionPath]);
+  }, [activeSurface?.autoNavigateProjection, activeSurface?.projectionPath, presentation, pathname]);
 
   return (
-    <div className={styles.surface}>
-      <ControllerGlobalVolume />
-      <nav className={styles.tabs} aria-label="Controllers cênicos">
+    <div className={styles.surface} data-presentation={hideControls}>
+      {!hideControls ? <ControllerGlobalVolume /> : null}
+      {!hideControls ? <nav className={styles.tabs} aria-label="Controllers cênicos">
         {controllerNavigationSurfaces.map((surface) => {
           const active = isControllerSurfaceActive(surface, pathname);
           return (
@@ -82,9 +83,9 @@ export default function ControllerSurface({ children }) {
             </Link>
           );
         })}
-      </nav>
+      </nav> : null}
       <div className={styles.content}>{children}</div>
-      {activeSurface?.sceneNumber?.startsWith("CENA") ? <SceneNotes scene={activeSurface} /> : null}
+      {!hideControls && activeSurface?.sceneNumber?.startsWith("CENA") ? <SceneNotes scene={activeSurface} /> : null}
     </div>
   );
 }

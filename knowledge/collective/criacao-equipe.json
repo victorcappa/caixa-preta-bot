@@ -1,0 +1,813 @@
+{
+  "schemaVersion": 1,
+  "title": "Criação e equipe: pesquisa pública para o inconsciente coletivo da Caixa Preta",
+  "verifiedAt": "2026-11-12",
+  "methodology": "Identidades vinculadas à ficha técnica institucional de A Caixa Preta – Versão Demo. Seleção de obras profissionais públicas com prioridade para páginas dos próprios artistas, universidades, instituições apresentadoras e arquivos culturais. Resumos e motivos são paráfrases editoriais; motivos são possibilidades de composição, não declarações atribuídas às pessoas.",
+  "people": [
+    {
+      "id": "victor-cappa",
+      "name": "Victor Cappa",
+      "verifiedIdentity": true,
+      "identityEvidence": "A ficha técnica do Instituto Capobianco credita criação e operação de Tecnologia Digital Interativa. O perfil autoral na 8th Wall identifica Victor Cappa e liga diretamente a imaginar.dev.",
+      "academicWorks": [],
+      "artisticWorks": [
+        {
+          "title": "imaginAR",
+          "year": null,
+          "url": "https://www.8thwall.com/victorcappa/imaginar",
+          "summary": "Projeto autoral de criação e interação em realidade aumentada: artefatos tridimensionais ocupam o espaço físico, com elementos sonoros e pontos geolocalizados. A apresentação pública articula cidade, presença virtual e participação.",
+          "coverage": "Descrição autoral pública lida; funcionamento atual e experiência em dispositivo não foram verificados."
+        },
+        {
+          "title": "A Caixa Preta – Versão Demo",
+          "year": 2026,
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "summary": "Criação e operação da tecnologia digital interativa, segundo a ficha técnica institucional.",
+          "coverage": "Crédito profissional confirmado; não equivale à observação do espetáculo."
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://www.8thwall.com/victorcappa",
+          "title": "Perfil autoral de Victor Cappa na 8th Wall",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-author-profile"
+        },
+        {
+          "url": "https://www.8thwall.com/victorcappa/imaginar",
+          "title": "imaginAR — apresentação autoral na 8th Wall",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-artwork-description"
+        },
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — A Caixa Preta Versão Demo",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-presenter-credit"
+        }
+      ],
+      "motifs": [
+        "Um objeto virtual precisa de um lugar e de um corpo que o encontre.",
+        "A cidade pode guardar artefatos que só aparecem quando alguém atravessa o espaço.",
+        "Interagir pode ser uma forma de deixar um vestígio para o próximo visitante."
+      ],
+      "limitations": [
+        "Não foi identificada nesta pesquisa uma publicação acadêmica autoral com confirmação suficiente.",
+        "victorcappa.com e imaginar.dev não abriram na ferramenta de pesquisa; a evidência utilizada é o portfólio autoral publicado na 8th Wall.",
+        "Não se atribuem a Victor trabalhos homônimos encontrados em outras fichas sem vínculo verificável."
+      ],
+      "membership": "technical-creative",
+      "creditRole": "Tecnologia Digital Interativa — criação e operação"
+    },
+    {
+      "id": "matheus-leston",
+      "name": "Matheus Leston",
+      "verifiedIdentity": true,
+      "identityEvidence": "Criação e operação de som na ficha de A Caixa Preta; catálogo institucional do CCBB identifica o músico, artista multimídia e desenvolvedor e sua produção audiovisual.",
+      "academicWorks": [],
+      "artisticWorks": [
+        {
+          "title": "Orquestra Vermelha",
+          "year": 2013,
+          "url": "https://www.nendu.net/?p=111&lang=pt",
+          "summary": "Projeto audiovisual em que a presença musical ao vivo se relaciona com músicos gravados e apresentados como imagens. O arquivo nendu identifica seu início em 2013 e publica uma reflexão autoral sobre tensões entre som, imagem e tecnologia.",
+          "coverage": "Registro e texto autoral consultados; não houve escuta ou análise integral da performance."
+        },
+        {
+          "title": "Pedra Pássaro e 256x256x256x256",
+          "year": null,
+          "url": "https://static.ccbb.com.br/site-prod/2024/07/LUZ_AETERNA_catalogo_RJ_V01-1.pdf",
+          "summary": "Séries digitais generativas descritas no catálogo Luz Æterna: um conjunto de regras produz variações de imagens. A programação participa da composição, junto da relação entre som e visualidade.",
+          "coverage": "Descrição no catálogo do CCBB consultada; as séries completas não foram incorporadas."
+        },
+        {
+          "title": "Céu Zero",
+          "year": 2024,
+          "url": "https://static.ccbb.com.br/site-prod/2024/07/LUZ_AETERNA_catalogo_RJ_V01-1.pdf",
+          "summary": "Obra da exposição Luz Æterna que aproxima do observador a experiência do horizonte e da luz no espaço. O catálogo credita concepção e direção criativa a Matheus Leston.",
+          "coverage": "Texto e crédito do catálogo consultados; instalação não observada presencialmente."
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://www.nendu.net/?p=111&lang=pt",
+          "title": "nendu — Matheus Leston, arquivo de arte sonora e depoimento autoral",
+          "accessedAt": "2026-11-12",
+          "kind": "cultural-archive-with-author-statement"
+        },
+        {
+          "url": "https://static.ccbb.com.br/site-prod/2024/07/LUZ_AETERNA_catalogo_RJ_V01-1.pdf",
+          "title": "CCBB — Luz Æterna: Ensaio sobre o Sol, catálogo 2024",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-institutional-catalog"
+        },
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — A Caixa Preta Versão Demo",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-presenter-credit"
+        }
+      ],
+      "motifs": [
+        "Uma sombra gravada pode tocar ao lado de um corpo que ainda está aqui.",
+        "Repetir uma regra não obriga o mundo a produzir a mesma imagem.",
+        "Entre o gesto e o algoritmo permanece um intervalo que também compõe."
+      ],
+      "limitations": [
+        "Não foi localizada publicação acadêmica autoral com confirmação suficiente.",
+        "As fontes descrevem obras; não comprovam a incorporação integral de áudios, vídeos, instalações ou código ao bot.",
+        "O site autoral matheusleston.com não abriu na ferramenta; foram utilizados o arquivo nendu e o catálogo institucional."
+      ],
+      "membership": "technical-creative",
+      "creditRole": "Som — criação e operação"
+    },
+    {
+      "id": "vic-von-poser",
+      "name": "Vic von Poser",
+      "verifiedIdentity": true,
+      "identityEvidence": "A University of the Arts London identifica Victoria von Poser como Vic; a folha de rosto da dissertação associa Victória Boni von Poser a Vic von Poser. A ficha de A Caixa Preta credita videocenografia, criação e operação.",
+      "academicWorks": [
+        {
+          "title": "Autonomia da luz: um estudo das obras de Mirella Brandi x MuepEtmo e Luiz duVa",
+          "year": 2017,
+          "url": "https://tile.loc.gov/storage-services/master/gdc/gdcebookspublic/20/20/39/65/13/2020396513/2020396513.pdf",
+          "summary": "Dissertação do programa de Educação, Arte e História da Cultura da Universidade Presbiteriana Mackenzie, com orientação de Jane de Almeida. Investiga a luz como linguagem artística, tomando as obras de Mirella Brandi x MuepEtmo e Luiz duVa como campo de estudo.",
+          "coverage": "Folha de rosto indexada e descrição autoral verificadas; o PDF integral não foi baixado nem indexado nesta pesquisa. Ano 2017 conforme folha de rosto; algumas referências secundárias registram 2016."
+        },
+        {
+          "title": "The expanded light: An analysis of the light and sound work of the Brazilian duo known as Mirella Brandi X MuepEtmo through the concepts of expanded cinema",
+          "year": 2019,
+          "url": "https://intellectdiscover.com/content/journals/jaws/5/2",
+          "summary": "Artigo publicado em JAWS: Journal of Arts Writing by Students, volume 5, número 2. Pelo título e pelo registro autoral, relaciona a obra de luz e som da dupla ao cinema expandido.",
+          "coverage": "Metadados de publicação confirmados no sumário da editora e no perfil público autoral; texto integral e conclusões não foram lidos."
+        }
+      ],
+      "artisticWorks": [
+        {
+          "title": "Experiência: Azul #2",
+          "year": 2016,
+          "url": "https://www.arts.ac.uk/colleges/camberwell-college-of-arts/stories/camberwell-cameo-experiencing-light-and-water-with-vic-von-poser",
+          "summary": "No relato autoral publicado pela UAL, luz projetada, espelhos e água alteram uma imagem de árvores. A ação presencial da artista participa do acontecimento; a performance foi apresentada no Instituto Tomie Ohtake, com trilha ao vivo de Herbert Baioco.",
+          "coverage": "Relato autoral e imagens de documentação consultados; performance e vídeo completos não observados."
+        },
+        {
+          "title": "Intolleranza 1960",
+          "year": 2026,
+          "url": "https://theatromunicipal.org.br/wp-content/uploads/2026/06/libreto_digital_intolleranza1960_25052026-1.pdf",
+          "summary": "Design de vídeo na montagem do Theatro Municipal de São Paulo, confirmado na ficha técnica do libreto.",
+          "coverage": "Crédito profissional verificado; não se presume autoria das outras linguagens da montagem."
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://www.arts.ac.uk/colleges/camberwell-college-of-arts/stories/camberwell-cameo-experiencing-light-and-water-with-vic-von-poser",
+          "title": "UAL / Camberwell — relato autoral de Vic von Poser sobre luz e água, 2017",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-author-statement"
+        },
+        {
+          "url": "https://tile.loc.gov/storage-services/master/gdc/gdcebookspublic/20/20/39/65/13/2020396513/2020396513.pdf",
+          "title": "Library of Congress — cópia pública de Autonomia da luz, folha de rosto indexada",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-document-metadata",
+          "coverage": "A ferramenta não carregou os 23 MB do PDF; a verificação restringe-se à folha de rosto indexada."
+        },
+        {
+          "url": "https://intellectdiscover.com/content/journals/jaws/5/2",
+          "title": "Intellect — JAWS volume 5, número 2, sumário",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-publisher-metadata",
+          "coverage": "Sumário indexado; acesso direto retornou 403."
+        },
+        {
+          "url": "https://independent.academia.edu/VicVonPoser",
+          "title": "Vic von Poser — perfil autoral de pesquisa e resumos",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-author-publication-list"
+        },
+        {
+          "url": "https://theatromunicipal.org.br/wp-content/uploads/2026/06/libreto_digital_intolleranza1960_25052026-1.pdf",
+          "title": "Theatro Municipal — libreto Intolleranza 1960, 2026",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-presenter-credit"
+        },
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — A Caixa Preta Versão Demo",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-presenter-credit"
+        }
+      ],
+      "motifs": [
+        "A luz pode deixar de explicar uma cena e começar a agir por conta própria.",
+        "Uma superfície de água devolve a imagem diferente daquela que recebeu.",
+        "O corpo que opera a projeção também altera o que pode aparecer."
+      ],
+      "limitations": [
+        "Os trabalhos acadêmicos foram identificados por metadados e resumos; não estão apresentados como textos integrais lidos pelo bot.",
+        "O endereço do repositório Mackenzie foi identificado, mas não abriu na ferramenta: https://dspace.mackenzie.br/items/c315d0d9-93d8-43f2-bfa1-7728e1971b0b.",
+        "Motivos são formulações editoriais inspiradas nas práticas documentadas, sem imitar a voz da artista."
+      ],
+      "membership": "technical-creative",
+      "creditRole": "Videocenografia — criação e operação"
+    },
+    {
+      "id": "felipe-cruz",
+      "name": "Felipe Cruz",
+      "verifiedIdentity": true,
+      "identityEvidence": "A ficha institucional de A Caixa Preta confirma Felipe Cruz no figurino. O registro de Planeta Pelúcia no Sesc relaciona o mesmo nome a figurinos e adereços, junto de Vic von Poser e artistas do circuito Grupo XIX; esse vínculo contextual sustenta a seleção, mas não substitui um identificador autoral exclusivo.",
+      "academicWorks": [],
+      "artisticWorks": [
+        {
+          "title": "A Caixa Preta – Versão Demo",
+          "year": 2026,
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "summary": "Figurino, conforme a ficha técnica oficial do espetáculo.",
+          "coverage": "Crédito confirmado pelo apresentador institucional."
+        },
+        {
+          "title": "Planeta Pelúcia",
+          "year": 2026,
+          "url": "https://www.sescsp.org.br/programacao/planeta-pelucia-5/",
+          "summary": "Crédito de figurinos e adereços na criação da CASCA – Coletivo de Criação. O espetáculo acompanha uma criança que atravessa um espaço reservado aos adultos e precisa reencontrar sua infância.",
+          "coverage": "Ficha e sinopse indexadas do Sesc; ligação com o profissional de A Caixa Preta é contextual, não uma identidade documental exclusiva."
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — A Caixa Preta Versão Demo",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-presenter-credit"
+        },
+        {
+          "url": "https://www.sescsp.org.br/programacao/planeta-pelucia-5/",
+          "title": "Sesc São Paulo — Planeta Pelúcia, ficha técnica",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-presenter-credit",
+          "coverage": "Conteúdo indexado verificado; abertura direta retornou 403."
+        }
+      ],
+      "motifs": [
+        "A roupa pode ser a primeira matéria que transforma um corpo em personagem.",
+        "Um adereço transporta a medida do corpo entre o jogo e o mundo adulto."
+      ],
+      "limitations": [
+        "Há homônimos. Não foram atribuídos os créditos de Sorocaba, Tatuí, música, audiovisual ou outras áreas sem desambiguação suficiente.",
+        "Não foi localizada obra acadêmica autoral ou portfólio individual inequívoco.",
+        "Planeta Pelúcia permanece um vínculo contextual; a atribuição pode ser retirada se o responsável informar que se trata de homônimo."
+      ],
+      "membership": "technical-creative",
+      "creditRole": "Figurino"
+    },
+    {
+      "id": "paula-halker",
+      "name": "Paula Halker",
+      "aliases": [
+        "Paula Halcker — grafia recebida na solicitação"
+      ],
+      "verifiedIdentity": true,
+      "identityEvidence": "Paula Halker é a grafia usada pelo Instituto Capobianco e pelo Theatro Municipal nas fichas consultadas. A ficha de A Caixa Preta a credita em cenografia e direção de palco, com Marina Legaspe.",
+      "academicWorks": [],
+      "artisticWorks": [
+        {
+          "title": "Vozes da Parede: o testemunho do espaço",
+          "year": 2022,
+          "url": "https://www.abcdoabc.com.br/exposicao-vozes-da-parede-entra-em-cartaz-na-oficina-cultural-oswald-de-andrade/",
+          "summary": "Direção artística, performance, escultura e fotografia em pesquisa coletiva sobre corpo, casa e vestígios. A documentação descreve gesso e látex como materiais que guardam marcas do corpo; Marina Legaspe assina a expografia e a cenografia.",
+          "coverage": "Release e ficha técnica publicados consultados, com autoria do projeto confirmada em registro público do ProAC. Obras e performances integrais não foram observadas."
+        },
+        {
+          "title": "Atlântica Parte 1 – Antroma",
+          "year": 2023,
+          "url": "https://theatromunicipal.org.br/wp-content/uploads/2023/11/Programa-de-Sala_Projeto-Atlantica-1.pdf",
+          "summary": "Cenografia e visualidades com Eduardo Joly. O programa do Theatro Municipal situa a pesquisa na relação com a Mata Atlântica e na criação cênica a partir de presenças e ausências.",
+          "coverage": "Programa de sala e créditos consultados; não houve observação presencial."
+        },
+        {
+          "title": "BLAIHAIT! e outras perguntas para inventar um idioma",
+          "year": 2023,
+          "url": "https://pombocorreio.art.br/?p=4557",
+          "summary": "Cenografia com Marina Legaspe e fotografia na criação do Coletivo Karenin dirigida por Marcus Garcia. A obra relaciona a invenção de um idioma à construção de mundos em cena.",
+          "coverage": "Release da assessoria responsável e ficha técnica consultados."
+        },
+        {
+          "title": "Alien(nada): a Terra é uma adolescente e o Grande Filtro pode ser a autodestruição da humanidade",
+          "year": 2026,
+          "url": "https://institutocapobianco.art.br/residencia-janaina-leite-e-nucleo-do-olho",
+          "summary": "Visualidades na palestra-performance de Lívia Machado, conforme ficha institucional. A criação aproxima imaginários alienígenas, ciência e a possibilidade de autodestruição terrestre.",
+          "coverage": "Sinopse e crédito institucional consultados; audiovisual integral não incorporado."
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://www.abcdoabc.com.br/exposicao-vozes-da-parede-entra-em-cartaz-na-oficina-cultural-oswald-de-andrade/",
+          "title": "ABC do ABC — Vozes da Parede, release com ficha e declarações da artista",
+          "accessedAt": "2026-11-12",
+          "kind": "published-project-release"
+        },
+        {
+          "url": "https://www.al.sp.gov.br/spl/2021/07/Acessorio/1000378179_1000448977_Acessorio.pdf",
+          "title": "ALESP / Secretaria de Cultura — registro do projeto Vozes da Parede, ProAC 09/2020",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-public-project-record"
+        },
+        {
+          "url": "https://theatromunicipal.org.br/wp-content/uploads/2023/11/Programa-de-Sala_Projeto-Atlantica-1.pdf",
+          "title": "Theatro Municipal — programa Atlântica Parte 1 – Antroma",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-presenter-program"
+        },
+        {
+          "url": "https://pombocorreio.art.br/?p=4557",
+          "title": "Pombo Correio — release BLAIHAIT! do Coletivo Karenin",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-project-press-agent-release",
+          "coverage": "Release indexado consultado; abertura direta apresentou falha."
+        },
+        {
+          "url": "https://institutocapobianco.art.br/residencia-janaina-leite-e-nucleo-do-olho",
+          "title": "Instituto Capobianco — Residência Janaina Leite e Núcleo do Olho",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-presenter-credit"
+        },
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — A Caixa Preta Versão Demo",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-presenter-credit"
+        }
+      ],
+      "motifs": [
+        "Uma parede pode guardar a ausência do corpo que a tocou.",
+        "O molde preserva uma forma sem devolver a presença que o produziu.",
+        "A matéria do palco pode testemunhar aquilo que a imagem não consegue dizer."
+      ],
+      "limitations": [
+        "Não foi localizada publicação acadêmica autoral concluída com confirmação suficiente; listas de inscrição ou participação em disciplinas não foram tratadas como obras.",
+        "Resumos de projetos não equivalem à incorporação integral das obras.",
+        "A grafia Halcker foi mantida apenas como alias da solicitação; as fontes profissionais consultadas usam Halker."
+      ],
+      "membership": "technical-creative",
+      "creditRole": "Cenografia e direção de palco"
+    },
+    {
+      "id": "marina-legaspe",
+      "name": "Marina Legaspe",
+      "verifiedIdentity": true,
+      "identityEvidence": "Arquiteta e cenógrafa identificada no Centro de Referência do Theatro Municipal. Créditos em parceria com Paula Halker e Marcus Garcia coincidem com o núcleo artístico da ficha institucional de A Caixa Preta.",
+      "academicWorks": [],
+      "artisticWorks": [
+        {
+          "title": "Vozes da Parede: o testemunho do espaço",
+          "year": 2022,
+          "url": "https://www.abcdoabc.com.br/exposicao-vozes-da-parede-entra-em-cartaz-na-oficina-cultural-oswald-de-andrade/",
+          "summary": "Expografia e cenografia em criação coletiva com Paula Halker e Emilie Becker. O espaço expositivo participa de uma pesquisa sobre corpo, marcas materiais e memória da casa.",
+          "coverage": "Ficha técnica publicada e registro institucional da artista consultados; exposição não visitada."
+        },
+        {
+          "title": "BLAIHAIT! e outras perguntas para inventar um idioma",
+          "year": 2023,
+          "url": "https://pombocorreio.art.br/?p=4557",
+          "summary": "Cenografia com Paula Halker para o Coletivo Karenin. O ambiente cênico integra uma criação em idioma inventado, em diálogo com palavra, corpo e mito.",
+          "coverage": "Release da assessoria da obra e ficha técnica consultados."
+        },
+        {
+          "title": "Intolleranza 1960",
+          "year": 2026,
+          "url": "https://theatromunicipal.org.br/wp-content/uploads/2026/06/libreto_digital_intolleranza1960_25052026-1.pdf",
+          "summary": "Desenho técnico da montagem e das bandeiras automatizadas, em diálogo com a cenografia de Renan Marcondes e Marcus Garcia. O libreto distingue o trabalho arquitetônico de Marina da autoria geral da cenografia.",
+          "coverage": "Créditos e texto de processo no libreto institucional consultados."
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://centrodereferencia.theatromunicipal.org.br/inweb/ficha.aspx?IPR=-1&c=pgentarq&id=2871&lang=BR&ns=409000",
+          "title": "Centro de Referência do Theatro Municipal — Marina Legaspe",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-institutional-artist-record",
+          "coverage": "Registro institucional indexado consultado; abertura direta apresentou falha."
+        },
+        {
+          "url": "https://www.abcdoabc.com.br/exposicao-vozes-da-parede-entra-em-cartaz-na-oficina-cultural-oswald-de-andrade/",
+          "title": "ABC do ABC — Vozes da Parede, release com ficha técnica",
+          "accessedAt": "2026-11-12",
+          "kind": "published-project-release"
+        },
+        {
+          "url": "https://pombocorreio.art.br/?p=4557",
+          "title": "Pombo Correio — release BLAIHAIT! do Coletivo Karenin",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-project-press-agent-release"
+        },
+        {
+          "url": "https://theatromunicipal.org.br/wp-content/uploads/2026/06/libreto_digital_intolleranza1960_25052026-1.pdf",
+          "title": "Theatro Municipal — libreto Intolleranza 1960, 2026",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-presenter-credit"
+        },
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — A Caixa Preta Versão Demo",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-presenter-credit"
+        }
+      ],
+      "motifs": [
+        "Desenhar um espaço é negociar a passagem entre uma ideia e a resistência da matéria.",
+        "A arquitetura de uma cena também organiza o que pode ser visto e o que permanece escondido.",
+        "Um mecanismo precisa de desenho, construção e escuta antes de parecer um gesto simples."
+      ],
+      "limitations": [
+        "O título de TCC encontrado em agregador não foi atribuído sem fonte acadêmica direta e desambiguação suficiente.",
+        "Crédito de desenho técnico não foi convertido em autoria exclusiva da cenografia.",
+        "Amostra profissional selecionada; não constitui currículo completo."
+      ],
+      "membership": "technical-creative",
+      "creditRole": "Cenografia e direção de palco"
+    },
+    {
+      "id": "luzia-huttenmoser",
+      "name": "Luzia Hüttenmoser",
+      "verifiedIdentity": true,
+      "membership": "research-collaborator",
+      "creditRole": "Colaboração de pesquisa",
+      "identityEvidence": "Vínculo com A Caixa Preta confirmado na ficha técnica institucional do Instituto Capobianco; a produção pública foi cruzada com as fontes abaixo.",
+      "academicWorks": [
+        {
+          "title": "[I] doesn’t exist — projeto de diploma BA em Game Design",
+          "year": 2021,
+          "url": "https://www.gamedesign.zhdk.ch/en/projects/i-doesnt-exist/",
+          "summary": "Projeto de diploma da ZHdK, de Luzia Hüttenmoser e Anna-Lena Pontet. Um avatar inicialmente obedece a comandos textuais; depois passa a conversar e a colocar em questão a relação de controle com quem joga.",
+          "coverage": "Descrição e autoria verificadas no arquivo da universidade; jogo completo e documento acadêmico integral não foram analisados."
+        }
+      ],
+      "artisticWorks": [
+        {
+          "title": "[I] doesn’t exist — a modern text adventure",
+          "year": 2023,
+          "url": "https://lual.games/sheet.php?p=i_doesnt_exist",
+          "summary": "Desdobramento comercial do projeto de diploma pela LUAL Games, com publicação pela DreadXP. O press kit credita Luzia em game design, desenvolvimento e direção de arte.",
+          "coverage": "Metadados e créditos autorais verificados; o jogo não foi executado nesta pesquisa."
+        }
+      ],
+      "researchWorks": [],
+      "sources": [
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — A Caixa Preta Versão Demo",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-presenter-credit"
+        },
+        {
+          "url": "https://www.gamedesign.zhdk.ch/en/projects/i-doesnt-exist/",
+          "title": "ZHdK — [I] doesn’t exist, projeto de diploma BA 2021",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-university-project"
+        },
+        {
+          "url": "https://lual.games/sheet.php?p=i_doesnt_exist",
+          "title": "LUAL Games — [I] doesn’t exist, press kit",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-developer-press-kit"
+        }
+      ],
+      "motifs": [
+        "Um avatar pode perceber que obedecer é uma relação, não uma lei da natureza.",
+        "Uma conversa começa quando o comando já não basta."
+      ],
+      "limitations": [
+        "Projeto descrito por fontes primárias; isso não comprova experiência direta de jogo nem ingestão de seu texto, suas imagens ou seu código."
+      ]
+    },
+    {
+      "id": "mayalu-txucarramae",
+      "name": "Mayalu Txucarramãe",
+      "verifiedIdentity": true,
+      "membership": "research-collaborator",
+      "creditRole": "Colaboração de pesquisa",
+      "identityEvidence": "A ficha do Capobianco credita Mayalu Txucarramãe. O Instituto Raoni identifica Mayalu Kokometi Waura Txucarramãe na coordenação executiva; o ISA registra a atuação pública de Mayalú Kokometi Waurá Txucarramãe. As variações de grafia são mantidas pelas fontes.",
+      "academicWorks": [],
+      "artisticWorks": [],
+      "researchWorks": [
+        {
+          "title": "Movimento Mebêngôkre Nyre e comunicação intercultural",
+          "year": null,
+          "url": "https://site-antigo.socioambiental.org/pt-br/noticias-socioambientais/mayalu-txucarramae-saude-bem-viver-e-combate-as-fake-news",
+          "summary": "O relato publicado pelo ISA documenta a organização da juventude e uma prática de mediação: informações de saúde são trabalhadas com confiança, cuidado coletivo e respeito aos modos próprios de conhecimento. Trata-se de atuação pública descrita em entrevista, não de obra artística ou tese atribuída.",
+          "coverage": "Relato de 2021 consultado; cargos e circunstâncias daquele período não são apresentados como atuais."
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — A Caixa Preta Versão Demo",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-presenter-credit"
+        },
+        {
+          "url": "https://institutoraoni.org.br/sobre/equipe/",
+          "title": "Instituto Raoni — equipe, coordenação executiva",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-community-institution"
+        },
+        {
+          "url": "https://site-antigo.socioambiental.org/pt-br/noticias-socioambientais/mayalu-txucarramae-saude-bem-viver-e-combate-as-fake-news",
+          "title": "ISA — Mayalú Txucarramãe: saúde, bem viver e combate às fake news, 2021",
+          "accessedAt": "2026-11-12",
+          "kind": "institutional-interview"
+        }
+      ],
+      "motifs": [
+        "Conhecer exige uma relação de confiança e responsabilidade com quem será afetado.",
+        "A técnica pode escutar modos de cuidar que não cabem em seu próprio protocolo."
+      ],
+      "limitations": [
+        "Não foi identificada obra acadêmica ou artística autoral com confirmação suficiente nesta pesquisa.",
+        "A prática descrita não autoriza o bot a falar em nome de Mayalu ou de qualquer povo, nem a inventar saberes, narrativas ou conhecimentos reservados.",
+        "A fonte do ISA é histórica; a página atual do Instituto Raoni verifica apenas o vínculo profissional nela registrado."
+      ]
+    },
+    {
+      "id": "yves-regenass",
+      "name": "Yves Regenass",
+      "verifiedIdentity": true,
+      "membership": "research-collaborator",
+      "creditRole": "Colaboração de pesquisa",
+      "identityEvidence": "Vínculo com A Caixa Preta confirmado na ficha técnica institucional do Instituto Capobianco; a produção pública foi cruzada com as fontes abaixo.",
+      "academicWorks": [],
+      "artisticWorks": [],
+      "researchWorks": [
+        {
+          "title": "Agency of Change: The Call",
+          "year": 2024,
+          "url": "https://metalab.harvard.edu/m/yves-regenass/",
+          "summary": "Projeto de pesquisa de Yves Regenass registrado pelo metaLAB Basel. A trajetória institucional do criador relaciona dramaturgia digital, jogo teatral e formatos de narrativa em que o público participa.",
+          "coverage": "Existência e vínculo de pesquisa verificados; não foi encontrada descrição suficiente para afirmar o funcionamento específico ou os resultados do projeto."
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — A Caixa Preta Versão Demo",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-presenter-credit"
+        },
+        {
+          "url": "https://metalab.harvard.edu/m/yves-regenass/",
+          "title": "metaLAB — Yves Regenass e Agency of Change: The Call",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-research-lab-record",
+          "coverage": "A versão indexada identifica o perfil como alumnus e adverte que a página pode não estar atualizada."
+        },
+        {
+          "url": "https://www.ag.ch/de/themen/kultur-sport/kultur/digiculture/digiexperts?dc=d3524e57-08ff-46fb-87ec-84c1dc1e955f_de",
+          "title": "Cantão de Aargau — Yves Regenass, dramaturgia digital e game theater",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-public-cultural-institution"
+        },
+        {
+          "url": "https://media.bs.ch/original_file/baea10215d2b058e8aa4cf0393b2593ba60b81f3/fachausschuss-darstellende-kuenste-bsbl-beitraege-2024.pdf",
+          "title": "Basel-Stadt — apoio ao desenvolvimento de Agency of Change: The Call, 2024",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-public-project-record"
+        }
+      ],
+      "motifs": [
+        "Quem assiste pode se tornar participante e alterar o percurso da cena.",
+        "Uma narrativa pode depender de escolhas que nenhum palco decidiu sozinho."
+      ],
+      "limitations": [
+        "Registro de pesquisa não é confirmação de conclusão, estreia, resultados ou cargo atual.",
+        "A condição de ex-integrante do laboratório foi preservada onde indicada pela fonte; não se atribui vínculo atual permanente a Harvard."
+      ]
+    },
+    {
+      "id": "marcela-vieira",
+      "name": "Marcela Vieira",
+      "verifiedIdentity": true,
+      "membership": "research-collaborator",
+      "creditRole": "Colaboração de pesquisa — aarea",
+      "identityEvidence": "A ficha do Capobianco nomeia a pesquisadora com a plataforma aarea. Pivô e Bienal de São Paulo confirmam a parceria curatorial de Marcela Vieira e Livia Benedetti.",
+      "academicWorks": [],
+      "artisticWorks": [
+        {
+          "title": "aarea — plataforma curatorial de obras para a internet",
+          "year": 2017,
+          "url": "https://pivo.org.br/participantes/aarea/",
+          "summary": "Plataforma fundada por Livia Benedetti e Marcela Vieira para comissionar e apresentar trabalhos concebidos para a internet. A curadoria trata a rede como lugar de experiência, e não apenas de divulgação de obras.",
+          "coverage": "História e escopo curatorial confirmados por instituição parceira; as obras de todos os artistas da plataforma não foram vistas nem incorporadas."
+        },
+        {
+          "title": "Replicante — curadoria do projeto de Clara Ianni",
+          "year": 2021,
+          "url": "https://34.bienal.org.br/exposicoes/9045",
+          "summary": "Projeto de Clara Ianni desenvolvido por aarea, com curadoria de Livia Benedetti e Marcela Vieira, apresentado na 34ª Bienal de São Paulo. O canal de interlocução com o público participa da estrutura do trabalho.",
+          "coverage": "Ficha institucional indexada verificada; autoria da obra permanece de Clara Ianni, sem transferi-la às curadoras."
+        }
+      ],
+      "researchWorks": [],
+      "sources": [
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — A Caixa Preta Versão Demo",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-presenter-credit"
+        },
+        {
+          "url": "https://pivo.org.br/participantes/aarea/",
+          "title": "Pivô — aarea",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-partner-institution"
+        },
+        {
+          "url": "https://34.bienal.org.br/exposicoes/9045",
+          "title": "34ª Bienal de São Paulo — Replicante, Clara Ianni",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-presenter-credit",
+          "coverage": "Ficha e descrição indexadas; abertura direta retornou 502."
+        },
+        {
+          "url": "https://revistazum.com.br/zum-quarentena/aarea/",
+          "title": "ZUM / Instituto Moreira Salles — entrevista com as fundadoras de aarea",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-author-interview"
+        }
+      ],
+      "motifs": [
+        "Uma obra pode nascer para a rede sem precisar de um original escondido fora dela.",
+        "A interface decide como alguém chega, permanece e se relaciona com uma imagem."
+      ],
+      "limitations": [
+        "Não foi confirmada nesta pesquisa publicação acadêmica individual com fonte primária suficiente.",
+        "As obras comissionadas são de seus respectivos autores; participação curatorial não significa autoria de cada obra.",
+        "Registro e documentação de uma obra online não substituem a sua experiência."
+      ]
+    },
+    {
+      "id": "livia-benedetti",
+      "name": "Lívia Benedetti",
+      "verifiedIdentity": true,
+      "membership": "research-collaborator",
+      "creditRole": "Colaboração de pesquisa — aarea",
+      "identityEvidence": "A ficha do Capobianco nomeia a pesquisadora com a plataforma aarea. Pivô e Bienal de São Paulo confirmam a parceria curatorial de Marcela Vieira e Livia Benedetti.",
+      "academicWorks": [],
+      "artisticWorks": [
+        {
+          "title": "aarea — plataforma curatorial de obras para a internet",
+          "year": 2017,
+          "url": "https://pivo.org.br/participantes/aarea/",
+          "summary": "Plataforma fundada por Livia Benedetti e Marcela Vieira para comissionar e apresentar trabalhos concebidos para a internet. A curadoria trata a rede como lugar de experiência, e não apenas de divulgação de obras.",
+          "coverage": "História e escopo curatorial confirmados por instituição parceira; as obras de todos os artistas da plataforma não foram vistas nem incorporadas."
+        },
+        {
+          "title": "Replicante — curadoria do projeto de Clara Ianni",
+          "year": 2021,
+          "url": "https://34.bienal.org.br/exposicoes/9045",
+          "summary": "Projeto de Clara Ianni desenvolvido por aarea, com curadoria de Livia Benedetti e Marcela Vieira, apresentado na 34ª Bienal de São Paulo. O canal de interlocução com o público participa da estrutura do trabalho.",
+          "coverage": "Ficha institucional indexada verificada; autoria da obra permanece de Clara Ianni, sem transferi-la às curadoras."
+        }
+      ],
+      "researchWorks": [],
+      "sources": [
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — A Caixa Preta Versão Demo",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-presenter-credit"
+        },
+        {
+          "url": "https://pivo.org.br/participantes/aarea/",
+          "title": "Pivô — aarea",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-partner-institution"
+        },
+        {
+          "url": "https://34.bienal.org.br/exposicoes/9045",
+          "title": "34ª Bienal de São Paulo — Replicante, Clara Ianni",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-presenter-credit",
+          "coverage": "Ficha e descrição indexadas; abertura direta retornou 502."
+        },
+        {
+          "url": "https://revistazum.com.br/zum-quarentena/aarea/",
+          "title": "ZUM / Instituto Moreira Salles — entrevista com as fundadoras de aarea",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-author-interview"
+        }
+      ],
+      "motifs": [
+        "Uma obra pode nascer para a rede sem precisar de um original escondido fora dela.",
+        "A interface decide como alguém chega, permanece e se relaciona com uma imagem."
+      ],
+      "limitations": [
+        "Não foi confirmada nesta pesquisa publicação acadêmica individual com fonte primária suficiente.",
+        "As obras comissionadas são de seus respectivos autores; participação curatorial não significa autoria de cada obra.",
+        "Registro e documentação de uma obra online não substituem a sua experiência."
+      ]
+    },
+    {
+      "id": "ariane-cuminale",
+      "name": "Ariane Cuminale",
+      "verifiedIdentity": true,
+      "membership": "production",
+      "creditRole": "Concepção de produção, relações internacionais e difusão",
+      "identityEvidence": "Vínculo com A Caixa Preta confirmado na ficha técnica institucional do Instituto Capobianco; a produção pública foi cruzada com as fontes abaixo.",
+      "academicWorks": [],
+      "artisticWorks": [
+        {
+          "title": "Vuela — produção e circulação de artes vivas",
+          "year": 2017,
+          "url": "https://mitsp.org/2026/programadores-2026/",
+          "summary": "Na apresentação institucional da MITsp, a Vuela articula produção, circulação e colaboração entre artistas e instituições latino-americanas e europeias. Ariane Cuminale é apresentada como produtora ligada à plataforma.",
+          "coverage": "Descrição profissional confirmada pela MITsp; produção e difusão não foram confundidas com direção ou autoria das obras representadas."
+        },
+        {
+          "title": "A Caixa Preta – Versão Demo",
+          "year": 2026,
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "summary": "Concepção de produção, relações internacionais e difusão, segundo o crédito oficial.",
+          "coverage": "Crédito confirmado pelo Instituto Capobianco."
+        }
+      ],
+      "researchWorks": [],
+      "sources": [
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — A Caixa Preta Versão Demo",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-presenter-credit"
+        },
+        {
+          "url": "https://mitsp.org/2026/programadores-2026/",
+          "title": "MITsp 2026 — Ariane Cuminale e Vuela",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-festival-professional-profile"
+        }
+      ],
+      "motifs": [
+        "Uma obra atravessa fronteiras porque pessoas constroem as condições do encontro.",
+        "Circular também transforma o modo de ver e de escutar uma cena."
+      ],
+      "limitations": [
+        "Não foi identificada publicação acadêmica autoral com confirmação suficiente.",
+        "Atuação profissional e créditos são uma amostra pública, não um currículo exaustivo."
+      ]
+    }
+  ],
+  "limits": [
+    "Este arquivo incorpora pesquisa textual e metadados de obras; não afirma ingestão integral dos trabalhos externos.",
+    "Motivos são sugestões editoriais de influência silenciosa na composição do bot. Não devem se transformar em citações inventadas, imitação de voz ou leitura de currículo em cena.",
+    "Não foram pesquisados dados pessoais sensíveis, relações privadas ou informações de contato.",
+    "A falta de obra acadêmica verificada significa apenas que não foi encontrada nesta pesquisa, não que ela inexista.",
+    "A navegação e o catálogo devem distinguir a incorporação deste dossiê dos documentos externos apenas identificados ou resumidos."
+  ],
+  "collectives": [
+    {
+      "id": "molde",
+      "name": "Molde",
+      "kind": "credited-entity",
+      "membership": "technical-creative",
+      "creditRole": "Cenotecnia",
+      "verifiedIdentity": true,
+      "identityEvidence": "Molde é o nome creditado em cenotecnia pelo Instituto Capobianco; o libreto Intolleranza 1960 credita MOLDE na construção de bandeiras automatizadas.",
+      "academicWorks": [],
+      "artisticWorks": [
+        {
+          "title": "A Caixa Preta – Versão Demo",
+          "year": 2026,
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "summary": "Cenotecnia, conforme a ficha institucional.",
+          "coverage": "Crédito confirmado; integrantes e natureza jurídica não identificados."
+        },
+        {
+          "title": "Intolleranza 1960 — bandeiras automatizadas",
+          "year": 2026,
+          "url": "https://theatromunicipal.org.br/wp-content/uploads/2026/06/libreto_digital_intolleranza1960_25052026-1.pdf",
+          "summary": "Construção creditada a MOLDE e Daniel Zagatti, em mecanismo de projeto, programação e construção de Marcus Garcia.",
+          "coverage": "Crédito de construção confirmado; não equivale à autoria integral do mecanismo."
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://institutocapobianco.art.br/a-caixa-preta-versao-demo",
+          "title": "Instituto Capobianco — A Caixa Preta Versão Demo",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-presenter-credit"
+        },
+        {
+          "url": "https://theatromunicipal.org.br/wp-content/uploads/2026/06/libreto_digital_intolleranza1960_25052026-1.pdf",
+          "title": "Theatro Municipal — libreto Intolleranza 1960, 2026",
+          "accessedAt": "2026-11-12",
+          "kind": "primary-presenter-credit"
+        }
+      ],
+      "motifs": [
+        "Um objeto só entra em cena depois que mãos e materiais tornam o desenho possível."
+      ],
+      "limitations": [
+        "Não foi encontrado site inequívoco, lista de integrantes ou identificação suficiente para afirmar que Molde é uma pessoa, empresa ou coletivo. Mantido como entidade creditada, fora da contagem de pessoas."
+      ]
+    }
+  ]
+}

@@ -27,6 +27,7 @@ function pitchScaleForSemitones(semitones) {
 async function postSettings(settings) {
   const response = await fetch("/api/robot-sound", {
     method: "POST",
+    keepalive: true,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ settings }),
     signal: AbortSignal.timeout(15000)

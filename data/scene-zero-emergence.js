@@ -1,9 +1,9 @@
 export const SCENE_ZERO_EMERGENCE_SOURCE_PREFIX = "scene-zero-emergence:";
 
 export const SCENE_ZERO_EMERGENCE_CUES = {
-  "before-suitcase-3": {
-    id: "before-suitcase-3",
-    nextSuitcase: 3,
+  "before-suitcase-1": {
+    id: "before-suitcase-1",
+    nextSuitcase: 1,
     text: "...",
     glitchLevel: "glitch-2",
     holdMs: 2000,
@@ -13,9 +13,9 @@ export const SCENE_ZERO_EMERGENCE_CUES = {
     hesitationMs: 120,
     pauseAfterMs: 450
   },
-  "before-suitcase-1": {
-    id: "before-suitcase-1",
-    nextSuitcase: 1,
+  "before-suitcase-3": {
+    id: "before-suitcase-3",
+    nextSuitcase: 3,
     text: ":)",
     glitchLevel: "glitch-3",
     holdMs: 800,

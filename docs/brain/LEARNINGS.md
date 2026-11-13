@@ -4,7 +4,7 @@ Each entry records a reproduced problem, its cause, the working response, and a 
 
 ## Sparse suitcase history
 
-Advance by position, not history length: `[2, 1]` ends at Mala 1. Final instruction outranks stale draws. Clear old speech on selection; new speech hides opening/theme overlays.
+Advance by position, not history length: `[2, 3]` ends at Mala 3. Final instruction outranks stale draws. Clear old speech on selection; new speech hides opening/theme overlays.
 
 ## Await asynchronous browser test conditions explicitly
 
@@ -17,8 +17,8 @@ Advance by position, not history length: `[2, 1]` ends at Mala 1. Final instruct
 
 - Problem: after the roulette selected a participant, the name overlay stayed up while the center-stage and suitcase instructions were already advancing inside it without the chatbot typewriter.
 - Cause: the `selected` state both owned the full overlay and scheduled every post-selection message by mutating the overlay's `lastComment`.
-- Working response: make `selected` a dedicated name hold, close it after five seconds in automatic mode or `→`/click in manual mode, then enter a separate `post_selection` state and publish the two instructions through the normal chatbot message path.
-- Prevent regression: the selected overlay renders only the participant name; do not publish post-selection messages until it has closed, and do not permit the next-stage shortcut until both typed lines finish.
+- Working response: make `selected` a dedicated name hold, close it after five seconds in automatic mode or `→`/click in manual mode, then enter `post_selection` and use normal chat to call the person to the center, facing the screen.
+- Prevent regression: the selected overlay renders only the participant name; publish the invitation only after it closes and unlock the next stage only after the line finishes typing.
 
 ## Audience agreements belong before the first warmup challenge
 
@@ -71,10 +71,10 @@ Advance by position, not history length: `[2, 1]` ends at Mala 1. Final instruct
 
 ## A pre-draw challenge must not mutate suitcase selection early
 
-- Problem: attaching the hangman to Mala 3 selected and opened the suitcase before the requested challenge had finished.
-- Cause: suitcase activation, public roulette, and activity startup were previously one sequence keyed by `currentSuitcase === 3`.
-- Working response: keep Mala 2 current while the choice state owns the pre-draw hangman. Only after its green success message finishes does manual `→` or the automatic two-second hold publish the Mala 3 announcement and start the existing roulette.
-- Prevent regression: assert that `currentSuitcase === 2` and `openedSuitcases === [2]` during the entire hangman, then verify Mala 3 is added only after victory. For the last suitcase, verify the one-option joke completes before the roulette still runs.
+- Problem: attaching the hangman directly to the second suitcase selected and opened it before the challenge had finished.
+- Cause: suitcase activation, public roulette, and activity startup shared a sequence keyed by the selected suitcase.
+- Working response: keep Mala 2 current while the choice state owns the pre-draw hangman. Only after its green success message finishes does manual `→` or the automatic two-second hold publish the Mala 1 announcement and start the existing roulette.
+- Prevent regression: assert that `currentSuitcase === 2` and `openedSuitcases === [2]` during the entire hangman, then verify Mala 1 is added only after victory. For the last suitcase, verify the one-option joke completes before the roulette still runs.
 
 ## Manual suitcase recovery must invalidate current work
 
@@ -103,12 +103,11 @@ Advance by position, not history length: `[2, 1]` ends at Mala 1. Final instruct
 - Working response: restart the server; when the persisted in-process shape intentionally changes, update `STORE_VERSION` and verify reset behavior.
 - Prevent regression: do not infer current runtime state from source inspection alone after hot reload.
 
-## SSE needs revision reconciliation
+## Multiwindow SSE and reconciliation
 
-- Problem: a public screen can miss an update during connection loss or the initial subscription window.
-- Cause: delivery timing between listener registration, initial snapshot, and a transient EventSource interruption.
-- Working response: subscribe before the initial snapshot server-side; share one public EventSource and probe the lightweight revision endpoint, fetching a full snapshot only when behind.
-- Prevent regression: preserve revision ordering in `lib/publicRealtime.js` and run `scripts/public-realtime-browser-test.js` after sync changes.
+- Problem: six per-window HTTP/1.1 streams exhaust browser sockets; later windows/commands stall. Reproduced in Chromium.
+- Response: one SharedWorker stream across public/controllers, no tab leader; finite polling if unavailable. Bound requests, reconcile revision, refresh on return; subscribe before snapshot server-side.
+- Guard: `test:public-realtime:multiwindow` checks nine windows, closed/frozen tabs and fallback; `test:public-realtime:browser` owns an isolated build/runtime. Physical monitor changes remain unverified.
 
 ## Projection navigation requires a registered live window
 
@@ -130,6 +129,7 @@ Advance by position, not history length: `[2, 1]` ends at Mala 1. Final instruct
 - Cause: hidden-tab rAF pauses; autoplay, permissions and physical routing also affect audio.
 - Working response: use the audio-clock meter in `lib/audienceMicrophoneMeter.js`, keep Operator open, unlock audio, grant its mic permission, then check hardware.
 - Prevent regression: report static/browser/physical-audio outcomes separately; do not make the public projection request microphone access.
+- Audio unlock: reserve the button's space; removing it on pointerdown can move a checkbox before pointerup and cancel the click.
 
 ## Reels comments need a feed fallback and a usable publish control
 

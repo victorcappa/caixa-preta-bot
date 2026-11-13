@@ -2,7 +2,7 @@ import { normalizePublicComposition, patchPublicComposition } from "../lib/publi
 import { extractOperatorPreferences, applyOperatorPreferences } from "../lib/operatorPreferences.js";
 import assert from "node:assert/strict";
 import { createOperatorPublicState, normalizePersonality, operatorPublicSnapshot, operatorShowContext,
-  personalityPrompt, relevantPersonalityChanges } from "../lib/operatorPublic.js";
+  personalityPrompt, relevantPersonalityChanges, normalizeExpressionProfile, expressionProfilePrompt } from "../lib/operatorPublic.js";
 import { runExternalRequest } from "../lib/externalRequestControl.js";
 import { getInstagramController, getExistingInstagramController, retireInstagramController } from "../lib/instagram/InstagramController.js";
 
@@ -22,6 +22,9 @@ channel.lastReactionAt = Date.now();
 assert.equal(relevantPersonalityChanges(channel).length, 0);
 assert.match(personalityPrompt({ sarcasm: 90 }), /SARCASMO: 90%/);
 assert.match(personalityPrompt({ sarcasm: 10 }), /SARCASMO: 10%/);
+assert.deepEqual(normalizeExpressionProfile({ humor: 120, poetry: -1, rigor: 37.5, secret: 99, social: "30" }), { humor: 100, poetry: 0, rigor: 37.5 });
+assert.match(expressionProfilePrompt({ humor: 19, poetry: 81 }), /Humor: 19%[\s\S]*Linguagem poética: 81%/);
+assert.match(expressionProfilePrompt({}), /Humor: 50%/);
 const context = operatorShowContext({ sceneZero: { stage: "suitcases" },
   instagram: { status: "NAVIGATING", currentUrl: "https://instagram.com/", profileDir: "secret", logs: ["private"] },
   variables: { apiKey: "secret" }, memories: [{ content: "private" }] });
@@ -33,7 +36,7 @@ const request = runExternalRequest("operator-test", (signal) => new Promise((res
   signal.addEventListener("abort", () => reject(new Error("cancelled")), { once: true });
 }), { signal: controller.signal });
 controller.abort();
-await assert.rejects(request, /cancelled/);
+await assert.rejects(request, error => error.name === "AbortError" || /cancelled/.test(error.message));
 let reports = 0;
 const instagram = getInstagramController({ reporter: () => { reports += 1; } });
 const initialGeneration = instagram.googleGuidanceGeneration;

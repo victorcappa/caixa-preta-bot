@@ -76,7 +76,7 @@ Audience actions are dramaturgical material with fixed wording, sequencing metad
 
 ### Decision
 
-`data/audience-warmup-prompts.js` is the source of truth. The warmup endpoint accepts registered prompts, and the controller exposes draw, trigger, timing, contextual audience-result, manual progression, and end controls. The operator's response is stored against the active prompt; it is not itself projected.
+`data/audience-warmup-prompts.js` is the fixed source of truth. Question 3 uses `atualidades`, combining fourteen permanent thematic actions with a validated weekly edition (seed `data/audience-warmup-current-affairs.json`, cache `lib/audienceWarmupCurrentAffairsStore.js`). Public text is a direct experiential question/challenge. Factual context, dates and sources stay private. Recovered sessions past the slot keep it pending until the category is published. Each selected action is frozen and published literally through the same path. The controller exposes sources, draw, trigger, timing, audience-result, manual progression, and end controls. The operator's response is stored against the active prompt and remains private.
 
 ### Reason
 

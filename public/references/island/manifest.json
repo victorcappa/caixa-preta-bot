@@ -1,0 +1,333 @@
+{
+  "version": 1,
+  "source": "Modelos locais da pasta Caixa Preta/modelos-3d/AR",
+  "models": [
+    {
+      "id": "aviao-quebrado",
+      "label": "Avião quebrado",
+      "topic": "falha",
+      "size": 7.3,
+      "position": [
+        -3.1,
+        0,
+        1.4
+      ],
+      "rotation": -0.5,
+      "initial": true,
+      "url": "/references/island/models/aviao-quebrado.glb",
+      "source": "../modelos-3d/AR/aviao-quebrado.glb",
+      "bytes": 555264,
+      "sha256": "4ce1209c5aa692d63fc7195b47dd8e6055b2d7ea579c42fdc0a7d0aa2f5b56b0",
+      "triangles": 3692,
+      "extensions": [
+        "EXT_texture_webp",
+        "KHR_draco_mesh_compression"
+      ],
+      "provenance": "Modelo local da peça, copiado byte a byte. A apresentação holográfica altera somente a luz e a exibição, sem editar o arquivo original."
+    },
+    {
+      "id": "piloto",
+      "label": "Piloto",
+      "topic": "corpo",
+      "size": 2.7,
+      "position": [
+        1.5,
+        0,
+        1.8
+      ],
+      "rotation": -0.6,
+      "initial": true,
+      "url": "/references/island/models/piloto.glb",
+      "source": "../modelos-3d/AR/piloto-optimized.glb",
+      "bytes": 2400780,
+      "sha256": "6a1f1b44c4d33d593791a0172ec23131cbf6b6c8dde3091d908e44640a6b2923",
+      "triangles": 143280,
+      "extensions": [
+        "EXT_texture_webp",
+        "KHR_draco_mesh_compression",
+        "KHR_mesh_quantization"
+      ],
+      "provenance": "Modelo local da peça, copiado byte a byte. A apresentação holográfica altera somente a luz e a exibição, sem editar o arquivo original."
+    },
+    {
+      "id": "caixa-preta",
+      "label": "Caixa-preta",
+      "topic": "memoria",
+      "size": 1.25,
+      "position": [
+        -0.2,
+        0,
+        -1.4
+      ],
+      "rotation": 0.4,
+      "initial": true,
+      "url": "/references/island/models/caixa-preta.glb",
+      "source": "../modelos-3d/AR/caixa-preta.glb",
+      "bytes": 1387056,
+      "sha256": "085616e098f4a91a8279825d6386ac0a573d6b935f6e481d003aba69ab3b4f68",
+      "triangles": 62736,
+      "extensions": [
+        "EXT_texture_webp",
+        "KHR_draco_mesh_compression"
+      ],
+      "provenance": "Modelo local da peça, copiado byte a byte. A apresentação holográfica altera somente a luz e a exibição, sem editar o arquivo original."
+    },
+    {
+      "id": "cadeira",
+      "label": "Cadeira",
+      "topic": "trabalho",
+      "size": 1.7,
+      "position": [
+        3.5,
+        0,
+        -0.5
+      ],
+      "rotation": -1,
+      "initial": true,
+      "url": "/references/island/models/cadeira.glb",
+      "source": "../modelos-3d/AR/cadeira-optimized.glb",
+      "bytes": 2921300,
+      "sha256": "6c19395be86119304a11bcc21182301474e61e57f10aa1b13f4abb2b514eb365",
+      "triangles": 152902,
+      "extensions": [
+        "EXT_texture_webp",
+        "KHR_draco_mesh_compression",
+        "KHR_mesh_quantization"
+      ],
+      "provenance": "Modelo local da peça, copiado byte a byte. A apresentação holográfica altera somente a luz e a exibição, sem editar o arquivo original."
+    },
+    {
+      "id": "quati",
+      "label": "Quati",
+      "topic": "travessia",
+      "size": 1.5,
+      "position": [
+        -4.5,
+        0,
+        -2.1
+      ],
+      "rotation": 0.7,
+      "initial": true,
+      "url": "/references/island/models/quati.glb",
+      "source": "../modelos-3d/AR/quati.glb",
+      "bytes": 2249552,
+      "sha256": "a1e2376e6c09b3a2c899372c99ab6e1784617840908efc52d20a79b8f11cc175",
+      "triangles": 214628,
+      "extensions": [
+        "EXT_texture_webp",
+        "KHR_draco_mesh_compression"
+      ],
+      "provenance": "Modelo local da peça, copiado byte a byte. A apresentação holográfica altera somente a luz e a exibição, sem editar o arquivo original."
+    },
+    {
+      "id": "borboleta",
+      "label": "Borboleta",
+      "topic": "duplo",
+      "size": 1.1,
+      "position": [
+        2.4,
+        1.2,
+        -3.6
+      ],
+      "rotation": 0.4,
+      "initial": true,
+      "url": "/references/island/models/borboleta.glb",
+      "source": "../modelos-3d/AR/borboleta.glb",
+      "bytes": 750416,
+      "sha256": "05774abab2f297f1656712807bfcb4ab8ef3df5419db6edf585217f3f073b62d",
+      "triangles": 22411,
+      "extensions": [
+        "EXT_texture_webp",
+        "KHR_draco_mesh_compression"
+      ],
+      "provenance": "Modelo local da peça, copiado byte a byte. A apresentação holográfica altera somente a luz e a exibição, sem editar o arquivo original."
+    },
+    {
+      "id": "zippo",
+      "label": "Zippo",
+      "topic": "memoria",
+      "size": 0.85,
+      "position": [
+        -1.7,
+        0,
+        4.4
+      ],
+      "rotation": 0.3,
+      "initial": false,
+      "url": "/references/island/models/zippo.glb",
+      "source": "../modelos-3d/AR/zippo.glb",
+      "bytes": 1523068,
+      "sha256": "ba26edc723d94480ed248706cd1b6568b92d5772cfe76b1772f967c0d1bc1ea0",
+      "triangles": 34062,
+      "extensions": [
+        "EXT_texture_webp",
+        "KHR_draco_mesh_compression"
+      ],
+      "provenance": "Modelo local da peça, copiado byte a byte. A apresentação holográfica altera somente a luz e a exibição, sem editar o arquivo original."
+    },
+    {
+      "id": "cigarro",
+      "label": "Cigarro",
+      "topic": "corpo",
+      "size": 0.8,
+      "position": [
+        2.8,
+        0,
+        4.6
+      ],
+      "rotation": 0.9,
+      "initial": false,
+      "url": "/references/island/models/cigarro.glb",
+      "source": "../modelos-3d/AR/cigarro.glb",
+      "bytes": 580236,
+      "sha256": "2a83e7cd1d78058a5cb6961d5a8b6aff1d831952c8472cc104f5c777d167d146",
+      "triangles": 9010,
+      "extensions": [
+        "EXT_texture_webp",
+        "KHR_draco_mesh_compression"
+      ],
+      "provenance": "Modelo local da peça, copiado byte a byte. A apresentação holográfica altera somente a luz e a exibição, sem editar o arquivo original."
+    },
+    {
+      "id": "oculos",
+      "label": "Óculos",
+      "topic": "duplo",
+      "size": 1.1,
+      "position": [
+        4.6,
+        0,
+        -2.6
+      ],
+      "rotation": 0.4,
+      "initial": false,
+      "url": "/references/island/models/oculos.glb",
+      "source": "../modelos-3d/AR/oculos.glb",
+      "bytes": 150340,
+      "sha256": "37c703bda4b3d2b2a409eefc567be23633ac011ce62e65355a63339f7a181482",
+      "triangles": 4856,
+      "extensions": [],
+      "provenance": "Modelo local da peça, copiado byte a byte. A apresentação holográfica altera somente a luz e a exibição, sem editar o arquivo original."
+    },
+    {
+      "id": "medalha",
+      "label": "Medalha",
+      "topic": "memoria",
+      "size": 0.85,
+      "position": [
+        -4.5,
+        0,
+        3.5
+      ],
+      "rotation": 0.2,
+      "initial": false,
+      "url": "/references/island/models/medalha.glb",
+      "source": "../modelos-3d/AR/medalha.glb",
+      "bytes": 1669296,
+      "sha256": "5e91c7ccb962b448bf70333211be5778f155517792c1a4a458ddfb7197b75ff2",
+      "triangles": 50812,
+      "extensions": [
+        "EXT_texture_webp",
+        "KHR_draco_mesh_compression"
+      ],
+      "provenance": "Modelo local da peça, copiado byte a byte. A apresentação holográfica altera somente a luz e a exibição, sem editar o arquivo original."
+    },
+    {
+      "id": "braco",
+      "label": "Braço",
+      "topic": "corpo",
+      "size": 1.35,
+      "position": [
+        4.5,
+        0,
+        2.9
+      ],
+      "rotation": -0.5,
+      "initial": false,
+      "url": "/references/island/models/braco.glb",
+      "source": "../modelos-3d/AR/braco.glb",
+      "bytes": 8512,
+      "sha256": "fd8280fb058375d93b2a653abf0600cac4e638b0527fd5bb40ff21994e3a3ef4",
+      "triangles": 1812,
+      "extensions": [
+        "KHR_draco_mesh_compression"
+      ],
+      "provenance": "Modelo local da peça, copiado byte a byte. A apresentação holográfica altera somente a luz e a exibição, sem editar o arquivo original."
+    },
+    {
+      "id": "perna",
+      "label": "Perna",
+      "topic": "corpo",
+      "size": 1.5,
+      "position": [
+        5.2,
+        0,
+        1.2
+      ],
+      "rotation": 0.9,
+      "initial": false,
+      "url": "/references/island/models/perna.glb",
+      "source": "../modelos-3d/AR/perna.glb",
+      "bytes": 7240,
+      "sha256": "420a48046e02911235bca926c422a1c08edf72462fd03fa668905c06a290d225",
+      "triangles": 1482,
+      "extensions": [
+        "KHR_draco_mesh_compression"
+      ],
+      "provenance": "Modelo local da peça, copiado byte a byte. A apresentação holográfica altera somente a luz e a exibição, sem editar o arquivo original."
+    },
+    {
+      "id": "ra",
+      "label": "Rã",
+      "topic": "jogo",
+      "size": 0.8,
+      "position": [
+        -2,
+        0,
+        -4.8
+      ],
+      "rotation": 0.5,
+      "initial": false,
+      "url": "/references/island/models/ra.glb",
+      "source": "../modelos-3d/AR/ra.glb",
+      "bytes": 970952,
+      "sha256": "a3beb55d82d10b0f64739b9ba505c9f7203fc22e35a94c7d77d25cf17d41f275",
+      "triangles": 8240,
+      "extensions": [
+        "EXT_texture_webp",
+        "KHR_draco_mesh_compression"
+      ],
+      "provenance": "Modelo local da peça, copiado byte a byte. A apresentação holográfica altera somente a luz e a exibição, sem editar o arquivo original."
+    },
+    {
+      "id": "pieta",
+      "label": "Pietà",
+      "topic": "corpo",
+      "size": 3.2,
+      "position": [
+        0,
+        0,
+        -5
+      ],
+      "rotation": -0.3,
+      "initial": false,
+      "url": "/api/reference-island/pieta",
+      "storagePath": "public/references/island/models/pieta.glb.gz",
+      "source": "../pieta1.blend",
+      "sourceSha256": "ae8e63f949233c503fa43a7456d22cdf4bfc4d1c95ed37e1522f022e6720c159",
+      "sourceVertices": 2850526,
+      "sourcePolygons": 950347,
+      "sourceTriangles": 950437,
+      "bytes": 105726440,
+      "transferBytes": 50534496,
+      "sha256": "638f86fd4a737d18d94ec54b823f918d0493d9d3795ef9b68ac8f4bbe1748752",
+      "fileSha256": "eef5ed31b16c6fff25f267f861e8175a62438b1199768b2712bd135a6eb53ca9",
+      "triangles": 950437,
+      "extensions": [],
+      "provenance": "Exportada do objeto 3DModel de pieta1.blend, sem decimar a malha, com materiais e texturas. Arquivo GLB em gzip sem perda; carregamento somente sob demanda."
+    }
+  ],
+  "limits": [
+    "A geometria visual não é conhecimento textual lido pelo bot.",
+    "Pontes entre objetos e referências são propostas curatoriais; não atribuem a autoria dos modelos a uma pessoa."
+  ]
+}

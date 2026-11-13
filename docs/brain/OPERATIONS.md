@@ -52,9 +52,13 @@ npm run lint
 
 `brain:sync` rewrites only the generated region of `docs/brain/INVENTORY.md`. `brain:check` performs existence, size, path-reference, generated-header, and obvious-secret checks; it is not an application test.
 
-Targeted logical and browser commands are listed in the generated inventory. Run the narrowest relevant logical test first. Browser tests generally require `npm run dev` already running on port 3000 and prove Chromium behavior only where their assertions reach. They do not prove Safari, physical audio, live OpenAI, Instagram, or deployment.
+Targeted checks: generated inventory. Check each script's server/fixture requirements. Browser assertions prove Chromium behavior, not Safari, physical audio, live APIs or deployment.
 
-`npm run test:audience-warmup:transition` checks the play-dead typewriter acknowledgement, full 20-second timer, closing acknowledgement and first question in manual and automatic modes. It uses a fake clock and temporary snapshot storage without touching the active show or calling a model. Requires Node 22.15+ or 24, like the other `registerHooks` tests.
+Post-demo cloud: run `npm run point-cloud:prepare` before the show; private button, photos and offline tests: `docs/POST_DEMO_POINT_CLOUD.md`.
+
+`test:audience-warmup:transition` checks play-dead → first question and timer/typing gates, manual/automatic, with isolated fake time (Node 22.15+/24; no model/live-show writes).
+
+Weekly news refresh/cache and offline checks: `docs/AQUECIMENTO_ATUALIDADES.md`.
 
 ## Start a local presentation
 
@@ -63,11 +67,13 @@ Targeted logical and browser commands are listed in the generated inventory. Run
 3. In `ABRIR NOVA JANELA COM`, open the desired public route from the operator so the projection window receives an ID and registers.
 4. Move that public window to the extended display/projector and enter fullscreen manually.
 5. Use `MUDAR PARA TELA` or the scene-controller tabs only after the projection status reports a connected window.
-6. For Scene Zero, open `/cena-0-controller` (or `/videomapping-controller`), confirm microphone permission/status, then use `BOOT` and the visible operator sequence. Keep that tab open when switching to Bot: microphone detection uses the audio clock and continues while Operator is hidden; the public page never requests the microphone.
+6. Open `/cena-0-controller` (or `/videomapping-controller`), confirm microphone access and use `BOOT`. Keep the controller open: its audio clock detects sound while hidden. The public page never requests the microphone.
 7. Before audience entry, verify text, blackout/recovery, global volume, media playback, selected audio output, microphone level, and STOP ALL on the actual browser/hardware path.
 
+Timer with time left: `Shift + →` advances where allowed; at zero, `→` suffices. Challenge guards remain. Otherwise `→` advances, `Shift + →` returns. `←` ignored. Malas: 2 → 1 → 3.
+
 If the technical OP terminal reports an interrupted session, inspect scene, step, and snapshot time. Choose `RETOMAR APRESENTAÇÃO` to restore it paused and with transient media/external browser state stopped, or `INICIAR NOVA APRESENTAÇÃO` to discard that recovery path deliberately. Nothing restores automatically.
-Before restarting a live process, verify that its session ID/revision match the disk snapshot. A guarded older recovery is not a current backup. Gate shutdown on successful capture; separate shell lines can still execute after a failed assertion.
+Before restart, preserve the old recovery file, then POST `/api/show-session` with `action: "capture-current"` and the current `sessionId`. This explicitly captures live state even when an older file is guarded. Verify disk/session/revision equality; shut down only after success.
 
 `MODO EMERGÊNCIA` is available at the top of the technical OP terminal in Principal. Activating it cancels and blocks external requests, pauses automatic/timed activity, preserves snapshots, and keeps local/manual controls available. Deactivating it permits future external requests but deliberately leaves the show in manual control.
 
@@ -102,8 +108,9 @@ If generated Next artifacts are demonstrably stale, stop the server first and th
 
 ## Persistence, health, and writes
 
-- Operator choices save atomically to `.runtime/show/operator-preferences.json` (or the configured runtime directory), independently of recovery. New presentations, Tarot reset and process restart keep current tuning; recovery also retains the latest choices. Scope, capture/activation and checks: `docs/PREFERENCIAS_OPERADOR.md`.
+- Operator choices save atomically to `.runtime/show/operator-preferences.json` (or the configured runtime directory), independently of recovery. New sessions, BIOS/Tarot reset and restart keep tuning; recovery also retains the latest choices. Scope, capture/activation and checks: `docs/PREFERENCIAS_OPERADOR.md`.
 - Recovery snapshots are written asynchronously and atomically to `.runtime/show/current.json`; checksum/schema/store-version failures are rejected. The live singleton remains authoritative.
+- `show-reliability-v43` rejects earlier snapshots because suitcase IDs 1 and 3 changed. Files remain on disk; start a new presentation. Operator preferences are independent.
 - `GET /api/health` reports `core` app/storage/emergency state separately from optional internet/OpenAI/request state. Optional failure does not make the core unhealthy.
 - `data/scene-notes.json`, `data/controller-cues.json`, and `data/forca-g-sampler-settings.json` are local persisted operator data and can be changed by their UIs.
 - Scene Zero and general game draws use only valid names from the `publico` group in `data/publico.json`. Only when that list is empty do they draw from `equipe`; session-memory names never enter the pool. The rule also applies after reset/recovery and to the legacy `all`/`audience-only` values retained by POST `/api/show-session` (`participant-selection-scope`). An in-progress draw keeps its prepared candidates. Check with `node --no-warnings scripts/participant-pool-test.js` and `npm run test:games`; both use isolated participant fixtures.
@@ -125,9 +132,9 @@ Audit checks (never run against a live show):
 - `npm run test:openai:live` makes one real generation on a dedicated server with the configured key; resets the temporary session and checks operator context. It has a real provider cost and must never target the active show.
 - `npm run test:instagram:readonly` uses a disposable copy of the local browser profile, permits GET/HEAD and named GraphQL Queries, blocks writes and login, and reports only status/counts. It requires network access and never validates posting.
 - `npm run test:scene-zero:e2e` requires a dedicated local server, resets its session and follows BOOT → synthetic sound check → agreements → questions → minigame → participant → malas → final blackout. It also checks scoped routes and audio asset ranges; Baralho/videos are excluded. It does not prove physical microphone/audio or the entire later dramaturgy.
-- `npm run test:public-realtime:browser` checks projection/controller convergence with normal SSE and with public SSE blocked.
+- `test:public-realtime:browser`: isolated build/runtime; SSE, polling, offline/reload and multiple bot/control windows. `test:public-realtime:multiwindow`: HTTP/1.1 fixture, closed/frozen windows, free command sockets. No live state/model calls.
 
-Audit artifacts default to `artifacts/bot-audit-2026-10-14`; reusable audit scripts accept `CAIXA_PRETA_AUDIT_OUTPUT`. Results and remaining acceptance limits are in `BOT_TEST_REPORT.md`. Asynchronous browser predicates must use `scripts/browser-test-utils.js`, not async `waitForFunction`.
+Audit artifacts: `artifacts/bot-audit-2026-10-14`, override `CAIXA_PRETA_AUDIT_OUTPUT`. Limits: `BOT_TEST_REPORT.md`. Async browser predicates require `scripts/browser-test-utils.js`, never async `waitForFunction`.
 
 These checks were validated with the reliability layer now versioned in this checkout, including its launcher, health and recovery files. The dated audit evidence is versioned under `artifacts/`; runtime snapshots and browser profiles remain local.
 
@@ -148,7 +155,7 @@ Brain maintenance never authorizes commit, push, merge, deploy, data deletion, i
 
 ## Operator Público
 
-Use REVELAR OPERATOR at the top of Scene Zero’s right menu; ABRIR CONVERSA reopens private controls. `/operator` contains bot parameters. Capture the public tab with CONECTAR PROJEÇÃO AO VIVO for a muted live monitor. Operation, recovery, streaming, personality and acceptance limits: `OPERATOR_PUBLICO.md`.
+Scene Zero’s REVELAR OPERATOR opens public conversation; ABRIR CONVERSA opens private controls. `/operator` has parameters. CONECTAR PROJEÇÃO AO VIVO gives a muted monitor. Operation: `OPERATOR_PUBLICO.md`. Live training: `docs/TREINO_AO_VIVO.md`.
 
 For projection calibration, open `/?menu` in a separate control tab and keep the actual projection window without `?menu`. The menu tab does not register as the active projection. Choose **PERFIL TECIDO** to try larger bold white text without glow, or **VISUAL ORIGINAL** to disable the profile. Adjust typeface, weight, general scale, line spacing and per-module text scale; select a public module to move/resize it numerically or in the schematic preview. **RESTAURAR COMPONENTE** clears its geometry and text scale. Changes sync to connected public windows and persist in operator preferences; a failed save offers retry. Alt+M toggles the menu and Esc closes it. These adjustments do not change the projector's physical resolution; check clipping and readability on the actual projector and fabric, particularly after enlarging long text. Other canvas-rendered graphics keep their own rendering settings.
 

@@ -285,21 +285,21 @@ async function main() {
   assert.equal(suitcaseGame.clampGincanaDuration(5), 5);
   assert.equal(suitcaseGame.clampGincanaDuration(30), 30);
   assert.equal(suitcaseGame.clampGincanaDuration(200), 120);
-  assert.deepEqual(suitcaseGame.SCENE_ZERO_SUITCASE_ORDER, [2, 3, 1]);
-  assert.deepEqual(suitcaseGame.SCENE_ZERO_SUITCASE_ORDER.map(suitcaseGame.buildSuitcaseSelectionCue), ["Centro", "Esquerda", "Direita"], "a sequência pública deve ser Centro → Esquerda → Direita, preservando a ordem dos jogos");
+  assert.deepEqual(suitcaseGame.SCENE_ZERO_SUITCASE_ORDER, [2, 1, 3]);
+  assert.deepEqual(suitcaseGame.SCENE_ZERO_SUITCASE_ORDER.map(suitcaseGame.buildSuitcaseSelectionCue), ["2", "1", "3"], "a sequência pública deve usar os números 2 → 1 → 3, preservando bexigas, forca/disco e toca-discos");
   assert.equal(suitcaseGame.nextSceneZeroSuitcase(initial.suitcaseGame), 2);
-  assert.equal(suitcaseGame.nextSceneZeroSuitcase({ currentSuitcase: 2 }), 3);
-  assert.equal(suitcaseGame.nextSceneZeroSuitcase({ currentSuitcase: 3 }), 1);
-  assert.equal(suitcaseGame.nextSceneZeroSuitcase({ openedSuitcases: [2, 3, 1] }), null);
-  assert.equal(suitcaseGame.nextSceneZeroSuitcase({ currentSuitcase: 1, openedSuitcases: [2, 1] }), null,
+  assert.equal(suitcaseGame.nextSceneZeroSuitcase({ currentSuitcase: 2 }), 1);
+  assert.equal(suitcaseGame.nextSceneZeroSuitcase({ currentSuitcase: 1 }), 3);
+  assert.equal(suitcaseGame.nextSceneZeroSuitcase({ openedSuitcases: [2, 1, 3] }), null);
+  assert.equal(suitcaseGame.nextSceneZeroSuitcase({ currentSuitcase: 3, openedSuitcases: [2, 3] }), null,
     "a última mala deve encerrar a sequência mesmo após um salto manual");
-  assert.equal(suitcaseGame.nextSceneZeroSuitcase({ currentSuitcase: 3, openedSuitcases: [3] }), 1,
+  assert.equal(suitcaseGame.nextSceneZeroSuitcase({ currentSuitcase: 1, openedSuitcases: [1] }), 3,
     "a recuperação na segunda mala deve continuar para a última, sem repetir a atual");
-  assert.equal(suitcaseGame.nextSceneZeroSuitcase({ openedSuitcases: [1] }), 2,
+  assert.equal(suitcaseGame.nextSceneZeroSuitcase({ openedSuitcases: [3] }), 2,
     "sem mala atual, procurar a primeira disponível na ordem autoral");
   const recoveredFinalSuitcase = {
-    currentSuitcase: 1, openedSuitcases: [2, 1], status: "active", suitcaseSelectionSequence: 4,
-    choice: { status: "ready", targetSuitcase: 1 },
+    currentSuitcase: 3, openedSuitcases: [2, 3], status: "active", suitcaseSelectionSequence: 4,
+    choice: { status: "ready", targetSuitcase: 3 },
     contentInstruction: { kind: "last-suitcase", status: "complete", selectionSequence: 4 }
   };
   assert.equal(suitcaseGame.isSceneZeroFinalSuitcaseInstructionReady(recoveredFinalSuitcase), true);
@@ -307,7 +307,7 @@ async function main() {
   assert.equal(suitcaseGame.isSceneZeroFinalSuitcaseInstructionReady({ ...recoveredFinalSuitcase, suitcaseSelectionSequence: 5 }), false);
   assert.equal(suitcaseGame.isSceneZeroFinalSuitcaseInstructionReady({ ...recoveredFinalSuitcase, contentInstruction: { kind: "last-suitcase", status: "announcing", selectionSequence: 4 } }), false);
   const cueNow = Date.parse("2026-10-14T12:00:00Z");
-  const forcaCue = { currentSuitcase: 3, suitcaseSelectedAt: new Date(cueNow).toISOString(), cuePhase: "open" };
+  const forcaCue = { currentSuitcase: 1, suitcaseSelectedAt: new Date(cueNow).toISOString(), cuePhase: "open" };
   assert.equal(suitcaseGame.shouldShowSceneZeroSuitcaseCue(forcaCue, cueNow + 10000), true,
     "ABRA A MALA deve aguardar a seta no modo manual");
   assert.equal(suitcaseGame.shouldShowSceneZeroSuitcaseCue(forcaCue, cueNow + 10000, { source: "scene-zero-hangman-instruction" }), false,
@@ -315,23 +315,23 @@ async function main() {
   assert.equal(suitcaseGame.shouldShowSceneZeroSuitcaseCue({ ...forcaCue, cuePhase: "complete" }, cueNow + 10000), false);
   assert.equal(suitcaseGame.shouldShowSceneZeroSuitcaseCue({ ...forcaCue, cuePhase: "automatic" }, cueNow + 4999), true);
   assert.equal(suitcaseGame.shouldShowSceneZeroSuitcaseCue({ ...forcaCue, cuePhase: "automatic" }, cueNow + 5000), false);
-  assert.equal(suitcaseGame.buildSuitcaseSelectionCue(2), "Centro");
-  assert.equal(suitcaseGame.buildSuitcaseSelectionCue(1), "Direita");
-  assert.equal(suitcaseGame.buildSuitcaseSelectionCue(3), "Esquerda");
+  assert.equal(suitcaseGame.buildSuitcaseSelectionCue(2), "2");
+  assert.equal(suitcaseGame.buildSuitcaseSelectionCue(1), "1");
+  assert.equal(suitcaseGame.buildSuitcaseSelectionCue(3), "3");
   assert.equal(suitcaseGame.buildSuitcaseSelectionCue(4), "");
   assert.equal(suitcaseGame.SCENE_ZERO_SUITCASE_CUE_DURATION_MS, 5000);
   assert.deepEqual(suitcaseGame.sceneZeroSuitcaseBriefingSteps(2), [
     {
       id: "game-explanation",
-      text: "O jogo é simples: eu indico uma mala. Quando a posição aparecer, vá até ela, abra a mala e espere minhas instruções antes de começar. Vou escolher uma mala agora."
+      text: "O jogo é simples: eu indico uma mala. Quando o número aparecer, vá até ela, abra a mala e espere minhas instruções antes de começar. Vou escolher uma mala agora."
     },
     {
       id: "lighting-cue",
       text: 'Ricardinho, dá uma força com a luz aí, pra ficar bem "claro" qual mala abrir. Sim, foi um trocadilho. A verba não cobria um melhor.'
     }
   ]);
-  assert.equal(suitcaseGame.sceneZeroSuitcaseBriefingSteps(3)[0].text, "Antes de sortear a segunda mala, resolva o enigma com o jogo da forca.");
-  assert.equal(suitcaseGame.sceneZeroSuitcaseBriefingSteps(1)[0].text, "Abra a segunda mala e pegue o disco.");
+  assert.equal(suitcaseGame.sceneZeroSuitcaseBriefingSteps(1)[0].text, "Antes de sortear a segunda mala, resolva o enigma com o jogo da forca.");
+  assert.equal(suitcaseGame.sceneZeroSuitcaseBriefingSteps(3)[0].text, "Abra a segunda mala e pegue o disco.");
   assert.equal(suitcaseGame.SCENE_ZERO_FIRST_SUITCASE_INSTRUCTION, "Quando eu autorizar, você vai estourar as bexigas até encontrar a chave. Espere eu dizer ‘VALENDO!’.");
   assert.match(sceneZeroRouteSource, /SUITCASE_INSTRUCTION_READING_HOLD_MS = 2000/, "no automático, cada fala da mala deve manter dois segundos de leitura depois do typewriter");
   assert.match(showStateSource, /action === "suitcase-content-instruction-ready"[\s\S]*status: "ready"/, "a fala intermediária da mala deve ter espera manual explícita");
@@ -350,9 +350,9 @@ async function main() {
   assert.match(suitcaseGame.sceneZeroRetryComment(suitcaseGame.SCENE_ZERO_GINCANA_RETRY_COMMENTS, 1), /todo mundo espera mais uma vez/i);
   assert.match(suitcaseGame.sceneZeroRetryComment(suitcaseGame.SCENE_ZERO_GINCANA_RETRY_COMMENTS, 1), /substância/i);
   assert.match(suitcaseGame.sceneZeroRetryComment(suitcaseGame.SCENE_ZERO_HANGMAN_RETRY_COMMENTS, 1), /mais 30 segundos/i);
-  assert.equal(suitcaseGame.SCENE_ZERO_NEXT_SUITCASE_COMMENTS[3], "Próxima mala. Ricardinho, ilumina o próximo erro.");
-  assert.equal(suitcaseGame.SCENE_ZERO_NEXT_SUITCASE_COMMENTS[1], "Vou sortear a próxima mala. Suspense enorme: só sobrou uma. Ricardinho, finge que é surpresa.");
-  assert.match(sceneZeroRouteSource, /targetSuitcase\) === 3[\s\S]*startPreDrawHangman/, "a forca deve começar antes do sorteio da segunda mala");
+  assert.equal(suitcaseGame.SCENE_ZERO_NEXT_SUITCASE_COMMENTS[1], "Próxima mala. Ricardinho, ilumina o próximo erro.");
+  assert.equal(suitcaseGame.SCENE_ZERO_NEXT_SUITCASE_COMMENTS[3], "Vou sortear a próxima mala. Suspense enorme: só sobrou uma. Ricardinho, finge que é surpresa.");
+  assert.match(sceneZeroRouteSource, /targetSuitcase\) === 1[\s\S]*startPreDrawHangman/, "a forca deve começar antes do sorteio da segunda mala");
   assert.match(showStateSource, /function publishSceneZeroHangmanResult\(hangman\)[\s\S]*const suitcaseGame = ensureSceneZeroSuitcaseGame\(\)[\s\S]*status: "challenge_result"/, "o resultado da forca deve acessar o estado atual antes de liberar o sorteio");
   assert.match(showStateSource, /status: "challenge_result"[\s\S]*suitcase-choice-predraw-complete/, "a vitória na forca deve liberar o sorteio pendente");
   assert.match(chatSource, /scene-zero-hangman-instruction[\s\S]*scene-zero-hangman-result:success/, "o typewriter deve confirmar tanto a instrução quanto o resultado da forca pré-sorteio");
@@ -361,7 +361,7 @@ async function main() {
   assert.match(sceneZeroControllerSource, /\["challenge_result", "challenge_complete"\]\.includes\(suitcaseChoice\.status\)[\s\S]*suitcase-predraw-continue/, "o modo manual deve sempre conseguir seguir da vitória da forca para o sorteio");
   assert.match(sceneZeroControllerSource, /emergenceWaiting[\s\S]*suitcase-emergence-continue/, "o lapso entre malas deve ter avanço manual explícito");
   assert.match(sceneZeroControllerSource, /gincanaRetryWaiting[\s\S]*gincana-retry-start[\s\S]*hangmanRetryWaiting[\s\S]*hangman-retry-start/, "as duas repetições devem permanecer avançáveis no modo manual");
-  assert.match(sceneZeroControllerSource, /SORTEAR MALA CENTRO[\s\S]*SORTEAR MALA ESQUERDA[\s\S]*SORTEAR MALA DIREITA/, "o modo manual deve expor as posições na ordem Centro → Esquerda → Direita");
+  assert.match(sceneZeroControllerSource, /SORTEAR MALA 2[\s\S]*SORTEAR MALA 1[\s\S]*SORTEAR MALA 3/, "o modo manual deve expor os números na ordem 2 → 1 → 3");
   assert.match(sceneZeroControllerSource, /suitcaseAdvanceToken[\s\S]*suitcaseAdvanceLockRef[\s\S]*runSuitcaseAdvance/, "a seta deve permanecer travada até o estado da etapa mudar");
   assert.match(sceneZeroRouteSource, /action === "suitcase-manual-draw"[\s\S]*manualSuitcaseDrawInFlight[\s\S]*activateSuitcase\(suitcaseNumber[\s\S]*force: true/, "o sorteio manual deve serializar a recuperação e forçar somente a mala escolhida");
   assert.match(showStateSource, /action === "suitcase-manual-recover"[\s\S]*clearSceneZeroGincanaTimer\(\)[\s\S]*clearSceneZeroHangmanTimer\(\)[\s\S]*openedSuitcases/, "a recuperação deve cancelar a etapa atual sem apagar as malas já realizadas");
@@ -390,15 +390,15 @@ async function main() {
   assert.equal(suitcaseGame.sceneZeroSuitcaseChallenge(2, [], () => 0).id, "bexigas-chave");
   assert.equal(suitcaseGame.sceneZeroSuitcaseChallenge(2, ["bexigas-chave"], () => 0).id, "bexigas-chave");
   assert.equal(suitcaseGame.sceneZeroSuitcaseChallenge(3), null);
-  assert.equal(suitcaseGame.SCENE_ZERO_SUITCASES[1].game, "tutorial_end");
+  assert.equal(suitcaseGame.SCENE_ZERO_SUITCASES[1].game, "hangman");
   assert.equal(suitcaseGame.SCENE_ZERO_SUITCASES[2].game, "physical_challenge");
-  assert.equal(suitcaseGame.SCENE_ZERO_SUITCASES[3].game, "hangman");
+  assert.equal(suitcaseGame.SCENE_ZERO_SUITCASES[3].game, "tutorial_end");
   assert.equal(emergence.sceneZeroEmergenceCueForNextSuitcase(2), null, "a explicação inicial não deve competir com prompt ou glitch");
   assert.deepEqual(
-    [3, 1].map((number) => emergence.sceneZeroEmergenceCueForNextSuitcase(number).glitchLevel),
+    [1, 3].map((number) => emergence.sceneZeroEmergenceCueForNextSuitcase(number).glitchLevel),
     ["glitch-2", "glitch-3"]
   );
-  const finalEmergenceCue = emergence.sceneZeroEmergenceCueForNextSuitcase(1);
+  const finalEmergenceCue = emergence.sceneZeroEmergenceCueForNextSuitcase(3);
   assert.equal(finalEmergenceCue.text, ":)");
   assert.equal(
     emergence.sceneZeroEmergenceCueForMessage({ source: emergence.sceneZeroEmergenceSource(finalEmergenceCue.id) }),
@@ -430,6 +430,21 @@ async function main() {
   assert.deepEqual(gincanaBank.sceneZeroEvidenciasFrameAt(24), { phase: "complete", lineIndex: 6, lineProgress: 1 });
   assert.equal(fs.existsSync(path.join(process.cwd(), "assets", gincanaBank.SCENE_ZERO_EVIDENCIAS_AUDIO_FILE)), true);
   assert.equal(hangmanWords.SCENE_ZERO_HANGMAN_WORDS.length, 24);
+  assert(hangmanWords.SCENE_ZERO_HANGMAN_WORDS.every(hangmanWords.isSceneZeroHangmanWordEligible), "nenhuma palavra pode repetir seu próprio tema");
+  assert.equal(hangmanWords.isSceneZeroHangmanWordEligible({ text: "FÓRÇA-G", category: "força g" }), false, "acentos, caixa e pontuação não devem disfarçar uma resposta igual ao tema");
+  const invalidWord = { id: "regression-theme-answer", text: "ACIDENTE", category: "acidente" };
+  hangmanWords.SCENE_ZERO_HANGMAN_WORDS.push(invalidWord);
+  try {
+    assert.equal(hangmanWords.getSceneZeroHangmanWord(invalidWord.id), null, "a seleção manual também deve rejeitar uma resposta que entrega o tema");
+    for (const theme of hangmanWords.SCENE_ZERO_HANGMAN_THEMES) {
+      for (const randomValue of [0, 0.5, 0.999999]) {
+        const word = suitcaseHangman.chooseSceneZeroHangmanWord({ theme, excludeIds: hangmanWords.SCENE_ZERO_HANGMAN_WORDS.map(({ id }) => id), random: () => randomValue });
+        assert(word && word.category === theme && hangmanWords.isSceneZeroHangmanWordEligible(word), "mesmo após esgotar as opções, o sorteio deve manter tema e resposta distintos");
+      }
+    }
+  } finally {
+    hangmanWords.SCENE_ZERO_HANGMAN_WORDS.pop();
+  }
   assert(hangmanWords.SCENE_ZERO_HANGMAN_THEMES.length > 1);
   const themeDraw = suitcaseHangman.startSceneZeroHangmanThemeDraw();
   assert.equal(themeDraw.status, "theme-drawing");

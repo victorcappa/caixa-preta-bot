@@ -58,6 +58,12 @@
 .minigameTransport .skipGame { border-color: var(--danger); color: var(--danger); }
 .questionsLocked { padding: 10px; border: 1px dashed #705b26; color: #ffcf62; text-align: center; }
 .promptLibrary { display: grid; gap: 9px; }
+.currentAffairs { display: grid; gap: 8px; padding: 12px; border: 1px solid #42624b; background: #080b09; font-size: .72rem; }
+.currentAffairs > strong { color: #d7ff41; }
+.currentAffairs p { margin: 0; line-height: 1.5; }
+.currentAffairs summary { padding: 8px 0; cursor: pointer; }
+.currentAffairs article { display: grid; gap: 6px; padding: 10px 0; border-top: 1px solid #263c2d; }
+.currentAffairs a { color: var(--green); overflow-wrap: anywhere; }
 .promptLibraryDisclosure { border: 1px solid #263c2d; background: #080b09; }
 .promptLibraryDisclosure > button { width: 100%; display: flex; justify-content: space-between; gap: 14px; align-items: center; min-height: 52px; padding: 10px 12px; color: #d2d2d2; background: transparent; border: 0; cursor: pointer; font: inherit; text-align: left; }
 .promptLibraryDisclosure > button:hover, .promptLibraryDisclosure > button:focus-visible { background: #101711; outline: 1px solid #42624b; outline-offset: -1px; }

@@ -30,7 +30,7 @@ try{
   sessionId=(await state()).sessionId;
   await post("/api/operator-public",{action:"patch",personality:{verbosity:0}});
   await post("/api/robot-sound",{settings:{typingIntervalMs:5,typingPauseMs:0,messageGapMs:0}});
-  await post("/api/tarot",{action:"config",config:{floorEnabled:false,maxWords:60}});
+  await post("/api/tarot",{action:"config",config:{floorEnabled:false,maxWords:60,revealSpeed:4,sentencePauseMs:0,paragraphPauseMs:0}});
   browser=await chromium.launch({headless:true});
   const context=await browser.newContext({viewport:{width:1920,height:1080},permissions:["camera"]});
   await context.addInitScript(()=>{

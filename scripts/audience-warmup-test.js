@@ -319,7 +319,8 @@ const soundOrderA = shuffledSoundCheckCommentOrder(() => 0);
 const soundOrderB = shuffledSoundCheckCommentOrder(() => 0.75);
 const soundCommentCount = PLAY_UNLOCK_CONFIG.soundCheck.waitingComments.length;
 for (const order of [soundOrderA, soundOrderB]) {
-  assert.equal(order[0], 0, "a saudação da prova sonora deve abrir a escuta");
+  assert.deepEqual(order.slice(0, 2), [0, 1], "Boa noite deve ser seguido do pedido explícito de barulho em toda sessão");
+  assert.equal(PLAY_UNLOCK_CONFIG.soundCheck.waitingComments[order[1]].text, PLAY_UNLOCK_CONFIG.soundCheck.instruction);
   assert.deepEqual([...order].sort((a, b) => a - b), Array.from({ length: soundCommentCount }, (_, index) => index));
   for (const [opening, length] of [
     ["Vou contar até três. O algoritmo adora ameaças simples.", 5],
@@ -417,7 +418,7 @@ assert.throws(
 );
 assert.doesNotThrow(() => assertBotCannotNavigateExternal({ source: "operator", target: "https://instagram.com/test" }));
 assert.equal(blockedAutonomousInstagramResult().code, "BOT_EXTERNAL_NAVIGATION_BLOCKED");
-assert.deepEqual(controllerNavigationSurfaces.map((surface) => surface.menuLabel), ["Principal", "Videomapping", "Sound Control", "Operator", "modelo-3D", "TARÔ", "Glitch", "Treino"]);
+assert.deepEqual(controllerNavigationSurfaces.map((surface) => surface.menuLabel), ["Principal", "Sound Control", "Operator", "modelo-3D", "Referências", "TARÔ", "Treino", "treino-ao-vivo", "pós-demo"]);
 assert.equal((await executeAutonomousInstagramTool({ name: "instagram_open_profile", args: { username: "test" } })).code, "BOT_EXTERNAL_NAVIGATION_BLOCKED");
 
 const research = updateResearchSettings(createInitialResearchState(), { autonomousInstagramEnabled: true });
@@ -496,16 +497,16 @@ assert.match(showStateSource, /action === "manual-next"[\s\S]*executeAudienceWar
 assert.match(showStateSource, /action === "primary-next"[\s\S]*current\.pendingAdvance[\s\S]*executeAudienceWarmupAdvance\(\)/, "seta deve consumir primeiro o avanço pendente");
 assert.match(showStateSource, /action === "primary-next"[\s\S]*current\.phase === "questions"[\s\S]*reactThenDrawAudienceWarmupPrompt\(AUDIENCE_WARMUP_FIRST_QUESTION_INTENSITY\)/, "seta deve sortear perguntas na intensidade 4 por padrão");
 assert.match(showStateSource, /current\.sequence\?\.completionKind === "first-provocation"[\s\S]*completeAudienceWarmupTimedAction\(\)[\s\S]*executeAudienceWarmupAdvance\(\)/, "seta deve concluir a ação de mortos e encaminhar a primeira provocação no modo manual");
-assert.match(sceneZeroController, /\["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown"\]\.includes\(event\.key\)[\s\S]*warmupAction\(action\)/, "setas devem controlar o avanço e as respostas");
+assert.match(sceneZeroController, /\["ArrowRight", "ArrowUp", "ArrowDown"\]\.includes\(event\.key\)[\s\S]*warmupAction\(action\)/, "seta direita deve controlar o avanço e cima/baixo as respostas; esquerda deve ser ignorada");
 assert.match(sceneZeroController, /event\.key === "ArrowUp" \? "many" : "few"[\s\S]*warmupAction\("record-response", option\)/, "seta para cima registra MUITOS e seta para baixo registra POUCOS");
 assert.match(sceneZeroController, /spacePressed[\s\S]*"questions-complete"[\s\S]*"minigame-draw"[\s\S]*"minigame-end"[\s\S]*warmupAction\(action\)/, "espaço encerra perguntas, sorteia o jogo após o briefing e encerra o mini game");
 assert.match(sceneZeroController, /\[\.\.\.responseOptions\]\.reverse\(\)\.map/, "POUCOS deve ficar abaixo de MUITOS");
 assert.match(sceneZeroController, /bootStatus === "STANDBY"[\s\S]*"unlock-boot"/, "seta direita deve iniciar a BIOS");
 assert.match(sceneZeroController, /bootStatus === "BOOTING"[\s\S]*"unlock-advance-boot"/, "seta direita deve avançar a BIOS");
 assert.match(sceneZeroController, /bootStatus === "BOOT_FAILED"[\s\S]*"unlock-end-bios"/, "seta direita deve encerrar a BIOS parada em 78%");
-assert.match(sceneZeroController, /event\.key === "ArrowLeft"[\s\S]*"unlock-rewind-boot"/, "seta esquerda deve voltar um passo da BIOS");
-assert.match(sceneZeroController, /stage === "suitcases"[\s\S]*"set-stage"[\s\S]*stage: "participant"/, "seta esquerda deve voltar das malas ao participante");
-assert.match(sceneZeroController, /stage === "participant"[\s\S]*"return-to-warmup"/, "seta esquerda deve voltar do participante ao aquecimento");
+assert.match(sceneZeroController, /event\.key === "ArrowRight" && event\.shiftKey[\s\S]*"unlock-rewind-boot"/, "Shift + seta direita deve voltar um passo da BIOS");
+assert.match(sceneZeroController, /stage === "suitcases"[\s\S]*"set-stage"[\s\S]*stage: "participant"/, "Shift + seta direita deve voltar das malas ao participante");
+assert.match(sceneZeroController, /stage === "participant"[\s\S]*"return-to-warmup"/, "Shift + seta direita deve voltar do participante ao aquecimento");
 assert.match(showStateSource, /action === "rewind-boot"[\s\S]*bootPaused: true/, "retrocesso da BIOS deve cancelar o temporizador e pausar");
 assert.match(showStateSource, /pending\.kind === "reaction-resume"[\s\S]*continuation\.dueAt/, "reação automática deve retomar a continuação no instante original");
 assert.match(sceneZeroController, /minigame\?\.status === "ready_for_draw"[\s\S]*"minigame-draw"/, "seta direita deve sortear o jogo depois do briefing");
@@ -531,7 +532,7 @@ assert.match(showStateSource, /Number\(payload\.selectionSequence\) !== suitcase
 assert.match(sceneZeroRoute, /if \(suitcaseGame\.cuePhase === "drawing"\)[\s\S]*SCENE_ZERO_SUITCASE_ROULETTE_DURATION_MS[\s\S]*startSelectedSuitcaseContent\(suitcaseGame\)/, "o conteúdo da mala não deve iniciar antes da confirmação manual");
 assert.match(sceneZeroProjection, /manualSuitcaseCue[\s\S]*suitcaseCuePhase === "open" \? "ABRA A MALA"/, "ABRA A MALA só deve aparecer após a primeira seta manual");
 assert.match(sceneZeroController, /game\?\.currentSuitcase === 2 && game\.gincana\?\.currentTask && game\.gincana\?\.timer\?\.status === "idle"[\s\S]*"gincana-timer-start"/, "seta direita deve iniciar o desafio da Mala 2 quando ainda não começou");
-assert.match(sceneZeroController, /game\?\.currentSuitcase === 3 && game\.hangman\?\.status === "ready"[\s\S]*nextSceneZeroSuitcase\(game\)[\s\S]*"suitcase-next"/, "seta direita deve esperar a instrução da forca e depois seguir para a próxima mala");
+assert.match(sceneZeroController, /game\?\.currentSuitcase === 1 && game\.hangman\?\.status === "ready"[\s\S]*nextSceneZeroSuitcase\(game\)[\s\S]*"suitcase-next"/, "seta direita deve esperar a instrução da forca e depois seguir para a próxima mala");
 assert.match(showStateSource, /action === "suitcase-choice-ready"[\s\S]*"suitcase-choice-start"[\s\S]*suitcaseGame\.choice\.messageId !== payload\.messageId/, "transição da mala deve estar vinculada à fala certa");
 assert.match(showStateSource, /action === "minigame-pause"[\s\S]*pendingAdvance: null[\s\S]*message = "MINIGAME PAUSADO"/, "pausar deve remover o antigo fim de cronômetro pendente");
 assert.equal((sceneZeroController.match(/getUserMedia\(/g) || []).length, 1, "o microfone deve ser solicitado uma única vez no controller");
@@ -549,12 +550,13 @@ assert.doesNotMatch(sceneZeroProjection, />5 SEGUNDOS</, "a nova contagem do par
 assert.match(sceneZeroProjection, /suitcaseCueFrame\.phase === "reveal" \? "ABRA A MALA"/, "revelação deve mandar abrir a mala indicada");
 assert.doesNotMatch(sceneZeroProjection, /warmupReactionOverlay/, "comentários do aquecimento devem usar a fala verde do chatbot");
 assert.match(sceneZeroProjection, /allVisibleMorelLines\.slice\(-10\)/, "BIOS final deve acompanhar as linhas mais recentes");
-assert.match(sceneZeroProjection, /hangman\.status === "won"\) robotSoundEngine\.success\(\)/, "vitória da forca deve disparar som de sucesso");
-assert.match(sceneZeroProjection, /else robotSoundEngine\.error\(\)/, "derrota da forca deve disparar som de erro");
+// Success/error behavior and deduplication are covered by scene-zero-suitcase-sounds-browser-test.js.
+assert.match(sceneZeroProjection, /import \{ sceneZeroSuitcaseResultSounds \} from "@\/lib\/scene-zero\/suitcaseSounds"/, "a projeção deve usar os resultados sonoros compartilhados das malas");
+assert.match(sceneZeroProjection, /for \(const sound of sceneZeroSuitcaseResultSounds\(sceneZero\)\)[\s\S]*robotSoundEngine\[sound\.effect\]\(\)/, "a projeção deve disparar o efeito indicado pelo resultado compartilhado");
 assert.match(sceneZeroProjection, /robotSoundEngine\.rouletteTick/, "sorteios devem disparar som sincronizado");
 assert.match(sceneZeroProjection, /robotSoundEngine\.hangmanPulse/, "a forca deve manter uma trilha procedural discreta");
 assert.match(sceneZeroProjection, /errorCount > previous\.errorCount[\s\S]*robotSoundEngine\.impact\(\)/, "cada erro da forca deve disparar o impacto sonoro existente");
-assert.match(chatProjection, /scene-zero-hangman-retry:[\s\S]*robotSoundEngine\.impact\(\)/, "a falha final da forca deve manter impacto ao trocar o jogo pelo comentário vermelho");
+assert.match(chatProjection, /else if \(isSceneZeroSuitcaseResultMessage\(message\)\) \{\s*(?:\/\/[^\n]*\s*)*\}/, "o fim da digitação não deve repetir o resultado sonoro já disparado pela projeção");
 assert.doesNotMatch(sceneZeroProjection, /hangman\.flightState|ESTÁVEL/, "a projeção da forca não deve exibir estados textuais");
 assert.match(sceneZeroProjection, /hangmanErrors\$\{Math\.min\(4, Number\(hangman\.errorCount\)/, "a gravidade da forca deve continuar vinculada ao número de erros");
 assert.equal((sceneZeroProjection.match(/data-scene-zero-timer/g) || []).length, 1, "todos os fluxos devem compartilhar um único temporizador projetado");
@@ -580,7 +582,7 @@ assert.match(sceneZeroProjection, /audios%2Fuba-hey\.mp3[\s\S]*robotSoundEngine\
 assert.match(chatProjection, /gameOutcomeEffect[\s\S]*publicMessage\?\.source\?\.endsWith\(":success"\)[\s\S]*publicMessage\?\.source\?\.endsWith\(":failure"\)/, "o chatbot deve reutilizar o visual dos combinados nos resultados dos jogos");
 assert.match(showStateSource, /timeoutSceneZeroHangman\(currentHangman\)[\s\S]*announceSceneZeroHangmanRetry\(timedOut\)/, "o fim automático da forca deve voltar como sarcasmo antes dos 30 segundos extras");
 assert.match(sceneZeroRoute, /scheduleHangmanStart[\s\S]*controlSceneZero\("hangman-start"/, "a forca deve iniciar automaticamente");
-assert.match(sceneZeroRoute, /FIM DO TUTORIAL|tutorialCompleteDurationMs/, "a Mala 1 deve terminar o tutorial antes do glitch");
+assert.match(sceneZeroRoute, /FIM DO TUTORIAL|tutorialCompleteDurationMs/, "a Mala 3 deve terminar o tutorial antes do glitch");
 assert.match(sceneZeroRoute, /parsed\.centro[\s\S]*centro da cena/, "o GPT deve criar um chamado nominal ao centro da cena");
 assert.doesNotMatch(sceneZeroRoute, /postSelection: \[sequence\.centerInvitation, sequence\.gameExplanation\]/, "a seleção do participante não deve duplicar a explicação das malas");
 assert.match(sceneZeroRoute, /startSuitcases\(\{ source: "scene-zero-operator", queueEvents: false \}\)/, "a Cena Zero não deve projetar o antigo ESCOLHA UMA MALA");

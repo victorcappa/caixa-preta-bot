@@ -5,7 +5,7 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 ## Core runtime
 
 - Show state or reset -> `lib/showState.js` -> relevant reducer/director -> owning API route.
-- Public realtime drift -> `lib/publicRealtime.js` -> `app/api/events/route.js` -> `app/api/state/route.js`.
+- Multiwindow realtime/drift -> `lib/publicRealtime.js` -> `public/public-realtime-worker.js` -> `app/api/events/route.js` / `app/api/state/route.js`. Shared SSE; bounded polling fallback, no tab leader.
 - Projection window registration/navigation -> `components/ProjectionWindowClient.js` -> `app/api/projection/route.js` -> `lib/projectionScreens.js`.
 - Public/private screen registry -> `lib/projectionScreens.js` and `lib/controllerSurfaces.js`.
 - Global stop -> `app/api/operator/route.js` (`stopAllRoutines`) -> `lib/stopAllSignal.js` -> media consumers.
@@ -17,21 +17,24 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 - Revealed Operator / private conversation / personality -> `OPERATOR_PUBLICO.md`, `app/api/operator-public/route.js`, `lib/operatorPublic.js`, and `lib/showState.js`.
 - Right-menu launcher -> `components/OperatorPublicLauncher.js` in `components/SceneZeroController.js`; private controls/monitor -> `components/PublicOperatorControls.js` and `components/OperatorLivePreview.js`.
 - LIVE reply pacing -> `components/OperatorTypedReply.js`, using private `robotSound` typing speed/punctuation pause; completed history is restored immediately.
+- Live training punctuation/paragraph holds -> `lib/liveTrainingTyping.js`, passed to `components/OperatorTypedReply.js`; letters retain shared speed, streamed blank lines receive one hold.
 - Training conversation/feedback -> `components/TrainingConsole.js`, `app/api/training/`, and `lib/training.js`; visible composer sends by Enter or button and preserves the draft after errors.
+- Live training -> `components/LiveTraining.js`, `/treino-ao-vivo/controle`, `/treino-ao-vivo`, `/api/live-training`; retractable header -> `LiveTrainingController.js`, `live-training-header` settings scope; state -> `lib/liveTraining.js`; repertoire -> `lib/liveTrainingContext.js`; shared 11-parameter panel -> `PublicOperatorControls.js`, `lib/operatorPublic.js`, `/api/operator-public`. Operation: `docs/TREINO_AO_VIVO.md`.
 - Editable public conversation/sliders reuse `components/PublicOperatorControls.js` with `publicSurface`; private operational commands remain outside the projection.
 - Projection calibration `/?menu` -> `components/ProjectionMenu.js`, `PublicCompositionControls.js`, `PublicModule.js`, `lib/publicComposition.js`; bot/Tarot text fitting -> `lib/useProjectionTextFit.js`; preferences sync via the operator API/SSE.
 - Default public 65/35 layout -> `app/layout.js` -> `components/ProjectionOperatorSurface.js` -> `components/PublicOperatorLayout.js`.
 
 - Bot parameters tab -> `app/operator/page.js`, `components/OperatorBotSettings.js`, `components/RobotSoundControls.js`, and `components/PublicOperatorControls.js` (`parametersOnly`); timing helpers in `lib/robot-sound/state.js`. Save acknowledgement/dirty-field merging lives in `RobotSoundControls`; `_refreshRobotSoundSettings` in `lib/showState.js` refreshes the live normalization after development reload. The technical console remains in the Principal OP drawer.
 - Image-to-3D / black turntable MP4 -> `app/modelo-3d/page.js`, `components/Model3DController.js`, `app/api/modelo-3d/`, `lib/model-3d/`, `scripts/model-3d-worker.cjs` and `model-3d-render.py`; admission -> `lib/model-3d/submissionGuard.cjs`; GPU video -> `lib/model-3d/browserRender.cjs` and `scripts/model-3d-browser-render.mjs`; operation/configuration/acceptance -> `docs/MODELO_3D.md`.
-- Persistent current operator/Tarot choices -> `lib/operatorPreferences.js`, `lib/showState.js`, `/api/operator-preferences`, `components/OperatorPreferencesStatus.js`; scope/activation -> `docs/PREFERENCIAS_OPERADOR.md`; checks -> `scripts/operator-preferences-*.js`.
+- Persistent current operator/Tarot choices -> `lib/operatorPreferences.js`, `lib/showState.js`, `/api/operator-preferences`, `components/OperatorPreferencesStatus.js`; form-only settings -> `lib/controllerSettings.js`, `/api/controller-settings`, `lib/useControllerSettings.js`; serialized saves -> `lib/settingsSaveQueue.js`; scope/activation -> `docs/PREFERENCIAS_OPERADOR.md`; checks -> `scripts/operator-preferences-*.js`.
 - Public text/layout/typing -> `components/Chat.js` and `components/Chat.module.css`.
 - Visual performance event -> `components/PerformanceLayer.js` -> `lib/performanceEvents.js`.
 - Chat request/model envelope -> `app/api/chat/route.js` -> `lib/openai.js`.
 - OpenAI timeout/local fallback -> `lib/externalRequestControl.js` -> `lib/showFallback.js` -> normal chat message/typewriter flow.
 - Public render containment -> `components/PublicErrorBoundary.js`, `app/global-error.js`, and `app/not-found.js`.
 - System prompt -> `prompts/buildSystemPrompt.js` -> `prompts/personality.js`, `prompts/rules.js`, `prompts/modes.js`.
-- Play knowledge -> `lib/knowledge.js` -> `knowledge/`.
+- Play knowledge -> `lib/knowledge.js` (permanent map), `lib/showMemory.js` (full PDF/current authored texts/reference retrieval), `knowledge/sources/texto-caixa-preta.json`; extraction/audit -> `scripts/show-memory-sync.py`, `scripts/show-memory-audit.js`. Commands and limits: `docs/TREINO_AO_VIVO.md`.
+- References / collective influence -> `/referencias`, `components/ReferenceArchive.js`, `ReferenceArchiveScene.js`, `lib/referenceLibrary.js`; 35-person public research -> `knowledge/collective/`, `lib/collectiveMemory.js`, shared prompt. Original books view -> `components/ReferenceBooksScene.js` (Livros 3D; shared filters/selection). Island -> `lib/createReferenceIsland.js`, `lib/referenceIsland.js`, 14 local models/manifest; slow moving suns/color fades -> `lib/createReferenceSuns.js`; colored terrain/sun hologram shaders -> `lib/referenceHologram.js`; Tudo displays the complete catalogue on an expanded island; screen-space fragment/mesh selection -> `lib/referencePicking.js`; Pessoas shows all 35 concurrently and hides scenic objects/tools; floating/pulsing surface fragments and touch assembly -> `lib/createReferenceFragments.js`; touching things preserves filters and approaches their content; tools require explicit use. As Coisas props/actions/sourced Morel mirror -> `lib/referenceThings.js`, `lib/createReferenceThing.js`; 35 archive-only bios/object reasons -> `data/reference-biographies.json`; private experiments -> `lib/referenceExperiment.js`, `app/api/reference-experiment/route.js`. Dissertation: 182 pages. Scope/limits/checks: `docs/REFERENCIAS.md`.
 - Web research policy/state -> `lib/research/ResearchDirector.js` and `docs/autonomia-pesquisa.md`.
 
 ## Scene Zero
@@ -43,13 +46,14 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 - Public BIOS/unlock/countdown rendering -> `components/SceneZeroProjectionLayer.js` and its CSS module.
 - Sound meter/microphone -> `components/SceneZeroController.js` uses `lib/audienceMicrophoneMeter.js` and `public/audio-worklets/audience-meter.js`; audio-clock sampling continues in hidden tabs/windows, with a timer fallback. Public receives numeric level only.
 - Warmup prompt library -> `data/audience-warmup-prompts.js`; selection/timers -> `lib/audienceWarmup.js`; UI -> `components/AudienceWarmupController.js`.
+- Weekly warmup news / third question -> `lib/audienceWarmupCurrentAffairsStore.js`, `lib/audienceWarmupCurrentAffairs.js`, `data/audience-warmup-current-affairs.json`; operation -> `docs/AQUECIMENTO_ATUALIDADES.md`.
 - Warmup mini games -> `data/audience-warmup-minigames.js` and `components/AudienceWarmupController.js`.
 - Participant selection -> `app/api/scene-zero/route.js` -> `lib/participants.js` -> `lib/showState.js`.
 - Suitcase order/content -> `lib/scene-zero/suitcaseGame.js`; route orchestration -> `app/api/scene-zero/route.js`; public state -> `lib/scene-zero/state.js`.
 - Hangman -> `lib/scene-zero/suitcaseHangman.js` and `data/scene-zero-hangman-words.js`.
 - Physical challenge -> `data/scene-zero-physical-challenges.js` and `data/scene-zero-gincanas.js`.
 - Morel ending -> `data/scene-zero-morel.js` -> suitcase handlers in `app/api/scene-zero/route.js`.
-- Older general suitcase mode -> `lib/suitcases/SuitcaseDirector.js`; do not confuse it with the current Scene Zero 2 -> 3 -> 1 orchestration.
+- Older general suitcase mode -> `lib/suitcases/SuitcaseDirector.js`; do not confuse it with the current Scene Zero 2 -> 1 -> 3 orchestration.
 
 ## Scene and media surfaces
 
@@ -72,12 +76,14 @@ Use this as “if the task is X, start at Y.” Search for the relevant symbol b
 
 - Glitch -> `lib/glitch/state.js` -> `app/api/glitch/route.js` -> `components/PublicGlitchLayer.js` / `components/GlitchOverlay.js`.
 - Robot sound and shared microphone sensitivity -> `lib/robot-sound/RobotSoundEngine.js`, `lib/robot-sound/state.js`, `components/RobotSoundControls.js`; the Scene Zero meter applies sensitivity in `components/SceneZeroController.js`; dedicated private route -> `app/sound-control/page.js` / `components/SoundControlPanel.js`.
-- Global volume -> `lib/globalVolume.js` -> `app/api/global-volume/route.js` -> media stages/controllers.
+- Global volume -> `lib/globalVolume.js` -> `app/api/global-volume/route.js` -> media stages/controllers; private floating control -> `components/ControllerGlobalVolume.js` (50% scale; drag the title with mouse/touch or move it with arrow keys).
 - Blackout -> `lib/displayBlackout.js` -> `components/DisplayBlackout.js` -> public surfaces.
 - Instagram -> `lib/instagram/InstagramController.js`; embedded UI -> `components/InstagramBrowserPanel.js`; server endpoints -> `app/api/instagram/`.
 - External-navigation safety -> `lib/externalNavigationGuard.js` and calls in `lib/showState.js`.
 
 ## Tarô / Treinamento
+
+- Post-demo -> `components/PostDemo.js`, `lib/postDemo.js`, `/api/post-demo`; screens `/pos-demo/controle`, `/pos-demo`. Opening/audio -> `lib/post-demo/`; layout -> `components/PostDemoLayoutFrame.js`, `lib/post-demo/layout.js`; cloud -> `components/PostDemoPointCloud.js`, `PostDemoPointCloudControls.js`, `lib/post-demo/`. Guides/tests: `docs/POST_DEMO_POINT_CLOUD.md`, `docs/POS_DEMO.md`.
 
 - Public camera/annotations/speech and one-shot **INTERPRETAR** question -> `app/treinamento/page.js` -> `components/tarot/TarotTraining.js` / `useTarotCamera.js`.
 - Private operation/catalogue/anchors -> `app/treinamento/controle/page.js` -> `components/tarot/TarotControls.js` / `TarotCatalogEditor.js` (TARÔ navigation).

@@ -20,6 +20,7 @@ registerHooks({ resolve(specifier, context, nextResolve) {
 
 const { showState } = await import("../lib/showState.js");
 const { flushSnapshotWrites } = await import("../lib/showSessionPersistence.js");
+const { createOperatorPreferenceStore } = await import("../lib/operatorPreferences.js");
 const initial = showState.privateSnapshot();
 const warmup = () => showState.snapshot().audienceWarmup;
 function action(name, payload = {}) {
@@ -29,7 +30,26 @@ function action(name, payload = {}) {
 }
 
 mock.timers.enable({ apis: ["Date", "setTimeout"], now: new Date("2026-11-11T12:00:00Z") });
+function assertManualSettingsDoNotAdvance() {
+  const progress = () => {
+    const state = showState.privateSnapshot();
+    return { stage: state.sceneZero.stage, message: state.publicMessage, phase: state.audienceWarmup.phase,
+      currentStep: state.audienceWarmup.currentStep, sequence: state.audienceWarmup.sequence,
+      pendingAdvance: state.audienceWarmup.pendingAdvance, actionTimer: state.audienceWarmup.actionTimer,
+      awaitingOperator: state.audienceWarmup.awaitingOperator, manualMode: state.audienceWarmup.manualMode };
+  };
+  const before = structuredClone(progress());
+  assert.equal(before.manualMode, true);
+  showState.controlRobotSound({ typingIntervalMs: 115, typingPauseMs: 850 });
+  showState.patchOperatorPublic({ personality: { sarcasm: 43 } });
+  showState.postDemo.config({ cardHoldMs: 27000, personality: { sarcasm: 18 } });
+  action("set-interval", { intervalMs: 4200 });
+  showState._refreshOperatorPreferences(createOperatorPreferenceStore());
+  mock.timers.tick(1200);
+  assert.deepEqual(progress(), before, "salvar parâmetros não pode mudar fala, etapa, pendingAdvance, timer ou espera manual");
+}
 try {
+  assert.equal(showState.restoreFromRecovery({ storeVersion: "show-reliability-v42", state: initial }).error, "SNAPSHOT_INCOMPATIBLE", "a numeração antiga das malas não pode ser reinterpretada na ordem nova");
   for (const manualMode of [true, false]) {
     const state = structuredClone(initial);
     state.sceneZero.unlock.status = "HUMAN_VERIFICATION";
@@ -39,6 +59,7 @@ try {
     };
     assert.equal(showState.restoreFromRecovery({ storeVersion: showState._storeVersion, sessionId: "transition-test", state }).ok, true);
     action("set-manual-mode", { manualMode: true });
+    assertManualSettingsDoNotAdvance();
     action("primary-next");
     const messageId = showState.snapshot().publicMessage.id;
     assert.equal(warmup().previewPromptId, "play-dead-30");
@@ -64,12 +85,13 @@ try {
     mock.timers.tick(Date.parse(warmup().pendingAdvance.dueAt) - Date.now());
     if (manualMode) {
       assert.equal(showState.snapshot().publicMessage.content, AUDIENCE_WARMUP_REQUIRED_ACKNOWLEDGEMENT);
+      assertManualSettingsDoNotAdvance();
       action("primary-next");
     }
     assert.match(warmup().previewPromptId, /^provocative-/);
     assert.equal(showState.snapshot().publicMessage.content, warmup().preview);
     assert.equal(warmup().intensity, "provocative");
-    console.log(`PASS ${manualMode ? "manual" : "automatic"}: typed instruction → full 20s → acknowledgement → first question`);
+    console.log(`PASS ${manualMode ? "manual" : "automatic"}: typed instruction → full 20s → acknowledgement → first question; settings preserve manual progress`);
   }
 } finally {
   showState.startNewPresentation();

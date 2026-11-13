@@ -21,6 +21,8 @@
   font-family: "Courier New", Courier, monospace;
 }
 
+.surface[data-presentation="true"] { grid-template-rows:minmax(0,1fr); }
+
 .tab,
 .activeTab {
   flex: 0 0 auto;

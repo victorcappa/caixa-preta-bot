@@ -23,13 +23,22 @@ const CONTENT_TYPES = {
 };
 
 function safeAssetPath(rawFile = "") {
-  const decoded = decodeURIComponent(`${rawFile || ""}`);
+  let decoded;
+  try { decoded = decodeURIComponent(`${rawFile || ""}`); } catch { return null; }
   const normalized = path.normalize(decoded).replace(/^(\.\.(\/|\\|$))+/, "");
   const absolute = path.join(ASSETS_ROOT, normalized);
 
   if (!absolute.startsWith(ASSETS_ROOT + path.sep)) {
     return null;
   }
+
+  if (path.relative(ASSETS_ROOT, absolute).split(path.sep)[0]?.toLowerCase() === "publico") return null;
+  // A different asset symlink must not expose a private audience photo either.
+  try {
+    const privateRoot = fs.realpathSync(path.join(ASSETS_ROOT, "publico")), real = fs.realpathSync(absolute);
+    const canonical = value => value.normalize("NFC").toLowerCase();
+    if (canonical(real) === canonical(privateRoot) || canonical(real).startsWith(canonical(privateRoot) + path.sep)) return null;
+  } catch {}
 
   return absolute;
 }

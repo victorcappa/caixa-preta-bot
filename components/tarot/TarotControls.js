@@ -1,7 +1,8 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- Raw reference pixels are used by the local vision pipeline. */
 import PublicCompositionControls from "@/components/PublicCompositionControls";
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
+import { createSettingsSaveQueue } from "@/lib/settingsSaveQueue";
 import { prepareDeck, tarotCommand } from "@/lib/tarot/client";
 import {TarotHallucinationControls,TarotFacePreparation,TarotPreview} from "./TarotHallucinationControls";
 import TarotReferenceControls from "./TarotReferenceControls";
@@ -10,11 +11,11 @@ import PublicOperatorControls from "@/components/PublicOperatorControls";
 import OperatorPreferencesStatus from "@/components/OperatorPreferencesStatus";
 import {hallucinationReadiness} from "@/lib/tarot/hallucination";
 import { DEFAULT_TAROT_VISUAL } from "@/lib/tarot/state";
+import { DEFAULT_TAROT_TYPING } from "@/lib/tarot/typing";
 import { referenceSettings } from "@/lib/tarot/reference-settings";
 import styles from "./TarotControls.module.css";
 
 const configFields = [["questionsUntilAutonomy","Perguntas até autonomia"],["maxCards","Máximo de cartas"],["intervalMs","Intervalo entre cartas (ms)"],["maxDurationMs","Duração total (ms)"],["reflectionSeconds","Reflexão aproximada (s)"],["questionFrequency","Perguntar a cada N cartas"],["associationIntensity","Intensidade de associações (0–100)"]];
-const profileFields = [["humor","Humor"],["provocation","Provocação"],["philosophy","Densidade filosófica"],["association","Associação livre"],["social","Crítica social"],["poetry","Linguagem poética"],["rigor","Rigor analítico"]];
 
 export default function TarotControls() {
   const [snapshot,setSnapshot]=useState(null),[cards,setCards]=useState([]),[back,setBack]=useState(null);
@@ -25,6 +26,18 @@ export default function TarotControls() {
   const [context,setContext]=useState({text:"",date:"",url:"",checkedAt:"",verification:"unverified"});
   const refreshSequence=useRef(0),settingsPending=useRef(0);
   const tarot=snapshot?.tarot,sessionId=snapshot?.sessionId;
+  const instructionLoaded = useRef(null);
+  const instructionQueue = useMemo(() => createSettingsSaveQueue({
+    save: patch => tarotCommand(sessionId, "instruction", patch),
+    onStatus: status => { if (status === "error") setError("Não foi possível salvar a instrução privada."); }
+  }), [sessionId]);
+  useEffect(() => {
+    if (sessionId && instructionLoaded.current !== sessionId) { instructionLoaded.current = sessionId; setInstruction(tarot.privateInstruction || ""); }
+  }, [sessionId, tarot?.privateInstruction]);
+  useEffect(() => {
+    const flush = () => void instructionQueue.flush(); window.addEventListener("pagehide", flush);
+    return () => { window.removeEventListener("pagehide", flush); flush(); };
+  }, [instructionQueue]);
   const readiness=tarot?.hallucination?hallucinationReadiness(tarot):null;
   const refresh=useCallback(async(force=false)=>{
     if(settingsPending.current&&!force)return;
@@ -90,7 +103,13 @@ export default function TarotControls() {
           <details hidden={section!=="memoria"}><summary>TEXTOS, DOCUMENTOS E ENTREVISTAS (OPCIONAIS)</summary><div className={styles.section}><label>Título<input value={memoryTitle} onChange={e=>setMemoryTitle(e.target.value)}/></label><label>Texto / entrevista<textarea value={memoryText} onChange={e=>setMemoryText(e.target.value)}/></label><label>Importar documento de texto UTF-8<input type="file" accept=".txt,.md,text/plain" onChange={async e=>{const file=e.target.files[0];if(file){setMemoryTitle(file.name);const text=await file.text();if(text.length>120000){setError("Documento excede 120.000 caracteres; divida por seções antes de importar.");return;}setMemoryText(text);}}}/></label><p className={styles.hint}>Até 120.000 caracteres por documento. Vincule entrevistas às pessoas cadastradas, sem atribuir identidades às figuras da carta.</p>{library.faces.map(face=><label className={styles.check} key={face.id}><input type="checkbox" checked={memoryPeople.includes(face.id)} onChange={e=>setMemoryPeople(old=>e.target.checked?[...old,face.id]:old.filter(id=>id!==face.id))}/>{face.name}</label>)}<button disabled={!memoryText.trim()||memoryText.length>120000} onClick={async()=>{if(await command("hallucination-memory",{memories:[...tarot.hallucination.memories,{id:crypto.randomUUID(),title:memoryTitle,text:memoryText,enabled:true,personIds:memoryPeople}]})){setMemoryText("");setMemoryTitle("");setMemoryPeople([]);}}}>SALVAR NA MEMÓRIA TEXTUAL</button>{tarot.hallucination.memories.map(m=><div key={m.id}><label className={styles.check}><input type="checkbox" checked={m.enabled} onChange={e=>command("hallucination-memory",{memories:tarot.hallucination.memories.map(v=>v.id===m.id?{...v,enabled:e.target.checked}:v)})}/>{m.title}</label><button onClick={()=>command("hallucination-memory",{memories:tarot.hallucination.memories.filter(v=>v.id!==m.id)})}>REMOVER TEXTO</button></div>)}</div></details>
         </>:null}
 
-        <details open hidden={section!=="apresentacao"}><summary>APRESENTAÇÃO</summary><div className={styles.section}><p className={styles.hint}>Câmera e processamento pertencem à tela pública. A prévia usa a referência e o estado compartilhado, sem vídeo remoto.</p><div className={styles.actions}><button onClick={()=>command("start")}>INICIAR</button><button onClick={()=>command("end")}>ENCERRAR PRÓLOGO</button><button onClick={()=>command("reset")}>REINICIAR TREINAMENTO</button><button onClick={()=>command("interrupt")}>INTERROMPER FALA</button><button onClick={()=>command("resume-speech")}>RETOMAR FALA</button><a href="/" target="_blank" rel="noreferrer">PRINCIPAL ↗</a></div>{tarot.currentCard?<div className={styles.preview}><img src={tarot.currentCard.imageUrl} alt={tarot.currentCard.name}/><div><strong>{tarot.currentCard.name}</strong><p>{tarot.response?.text||"Aguardando interpretação automática."}</p></div></div>:<p>Inicie o prólogo e mostre uma carta. O inventário visual das 22 referências já está incluído.</p>}</div></details>
+        <details open hidden={section!=="apresentacao"}><summary>APRESENTAÇÃO</summary><div className={styles.section}><p className={styles.hint}>Câmera e processamento pertencem à tela pública. A prévia usa a referência e o estado compartilhado, sem vídeo remoto.</p><div className={styles.actions}><button onClick={()=>command("start")}>INICIAR</button><button onClick={()=>command("end")}>ENCERRAR PRÓLOGO</button><button onClick={()=>command("reset")}>REINICIAR TREINAMENTO</button><button onClick={()=>command("interrupt")}>INTERROMPER FALA</button><button onClick={()=>command("resume-speech")}>RETOMAR FALA</button><a href="/" target="_blank" rel="noreferrer">PRINCIPAL ↗</a></div>
+          <h2>RITMO DA ESCRITA</h2>
+          <RangeSetting label="Velocidade da escrita (×)" value={tarot.config.revealSpeed??DEFAULT_TAROT_TYPING.revealSpeed} min={.25} max={4} step={.25} onCommit={(value)=>command("config",{config:{revealSpeed:value}})}/>
+          <RangeSetting label="Pausa entre frases (s)" value={(tarot.config.sentencePauseMs??DEFAULT_TAROT_TYPING.sentencePauseMs)/1000} max={5} step={.1} onCommit={(value)=>command("config",{config:{sentencePauseMs:Math.round(value*1000)}})}/>
+          <RangeSetting label="Pausa entre parágrafos (s)" value={(tarot.config.paragraphPauseMs??DEFAULT_TAROT_TYPING.paragraphPauseMs)/1000} max={10} step={.1} onCommit={(value)=>command("config",{config:{paragraphPauseMs:Math.round(value*1000)}})}/>
+          <p className={styles.hint}>1× escreve cerca de 17 letras por segundo. As pausas têm duração própria, mesmo ao acelerar as letras. Entre parágrafos vale uma única pausa de parágrafo. Os ajustes são salvos e valem também durante a escrita.</p>
+          {tarot.currentCard?<div className={styles.preview}><img src={tarot.currentCard.imageUrl} alt={tarot.currentCard.name}/><div><strong>{tarot.currentCard.name}</strong><p>{tarot.response?.text||"Aguardando interpretação automática."}</p></div></div>:<p>Inicie o prólogo e mostre uma carta. O inventário visual das 22 referências já está incluído.</p>}</div></details>
         <details open hidden={section!=="camera"}><summary>CÂMERA E CARTA</summary><div className={styles.section}>
           <label>Câmera da projeção<select value={tarot.camera.deviceId} onChange={(e)=>command("camera",{deviceId:e.target.value})}><option value="">Automática / integrada</option>{tarot.camera.devices.map((device)=><option key={device.deviceId} value={device.deviceId}>{device.label||"Câmera"}</option>)}</select></label>
           <div className={styles.actions}><button onClick={()=>command("camera",{enabled:true})}>INICIAR CÂMERA</button><button onClick={()=>command("camera",{enabled:false})}>PARAR CÂMERA</button><button onClick={()=>command("camera",{capture:true})}>CAPTURAR CARTA</button><button disabled={pending||!tarot.currentCard} onClick={()=>command("analyze",{requestId:crypto.randomUUID()})}>INTERPRETAR CARTA ATUAL</button></div>
@@ -128,7 +147,7 @@ export default function TarotControls() {
         </div></details>
         <details open hidden={section!=="conversa"}><summary>CONVERSA</summary><div className={styles.section}>
           <form onSubmit={ask}><label>Pergunta ao bot<textarea value={question} onChange={(e)=>setQuestion(e.target.value)} placeholder="O que esta imagem diz sobre a percepção?" /></label><button disabled={pending||!question.trim()||!tarot.currentCard||!tarot.active||!["idle","interpreting"].includes(tarot.floor?.phase||"idle")}>ENVIAR PERGUNTA</button></form>
-          <label>Instrução privada<textarea value={instruction} onChange={(e)=>setInstruction(e.target.value)} /></label><button onClick={()=>command("instruction",{text:instruction})}>SALVAR INSTRUÇÃO PRIVADA</button>
+          <label>Instrução privada<textarea value={instruction} onChange={(e)=>{setInstruction(e.target.value);instructionQueue.enqueue({text:e.target.value});}} /></label><button onClick={()=>void instructionQueue.flush()}>SALVAR INSTRUÇÃO PRIVADA</button>
           <details><summary>HISTÓRICO DA SESSÃO</summary><div className={styles.history}>{snapshot.history.map((message)=><p key={message.id}><strong>{message.role==="user"?"PERGUNTA":"BOT"}:</strong> {message.content}</p>)}</div></details>
         </div></details>
         <details open hidden={section!=="autonomia"}><summary>AUTONOMIA</summary><div className={styles.section}>
@@ -137,7 +156,7 @@ export default function TarotControls() {
           <label className={styles.check}><input type="checkbox" checked={tarot.config.automatic} onChange={(e)=>command("config",{config:{automatic:e.target.checked}})}/>Ativar após a última resposta terminar</label>
           <div className={styles.actions}>{[["autonomy-start","ATIVAR AGORA"],["autonomy-pause","PAUSAR"],["autonomy-resume","RETOMAR"],["next","PRÓXIMA CARTA"],["human","RETOMAR CONTROLE HUMANO"]].map(([action,label])=><button key={action} onClick={()=>command(action)}>{label}</button>)}<button onClick={()=>command("next",{cardId:selected})}>USAR CARTA {selected} NA PRÓXIMA REFLEXÃO</button></div>
         </div></details>
-        <details open hidden={section!=="contexto"}><summary>PERSONALIDADE DO TREINAMENTO</summary><div className={styles.section}><PublicOperatorControls parametersOnly /><p className={styles.hint}>Os controles abaixo complementam a personalidade compartilhada do bot.</p>{profileFields.map(([key,label])=><label className={styles.slider} key={key}>{label}<input type="range" min="0" max="100" value={tarot.profile[key]??50} onChange={(e)=>command("profile",{profile:{...tarot.profile,[key]:Number(e.target.value)}})}/><span>{tarot.profile[key]??50}%</span></label>)}<button onClick={()=>command("profile",{profile:{}})}>RESTAURAR PERFIL</button></div></details>
+        <details open hidden={section!=="contexto"}><summary>PERSONALIDADE DO BOT</summary><div className={styles.section}><PublicOperatorControls parametersOnly /><p className={styles.hint}>Parâmetros compartilhados com Operator e treino-ao-vivo.</p></div></details>
         <details hidden={section!=="contexto"}><summary>CONTEXTO CONTEMPORÂNEO</summary><div className={styles.section}>
           <p className={styles.hint}>Prepare antes do espetáculo. Cada fato exige data e fonte; a consulta durante a apresentação usa os dados locais.</p>
           <label>Acontecimento<textarea value={context.text} onChange={(e)=>setContext({...context,text:e.target.value})}/></label><label>Data<input type="date" value={context.date} onChange={(e)=>setContext({...context,date:e.target.value})}/></label><label>Fonte<input type="url" value={context.url} onChange={(e)=>setContext({...context,url:e.target.value})}/></label>
@@ -155,7 +174,6 @@ export default function TarotControls() {
           <label>Alfabeto de símbolos<textarea aria-label="Alfabeto de símbolos" key={tarot.visual?.matrixSymbols} defaultValue={tarot.visual?.matrixSymbols||DEFAULT_TAROT_VISUAL.matrixSymbols} maxLength={180} onBlur={(e)=>command("visual",{visual:{matrixSymbols:e.target.value}})}/></label>
           <label>Cor dos símbolos<input type="color" defaultValue={tarot.visual?.matrixColor||DEFAULT_TAROT_VISUAL.matrixColor} onBlur={(e)=>command("visual",{visual:{matrixColor:e.target.value}})}/></label>
           <label className={styles.check}><input type="checkbox" checked={tarot.visual?.animations!==false} onChange={(e)=>command("visual",{visual:{animations:e.target.checked}})}/>Animações discretas</label>
-          <RangeSetting label="Velocidade de revelação" value={tarot.config.revealSpeed||1} min={.25} max={4} step={.25} onCommit={(value)=>command("config",{config:{revealSpeed:value}})}/>
           <button onClick={()=>command("visual",{visual:DEFAULT_TAROT_VISUAL})}>RESTAURAR VISUAL</button>
         </div></details>
         {tarot.error?<p role="status" className={styles.error}>ÚLTIMA OCORRÊNCIA: {tarot.error}</p>:null}

@@ -1,0 +1,147 @@
+"use client";
+
+import dynamic from "next/dynamic";
+import { useMemo, useState } from "react";
+import styles from "./ReferenceArchive.module.css";
+import { islandTopics, islandTrails, referenceRelations } from "@/lib/referenceIsland";
+import { cabinetTools, cabinetToolReference } from "@/lib/referenceThings";
+import ReferenceExperiment from "./ReferenceExperiment";
+
+const ArchiveScene = dynamic(() => import("./ReferenceArchiveScene"), { ssr: false });
+const BooksScene = dynamic(() => import("./ReferenceBooksScene"), { ssr: false });
+const fold = value => `${value || ""}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const code = (item, index) => /^(CP-|E\d)/.test(item.id) ? item.id : String(index + 1).padStart(3, "0");
+
+export default function ReferenceArchive({ library }) {
+  const { items, groups, island } = library;
+  const [query, setQuery] = useState("");
+  const [group, setGroup] = useState("all");
+  const [selectedId, setSelectedId] = useState("marcus-garcia-labirinto");
+  const [inspection, setInspection] = useState(null), [focusTarget, setFocusTarget] = useState(null);
+  const [mode, setMode] = useState("3d");
+  const [paused, setPaused] = useState(false);
+  const [toolNote, setToolNote] = useState(null), [resetToken, setResetToken] = useState(0), [originalMaterials, setOriginalMaterials] = useState(false);
+  const [topic, setTopic] = useState(null), [objectId, setObjectId] = useState(null), [focusToken, setFocusToken] = useState(0);
+  const [pair, setPair] = useState([]), [gaps, setGaps] = useState(false), [trailId, setTrailId] = useState(null), [trailStep, setTrailStep] = useState(0);
+  const hasGap = item => item.status === "research" || item.limitations?.some(limit => /nao.*(localiz|identific|confirm|verific)/.test(fold(limit)));
+  const trail = islandTrails.find(trail => trail.id === trailId);
+  const gapCount = items.filter(hasGap).length;
+  const filtered = useMemo(() => items.filter(item => (group === "all" || item.group === group) &&
+    (!topic || item.affinities.includes(topic)) && (!gaps || hasGap(item)) && fold([item.title, item.author, item.description, ...(item.tags || [])].join(" ")).includes(fold(query))), [items, query, group, topic, gaps]);
+  const visibleIds = useMemo(() => filtered.map(item => item.id), [filtered]);
+  const selectionScope = JSON.stringify([group, query, topic, gaps]);
+  const activeInspection = inspection?.scope === selectionScope ? inspection : null;
+  const selected = (activeInspection?.toolId ? cabinetToolReference(activeInspection.toolId) : items.find(item => item.id === activeInspection?.id)) || filtered.find(item => item.id === selectedId) || filtered[0];
+  const selectedIndex = selected ? filtered.indexOf(selected) : -1;
+  const bookItems = useMemo(() => selected && !selected.toolId && !filtered.includes(selected) ? [...filtered, selected] : filtered, [filtered, selected]);
+  const relations = useMemo(() => selected && (!selected.toolId || selected.relatedIds?.length) ? referenceRelations(selected, items) : [], [selected, items]);
+  function clearInspection() { setInspection(null); setFocusTarget(null); }
+  function switchMode(next) { if (selected?.toolId) clearInspection(); setMode(next); }
+  function revealDetail() { requestAnimationFrame(() => { const detail = document.querySelector('[data-reference-detail]'); if (detail) { detail.scrollTop = 0; detail.scrollIntoView({ block: "start", behavior: "auto" }); } }); }
+  function chooseItem(id) {
+    const item = items.find(item => item.id === id); if (!item) return;
+    setInspection({ id, scope: selectionScope });
+    if (filtered.some(item => item.id === id)) setSelectedId(id);
+    setObjectId(item.modelId || null); setFocusTarget({ kind: item.modelId ? 'model' : 'reference', id: item.modelId || id, scope: selectionScope });
+    setFocusToken(value => value + 1); revealDetail();
+  }
+  function chooseObject(id) { chooseItem(`objeto-${id}`); }
+  function inspectTool(id) {
+    if (!cabinetToolReference(id)) return;
+    setInspection({ toolId: id, materialId: activeInspection?.toolId ? activeInspection.materialId : selected?.id, scope: selectionScope }); setObjectId(null);
+    setFocusTarget({ kind: 'tool', id, scope: selectionScope }); setFocusToken(value => value + 1); revealDetail();
+  }
+  function walk(id, step = 0) { const route = islandTrails.find(route => route.id === id); setInspection(null); setFocusTarget({ kind: "model", id: route.steps[step].object, scope: JSON.stringify(["all", "", route.steps[step].topic, false]) }); setTrailId(id); setTrailStep(step); setQuery(""); setGroup("all"); setGaps(false); setSelectedId(`objeto-${route.steps[step].object}`); setObjectId(route.steps[step].object); setFocusToken(value => value + 1); setTopic(route.steps[step].topic); setMode("3d"); }
+  function cross(id) { setPair(current => current.includes(id) ? current.filter(value => value !== id) : current.length < 2 ? [...current, id] : current); }
+  function activateTool(id) {
+    const tool = cabinetTools.find(tool => tool.id === id); if (!tool) return;
+    const material = selected?.toolId ? items.find(item => item.id === activeInspection.materialId) || filtered.find(item => item.id === selectedId) || filtered[0] : selected;
+    clearInspection(); setToolNote(tool);
+    if (tool.action === "people") revealDetail();
+    if (!["people", "cross", "double"].includes(tool.action)) requestAnimationFrame(() => document.querySelector('[aria-label="Explorar acervo"]')?.scrollIntoView({ block: "start", behavior: "auto" }));
+    if (tool.action === "people") { const people = items.filter(item => item.group === "pessoas"); const index = people.findIndex(item => item.id === material?.id); setGroup("pessoas"); setQuery(""); setTopic(null); setGaps(false); setSelectedId(people[(index + 1) % people.length].id); setMode("3d"); }
+    if (tool.action === "gaps") { setGaps(value => !value); setGroup("all"); setQuery(""); setTopic(null); }
+    if (tool.action === "affinity") { setTopic(material?.affinities?.[0] || "memoria"); setGroup("all"); setQuery(""); setGaps(false); }
+    if (tool.action === "double") { const other = tool.relatedIds?.[0] || (material && referenceRelations(material, items).find(relation => relation.id !== material.id)?.id); if (other) chooseItem(other); }
+    if (tool.action === "reset") { setGroup("all"); setQuery(""); setTopic(null); setGaps(false); setMode("3d"); setResetToken(value => value + 1); }
+    if (tool.action === "list") setMode("list");
+    if (tool.action === "material") setOriginalMaterials(value => !value);
+    if (tool.action === "cross") {
+      const anchor = material && !material.modelId ? material : items.find(item => item.id === "marcus-garcia-labirinto");
+      const others = items.filter(item => item.id !== anchor.id && !item.modelId && item.status !== "research");
+      others.sort((a, b) => (a.affinities.filter(topic => anchor.affinities.includes(topic)).length + (a.group === anchor.group ? 3 : 0)) - (b.affinities.filter(topic => anchor.affinities.includes(topic)).length + (b.group === anchor.group ? 3 : 0)) || a.title.localeCompare(b.title, "pt-BR"));
+      if (others[0]) setPair([anchor.id, others[0].id]);
+      document.querySelector('[aria-label="Laboratório privado de associações"]')?.scrollIntoView({ behavior: "auto", block: "start" });
+    }
+  }
+  const selectRelative = delta => {
+    if (filtered.length) { const base = selectedIndex >= 0 ? selectedIndex : delta > 0 ? -1 : 0; chooseItem(filtered[(base + delta + filtered.length) % filtered.length].id); }
+  };
+
+  return <main className={styles.archive}>
+    <header className={styles.header}>
+      <div><p className={styles.eyebrow}><span /> CAIXA PRETA / ILHA HOLOGRÁFICA</p>
+        <h1>Uma ilha feita<br /> de memória<span>.</span></h1>
+        <p className={styles.introduction}>As coisas ganharam outros usos. Escolha um objeto para abrir uma pessoa, desviar uma referência ou abrigar o que falta.</p>
+      </div>
+      <div className={styles.headerNote}><span>ARQUIPÉLAGO / 001</span><p>O acervo fica visível aqui.<br />Em cena, ele vira inconsciente.</p><strong>{items.length}<small>REGISTROS RASTREÁVEIS</small></strong></div>
+    </header>
+
+    <div className={styles.toolbar}>
+      <label className={styles.search}><span aria-hidden="true">⌕</span><input aria-label="Buscar referências" placeholder="Buscar uma ideia, pessoa ou material" value={query} onChange={event => { clearInspection(); setQuery(event.target.value); }} />{query && <button onClick={() => { clearInspection(); setQuery(""); }} aria-label="Limpar busca">×</button>}</label>
+      <div className={styles.modeSwitch} aria-label="Visualização"><button aria-pressed={mode === "3d"} onClick={() => switchMode("3d")}>Ilha 3D</button><button aria-pressed={mode === "books"} onClick={() => switchMode("books")}>Livros 3D</button><button aria-pressed={mode === "list"} onClick={() => switchMode("list")}>Lista</button></div>
+    </div>
+    <div className={styles.filters} aria-label="Filtrar acervo">
+      <button data-reference-group="all" aria-pressed={group === "all"} onClick={() => { clearInspection(); setGroup("all"); }}>Tudo <span>{items.length}</span></button>
+      {groups.map(category => <button key={category.id} data-reference-group={category.id} aria-pressed={group === category.id} onClick={() => { clearInspection(); setGroup(category.id); }}>{category.label} <span>{category.count ?? items.filter(item => item.group === category.id).length}</span></button>)}
+    </div>
+
+    <div className={styles.topicFilters} aria-label="Afinidades da ilha"><span>APROXIMAR POR</span>{islandTopics.map(theme => <button key={theme.id} style={{ "--topic-color": theme.color }} data-island-topic={theme.id} aria-pressed={topic === theme.id} onClick={() => { clearInspection(); setTopic(current => current === theme.id ? null : theme.id); }}><i />{theme.label}</button>)}<button data-reference-gaps aria-pressed={gaps} onClick={() => { clearInspection(); setGaps(value => !value); }}>◌ Lacunas {gapCount}</button></div>
+    <section className={styles.trails} aria-label="Percursos da ilha"><span>PERCURSOS CURATORIAIS</span><div>{islandTrails.map(route => <button key={route.id} data-island-trail={route.id} aria-pressed={trailId === route.id} onClick={() => walk(route.id)}>{route.label} <b>↗</b></button>)}</div>{trail && <article data-island-trail-step={trailStep}><p><span>0{trailStep + 1} / 0{trail.steps.length}</span>{trail.steps[trailStep].text}</p><div><button onClick={() => setTrailId(null)}>Sair do percurso</button><button disabled={trailStep === 0} onClick={() => walk(trail.id, trailStep - 1)}>← Anterior</button><button disabled={trailStep === trail.steps.length - 1} onClick={() => walk(trail.id, trailStep + 1)}>Próximo vestígio →</button></div></article>}</section>
+    {mode === "3d" && group !== "pessoas" && <div className={styles.objectBar} aria-label="Objetos cênicos da ilha"><span>OBJETOS CÊNICOS</span>{island.models.map(model => <button key={model.id} data-island-object={model.id} aria-pressed={objectId === model.id} title={`Integrar ${model.label}`} onClick={() => chooseObject(model.id)}>{model.label}</button>)}</div>}
+
+    {selected ? <div className={`${styles.exhibition} ${mode === "books" ? styles.booksMode : mode === "list" ? styles.listMode : ""}`}>
+      <section className={styles.viewport} aria-label="Explorar acervo">
+        <div className={styles.viewportHeader}><span>FIG. 01 / {mode === "3d" ? "ILHA / CAMPO DE MEMÓRIA" : mode === "books" ? "LIVROS / CAMPO DE MEMÓRIA" : "ÍNDICE DO ACERVO"}</span><span>{String(filtered.length).padStart(3, "0")} FRAGMENTOS</span></div>
+        {mode === "3d" ? <>
+          <ArchiveScene items={items} manifest={island} visibleIds={visibleIds} topic={topic} selectedId={selected.id} onSelect={chooseItem} onObjectSelect={chooseObject} focusTarget={focusTarget?.scope === selectionScope ? focusTarget : null} focusToken={focusToken} onTool={inspectTool} scope={group} resetToken={resetToken} originalMaterials={originalMaterials} onMaterialChange={() => setOriginalMaterials(value => !value)} paused={paused} />
+          <div className={styles.cabinetPagination}><span>{filtered.length} materiais · todos na ilha</span></div><div className={styles.sceneLegend}><span><i /> LIGAÇÃO DOCUMENTADA</span><span><i /> PONTE CURATORIAL</span></div>
+          <div className={styles.sceneControls}><span>Toque para integrar · arraste para orbitar · roda para aproximar</span><button aria-pressed={paused} onClick={() => setPaused(value => !value)}>{paused ? "Retomar movimento" : "Pausar movimento"}</button></div>
+        </> : mode === "books" ? <>
+          <BooksScene items={bookItems} selectedId={selected.id} onSelect={chooseItem} paused={paused} />
+          <div className={styles.sceneLegend}><span><i /> FICHA DO ACERVO</span><span><i /> REFERÊNCIA CITADA</span></div>
+          <div className={styles.sceneControls}><span>Arraste para girar · clique para abrir</span><button aria-pressed={paused} onClick={() => setPaused(value => !value)}>{paused ? "Retomar movimento" : "Pausar movimento"}</button></div>
+        </> : <div className={styles.indexList}>
+          {filtered.map((item, index) => <button key={item.id} data-reference-id={item.id} aria-pressed={selected.id === item.id} onClick={() => chooseItem(item.id)}><span>{code(item, index)}</span><div><strong>{item.title}</strong><small>{item.author || item.kind} {item.year ? ` / ${item.year}` : ""}</small></div><em>{item.statusLabel}</em><b aria-hidden="true">↗</b></button>)}
+        </div>}
+      </section>
+
+      <article key={selected.id} className={styles.detail} data-reference-detail={selected.id} aria-label="Material selecionado" aria-live="polite">
+        <div className={styles.detailMeta}><span>{groups.find(category => category.id === selected.group)?.label || selected.kind}</span><span>{selectedIndex >= 0 ? `${String(selectedIndex + 1).padStart(3, "0")} / ${String(filtered.length).padStart(3, "0")}` : "OBJETO EM FOCO"}</span></div>
+        <p className={styles.status} data-status={selected.status}><i />{selected.statusLabel}</p>
+        <h2>{selected.title}</h2>
+        {selected.subtitle && <p className={styles.byline}>{selected.subtitle}</p>}
+        {selected.author && <p className={styles.byline}>{selected.group === "pessoas" ? selected.kind : selected.author}{selected.year ? ` · ${selected.year}` : ""}</p>}
+        {selected.biography ? <section className={styles.biography} data-reference-biography={selected.id}><span>A CAIXA SOBRE QUEM PASSOU POR AQUI</span><p>{selected.biography}</p></section> : <p className={styles.description}>{selected.description}</p>}
+        {selected.thing && !selected.modelId && <div className={styles.displacedThing}><span>UMA COISA NO LUGAR DE OUTRA</span><strong>{selected.thing.name}</strong><p>{selected.thing.playLink || selected.thing.strangeUse}</p><small>{selected.thing.basis}</small></div>}
+        {selected.coverUrl && <figure className={styles.cover}><img src={selected.coverUrl} alt="Capa do PDF original de Labirinto de Labirintos" width="110" height="155" /><figcaption>Capa do documento<br />original incorporado</figcaption></figure>}
+        <div className={styles.evidence}><span>COMO ISSO ENTRA NA MEMÓRIA</span><p>{selected.evidence || selected.statusLabel}</p><div>{selected.pageCount > 0 && <b>{selected.pageCount} páginas</b>}{selected.chunkCount > 0 && <b>{selected.chunkCount} fragmentos locais</b>}</div></div>
+        {selected.excerpt && <div className={styles.excerpt}><span>JANELA PARA O MATERIAL</span><p>{selected.excerpt}</p></div>}
+        {selected.works?.length > 0 && <details className={styles.works} open><summary>Trabalhos e pesquisas <span>{selected.works.length}</span></summary><div>{selected.works.map((work, index) => <section key={`${work.title}-${index}`}><span>{work.category || work.type || work.kind || "Obra / pesquisa"}{work.year ? ` · ${work.year}` : ""}</span><h3>{work.url ? <a href={work.url} target="_blank" rel="noopener noreferrer">{work.title} ↗</a> : work.title}</h3><p>{work.summary}</p>{(work.readStatus || work.coverage || work.contentStatus) && <small>{work.readStatus || work.coverage || (work.contentStatus === "full_text_indexed" ? "Texto integral indexado no acervo." : "Créditos, descrição ou resumo público consultados; obra integral não incorporada.")}</small>}</section>)}</div></details>}
+        {selected.limitations?.length > 0 && <details className={styles.limits}><summary>Limites desta pesquisa</summary><ul>{selected.limitations.map((limit, index) => <li key={index}>{limit}</li>)}</ul></details>}
+        {selected.sources?.length > 0 && <details className={styles.limits}><summary>Fontes públicas consultadas</summary><ul>{selected.sources.map((source, index) => <li key={index}><a href={source.url} target="_blank" rel="noopener noreferrer">{source.title || "Fonte pública"} ↗</a>{source.accessedAt ? ` · ${source.accessedAt}` : ""}</li>)}</ul></details>}
+        {selected.tags?.length > 0 && <div className={styles.tags}>{selected.tags.slice(0, 6).map(tag => <span key={tag}>{tag}</span>)}</div>}
+        {relations.length > 0 && <details className={styles.relations} open><summary>Fios que atravessam este material</summary><div>{relations.map(relation => <button key={relation.id} onClick={() => chooseItem(relation.id)}><strong>{relation.title} ↗</strong><small data-relation-type={relation.type}>{relation.reason}</small></button>)}</div></details>}
+        {selected.toolId && <div className={styles.crossButton}><button onClick={() => activateTool(selected.toolId)}>Usar esta ferramenta</button></div>}
+        {!selected.toolId && <div className={styles.crossButton}><button aria-pressed={pair.includes(selected.id)} disabled={pair.length === 2 && !pair.includes(selected.id)} onClick={() => cross(selected.id)}>{pair.includes(selected.id) ? "✓ No cruzamento · retirar" : "＋ Adicionar ao cruzamento"}</button><span>{pair.length} / 2 materiais · laboratório abaixo</span></div>}
+        <div className={styles.provenance}><span>ORIGEM NO ACERVO</span><code>{selected.sourcePath}</code></div>
+        <div className={styles.detailFooter}>{selected.sourceUrl && <a href={selected.sourceUrl} target="_blank" rel="noopener noreferrer">Abrir fonte original <span>↗</span></a>}<div><button aria-label="Material anterior" onClick={() => selectRelative(-1)}>←</button><button aria-label="Próximo material" onClick={() => selectRelative(1)}>→</button></div></div>
+      </article>
+    </div> : <div className={styles.empty}><span>∅</span><h2>Nenhum fragmento encontrado.</h2><p>Tente outro termo ou abra o acervo inteiro.</p><button onClick={() => { clearInspection(); setQuery(""); setGroup("all"); setTopic(null); setGaps(false); }}>Ver todas as referências</button></div>}
+
+    {group !== "pessoas" && <section className={styles.cabinetTools} aria-label="As coisas e seus outros usos"><div><span>CENA 3 / AS COISAS</span><p>Ferramentas com a função ligeiramente fora do lugar.</p></div><div className={styles.cabinetToolButtons}>{cabinetTools.map(tool => <button key={tool.id} data-cabinet-tool={tool.id} aria-label={`${tool.label}: ${tool.strangeUse}`} onClick={() => activateTool(tool.id)}><strong>{tool.label}</strong><small>{tool.strangeUse}</small></button>)}</div>{toolNote && <p className={styles.toolNote} role="status"><strong>{toolNote.label}.</strong> Servia para {toolNote.ordinaryUse.charAt(0).toLowerCase() + toolNote.ordinaryUse.slice(1)} Agora: {toolNote.strangeUse}</p>}</section>}
+    {mode !== "list" && filtered.length > 0 && <section className={styles.shelf} aria-label="Materiais do arquivo"><div className={styles.shelfHeading}><span>ESCOLHA UM FRAGMENTO</span><span>← DESLIZE PARA EXPLORAR →</span></div><div className={styles.shelfItems}>{filtered.map((item, index) => <button data-reference-id={item.id} key={item.id} aria-pressed={selected.id === item.id} onClick={() => chooseItem(item.id)}><span>{code(item, index)}<i>{item.status === "cited" ? "○" : "●"}</i></span><strong>{item.title}</strong><small>{item.author || item.kind}</small></button>)}</div></section>}
+    <ReferenceExperiment items={items} ids={pair} onRemove={cross} />
+    <footer className={styles.footer}><p><span>●</span> Transparência de memória</p><p>Texto disponível ≠ obra inteira consultada. As fichas distinguem texto integral, recortes e citações. O repertório inspira a cena; as fontes ficam neste arquivo.</p></footer>
+  </main>;
+}
