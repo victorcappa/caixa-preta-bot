@@ -418,7 +418,7 @@ assert.throws(
 );
 assert.doesNotThrow(() => assertBotCannotNavigateExternal({ source: "operator", target: "https://instagram.com/test" }));
 assert.equal(blockedAutonomousInstagramResult().code, "BOT_EXTERNAL_NAVIGATION_BLOCKED");
-assert.deepEqual(controllerNavigationSurfaces.map((surface) => surface.menuLabel), ["Principal", "Sound Control", "Operator", "modelo-3D", "TARÔ", "Treino", "treino-ao-vivo", "pós-demo"]);
+assert.deepEqual(controllerNavigationSurfaces.map((surface) => surface.menuLabel), ["Principal", "Sound Control", "Operator", "modelo-3D", "Referências", "TARÔ", "Treino", "treino-ao-vivo", "pós-demo"]);
 assert.equal((await executeAutonomousInstagramTool({ name: "instagram_open_profile", args: { username: "test" } })).code, "BOT_EXTERNAL_NAVIGATION_BLOCKED");
 
 const research = updateResearchSettings(createInitialResearchState(), { autonomousInstagramEnabled: true });
@@ -550,12 +550,13 @@ assert.doesNotMatch(sceneZeroProjection, />5 SEGUNDOS</, "a nova contagem do par
 assert.match(sceneZeroProjection, /suitcaseCueFrame\.phase === "reveal" \? "ABRA A MALA"/, "revelação deve mandar abrir a mala indicada");
 assert.doesNotMatch(sceneZeroProjection, /warmupReactionOverlay/, "comentários do aquecimento devem usar a fala verde do chatbot");
 assert.match(sceneZeroProjection, /allVisibleMorelLines\.slice\(-10\)/, "BIOS final deve acompanhar as linhas mais recentes");
-assert.match(sceneZeroProjection, /hangman\.status === "won"\) robotSoundEngine\.success\(\)/, "vitória da forca deve disparar som de sucesso");
-assert.match(sceneZeroProjection, /else robotSoundEngine\.error\(\)/, "derrota da forca deve disparar som de erro");
+// Success/error behavior and deduplication are covered by scene-zero-suitcase-sounds-browser-test.js.
+assert.match(sceneZeroProjection, /import \{ sceneZeroSuitcaseResultSounds \} from "@\/lib\/scene-zero\/suitcaseSounds"/, "a projeção deve usar os resultados sonoros compartilhados das malas");
+assert.match(sceneZeroProjection, /for \(const sound of sceneZeroSuitcaseResultSounds\(sceneZero\)\)[\s\S]*robotSoundEngine\[sound\.effect\]\(\)/, "a projeção deve disparar o efeito indicado pelo resultado compartilhado");
 assert.match(sceneZeroProjection, /robotSoundEngine\.rouletteTick/, "sorteios devem disparar som sincronizado");
 assert.match(sceneZeroProjection, /robotSoundEngine\.hangmanPulse/, "a forca deve manter uma trilha procedural discreta");
 assert.match(sceneZeroProjection, /errorCount > previous\.errorCount[\s\S]*robotSoundEngine\.impact\(\)/, "cada erro da forca deve disparar o impacto sonoro existente");
-assert.match(chatProjection, /scene-zero-hangman-retry:[\s\S]*robotSoundEngine\.impact\(\)/, "a falha final da forca deve manter impacto ao trocar o jogo pelo comentário vermelho");
+assert.match(chatProjection, /else if \(isSceneZeroSuitcaseResultMessage\(message\)\) \{\s*(?:\/\/[^\n]*\s*)*\}/, "o fim da digitação não deve repetir o resultado sonoro já disparado pela projeção");
 assert.doesNotMatch(sceneZeroProjection, /hangman\.flightState|ESTÁVEL/, "a projeção da forca não deve exibir estados textuais");
 assert.match(sceneZeroProjection, /hangmanErrors\$\{Math\.min\(4, Number\(hangman\.errorCount\)/, "a gravidade da forca deve continuar vinculada ao número de erros");
 assert.equal((sceneZeroProjection.match(/data-scene-zero-timer/g) || []).length, 1, "todos os fluxos devem compartilhar um único temporizador projetado");

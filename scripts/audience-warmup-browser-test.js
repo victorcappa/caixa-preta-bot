@@ -139,6 +139,8 @@ try {
   sceneOperator.on("pageerror", (error) => pageErrors.push(error.message));
   await sceneOperator.setViewportSize({ width: 1440, height: 1000 });
   await sceneOperator.goto(`${BASE_URL}/cena-0-controller`, { waitUntil: "domcontentloaded" });
+  // The floating notes can cover the response buttons; close them through the normal UI.
+  await sceneOperator.locator('aside[aria-label="Anotações de CENA 0"]').getByRole("button", { name: /MINIMIZAR/ }).click();
   const sceneWarmupToggle = sceneOperator.locator("#scene-zero-unlock").getByRole("button", { name: /ESQUENTAR PÚBLICO/ });
   await sceneWarmupToggle.waitFor();
   await sceneWarmupToggle.click();
